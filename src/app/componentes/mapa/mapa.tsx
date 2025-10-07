@@ -12,24 +12,25 @@ L.Icon.Default.mergeOptions({
 })
 
 export default function Mapa() {
-  const position: [number, number] = [-17.3940,-66.1570]
+  const position: [number, number] = [-17.3940, -66.1570]
 
-  return (
-    <MapContainer 
-      center={position} 
-      zoom={13} 
-      style={{ height: '400px', width: '100%' }}
-      className="rounded-lg shadow-lg"
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <Marker position={position}>
-        <Popup>
-          Una propiedad en alquiler
-        </Popup>
-      </Marker>
-    </MapContainer>
+  return ( 
+    <div className="w-full max-w-6xl h-[300px] sm:h-[400px] md:h-[500px] lg:h-[550px] mx-auto px-4">
+      <MapContainer
+        center={position}
+        zoom={13}
+        className="w-full h-full rounded-lg shadow-lg z-0"
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <Marker position={position}>
+          <Popup>
+            Una propiedad en alquiler
+          </Popup>
+        </Marker>
+      </MapContainer>
+    </div>
   )
 }
