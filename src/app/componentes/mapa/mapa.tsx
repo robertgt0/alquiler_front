@@ -68,18 +68,7 @@ export default function Mapa({
           >
             <Popup>{u.nombre}</Popup>
           </Marker>
-        ))}
-
-        {/* Marcador seleccionado */}
-        {ubicacionSeleccionada && (
-          <Marker
-            position={ubicacionSeleccionada.posicion}
-            icon={crearIcono()}
-          >
-            <Popup>{ubicacionSeleccionada.nombre}</Popup>
-          </Marker>
-        )}
-
+        ))} 
         <ActualizarVista ubicacion={ubicacionSeleccionada} />
       </MapContainer>
     </div>
