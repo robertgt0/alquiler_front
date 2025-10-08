@@ -31,7 +31,7 @@ export default function BuscadorUbicaciones({ ubicaciones, onBuscar }: BuscadorU
         Selecciona una ubicación y presiona Buscar para acercar el mapa.
       </p>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+      <div className="flex flex-row flex-wrap gap-4 items-end">
         <div className="flex-1">
           <select
             value={seleccionada?.id?.toString() ?? ""}
