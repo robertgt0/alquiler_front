@@ -24,9 +24,10 @@ export default function BuscadorUbicaciones({ ubicaciones, onBuscar }: BuscadorU
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-6 w-[1750px] mx-auto">
+    <div className="bg-white rounded-lg shadow-lg p-6 mb-6 w-full max-w-6xl mx-auto px-4 transition-all duration-300">
+
       <h2 className="text-xl font-bold text-gray-900 mb-2">Buscar ubicación</h2>
-      <p className="text-gray-600 mb-4">
+      <p className="text-black mb-4">
         Selecciona una ubicación y presiona Buscar para acercar el mapa.
       </p>
 
@@ -35,7 +36,7 @@ export default function BuscadorUbicaciones({ ubicaciones, onBuscar }: BuscadorU
           <select
             value={seleccionada?.id?.toString() ?? ""}
             onChange={handleSeleccionChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer text-black bg-white" 
             aria-label="Selecciona una ubicación"
           >
             <option value="">Selecciona una ubicación</option>
@@ -53,7 +54,7 @@ export default function BuscadorUbicaciones({ ubicaciones, onBuscar }: BuscadorU
           className={`px-6 py-3 rounded-lg font-medium transition duration-200 min-w-[120px] h-[50px] ${
             seleccionada
               ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-              : "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-gray-200 text-black cursor-not-allowed"
           }`}
         >
           Buscar
