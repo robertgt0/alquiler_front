@@ -4,15 +4,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
-
-// Configurar íconos de Leaflet (solo en cliente)
-if (typeof window !== "undefined") {
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "/marker-icon-2x.png",
-    iconUrl: "/marker-icon.png",
-    shadowUrl: "/marker-shadow.png",
-  });
-}
+import ReactDOMServer from "react-dom/server";
+import UbicacionIcon from "./UbicacionIcon";
 
 export interface Ubicacion {
   id: number;
@@ -38,32 +31,51 @@ function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
   return null;
 }
 
-export default function Mapa({ ubicaciones, ubicacionSeleccionada, onUbicacionClick }: MapaProps) {
+export default function Mapa({
+  ubicaciones,
+  ubicacionSeleccionada,
+  onUbicacionClick,
+}: MapaProps) {
   const centroInicial: [number, number] = [-17.3895, -66.1568];
+
+  // Crea un ícono HTML con el componente UbicacionIcon
+  const crearIcono = (onClick?: () => void) =>
+    L.divIcon({
+      className: "custom-marker",
+      html: ReactDOMServer.renderToString(<UbicacionIcon onClick={onClick} />),
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+    });
 
   return (
     <div className="w-full max-w-6xl h-[300px] sm:h-[400px] md:h-[500px] lg:h-[550px] mx-auto px-4">
-
-      <MapContainer center={centroInicial} zoom={13} className="w-full h-full rounded-lg shadow-lg z-0">
+      <MapContainer
+        center={centroInicial}
+        zoom={13}
+        className="w-full h-full rounded-lg shadow-lg z-0"
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Marcadores de todas las ubicaciones */}
+        {/* Marcadores */}
         {ubicaciones.map((u) => (
           <Marker
             key={u.id}
             position={u.posicion}
-            eventHandlers={{ click: () => onUbicacionClick?.(u) }}
+            icon={crearIcono(() => onUbicacionClick?.(u))}
           >
             <Popup>{u.nombre}</Popup>
           </Marker>
         ))}
 
-        {/* Marcador resaltado de la ubicación seleccionada */}
+        {/* Marcador seleccionado */}
         {ubicacionSeleccionada && (
-          <Marker position={ubicacionSeleccionada.posicion}>
+          <Marker
+            position={ubicacionSeleccionada.posicion}
+            icon={crearIcono()}
+          >
             <Popup>{ubicacionSeleccionada.nombre}</Popup>
           </Marker>
         )}

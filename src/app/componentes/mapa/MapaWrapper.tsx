@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Ubicacion } from "./mapa";
 import dynamic from "next/dynamic";
 import BuscadorUbicaciones from "./BuscadorUbicaciones";
+import FixersHeader from "./FixersHeader";
 
 // Importar mapa dinámicamente para evitar SSR
 const Mapa = dynamic(() => import("./mapa"), { ssr: false });
@@ -20,11 +21,13 @@ export default function MapaWrapper() {
   const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState<Ubicacion | null>(null);
 
   return (
+    
     <div className="flex flex-col items-center">
       <BuscadorUbicaciones
         ubicaciones={ubicaciones}
         onBuscar={(u) => setUbicacionSeleccionada(u)}
       />
+       <FixersHeader />
       <Mapa
         ubicaciones={ubicaciones}
         ubicacionSeleccionada={ubicacionSeleccionada}
