@@ -1,3 +1,5 @@
+// components/mapa.tsx
+
 "use client";
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -49,7 +51,7 @@ export default function Mapa({
     });
 
   return (
-    <div className="w-full max-w-6xl h-[300px] sm:h-[400px] md:h-[500px] lg:h-[550px] mx-auto px-4">
+    <div className="w-full max-w-6xl h-[300px] sm:h-[400px] md:h-[500px] lg:h-[350px] mx-2 px-2">
       <MapContainer
         center={centroInicial}
         zoom={13}

@@ -1,3 +1,5 @@
+// components/BuscarUbicacion.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -24,7 +26,8 @@ export default function BuscadorUbicaciones({ ubicaciones, onBuscar }: BuscadorU
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-6 w-full max-w-6xl mx-auto px-4 transition-all duration-300">
+    <div className="bg-white rounded-lg shadow-lg p-6 mb-3 w-full max-w-6xl mx-2 px-2 transition-all duration-300">
+
 
       <h2 className="text-xl font-bold text-gray-900 mb-2">Buscar ubicación</h2>
       <div className="flex flex-row flex-wrap gap-4 items-end">

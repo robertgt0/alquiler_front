@@ -1,3 +1,5 @@
+// components/MapaWeapper.tsx
+
 "use client";
 
 import { useState } from "react";

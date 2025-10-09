@@ -1,6 +1,5 @@
 // components/UbicacionIcon.tsx
 
-
 "use client";
 import { FC } from "react";
 import { FaStar, FaCheck, FaWhatsapp } from "react-icons/fa";
