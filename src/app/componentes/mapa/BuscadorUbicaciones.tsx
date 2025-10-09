@@ -27,11 +27,7 @@ export default function BuscadorUbicaciones({ ubicaciones, onBuscar }: BuscadorU
     <div className="bg-white rounded-lg shadow-lg p-6 mb-6 w-full max-w-6xl mx-auto px-4 transition-all duration-300">
 
       <h2 className="text-xl font-bold text-gray-900 mb-2">Buscar ubicación</h2>
-      <p className="text-black mb-4">
-        Selecciona una ubicación y presiona Buscar para acercar el mapa.
-      </p>
-
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+      <div className="flex flex-row flex-wrap gap-4 items-end">
         <div className="flex-1">
           <select
             value={seleccionada?.id?.toString() ?? ""}
