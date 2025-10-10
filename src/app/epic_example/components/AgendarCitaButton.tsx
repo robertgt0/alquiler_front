@@ -1,7 +1,7 @@
 //Componente del botón agendar cita + estado de abrir/cerrar el modal
 "use client";
 import { useState } from "react";
-import AgendarCitaModal from "../components/AgendarCitaModal";
+import { AppointmentModal } from "./appointment-modal";
 
 //import ModalWrapper from "./ModalWrapper";
 //import CalendarPicker from "./CalendarPicker";
@@ -24,7 +24,7 @@ export default function AgendarCitaButton() {
       </button>
 
       {/* 🪟 Modal */}
-      {open && <AgendarCitaModal onClose={() => setOpen(false)} />}
+      <AppointmentModal open={open} onOpenChange={(v) => setOpen(v)} />
 
     </>
   );
