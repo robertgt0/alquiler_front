@@ -24,3 +24,30 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+
+/* Estilos para el mapa */
+.leaflet-container {
+  font-family: inherit;
+}
+
+.custom-marker,
+.user-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+}
+
+/* Estilos para el mapa */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+}
