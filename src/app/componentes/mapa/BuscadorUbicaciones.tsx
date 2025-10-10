@@ -12,8 +12,8 @@ export default function BuscadorUbicaciones({ ubicaciones, onBuscar }: BuscadorU
   const [seleccionada, setSeleccionada] = useState<Ubicacion | null>(null);
 
   const handleSeleccionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = Number(event.target.value);
-    const ubicacion = ubicaciones.find(u => u.id === id) || null;
+    const id = event.target.value;
+    const ubicacion = ubicaciones.find(u => u.id.toString() === id) || null;
     setSeleccionada(ubicacion);
   };
 
