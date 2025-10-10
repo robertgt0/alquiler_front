@@ -1,45 +1,31 @@
+//Componente del botón agendar cita + estado de abrir/cerrar el modal
 "use client";
-
 import { useState } from "react";
-import ModalWrapper from "./ModalWrapper";
-import CalendarPicker from "./CalendarPicker";
+import AgendarCitaModal from "../components/AgendarCitaModal";
+
+//import ModalWrapper from "./ModalWrapper";
+//import CalendarPicker from "./CalendarPicker";
 
 export default function AgendarCitaButton() {
   const [open, setOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-    
-  };
+  //const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  //const handleDateSelect = (date: Date) => {
+    //setSelectedDate(date);
+  //};
 
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-4 py-2 bg-[#4289CC] text-white rounded hover:bg-blue-500 transition"
+        className="px-5 py-2 bg-[#4289CC] text-white rounded-lg hover:bg-blue-700 transition transform hover:scale-105 duration-300 font-medium"
       >
-        Agendar Cita
+        + Appointment
       </button>
 
-      <ModalWrapper isOpen={open} onClose={() => setOpen(false)}>
-        <h1 className="text-2xl font-bold mb-6">Agendar cita</h1>
-        <CalendarPicker onDateSelect={handleDateSelect} />
+      {/* 🪟 Modal */}
+      {open && <AgendarCitaModal onClose={() => setOpen(false)} />}
 
-        {selectedDate && (
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => {
-                console.log("Fecha confirmada:", selectedDate);
-                setOpen(false);
-              }}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-            >
-              Confirmar
-            </button>
-          </div>
-        )}
-      </ModalWrapper>
     </>
   );
 }
