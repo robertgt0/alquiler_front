@@ -1,0 +1,427 @@
+/* OfferModal.module.css - Estilos para el Modal de Oferta (HU13) */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 800px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translate(-50%, -45%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid #e0e0e0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1001;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background-color: #f0f0f0;
+  color: #1a1a1a;
+}
+
+/* Content */
+.content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Carrusel de imágenes */
+.imageCarousel {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mainImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.noImage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  background: #f0f0f0;
+  color: #999;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+/* Botones del carrusel */
+.carouselBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  font-size: 32px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.carouselBtn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.prevBtn {
+  left: 10px;
+}
+
+.nextBtn {
+  right: 10px;
+}
+
+.imageIndicator {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Sección de precio */
+.priceSection {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.price {
+  font-size: 28px;
+  font-weight: 700;
+  color: #27ae60;
+}
+
+.category {
+  display: inline-block;
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Sección del proveedor */
+.providerSection {
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.sectionTitle {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.providerCard {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.providerImage {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.providerDetails {
+  flex: 1;
+}
+
+.providerName {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.providerStats {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #666;
+}
+
+.rating,
+.services {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Secciones generales */
+.section {
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.section p {
+  color: #1a1a1a;
+  font-size: 15px;
+  margin: 8px 0;
+}
+
+.section p:first-of-type {
+  margin-top: 0;
+}
+
+.description {
+  margin: 0;
+  line-height: 1.6;
+  color: #333;
+  font-size: 15px;
+}
+
+.address {
+  margin: 0;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 15px;
+}
+
+.city {
+  margin: 8px 0 0 0;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.offerRating {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Tags */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  display: inline-block;
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  background: white;
+  position: sticky;
+  bottom: 0;
+  flex-wrap: wrap;
+}
+
+.contactBtn,
+.deleteBtn,
+.closeFooterBtn {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.contactBtn {
+  background: #2196f3;
+  color: white;
+}
+
+.contactBtn:hover:not(:disabled) {
+  background: #1976d2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.deleteBtn {
+  background: #f44336;
+  color: white;
+}
+
+.deleteBtn:hover:not(:disabled) {
+  background: #d32f2f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+}
+
+.deleteBtn.deleting {
+  opacity: 0.7;
+}
+
+.closeFooterBtn {
+  background: #e0e0e0;
+  color: #1a1a1a;
+}
+
+.closeFooterBtn:hover {
+  background: #d0d0d0;
+}
+
+/* Estados disabled */
+.contactBtn:disabled,
+.deleteBtn:disabled,
+.closeFooterBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .modal {
+    width: 95vw;
+    max-height: 95vh;
+  }
+
+  .header {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .content {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .imageCarousel {
+    height: 300px;
+  }
+
+  .price {
+    font-size: 24px;
+  }
+
+  .footer {
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .contactBtn,
+  .deleteBtn,
+  .closeFooterBtn {
+    min-width: 100px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .carouselBtn {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+  }
+}
