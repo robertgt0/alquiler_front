@@ -23,12 +23,10 @@ export default function Home() {
       </header>
       
       <main className="pt-8 pb-20">
-        {/* === CONTENEDOR CORREGIDO === */}
-        {/* Aplicamos padding lateral (px-...) para asegurar márgenes en móvil */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Título de la Sección del Carrusel */}
-          <h2 className="text-4xl font-bold text-center mb-4 text-gray-800 dark:text-gray-100">
+          <h2 className="text-4xl font-bold text-center mb-8 text-gray-800 dark:text-gray-100">
             Propiedades Destacadas
           </h2>
 
@@ -42,7 +40,7 @@ export default function Home() {
               Bienvenido
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              El componente de carrusel ha sido integrado. ¡La rotación y el ancho ya deberían estar funcionando correctamente!
+              El componente de carrusel ha sido integrado y ahora muestra títulos y descripciones. El diseño está centrado en la pantalla.
             </p>
           </section>
 
