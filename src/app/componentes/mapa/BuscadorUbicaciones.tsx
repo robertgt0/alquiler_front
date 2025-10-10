@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Ubicacion } from "./mapa";
+import type { Ubicacion } from "../../types";
 
 interface BuscadorUbicacionesProps {
   ubicaciones: Ubicacion[];
