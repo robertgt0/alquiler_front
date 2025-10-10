@@ -1,8 +1,8 @@
-'use client'; // ¡NECESARIO para que los hooks del carrusel funcionen!
+'use client'; 
 
-// Importación CORREGIDA: Usamos la ruta relativa directa.
+// === RUTA DE IMPORTACIÓN CORREGIDA ===
 import Carousel from './components/Carousel/Carousel'; 
-import Image from "next/image"; // Mantenemos la importación de Next/Image por si la usas en otro lugar
+import Image from "next/image"; 
 
 export default function Home() {
   return (
@@ -23,28 +23,40 @@ export default function Home() {
       </header>
       
       <main className="pt-8 pb-20">
+        
+        {/* === CONTENEDOR PARA EL TÍTULO Y LA SECCIÓN INFERIOR === */}
+        {/* Mantenemos el contenedor de Tailwind aquí para el resto del contenido */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Título de la Sección del Carrusel */}
           <h2 className="text-4xl font-bold text-center mb-8 text-gray-800 dark:text-gray-100">
             Propiedades Destacadas
           </h2>
+        </div>
+        {/* ================================================== */}
 
-          {/* === APLICACIÓN DEL CARRUSEL === */}
-          <Carousel /> 
-          {/* ============================== */}
 
-          {/* Sección de Contenido Adicional */}
-          <section className="mt-12 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-xl">
+        {/* === LLAMADA AL CARRUSEL (FUERA DE max-w-7xl) === */}
+        {/* El carrusel ahora puede usar sus propios estilos de centrado (width: 900px !important) sin interferencia. */}
+        <Carousel /> 
+        {/* ============================================== */}
+
+
+        {/* === CONTENEDOR PARA LA SECCIÓN INFERIOR === */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+          
+          <section className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-xl">
             <h3 className="text-2xl font-semibold mb-3 text-gray-800 dark:text-gray-100">
               Bienvenido
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              El componente de carrusel ha sido integrado y ahora muestra títulos y descripciones. El diseño está centrado en la pantalla.
+              El componente de carrusel ha sido aislado para que pueda usar su propio ancho fijo de 900px y centrarse sin conflictos con el contenedor principal de la página.
             </p>
           </section>
 
         </div>
+        {/* ============================================== */}
+
       </main>
 
       {/* Footer */}

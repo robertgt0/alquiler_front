@@ -58,26 +58,26 @@ const Carousel: React.FC = () => {
   const currentImage = images[currentIndex];
 
   return (
-    // CONTENEDOR PRINCIPAL: Usa Tailwind para centrar y limitar el ancho.
+    // CONTENEDOR PRINCIPAL: Usa 'container mx-auto max-w-4xl' para centrar y limitar el ancho.
     <div 
-      className="max-w-6xl mx-auto rounded-xl shadow-2xl overflow-hidden bg-white dark:bg-gray-800"
-      // Eliminamos el .carousel-container y lo reemplazamos con clases de Tailwind
+      className="container mx-auto max-w-4xl rounded-xl shadow-2xl overflow-hidden bg-white dark:bg-gray-800"
     >
       
-      {/* CONTENEDOR FLEXBOX: Coloca la imagen (60%) y la descripción (40%) lado a lado */}
-      <div className="flex items-start w-full">
+      {/* CONTENEDOR FLEXBOX: w-full se mantiene para activar flex */}
+      <div className="flex items-start w-full h-full">
         
-        {/* LADO IZQUIERDO: IMAGEN Y BOTONES (60% del ancho) */}
-        <div className="relative w-3/5 carousel-image-wrapper group">
+        {/* LADO IZQUIERDO: IMAGEN Y BOTONES (60% del ancho con clase .carousel-image-panel) */}
+        <div className="relative carousel-image-panel group">
           <Image
             src={currentImage.src}
             alt={currentImage.alt}
-            fill 
-            sizes="60vw"
-            className="carousel-image transition-opacity duration-700 ease-in-out"
+            // === CORRECCIÓN CLAVE: Usamos width y height en lugar de fill ===
+            width={538} // 60% de 896px (max-w-4xl) es aprox 538px, para el placeholder.
+            height={400} // Alto fijo
+            className="carousel-image transition-opacity duration-700 ease-in-out w-full"
             priority={currentIndex === 0}
           />
-
+          
           {/* Botones de Navegación (Superpuestos en la Imagen) */}
           <button 
             className="carousel-button prev opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 text-xl font-bold"
@@ -89,7 +89,7 @@ const Carousel: React.FC = () => {
 
           <button 
             className="carousel-button next opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 text-xl font-bold"
-            onClick={nextSlide} // Usamos nextSlide para mantener la lógica de autoplay limpia
+            onClick={nextSlide} 
             aria-label="Imagen siguiente"
           >
             &gt;
@@ -106,11 +106,10 @@ const Carousel: React.FC = () => {
               />
             ))}
           </div>
-
         </div>
 
-        {/* LADO DERECHO: CUADRO DE DESCRIPCIÓN (40% del ancho) */}
-        <div className="w-2/5 p-6 border-l border-gray-200 dark:border-gray-700 h-full">
+        {/* LADO DERECHO: CUADRO DE DESCRIPCIÓN (40% del ancho con clase .carousel-info-panel) */}
+        <div className="p-6 border-l border-gray-200 dark:border-gray-700 carousel-info-panel h-[400px]">
           <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1 uppercase">
             Propiedad Destacada
           </h4>
@@ -133,3 +132,5 @@ const Carousel: React.FC = () => {
 };
 
 export default Carousel;
+
+

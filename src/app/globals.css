@@ -1,16 +1,19 @@
-/* Directivas de Tailwind CSS */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* --- ESTILOS PARA EL CARRUSEL --- */
 
-/* Estilos de la imagen para asegurar que ocupe todo el espacio de su contenedor */
-.carousel-image-wrapper {
-  /* Define una altura fija que la imagen usará como referencia */
-  height: 400px; 
+/* 1. ARREGLO DE ANCHO INTERNO (Fuerza la división 60%/40%) */
+.carousel-image-panel {
+    /* 60% para la imagen */
+    width: 60% !important; 
+}
+.carousel-info-panel {
+    /* 40% para la descripción */
+    width: 40% !important;
 }
 
+/* 2. ESTILOS DE IMAGEN */
+/* El componente Image usa el 100% del width y height que le dimos en JSX */
 .carousel-image {
-  /* Asegura que la imagen cubra todo el espacio sin deformarse */
+  /* Asegura que la imagen cubra todo el espacio sin deformarse dentro de su tamaño fijo */
   object-fit: cover; 
   display: block;
 }
