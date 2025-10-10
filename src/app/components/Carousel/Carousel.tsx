@@ -1,66 +1,103 @@
-// src/app/components/Carousel/Carousel.tsx
+'use client'; 
 
-'use client'; // ¡IMPORTANTE! Marca este componente como Cliente en Next.js
+import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 
-import React, { useState } from 'react';
+// === Tiempo en milisegundos para cambiar automáticamente la diapositiva (5 segundos) ===
+const AUTOPLAY_DELAY = 5000; 
 
-// === PASO 1.2: DEFINIR LAS RUTAS DE LAS IMÁGENES ===
+// === Configuración de las imágenes (Solo 3 imágenes, para coincidir con la carpeta public) ===
 const images = [
-  '/carrusel-img-1.jpg', // ASUME que esta imagen está en la carpeta /public
-  '/carrusel-img-2.jpg',
-  '/carrusel-img-3.jpg',
+  { src: '/carrusel-img-1.jpg', alt: 'Propiedad 1' },
+  { src: '/carrusel-img-2.jpg', alt: 'Propiedad 2' },
+  { src: '/carrusel-img-3.jpg', alt: 'Propiedad 3' },
 ];
 
 const Carousel: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // Usamos useCallback para que la función sea estable
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prevIndex) => {
+      const newIndex = prevIndex === images.length - 1 ? 0 : prevIndex + 1;
+      return newIndex;
+    });
+  }, [images.length]);
+
   const goToPrevious = () => {
-    // Va a la anterior o salta a la última si es la primera
-    const isFirstSlide = currentIndex === 0;
-    const newIndex = isFirstSlide ? images.length - 1 : currentIndex - 1;
-    setCurrentIndex(newIndex);
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? images.length - 1 : prevIndex - 1
+    );
   };
 
   const goToNext = () => {
-    // Va a la siguiente o salta a la primera si es la última
-    const isLastSlide = currentIndex === images.length - 1;
-    const newIndex = isLastSlide ? 0 : currentIndex + 1;
-    setCurrentIndex(newIndex);
+    nextSlide();
   };
 
+  // === Hook para el Autoplay (ROTACIÓN ESTABLE cada 5 segundos) ===
+  useEffect(() => {
+    if (images.length < 2) return;
+
+    // Usamos setInterval estable
+    const intervalId = setInterval(nextSlide, AUTOPLAY_DELAY);
+
+    // Limpia el temporizador al desmontar el componente
+    return () => clearInterval(intervalId);
+  }, [nextSlide]); // Dependencia estable
+
   if (images.length === 0) {
-    return null; // No muestra nada si no hay imágenes
+    return <p className="text-center p-8 text-gray-500">No hay imágenes disponibles para el carrusel.</p>;
   }
 
-  return (
-    <div className="carousel-container">
-      {/* Botón Izquierda */}
-      <button className="carousel-button prev" onClick={goToPrevious} title="Anterior">
-        &lt;
-      </button>
+  const currentImage = images[currentIndex];
 
-      {/* Imagen Actual */}
+  return (
+    <div 
+      // CLASES CORREGIDAS: Usamos tu clase nativa '.carousel-container' para el ancho y centrado.
+      className="carousel-container group"
+      onMouseEnter={() => {}} 
+      onMouseLeave={() => {}} 
+    >
+      
+      {/* Contenedor de la Imagen: Usamos tu clase nativa para la altura */}
       <div className="carousel-image-wrapper">
-        <img
-          src={images[currentIndex]}
-          alt={`Slide ${currentIndex + 1}`}
-          className="carousel-image"
+        <Image
+          src={currentImage.src}
+          alt={currentImage.alt}
+          layout="fill"
+          objectFit="cover"
+          priority={currentIndex === 0}
+          className="carousel-image" // Usamos tu clase nativa para la imagen
         />
       </div>
 
-      {/* Botón Derecha */}
-      <button className="carousel-button next" onClick={goToNext} title="Siguiente">
-        &gt;
+      {/* Botón Izquierda */}
+      <button 
+        className="carousel-button prev"
+        onClick={goToPrevious}
+        aria-label="Imagen anterior"
+      >
+        &lt; {/* Carácter HTML de flecha izquierda */}
       </button>
-      
-      {/* Indicadores (Dots) */}
+
+      {/* Botón Derecha */}
+      <button 
+        className="carousel-button next"
+        onClick={goToNext}
+        aria-label="Imagen siguiente"
+      >
+        &gt; {/* Carácter HTML de flecha derecha */}
+      </button>
+
+      {/* Indicadores de Puntos */}
       <div className="carousel-dots">
         {images.map((_, index) => (
-          <span
+          <button
             key={index}
             className={`dot ${currentIndex === index ? 'active' : ''}`}
             onClick={() => setCurrentIndex(index)}
-          ></span>
+            aria-label={`Ir a imagen ${index + 1}`}
+          />
         ))}
       </div>
     </div>
@@ -68,3 +105,4 @@ const Carousel: React.FC = () => {
 };
 
 export default Carousel;
+

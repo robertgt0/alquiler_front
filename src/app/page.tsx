@@ -1,4 +1,7 @@
-import Carousel from './components/Carousel/Carousel';
+'use client'; // ¡NECESARIO para que los hooks del carrusel funcionen!
+
+// Importación CORREGIDA: Usamos la ruta relativa directa.
+import Carousel from './components/Carousel/Carousel'; 
 import Image from "next/image"; // Mantenemos la importación de Next/Image por si la usas en otro lugar
 
 export default function Home() {
@@ -20,7 +23,9 @@ export default function Home() {
       </header>
       
       <main className="pt-8 pb-20">
-        <div className="max-w-7xl mx-auto">
+        {/* === CONTENEDOR CORREGIDO === */}
+        {/* Aplicamos padding lateral (px-...) para asegurar márgenes en móvil */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Título de la Sección del Carrusel */}
           <h2 className="text-4xl font-bold text-center mb-4 text-gray-800 dark:text-gray-100">
@@ -32,12 +37,12 @@ export default function Home() {
           {/* ============================== */}
 
           {/* Sección de Contenido Adicional */}
-          <section className="mt-12 p-6 mx-4 sm:mx-6 lg:mx-8 bg-white dark:bg-gray-800 rounded-xl shadow-xl">
+          <section className="mt-12 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-xl">
             <h3 className="text-2xl font-semibold mb-3 text-gray-800 dark:text-gray-100">
               Bienvenido
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              El componente de carrusel ha sido integrado. Asegúrate de que las imágenes (carrusel-img-1.jpg, etc.) están en la carpeta **`public`** de tu proyecto y que la rama **`dev/soft-war_ricardo-carrusel`** contiene el archivo **`Carousel.tsx`** actualizado.
+              El componente de carrusel ha sido integrado. ¡La rotación y el ancho ya deberían estar funcionando correctamente!
             </p>
           </section>
 
