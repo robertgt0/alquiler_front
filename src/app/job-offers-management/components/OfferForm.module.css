@@ -1,0 +1,275 @@
+.form {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 32px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.title {
+  margin: 0 0 24px 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.successMessage {
+  padding: 12px 16px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  border-left: 4px solid #2e7d32;
+}
+
+.errorMessage {
+  padding: 12px 16px;
+  background: #ffebee;
+  color: #c62828;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  border-left: 4px solid #c62828;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.input,
+.textarea,
+.select {
+  padding: 12px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  color: #1a1a1a;
+  background: #fafafa;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: #2196f3;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #999;
+}
+
+.input.inputError,
+.textarea.inputError,
+.select.inputError {
+  border-color: #f44336;
+  background: #ffebee;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.charCount {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.twoColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .twoColumns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.errorText {
+  font-size: 12px;
+  color: #f44336;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.imageUploadArea {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  border: 2px dashed #2196f3;
+  border-radius: 8px;
+  background: #f5f9ff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.uploadLabel:hover {
+  border-color: #1976d2;
+  background: #e3f2fd;
+}
+
+.uploadIcon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.uploadLabel p {
+  margin: 4px 0;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.uploadHint {
+  font-size: 12px;
+  color: #999 !important;
+  font-weight: 400 !important;
+}
+
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.imagePreviewItem {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f0f0f0;
+  border: 2px solid #e0e0e0;
+}
+
+.imagePreviewItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.removeImageBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(244, 67, 54, 0.9);
+  color: white;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.imagePreviewItem:hover .removeImageBtn {
+  opacity: 1;
+}
+
+.removeImageBtn:hover {
+  background: rgba(244, 67, 54, 1);
+  transform: scale(1.1);
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.submitBtn,
+.resetBtn {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitBtn {
+  background: #2196f3;
+  color: white;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #1976d2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.submitBtn:disabled {
+  background: #90caf9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.resetBtn {
+  background: #e0e0e0;
+  color: #1a1a1a;
+}
+
+.resetBtn:hover {
+  background: #d0d0d0;
+}
+
+@media (max-width: 600px) {
+  .form {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+
+  .uploadLabel {
+    padding: 30px;
+  }
+
+  .imageGrid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+
+  .formActions {
+    flex-direction: column;
+  }
+}
