@@ -1,11 +1,9 @@
 'use client';
 
 import JobCard from "./components/jobCard";
-import Header from "./components/Header";
 import Pagination from "./components/Pagination";
 import { getJobs } from "./services/jobService";
 import { usePagination } from "./hooks/usePagination";
-
 
 export default function BusquedaPage() {
   const allJobs = getJobs();
@@ -21,23 +19,33 @@ export default function BusquedaPage() {
     totalItems
   } = usePagination(allJobs, itemsPerPage);
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header />
+  const handleViewDetails = (job: any) => {
+    console.log('Ver detalles de:', job);
+  };
 
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Información de paginación */}
-        <div className="mb-6 text-sm text-gray-600">
-          Mostrando {currentItems.length} de {totalItems} trabajos (Página {currentPage} de {totalPages})
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Título principal */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-blue-700 mb-3 tracking-tight">
+            Ofertas de Trabajo Disponibles
+          </h1>
+          
+          {/* Información de paginación */}
+          <div className="text-lg text-blue-600 font-medium">
+            Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
+          </div>
         </div>
         
+        {/* Lista de trabajos */}
         <div className="space-y-6">
           {currentItems.map((job, index) => (
             <JobCard
               key={`${job.title}-${job.company}-${index}`}
               {...job}
+              onViewDetails={() => handleViewDetails(job)}
             />
           ))}
         </div>
@@ -50,15 +58,6 @@ export default function BusquedaPage() {
           handleNextPage={handleNextPage}
           handlePrevPage={handlePrevPage}
         />
-        
-        {/* Información adicional de paginación */}
-        <div className="mt-4 text-center text-sm text-gray-500">
-          {currentItems.length === itemsPerPage ? (
-            <span>Mostrando {itemsPerPage} trabajos por página</span>
-          ) : (
-            <span>Última página: {currentItems.length} trabajos</span>
-          )}
-        </div>
       </main>
     </div>
   );
