@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-
+import UbicacionManual from "./UbicacionManual";
 export default function AgendarCitaModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(1);
   const [data, setData] = useState({
@@ -90,10 +90,13 @@ export default function AgendarCitaModal({ onClose }: { onClose: () => void }) {
                 </p>
                 <div className="space-y-4">
                 
-                <div className="border border-dashed border-gray-400 rounded-lg p-6 text-center text-gray-500">
-                    Añadir formulario aqui
-                </div>
-                
+                <div className="border border-gray-300 rounded-lg p-6 shadow-sm">
+                 <UbicacionManual
+                  direccion={data.direccion}
+                   notas={data.notas}
+                   onChange={handleChange}
+                        />
+                 </div>
                 {/*Añadir la implementacion del mapa aquí*/}
                 <div className="border border-dashed border-gray-400 rounded-lg p-6 text-center text-gray-500">
                         🗺️ <br /> ¿Prefieres seleccionar en el mapa? <br />
