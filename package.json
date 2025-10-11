@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+
+    "@heroicons/react": "^2.2.0",
+
     "lucide-react": "^0.545.0",
     "next": "15.5.4",
     "react": "19.1.0",
@@ -20,6 +23,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
