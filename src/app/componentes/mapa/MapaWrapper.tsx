@@ -8,6 +8,15 @@ import { Ubicacion, Fixer } from "../../types";
 
 const Mapa = dynamic(() => import("./mapa"), { ssr: false });
 
+// Interface para el item de la API
+interface UbicacionItem {
+  nombre: string;
+  posicion: {
+    lat: number;
+    lng: number;
+  };
+}
+
 export default function MapaWrapper() {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [fixers, setFixers] = useState<Fixer[]>([]);
@@ -25,7 +34,7 @@ export default function MapaWrapper() {
         if (responseUbicaciones.ok) {
           const dataUbicaciones = await responseUbicaciones.json();
           if (dataUbicaciones.success) {
-            const ubicacionesTransformadas: Ubicacion[] = dataUbicaciones.data.map((item: any, index: number) => ({
+            const ubicacionesTransformadas: Ubicacion[] = dataUbicaciones.data.map((item: UbicacionItem, index: number) => ({
               id: index + 1,
               nombre: item.nombre,
               posicion: [item.posicion.lat, item.posicion.lng] as [number, number],
