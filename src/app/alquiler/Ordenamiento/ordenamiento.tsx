@@ -9,20 +9,9 @@ interface Item {
   calificacion: number;
 }
 
-// Datos iniciales
-const INITIAL_ITEMS: Item[] = [
-  { nombre: "Manzana", fecha: "2026-10-05", calificacion: 4 },
-  { nombre: "Banana", fecha: "2024-10-03", calificacion: 5 },
-  { nombre: "Cereza", fecha: "2024-10-06", calificacion: 3 },
-  { nombre: "Azno", fecha: "2025-10-01", calificacion: 2 },
-  { nombre: "Z", fecha: "2025-10-03", calificacion: 5 },
-  { nombre: "Zen", fecha: "2025-10-06", calificacion: 3 },
-  { nombre: "A", fecha: "2025-10-01", calificacion: 2 },
-];
-
 // Función de ordenamiento
 const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
-  if (lista.length === 0) return [];
+  if (!lista || lista.length === 0) return [];
 
   const sorted = [...lista];
 
@@ -48,10 +37,24 @@ const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
   return sorted;
 };
 
-export default function Ordenamiento() {
-  const defaultSort = "Fecha (Reciente)";
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState(defaultSort);
+
+interface OrdenamientoProps {
+  items?: Item[];
+  sortValue?: string;
+  searchValue?: string;
+  onSortChange?: (value: string) => void;
+  onSearchChange?: (value: string) => void;
+}
+
+export default function Ordenamiento({
+  items = [],
+  sortValue = "Fecha (Reciente)",
+  searchValue = "",
+  onSortChange,
+  onSearchChange,
+}: OrdenamientoProps) {
+  const [search, setSearch] = useState(searchValue);
+  const [sort, setSort] = useState(sortValue);
   const [activeFilters, setActiveFilters] = useState({});
 
   const opciones = [
@@ -61,14 +64,24 @@ export default function Ordenamiento() {
     "Mayor Calificación (⭐)",
   ];
 
+  
+  useEffect(() => {
+    onSortChange?.(sort);
+  }, [sort]);
+
+ 
+  useEffect(() => {
+    onSearchChange?.(search);
+  }, [search]);
+
   useEffect(() => {
     if (search === "") {
-      setSort(defaultSort);
+      setSort(sortValue); 
     }
   }, [search]);
 
   const filteredItems = useMemo(() => {
-    let list = INITIAL_ITEMS;
+    let list = items;
 
     if (search) {
       list = list.filter((item) =>
@@ -77,7 +90,7 @@ export default function Ordenamiento() {
     }
 
     return list;
-  }, [search, activeFilters]);
+  }, [search, activeFilters, items]);
 
   const itemsToRender = useMemo(() => {
     return ordenarItems(sort, filteredItems);
@@ -92,7 +105,6 @@ export default function Ordenamiento() {
   return (
     <div className="container">
       <div className="card">
-        {/* Buscador */}
         <div className="search-container">
           <div className="search-input-container">
             <Search
@@ -112,7 +124,6 @@ export default function Ordenamiento() {
           </button>
         </div>
 
-        {/* Ordenamiento */}
         <div className="sort-section">
           <p className="sort-label">Ordenar por:</p>
           <select
@@ -127,25 +138,6 @@ export default function Ordenamiento() {
             ))}
           </select>
         </div>
-
-        <ul className="item-list">
-          {showNoOrderMessage ? (
-            <li className="error-message">
-              No se puede aplicar el ordenamiento.
-            </li>
-          ) : (
-            itemsToRender.map((item) => (
-              <li key={item.nombre} className="item">
-                <span>{item.nombre}</span> - {item.fecha} -{" "}
-                <span className="item-star">⭐ {item.calificacion}</span>
-              </li>
-            ))
-          )}
-
-          {!showNoOrderMessage && itemsToRender.length === 0 && (
-            <li className="empty-message">No hay elementos disponibles.</li>
-          )}
-        </ul>
       </div>
     </div>
   );
