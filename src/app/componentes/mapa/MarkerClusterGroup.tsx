@@ -22,7 +22,6 @@ const MarkerClusterGroup = ({ markers }: MarkerClusterGroupProps) => {
   useEffect(() => {
     if (!map) return;
 
-    // Solo cambiamos el 'any' por el tipo correcto
     const clusterGroup: L.MarkerClusterGroup = L.markerClusterGroup();
 
     markers.forEach((m) => {
