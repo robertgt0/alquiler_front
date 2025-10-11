@@ -1,4 +1,4 @@
-"use client";
+/*"use client";
 import { useState } from "react";
 import "./UbicacionForm.css";
 
@@ -31,3 +31,4 @@ export default function UbicacionForm() {
     </form>
   );
 }
+*/
