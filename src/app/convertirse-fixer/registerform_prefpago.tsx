@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export default function RegisterForm({ onNext }: { onNext: () => void }) {
+export default function Registerform_prefpago({ onBack }: { onBack: () => void }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
@@ -14,7 +14,7 @@ export default function RegisterForm({ onNext }: { onNext: () => void }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="register-form"
+    <form onSubmit={handleSubmit} className="Registerform_prefpago-form"
       
       style={{
         display: 'flex',
@@ -22,7 +22,7 @@ export default function RegisterForm({ onNext }: { onNext: () => void }) {
         gap: '2rem',
         maxWidth: '800px',
         margin: '2rem auto',
-        backgroundColor: '#d2eaebff', 
+        backgroundColor: '#000000ff', 
         color: 'white',
         padding: '2rem',
         borderRadius: '60px',
@@ -79,7 +79,7 @@ export default function RegisterForm({ onNext }: { onNext: () => void }) {
           cursor: 'pointer',
         }}
       >
-        siguiente
+        Enviar
       </button>
     </form>
   );
