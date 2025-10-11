@@ -274,7 +274,7 @@ export const getJobs = (): Job[] => [
       employmentTypeColor: "bg-blue-100 text-blue-800"
     },
     {
-      title: "Sales Representative",
+      title: "Cantante de Stray Kids",
       company: "Sales Force Bolivia",
       service: "Servicio: Ventas B2B",
       location: "Santa Cruz, Bolivia",
@@ -334,7 +334,7 @@ export const getJobs = (): Job[] => [
       employmentTypeColor: "bg-blue-100 text-blue-800"
     },
     {
-      title: "Diseñador UX/UI",
+      title: "Albañil de paredes",
       company: "Creative Studio Bolivia",
       service: "Servicio: Diseño Digital",
       location: "Santa Cruz, Bolivia",
@@ -344,7 +344,7 @@ export const getJobs = (): Job[] => [
       employmentTypeColor: "bg-blue-100 text-blue-800"
     },
     {
-      title: "Analista de Datos",
+      title: "Albañil de techos",
       company: "Data Insights Bolivia",
       service: "Servicio: Análisis de Datos",
       location: "Cochabamba, Bolivia",

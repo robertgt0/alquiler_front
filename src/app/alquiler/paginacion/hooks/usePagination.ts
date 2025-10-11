@@ -15,14 +15,18 @@ export const usePagination = (items: Job[], itemsPerPage: number = 10) => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    //muestra desde el inicio 
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return {
