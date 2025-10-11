@@ -10,7 +10,7 @@ export default function FixersHeader() {
       <div className="flex items-center gap-2">
         <FaMapMarkerAlt className="text-[#1366fd] text-2xl" />
         <h2 className="text-xl font-bold text-[#0d1b3d]">
-          FIXERS Cerca de Ti
+          FIXERS Cerca de ti
         </h2>
       </div>
 
