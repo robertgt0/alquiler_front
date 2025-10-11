@@ -1,8 +1,8 @@
 'use client';
 
 import { useRegistrationForm } from '../hooks/useRegistrationForm';
-import googleIcon from '../assets/icons/icons8-google-48.png';
-import AppleIcon from '../assets/icons/icons8-apple-50.png';
+import googleIcon from '../assets/icons8-google-48.png';
+import AppleIcon from '../assets/icons8-apple-50.png';
 
 export const RegistrationForm: React.FC = () => {
   const {
@@ -49,9 +49,10 @@ export const RegistrationForm: React.FC = () => {
                 }`}
                 placeholder="Nombre(s)"
               />
-              {errores.nombre && tocados.nombre && (
-                <p className="mt-1 text-sm text-red-600 ">{errores.nombre}</p>
-              )}
+              {/* Mostrar error SIEMPRE que exista */}
+                  {errores.nombre && (
+                  <p className="mt-1 text-sm text-red-600">{errores.nombre}</p>
+                )}
             </div>
           </div>
             {/*apellido*/}
@@ -73,8 +74,8 @@ export const RegistrationForm: React.FC = () => {
                 }`}
                 placeholder="Apellidos"
               />
-              {errores.apellido && tocados.apellido && (
-                <p className="mt-1 text-sm text-red-600">{errores.apellido}</p>
+              {errores.apellido && (
+              <p className="mt-1 text-sm text-red-600">{errores.apellido}</p>
               )}
             </div>
           </div>
