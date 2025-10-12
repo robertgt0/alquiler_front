@@ -21,13 +21,13 @@ export default function Header() {
 
       {/* Enlaces clicables */}
       <nav style={{ display: 'flex', gap: '1.5rem' }}>
-        <a href="#" style={{ color: 'black', textDecoration: 'none' }}>
+        <a href="#" style={{ color: 'white', textDecoration: 'none' }}>
           Ayuda
         </a>
-        <a href="#" style={{ color: 'black', textDecoration: 'none' }}>
+        <a href="#" style={{ color: 'white', textDecoration: 'none' }}>
           Sobre Nosotros
         </a>
-        <a href="#" style={{ color: 'black', textDecoration: 'none' }}>
+        <a href="#" style={{ color: 'white', textDecoration: 'none' }}>
           Contacto
         </a>
       </nav>
