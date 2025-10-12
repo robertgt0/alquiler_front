@@ -4,11 +4,17 @@ import JobCard from "./components/jobCard";
 import Header from "./components/Header";
 import Pagination from "./components/Pagination";
 import { getJobs } from "./services/jobService";
+import { useState, useEffect } from "react";
 import { usePagination } from "./hooks/usePagination";
+import { Job } from "./types/job";
+
 
 
 export default function BusquedaPage() {
-  const allJobs = getJobs();
+  //const allJobs = getJobs();
+
+  const [allJobs, setAllJobs] = useState<Job[]>([]);
+
   const itemsPerPage = 10;
 
   const {
@@ -21,6 +27,20 @@ export default function BusquedaPage() {
     totalItems
   } = usePagination(allJobs, itemsPerPage);
 
+
+  // Cargar trabajos desde la API al montar el componente
+  useEffect(() => {
+    const loadJobs = async () => {
+
+      
+      const jobs = await getJobs(); 
+      setAllJobs(jobs); 
+    };
+
+    loadJobs();
+  }, []);
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -32,7 +52,7 @@ export default function BusquedaPage() {
         <div className="mb-6 text-sm text-gray-600">
           Mostrando {currentItems.length} de {totalItems} trabajos (Página {currentPage} de {totalPages})
         </div>
-        
+
         <div className="space-y-6">
           {currentItems.map((job, index) => (
             <JobCard
@@ -41,7 +61,7 @@ export default function BusquedaPage() {
             />
           ))}
         </div>
-        
+
         {/* Pagination */}
         <Pagination
           currentPage={currentPage}
@@ -50,7 +70,7 @@ export default function BusquedaPage() {
           handleNextPage={handleNextPage}
           handlePrevPage={handlePrevPage}
         />
-        
+
         {/* Información adicional de paginación */}
         <div className="mt-4 text-center text-sm text-gray-500">
           {currentItems.length === itemsPerPage ? (

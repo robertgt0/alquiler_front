@@ -8,3 +8,5 @@ export interface Job {
   employmentType: string;
   employmentTypeColor: string;
 }
+
+
