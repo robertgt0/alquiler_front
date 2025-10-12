@@ -5,6 +5,7 @@ import "./busqueda.css";
 
 const DATA = [
     "Electricista",
+    "Electricista",
     "Plomero",
     "Pintor",
     "Carpintero",
@@ -255,18 +256,34 @@ export default function BusquedaAutocompletado() {
                                     if (!query.trim() && historial.length > 0 && !busquedaRealizada) {
                                         setMostrarHistorial(true);
                                     }
+                                    // AGREGAR ESTO: Mostrar sugerencias al hacer focus si hay query
+                                    if (query.length >= 2 && !busquedaRealizada) {
+                                        setMostrarSugerencias(true);
+                                    }
                                 }}
                                 onBlur={() => {
                                     setTimeout(() => {
-                                        setMostrarHistorial(false);
-                                        if (!busquedaRealizada) {
-                                            setMostrarSugerencias(false);
+                                        // MODIFICAR ESTO: No ocultar inmediatamente las sugerencias
+                                        // Solo ocultar si no se hizo clic en una sugerencia
+                                        if (!document.activeElement?.closest('.caja-sugerencias')) {
+                                            setMostrarHistorial(false);
+                                            if (!busquedaRealizada) {
+                                                setMostrarSugerencias(false);
+                                            }
                                         }
                                     }, 150);
                                 }}
                                 maxLength={80}
                                 className="busqueda-input"
                             />
+                            {/* AGREGAR ESTE BOTÓN */}
+                            <button
+                                className="btn-buscar"
+                                onClick={ejecutarBusqueda}
+                                disabled={!query.trim() || query.trim().length < 2}
+                            >
+                                Buscar
+                            </button>
                             {query && (
                                 <button className="btn-limpiar" onClick={limpiarBusqueda}>
                                     ✕
@@ -312,18 +329,25 @@ export default function BusquedaAutocompletado() {
                                             <ul className="caja-sugerencias">
                                                 {sugerencias.map((s, i) => (
                                                     <li key={i} onClick={() => seleccionarSugerencia(s)}>
+                                                        <Search className="icono-sugerencia" size={16} /> {/* AGREGAR LUPITA */}
                                                         {s}
                                                     </li>
                                                 ))}
                                                 {mensaje && (
-                                                    <li className="mensaje-sugerencia">{mensaje}</li>
+                                                    <li className="mensaje-sugerencia">
+                                                        <Search className="icono-sugerencia" size={16} /> {/* AGREGAR LUPITA */}
+                                                        {mensaje}
+                                                    </li>
                                                 )}
                                             </ul>
                                         )}
 
                                         {estado === "error" && mensaje && (
                                             <ul className="caja-sugerencias">
-                                                <li className="mensaje-error">{mensaje}</li>
+                                                <li className="mensaje-error">
+                                                    <Search className="icono-sugerencia" size={16} /> {/* AGREGAR LUPITA */}
+                                                    {mensaje}
+                                                </li>
                                             </ul>
                                         )}
                                     </>

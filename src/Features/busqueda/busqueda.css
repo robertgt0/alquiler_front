@@ -46,7 +46,7 @@
 
 .busqueda-input {
     width: 100%;
-    padding: 10px 40px 10px 40px;
+    padding: 10px 90px 10px 35px;
     border-radius: 8px;
     border: none;
     font-size: 15px;
@@ -67,7 +67,7 @@
 
 .btn-limpiar {
     position: absolute;
-    right: 10px;
+    right: 100px;
     background: transparent;
     border: none;
     color: #777;
@@ -329,4 +329,52 @@
     width: 100%;
     max-width: 450px;
     position: relative;
+}
+/* Botón Buscar */
+.btn-buscar {
+    position: absolute;
+    right: 10px;
+    background-color: #2563eb;
+    /* color fijo */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    /* mano normal, sin icono prohibido */
+    font-size: 14px;
+}
+
+.btn-buscar:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+
+/* Ajustar el input para que deje espacio al botón */
+.busqueda-input {
+    flex: 1;
+    border-right: none;
+    /* Quitar borde derecho para que se una con el botón */
+    border-radius: 8px 0 0 8px;
+}
+
+/* Estilos para la lupa en sugerencias */
+.icono-sugerencia {
+    margin-right: 8px;
+    color: #666;
+    flex-shrink: 0;
+}
+
+.caja-sugerencias li {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.mensaje-sugerencia,
+.mensaje-error {
+    display: flex;
+    align-items: center;
 }
