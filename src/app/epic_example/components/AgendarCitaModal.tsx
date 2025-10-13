@@ -3,16 +3,23 @@ import { useState } from "react";
 import UbicacionManual from "./UbicacionManual";
 export default function AgendarCitaModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(1);
+  const [ubicacionError, setUbicacionError] = useState<string>("");// Estado para error de ubicación
   const [data, setData] = useState({
     fecha: "",
     hora: "",
     direccion: "",
     notas: "",
   });
-
-  const handleChange = (field: string, value: string) => {
+// handleChange actualizado para limpiar error de ubicación
+/* const handleChange = (field: string, value: string) => {
     setData({ ...data, [field]: value });
   };
+*/
+// Nueva función handleChange que limpia el error de ubicación si se ingresa una dirección válida
+const handleChange = (field: string, value: string) => {
+  setData({ ...data, [field]: value });
+  if (field === "direccion" && value.trim()) setUbicacionError("");
+};
 
   const canContinue = data.fecha && data.hora;
 
@@ -95,6 +102,8 @@ export default function AgendarCitaModal({ onClose }: { onClose: () => void }) {
                   direccion={data.direccion}
                    notas={data.notas}
                    onChange={handleChange}
+                    errorMessage={ubicacionError}
+
                         />
                  </div>
                 {/*Añadir la implementacion del mapa aquí*/}
@@ -121,11 +130,24 @@ export default function AgendarCitaModal({ onClose }: { onClose: () => void }) {
                     Volver
                 </button>
                 <button
-                    onClick={() => setStep(3)}
-                    className="px-6 py-2 bg-[#4289CC] text-white rounded-lg hover:bg-blue-700 transition transition transform hover:scale-105 duration-300 font-medium"
+                  onClick={() => {
+                      // Validación: solo al pulsar Continuar
+                   if (!data.direccion || !data.direccion.trim()) {
+                    setUbicacionError("La dirección del servicio es obligatoria.");
+                      // enfocar el campo
+                       const el = document.getElementById("direccion") as HTMLInputElement | null;
+                     if (el) el.focus();
+                         return; // no avanzamos
+                        }
+                       // todo ok: limpiamos error y avanzamos
+                      setUbicacionError("");
+                   setStep(3);
+                 }}
+               className="px-6 py-2 bg-[#fffff] text-white rounded-lg hover:bg-blue-700 transition transform hover:scale-105 duration-300 font-medium"
                 >
-                    Continuar
-                </button>
+             Continuar
+              </button>
+
                 </div>
             </div>
             
