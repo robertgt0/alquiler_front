@@ -1,5 +1,3 @@
-// components/mapa.tsx
-// components/mapa.tsx
 "use client";
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -9,15 +7,13 @@ import { useEffect } from "react";
 import ReactDOMServer from "react-dom/server";
 import UbicacionIcon from "./UbicacionIcon";
 import MarkerClusterGroup from "./MarkerClusterGroup";
-import FixerCard from "./PopupFixer"; // ✅ importamos el nuevo componente
-import { Ubicacion, Fixer } from "../../types";
+import { Fixer } from "./FixerPopup";
+import { Ubicacion } from "../../types";
 
-// 🔹 Tipado seguro para Leaflet
 interface IconDefaultWithPrivate extends L.Icon.Default {
   _getIconUrl?: () => void;
 }
 
-// Corrige los íconos de Leaflet sin usar 'any'
 delete (L.Icon.Default.prototype as unknown as IconDefaultWithPrivate)._getIconUrl;
 
 L.Icon.Default.mergeOptions({
@@ -35,13 +31,9 @@ interface MapaProps {
 
 function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
   const map = useMap();
-
   useEffect(() => {
-    if (ubicacion) {
-      map.flyTo(ubicacion.posicion, 18, { duration: 2 });
-    }
+    if (ubicacion) map.flyTo(ubicacion.posicion, 18, { duration: 2 });
   }, [ubicacion, map]);
-
   return null;
 }
 
@@ -53,7 +45,6 @@ export default function Mapa({
 }: MapaProps) {
   const centroInicial: [number, number] = [-17.3895, -66.1568];
 
-  // 🔹 Crea un ícono HTML con el componente UbicacionIcon
   const crearIcono = (onClick?: () => void) =>
     L.divIcon({
       className: "custom-marker",
@@ -62,54 +53,128 @@ export default function Mapa({
       iconAnchor: [15, 30],
     });
 
-  const fixerMarkers = fixers.map((f) => ({
-    id: f._id,
-    position: [f.posicion.lat, f.posicion.lng] as [number, number],
-    popup: `
-      <div style="width: 220px; padding: 8px;">
-        <h3 style="margin: 0 0 5px 0; color: #2563eb; font-size: 14px;">${f.nombre}</h3>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #666; background: #f3f4f6; padding: 4px; border-radius: 4px;">
-          🛠️ ${f.especialidad}
-        </p>
-        <p style="margin: 0 0 8px 0; font-size: 11px; color: #4b5563;">${f.descripcion || 'Especialista disponible'}</p>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="color: #16a34a; font-size: 11px;">⭐ ${f.rating || 4.5}/5</span>
-          ${f.verified ? '<span style="color: #059669; font-size: 10px;">✅ Verificado</span>' : ''}
+  const fixerMarkers = fixers.map((f) => {
+    const iniciales = f.nombre
+      ? f.nombre
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .substring(0, 2)
+          .toUpperCase()
+      : "FX";
+
+    const especialidades = f.especialidad
+      ?.split(",")
+      .map(
+        (esp) =>
+          `<span style="
+              background:#eff6ff;
+              color:#2563eb;
+              font-size:11px;
+              padding:3px 8px;
+              border-radius:12px;
+              margin-right:4px;
+              display:inline-block;
+              ">${esp.trim()}</span>`
+      )
+      .join("") || "";
+
+    const popupHtml = `
+      <div style="
+        width: 250px;
+        font-family: 'Inter', sans-serif;
+        padding: 8px;
+      ">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="
+            background:#2563eb;
+            color:white;
+            border-radius:50%;
+            width:40px;
+            height:40px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:600;
+          ">
+            ${iniciales}
+          </div>
+          <div style="flex:1;">
+            <h3 style="margin:0; font-size:14px; color:#111827; display:flex; align-items:center; gap:5px;">
+              ${f.nombre}
+              ${f.verified ? '<span style="color:#2563eb;">✔️</span>' : ""}
+            </h3>
+            <p style="margin:2px 0 0 0; font-size:12px; color:#6b7280;">
+              ⭐ ${f.rating || 4.9} <span style="color:#9ca3af;">(${f.rating || "156 reseñas"})</span>
+            </p>
+          </div>
         </div>
+
+        <p style="
+          margin:8px 0 6px 0;
+          font-size:12px;
+          color:#374151;
+        ">
+          ${f.descripcion || "Especialista en instalaciones domésticas"}
+        </p>
+
+        <div style="margin-bottom:8px;">
+          ${especialidades}
+        </div>
+
+        ${
+          f.whatsapp
+            ? `<a href="https://wa.me/${f.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+                "Hola " + f.nombre + ", vi tu perfil en FixerMap y quiero más información."
+              )}"
+                 target="_blank"
+                 style="
+                   display:flex;
+                   align-items:center;
+                   justify-content:center;
+                   gap:6px;
+                   background:#25D366;
+                   color:white;
+                   font-weight:500;
+                   border-radius:6px;
+                   text-decoration:none;
+                   padding:8px 0;
+                   font-size:13px;
+                   margin-top:8px;
+                 ">
+                  Contactar por WhatsApp
+               </a>`
+            : ""
+        }
       </div>
-    `,
-    icon: crearIcono(),
-  }));
+    `;
+
+    return {
+      id: f._id,
+      position: [f.posicion.lat, f.posicion.lng] as [number, number],
+      popup: popupHtml,
+      icon: crearIcono(),
+    };
+  });
 
   return (
     <div className="w-full max-w-6xl h-[300px] sm:h-[400px] md:h-[500px] lg:h-[550px] mx-auto px-4">
-      <MapContainer
-        center={centroInicial}
-        zoom={13}
-        className="w-full h-full rounded-lg shadow-lg z-0"
-      >
+      <MapContainer center={centroInicial} zoom={13} className="w-full h-full rounded-lg shadow-lg z-0">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Marcadores normales */}
         {ubicaciones.map((u) => (
-          <Marker
-            key={u.id}
-            position={u.posicion}
-            icon={crearIcono(() => onUbicacionClick?.(u))}
-          >
+          <Marker key={u.id} position={u.posicion} icon={crearIcono(() => onUbicacionClick?.(u))}>
             <Popup>{u.nombre}</Popup>
           </Marker>
         ))}
 
-        {/* Fixers agrupados en clusters */}
         <MarkerClusterGroup markers={fixerMarkers} />
-
-        {/* Actualiza vista */}
         <ActualizarVista ubicacion={ubicacionSeleccionada} />
       </MapContainer>
     </div>
   );
 }
+
