@@ -23,3 +23,17 @@ export const fetchTrabajosProveedor = async (estado?: TrabajoStatus): Promise<IT
   const data: ITrabajo[] = await response.json();
   return data;
 };
+
+// ⬇️ AÑADE ESTA NUEVA FUNCIÓN ⬇️
+// NUEVA FUNCIÓN para la vista del Cliente (HU 1.8)
+export const fetchTrabajosCliente = async (clienteId: string, estado?: TrabajoStatus): Promise<ITrabajo[]> => {
+  let url = `${API_URL}/cliente/${clienteId}`;
+  if (estado) {
+    url += `?estado=${estado}`;
+  }
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error('Error al obtener los trabajos del cliente');
+  }
+  return response.json();
+};
