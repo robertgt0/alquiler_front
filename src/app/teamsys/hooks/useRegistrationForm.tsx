@@ -125,4 +125,4 @@ export const useRegistrationForm = () => {
     manejarBlur: manejarBlur,
     validarFormulario: validarFormulario
   };
-};
+}:
