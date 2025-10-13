@@ -1,4 +1,4 @@
-// components/MakerCluster.tsx
+// components/MakerClusterGroup.tsx
 "use client";
 
 import { useEffect } from "react";

@@ -1,4 +1,4 @@
-// components/MapaWeapper.tsx
+// components/MapaWrapper.tsx
 
 "use client";
 
