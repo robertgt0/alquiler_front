@@ -179,7 +179,7 @@ export default function TrabajosAgendadosPage() {
       {/* Modal Detalles */}
       {details && (
         <div role="dialog" aria-modal="true" style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', display: 'grid', placeItems: 'center', padding: 16
+          position: 'fixed', inset: 0, background: 'rgba(252, 249, 249, 1)', display: 'grid', placeItems: 'center', padding: 16
         }}>
           <div style={{ background: 'white', borderRadius: 12, padding: 16, maxWidth: 560, width: '100%' }}>
             <h2 style={{ fontSize: 20, marginBottom: 8 }}>Detalle del trabajo</h2>
