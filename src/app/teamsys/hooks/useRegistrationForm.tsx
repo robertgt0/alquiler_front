@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 'use client';
 
 import { useState } from 'react';
@@ -126,3 +127,5 @@ export const useRegistrationForm = () => {
     validarFormulario: validarFormulario
   };
 };
+=======
+>>>>>>> 7a568dc (contraseña)
