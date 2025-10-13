@@ -49,10 +49,9 @@ const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
 };
 
 export default function Ordenamiento() {
-  const defaultSort = "Fecha (Reciente)";
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState(defaultSort);
-  const [activeFilters, setActiveFilters] = useState({});
+   const defaultSort = "Fecha (Reciente)";
+   const [search, setSearch] = useState("");
+   const [sort, setSort] = useState(defaultSort);
 
   const opciones = [
     "Nombre A-Z",
@@ -77,7 +76,7 @@ export default function Ordenamiento() {
     }
 
     return list;
-  }, [search, activeFilters]);
+  }, [search]);
 
   const itemsToRender = useMemo(() => {
     return ordenarItems(sort, filteredItems);

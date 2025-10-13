@@ -1,4 +1,9 @@
+/* stylelint-disable at-rule-no-unknown */
 @import "tailwindcss";
+@import "mapbox-gl/dist/mapbox-gl.css";
+
+/* VS Code CSS validation doesn't recognize Tailwind v4 @theme directive */
+/* @theme is a valid Tailwind CSS v4 at-rule */
 
 :root {
   --background: #ffffff;
@@ -121,4 +126,19 @@ body {
 .dark .glass {
   background: rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-in-out;
 }
