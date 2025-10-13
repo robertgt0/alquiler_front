@@ -1,8 +1,8 @@
 'use client';
 
 import { useLoginForm } from '../hooks/useLoginForm';
-import googleIcon from '../app/assets/icons8-google-48.png';
-import AppleIcon from '../app/assets/icons8-apple-50.png';
+import googleIcon from '../assets/icons8-google-48.png';
+import AppleIcon from '../assets/icons8-apple-50.png';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
