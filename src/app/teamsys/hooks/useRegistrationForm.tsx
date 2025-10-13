@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DatosFormulario , ErroresFormulario } from '../interfaces/types.js';
+import { DatosFormulario , ErroresFormulario } from '../interfaces/types';
 
 
 // Validador integrado
