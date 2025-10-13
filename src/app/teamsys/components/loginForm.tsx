@@ -1,13 +1,13 @@
 'use client';
 
 import { useLoginForm } from '../hooks/useLoginForm';
-
+import googleIcon from '../app/assets/icons8-google-48.png';
+import AppleIcon from '../app/assets/icons8-apple-50.png';
 import Link from 'next/link';
-
-
+import { useRouter } from 'next/navigation';
 
 export const LoginForm: React.FC = () => {
-  
+  const router = useRouter();
   const {
     datosFormulario,
     errores,
@@ -21,10 +21,9 @@ export const LoginForm: React.FC = () => {
     e.preventDefault();
     if (validarFormulario()) {
       console.log('Login exitoso:', datosFormulario);
-   
+    router.push('/home'); // Redirige al usuario
   }
 };
-
 
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
