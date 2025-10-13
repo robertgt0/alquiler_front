@@ -8,15 +8,11 @@ export default function HomeFixer({ categorias }: { categorias: Categoria[] }) {
     alert(`Seleccionaste: ${c.nombre}`);
   };
 
-  const handleVerMas = () => {
-    alert("Cargar más categorías…");
-  };
-
   return (
     <Lista
       categorias={categorias}
-      onCategoriaClick={handleCategoriaClick}
-      onVerMas={handleVerMas}
+      // onVerMas ya no es necesario
+      // onCategoriaClick={handleCategoriaClick} // si lo usas en TarjetaCategoria
     />
   );
 }
