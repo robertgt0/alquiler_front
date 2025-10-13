@@ -1,8 +1,8 @@
 'use client';
-
+import React, { useState } from 'react';
 import { useRegistrationForm } from '../hooks/useRegistrationForm';
-import googleIcon from '../assets/icons/icons8-google-48.png';
-import AppleIcon from '../assets/icons/icons8-apple-50.png';
+import googleIcon from '../assets/icons8-google-48.png';
+import AppleIcon from '../assets/icons8-apple-50.png';
 
 export const RegistrationForm: React.FC = () => {
   const {
@@ -21,6 +21,12 @@ export const RegistrationForm: React.FC = () => {
       console.log('Formulario válido:', datosFormulario);
     }
   };
+
+//  Nueva lógica para habilitar/deshabilitar el botón
+const formularioValido =
+  Object.keys(errores).length === 0 &&
+  Object.values(datosFormulario).every((v) => v.trim() !== "");
+
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">{/* contenedor azul */}
       <div className="max-w-2xl w-full bg-white rounded-3xl shadow-md p-6"> {/* contenedor blanco dond eesta el formulario*/}
@@ -49,9 +55,10 @@ export const RegistrationForm: React.FC = () => {
                 }`}
                 placeholder="Nombre(s)"
               />
-              {errores.nombre && tocados.nombre && (
-                <p className="mt-1 text-sm text-red-600 ">{errores.nombre}</p>
-              )}
+              {/* Mostrar error SIEMPRE que exista */}
+                  {errores.nombre && (
+                  <p className="mt-1 text-sm text-red-600">{errores.nombre}</p>
+                )}
             </div>
           </div>
             {/*apellido*/}
@@ -73,8 +80,8 @@ export const RegistrationForm: React.FC = () => {
                 }`}
                 placeholder="Apellidos"
               />
-              {errores.apellido && tocados.apellido && (
-                <p className="mt-1 text-sm text-red-600">{errores.apellido}</p>
+              {errores.apellido && (
+              <p className="mt-1 text-sm text-red-600">{errores.apellido}</p>
               )}
             </div>
           </div>
@@ -215,15 +222,19 @@ export const RegistrationForm: React.FC = () => {
             Registrarse con Apple
           </button>
 
-          {/*boton de continuar*/} 
-
-          <button
-            type="submit"
-            className="w-120 mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
-            >
-            Continuar
-          </button>
-
+          {/* Botón de continuar */}
+<button
+  type="submit"
+  disabled={!formularioValido} // Se desactiva si no es válido
+  className={`w-120 mx-auto py-2 px-4 rounded-2xl border border-gray-300 flex items-center justify-center gap-3 transition-colors duration-200
+    ${
+      formularioValido
+        ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
+        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+    }`}
+>
+  Continuar
+</button>
           {/*parrafo de ¡ya tienes una cuenta?*/}
           
           <div className="flex justify-center items-center gap-2 mt-4">
