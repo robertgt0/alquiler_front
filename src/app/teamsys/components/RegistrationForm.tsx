@@ -1,10 +1,11 @@
 'use client';
 
 import { useRegistrationForm } from '../hooks/useRegistrationForm';
-import googleIcon from '../assets/icons8-google-48.png';
+import { useGoogleAuth } from '../hooks/usoGoogleAuth';
+import { GoogleButton } from './GoogleButton';
 import AppleIcon from '../assets/icons8-apple-50.png';
 
-export const RegistrationForm: React.FC = () => {
+const RegistrationForm: React.FC = () => { 
   const {
     datosFormulario,
     errores,
@@ -14,6 +15,10 @@ export const RegistrationForm: React.FC = () => {
     validarFormulario
   } = useRegistrationForm();
 
+const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
+
+
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -21,6 +26,15 @@ export const RegistrationForm: React.FC = () => {
       console.log('Formulario válido:', datosFormulario);
     }
   };
+
+  const handleGoogleClick = async () => {
+
+    const result = await handleGoogleAuth();
+    if (result.success) {
+      console.log('Registro con Google exitoso');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">{/* contenedor azul */}
       <div className="max-w-2xl w-full bg-white rounded-3xl shadow-md p-6"> {/* contenedor blanco dond eesta el formulario*/}
@@ -191,17 +205,11 @@ export const RegistrationForm: React.FC = () => {
         
           {/*botn de registrarse con google*/}    
 
-          <button
-            type="button"
-            className="w-120 mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
-          >
-          <img 
-            src={googleIcon.src}
-            alt="Registrarse con Google" 
-            className="w-5 h-5"
+            <GoogleButton 
+            onClick={handleGoogleClick}
+            isLoading={googleLoading}
+            type="register"
           />
-            Registrarse con Google
-          </button>
 
           {/*boton de registrarse con apple*/} 
 
@@ -235,3 +243,5 @@ export const RegistrationForm: React.FC = () => {
     </div>
   );
 };
+
+export default RegistrationForm;
