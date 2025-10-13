@@ -51,4 +51,28 @@ export function validateEmail(email: string): string | null {
   return null; //  El correo está bien :)
 }
 
+// Valida un número de teléfono
+export function validacionTelf(telf: string): string | null {
+  // Verifica que no esté vacío
+  if (!telf.trim()) {
+    return "El número de teléfono es requerido.";
+  }
+
+  // Verifica que solo tenga dígitos
+  if (!/^\d+$/.test(telf)) {
+    return "El número de teléfono solo debe contener dígitos.";
+  }
+
+  // Verifica que tenga exactamente 8 dígitos
+  if (telf.length !== 8) {
+    return "El número de teléfono debe tener exactamente 8 dígitos.";
+  }
+
+  // Verifica que comience con 6 o 7
+  if (telf[0] !== '6' && telf[0] !== '7') {
+    return "El número de teléfono debe comenzar con 6 o 7.";
+  }
+
+  return null; //  Teléfono válido
+}
 
