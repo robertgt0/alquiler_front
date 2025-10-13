@@ -100,6 +100,33 @@ export const LoginForm: React.FC = () => {
             <div className="flex items-center justify-center my-6">
             <span className="text-gray-500 text-sm font-medium">o</span>
             </div>
+            
+             {/*boton de registrarse con google*/}    
+
+          <button
+            type="button"
+            className="w-[500px] mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
+          >
+          <img 
+            src={googleIcon.src}
+            alt="Registrarse con Google" 
+            className="w-5 h-5"
+          />
+            Registrarse con Google
+          </button>
+
+          {/*boton de registrarse con apple*/} 
+
+          <button
+            type="button"
+            className="w-[500px] mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
+          >
+          <img src={AppleIcon.src}
+            alt="Registrarse con Apple" 
+            className="w-5 h-5"
+          />
+            Registrarse con Apple
+          </button>
 
 
             {/* Enlace para registrarse */}
