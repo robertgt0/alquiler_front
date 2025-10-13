@@ -2,11 +2,8 @@
 
 import { useState } from 'react';
 import { DatosLogin , ErroresLogin } from '../interfaces/typeslogin';
-//import { validatePassword} from '../utils/validation';
-//import { validateEmail } from '../utils/validation';
 import { useRouter } from 'next/navigation';
 
-const router = useRouter();
 // Validador integrado para login
 const validarCampo = (nombre: string, valor: string): string => {
   const valorLimpio = valor.trim();
@@ -34,6 +31,8 @@ const validarCampo = (nombre: string, valor: string): string => {
 }
 
 export const useLoginForm = () => {
+const router = useRouter();
+
   const [datosFormulario, setDatosFormulario] = useState<DatosLogin>({
     email: '',
     contraseña: '',
