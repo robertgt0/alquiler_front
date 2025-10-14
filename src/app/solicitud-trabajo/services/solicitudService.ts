@@ -1,4 +1,4 @@
-import { ISolicitud } from "../interfaces/ISolicitud";
+import { ISolicitud } from "../interfaces/Solicitud.interface";
 
 export async function enviarSolicitud(data: ISolicitud) {
   console.log("📤 Enviando solicitud al backend...", data);
