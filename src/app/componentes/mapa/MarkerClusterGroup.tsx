@@ -22,7 +22,7 @@ const MarkerClusterGroup = ({ markers }: MarkerClusterGroupProps) => {
   useEffect(() => {
     if (!map) return;
 
-    const clusterGroup: L.MarkerClusterGroup = L.markerClusterGroup();
+    const clusterGroup = (L as any).markerClusterGroup();
 
     markers.forEach((m) => {
       const marker = L.marker(m.position, { icon: m.icon });

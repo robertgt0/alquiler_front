@@ -1,35 +1,15 @@
-<<<<<<< HEAD
-import { redirect } from 'next/navigation';
+// src/app/page.tsx
 
 export default function Home() {
-  redirect('/Ordenamiento');
-}
-=======
-import Header from "./componentes/Header/Header";
-import Footer from "./componentes/Footer/Footer";
-import CarruselInspirador from "./componentes/CarruselInspirador/CarruselInspirador";
-import Mapa from "./componentes/mapa/MapaWrapper";
-import Lista from "./componentes/Lista/Lista";
-import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
-
-export default function HomePage() {
   return (
-    <main className="container-fluid p-0">
-      <Header />
-      <section className="my-5">
-        <CarruselInspirador />
-      </section>
-      <section className="my-5">
-        <Mapa />
-      </section>
-      <section className="my-5">
-        <Lista />
-      </section>
-      <section className="my-5">
-        <CarruselOfertas />
-      </section>
-      <Footer />
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      {/* Puedes colocar aquí el contenido de tu página principal */}
+      <h1 className="text-4xl font-bold text-center">¡Bienvenido a Servineo!</h1>
+      <p className="mt-4 text-lg text-center">Tu plataforma de servicios.</p>
+
+      {/* Aquí podrías añadir otros componentes como el CarruselInspirador o CarruselOfertas */}
+      {/* <CarruselInspirador /> */}
+      {/* <CarruselOfertas /> */}
     </main>
   );
 }
->>>>>>> origin/F-Gustavo_soft-war/Map

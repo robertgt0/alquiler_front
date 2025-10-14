@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+// 1. Importa tu componente Header
+import Header from "./componentes/Header/Header"; // Asegúrate de que la ruta sea correcta
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -26,10 +29,12 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+        suppressHydrationWarning={true}
+      > 
+        {/* 2. Añade el componente Header aquí, antes de {children} */}
+        <Header />
         {children}
       </body>
     </html>
   );
 }
-
