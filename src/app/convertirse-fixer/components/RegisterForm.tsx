@@ -1,22 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState ,type FormEvent } from 'react';
 
-export default function RegisterForm() {
-  const [ci, setCi] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
+type Props = {
+  onSuccess: (data: { ci: string; email: string }) => void;
+}; 
 
-  const handleSubmit = async (e: React.FormEvent) => {
+export default function RegisterForm({ onSuccess }: Props) {
+  const [ci, setCi] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessage('');
+    setMessage("");
 
     // Validar que el CI tenga solo números
     if (!/^\d+$/.test(ci)) {
       setMessage('❌ El carnet debe contener solo números.');
       return;
     }
-
+    setLoading(true);
     try {
       const res = await fetch('/api/test', {
         method: 'POST',
@@ -25,16 +30,21 @@ export default function RegisterForm() {
       });
 
       const data = await res.json();
-      setMessage(data.message);
 
-      if (data.success) {
-        setCi('');
-        setEmail('');
+      if (!res.ok || !data?.success) {
+        setMessage(data?.message ?? "❌ Error de validación.");
+        setLoading(false);
+        return;
       }
+      setMessage(data.message ?? "✅ OK, continuemos.");
+      onSuccess({ ci, email }); 
     } catch (error) {
       console.error(error);
-      setMessage('❌ Error al conectar con el servidor.');
+      setMessage("❌ Error al conectar con el servidor.");
+    } finally {
+      setLoading(false);
     }
+
   };
 
   return (
@@ -99,6 +109,7 @@ export default function RegisterForm() {
 
       <button
         type="submit"
+        disabled = {loading}
         style={{
           backgroundColor: '#0e418dff',
           color: 'white',
@@ -108,7 +119,8 @@ export default function RegisterForm() {
           cursor: 'pointer',
         }}
       >
-        siguiente
+        {loading ? "Validando..." : "Siguiente"}
+        
       </button>
 
       {message && (

@@ -1,8 +1,18 @@
 'use client'; 
 
-import { useState } from 'react';
+import { useState, type FormEvent} from 'react';
+type Props = {
+  onBack: () => void;
+  onFinish: (data: {
+    categoria?: string;
+    newsletter?: boolean;
+    metodo?: string;
+    aceptaTerminos?: boolean;
+  }) => void;
+};
 
-export default function Registerform_prefpago({ onBack }: { onBack: () => void }) {
+
+export default function Registerform_prefpago({ onBack, onFinish }: Props) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
 
