@@ -148,7 +148,7 @@ export default function RegistroImagen() {
 
   return (
     <form className="flex flex-col gap-4 items-center border p-6 rounded shadow-md w-full max-w-md bg-white mx-auto">
-      <h2 className="text-xl font-bold text-center">Subir Imagen</h2>
+      <h2 className="text-xl font-bold text-center">Subir Imagen y añade una Ubicacion</h2>
 
       <div className="flex gap-4 items-start">
         {/* Foto */}
@@ -194,8 +194,12 @@ export default function RegistroImagen() {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <button type="button" onClick={handleContinuar} className="bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 w-full">
-        Continuar
+      <button
+      type="button"
+      onClick={handleContinuar}
+      className="bg-blue-600 text-white py-2 px-6 rounded-xl hover:bg-red-600 w-full"
+       >
+        Terminar Registro
       </button>
     </form>
   );
