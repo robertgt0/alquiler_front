@@ -14,7 +14,7 @@ interface UserFromAPI {
 
 export const getJobs = async (): Promise<Job[]> => {
   try {
-    const response = await fetch("http://localhost:5000/api/borbotones/usuarios");
+    const response = await fetch("http://localhost:5000/api/borbotones/usuarios?limit=1000");
     if (!response.ok) throw new Error("Error al obtener los trabajos");
 
     // json.data 
@@ -37,7 +37,7 @@ export const getJobs = async (): Promise<Job[]> => {
     }));
 
     return mappedJobs;
-    
+
 
   } catch (error) {
     console.error(error);
