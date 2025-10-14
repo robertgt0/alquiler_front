@@ -1,11 +1,11 @@
 'use client';
-
+import React, { useState } from 'react';
 import { useRegistrationForm } from '../hooks/useRegistrationForm';
-import { useGoogleAuth } from '../hooks/usoGoogleAuth';
-import { GoogleButton } from './GoogleButton';
-import AppleIcon from '../assets/icons8-apple-50.png';
+import googleIcon from '../assets/icons8-google-48.png';
+const AppleIcon = { src: "https://img.icons8.com/?size=50&id=17949&format=png" };
 
-const RegistrationForm: React.FC = () => { 
+
+export const RegistrationForm: React.FC = () => {
   const {
     datosFormulario,
     errores,
@@ -15,10 +15,6 @@ const RegistrationForm: React.FC = () => {
     validarFormulario
   } = useRegistrationForm();
 
-const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
-
-
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -27,13 +23,10 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
     }
   };
 
-  const handleGoogleClick = async () => {
-
-    const result = await handleGoogleAuth();
-    if (result.success) {
-      console.log('Registro con Google exitoso');
-    }
-  };
+//  Nueva lógica para habilitar/deshabilitar el botón
+const formularioValido =
+  Object.keys(errores).length === 0 &&
+  Object.values(datosFormulario).every((v) => v.trim() !== "");
 
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">{/* contenedor azul */}
@@ -205,11 +198,17 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
         
           {/*botn de registrarse con google*/}    
 
-            <GoogleButton 
-            onClick={handleGoogleClick}
-            isLoading={googleLoading}
-            type="register"
+          <button
+            type="button"
+            className="w-120 mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
+          >
+          <img 
+            src={googleIcon.src}
+            alt="Registrarse con Google" 
+            className="w-5 h-5"
           />
+            Registrarse con Google
+          </button>
 
           {/*boton de registrarse con apple*/} 
 
@@ -224,15 +223,19 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
             Registrarse con Apple
           </button>
 
-          {/*boton de continuar*/} 
-
-          <button
-            type="submit"
-            className="w-120 mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
-            >
-            Continuar
-          </button>
-
+          {/* Botón de continuar */}
+<button
+  type="submit"
+  disabled={!formularioValido} // Se desactiva si no es válido
+  className={`w-120 mx-auto py-2 px-4 rounded-2xl border border-gray-300 flex items-center justify-center gap-3 transition-colors duration-200
+    ${
+      formularioValido
+        ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
+        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+    }`}
+>
+  Continuar
+</button>
           {/*parrafo de ¡ya tienes una cuenta?*/}
           
           <div className="flex justify-center items-center gap-2 mt-4">
@@ -243,5 +246,3 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
     </div>
   );
 };
-
-export default RegistrationForm;

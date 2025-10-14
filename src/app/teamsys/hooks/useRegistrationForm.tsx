@@ -1,25 +1,13 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-'use client';
-
-import { useState } from 'react';
-import { DatosFormulario , ErroresFormulario } from '../interfaces/types';
-=======
 'use client';
 
 import { useState } from 'react';
 import { DatosFormulario , ErroresFormulario } from '../interfaces/types.js';
->>>>>>> a63d1c6 (Validacion _Contraseña)
 
 
 // Validador integrado
 const validarCampo = (nombre: string, valor: string): string => {
   const camposRequeridos = ['nombre', 'apellido','telefono', 'email', 'contraseña'];
-<<<<<<< HEAD
   
-=======
-
->>>>>>> a63d1c6 (Validacion _Contraseña)
   if (camposRequeridos.includes(nombre) && !valor?.trim()) {
     return "Este campo es obligatorio";
   }
@@ -46,39 +34,10 @@ const validarCampo = (nombre: string, valor: string): string => {
 
         break;
     }
-<<<<<<< HEAD
-=======
-    
->>>>>>> a63d1c6 (Validacion _Contraseña)
   }
 
   return '';
 };
-<<<<<<< HEAD
-=======
-//Validacion de contraseña
-export const validatePassword = (password: string): string[] => {
-  const errors: string[] = [];
-
-  if (password.length < 8) {
-    errors.push("La contraseña debe tener al menos 8 caracteres.");
-  }
-  if (!/[A-Z]/.test(password)) {
-    errors.push("Debe contener al menos una letra mayúscula.");
-  }
-  if (!/[a-z]/.test(password)) {
-    errors.push("Debe contener al menos una letra minúscula.");
-  }
-  if (!/[0-9]/.test(password)) {
-    errors.push("Debe contener al menos un número.");
-  }
-  if (!/[^A-Za-z0-9]/.test(password)) {
-    errors.push("Debe incluir al menos un carácter especial.");
-  }
-
-  return errors;
-};
->>>>>>> a63d1c6 (Validacion _Contraseña)
 
 export const useRegistrationForm = () => {
   const [datosFormulario, setDatosFormulario] = useState<DatosFormulario>({
@@ -152,14 +111,6 @@ export const useRegistrationForm = () => {
       if (error) nuevosErrores[campo] = error;
     });
 
-<<<<<<< HEAD
-=======
-    //Validar onfirmacion de contraseña
-    if (datosFormulario.contraseña !== datosFormulario.confirmarContraseña) {
-      nuevosErrores.confirmarContraseña = "Las contraseñas no coinciden.";
-    }
-
->>>>>>> a63d1c6 (Validacion _Contraseña)
     setTocados(nuevosTocados);
     setErrores(nuevosErrores);
 
@@ -174,9 +125,4 @@ export const useRegistrationForm = () => {
     manejarBlur: manejarBlur,
     validarFormulario: validarFormulario
   };
-};
-<<<<<<< HEAD
-=======
->>>>>>> 7a568dc (contraseña)
-=======
->>>>>>> a63d1c6 (Validacion _Contraseña)
+}:
