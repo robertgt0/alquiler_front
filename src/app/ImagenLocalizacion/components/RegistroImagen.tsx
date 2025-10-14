@@ -70,16 +70,34 @@ export default function RegistroImagen() {
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
 
   // Recuperar datosFormulario desde query string
-  useEffect(() => {
-    const datos = searchParams.get('datos');
-    if (datos) {
-      try {
-        setDatosFormulario(JSON.parse(datos));
-      } catch (err) {
-        console.error("Error al parsear datosFormulario:", err);
-      }
+  // Recuperar datosFormulario desde query string
+// Recuperar datosFormulario desde sessionStorage
+useEffect(() => {
+  const datosGuardados = sessionStorage.getItem("datosUsuarioParcial");
+  if (datosGuardados) {
+    try {
+      const datos = JSON.parse(datosGuardados);
+
+      // Adaptar nombres de campos
+      const datosAdaptados = {
+        nombre: datos.nombre,
+        apellido: datos.apellido,
+        telefono: datos.telefono,
+        correoElectronico: datos.email || "",  // mapear 'email'
+        password: datos.contraseña || "",      // mapear 'contraseña'
+        terminosYCondiciones: datos.terminosYCondiciones || false,
+      };
+      console.log("Datos del formulario recuperados:", datosAdaptados);
+      
+      setDatosFormulario(datosAdaptados);
+    } catch (err) {
+      console.error("Error al parsear datos del formulario:", err);
     }
-  }, [searchParams]);
+  }
+}, []);
+
+
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -144,6 +162,8 @@ export default function RegistroImagen() {
     // Llama aquí a tu función para enviar al backend o API
     // sendToAPI(datosCompletos);
     alert("Formulario listo para enviar. Revisa la consola.");
+    sessionStorage.removeItem("datosUsuarioParcial");
+
   };
 
   return (
