@@ -1,11 +1,11 @@
 'use client';
 
 import { useRegistrationForm } from '../hooks/useRegistrationForm';
-import { useGoogleAuth } from '../hooks/usoGoogleAuth';
-import { GoogleButton } from './GoogleButton';
+import { usoGoogleAuth }  from '../../google/hooks/usoGoogleAuth';
+import { GoogleButton } from '../../google/components/GoogleButton';
 import AppleIcon from '../assets/icons8-apple-50.png';
 
-const RegistrationForm: React.FC = () => { 
+export const RegistrationForm: React.FC = () => { 
   const {
     datosFormulario,
     errores,
@@ -15,8 +15,16 @@ const RegistrationForm: React.FC = () => {
     validarFormulario
   } = useRegistrationForm();
 
-const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
-
+  const { isLoading: googleLoading, handleGoogleAuth } = usoGoogleAuth();
+  const handleGoogleRegister = async () => {
+    const result = await handleGoogleAuth();
+    if (result.success) {
+      console.log('Registro con Google exitoso');
+      // Redirección o manejo de éxito
+    } else {
+      console.error('Error en registro Google:', result.error);
+    }
+  };
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,6 +38,7 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
   const handleGoogleClick = async () => {
 
     const result = await handleGoogleAuth();
+
     if (result.success) {
       console.log('Registro con Google exitoso');
     }
@@ -94,33 +103,42 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
             </div>
           </div>
 
-{/* Teléfono */}
+          {/* Teléfono */}
           <div className="flex justify-center">
             <div className="w-120">
-            <label htmlFor="telefono" className="block text-sm font-medium text-gray-700 mb-1">
-              
-            </label>
-            <input
-              id="telefono"
-              name="telefono"
-              type="text"
-              inputMode="numeric"
-              value={datosFormulario.telefono}
-              onChange={(e) => manejarCambio('telefono', e.target.value)}
-              onBlur={() => manejarBlur('telefono')}
-              className={`w-120 px-3 py-2 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent mx-auto block ${
-                errores.telefono && tocados.telefono 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-gray-300 focus:ring-blue-500'
-              }`}
-              placeholder="Telefono"
-            />
-
-            {errores.telefono && tocados.telefono && (
-              <p className="mt-1 text-sm text-red-600">{errores.telefono}</p>
-            )}
+              <input
+                id="telefono"
+                name="telefono"
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]{8}"
+                title="El teléfono debe contener exactamente 8 dígitos"
+                value={datosFormulario.telefono}
+                onChange={(e) => {
+                  // Permitir solo números y limitar a 8 dígitos
+                  const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 8);
+                  manejarCambio('telefono', soloNumeros);
+                }}
+                onKeyPress={(e) => {
+                  // Prevenir caracteres no numéricos
+                  if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                onBlur={() => manejarBlur('telefono')}
+                className={`w-120 px-3 py-2 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent mx-auto block ${
+                  errores.telefono && tocados.telefono 
+                    ? 'border-red-300 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+                placeholder="Teléfono (8 dígitos)"
+                maxLength={8}
+              />
+              {errores.telefono && tocados.telefono && (
+                <p className="mt-1 text-sm text-red-600">{errores.telefono}</p>
+              )}
+            </div>
           </div>
-        </div>
 
           {/* Email */}
           <div className="flex justify-center">
@@ -192,7 +210,7 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
               }`}
               placeholder="Confirma contraseña"
             />
-            {errores.confirmarContraseña && tocados.confirmPassword && (
+            {errores.confirmarContraseña && tocados.confirmarContraseña && (
               <p className="mt-1 text-sm text-red-600">{errores.confirmarContraseña}</p>
             )}
           </div>
@@ -205,7 +223,7 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
         
           {/*botn de registrarse con google*/}    
 
-            <GoogleButton 
+           <GoogleButton 
             onClick={handleGoogleClick}
             isLoading={googleLoading}
             type="register"
@@ -230,10 +248,12 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
             type="submit"
             className="w-120 mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
             >
+          <a href="/ImagenLocalizacion" className="w-full h-full flex items-center justify-center">
             Continuar
+          </a>
           </button>
 
-          {/*parrafo de ¡ya tienes una cuenta?*/}
+          {/*campos obligatorios*/}
           
           <div className="flex justify-center items-center gap-2 mt-4">
             <p className = "text-sm text-gray-600">Rellene los campos obligatioramente*</p>
@@ -243,5 +263,3 @@ const { isLoading: googleLoading, handleGoogleAuth } = useGoogleAuth();
     </div>
   );
 };
-
-export default RegistrationForm;
