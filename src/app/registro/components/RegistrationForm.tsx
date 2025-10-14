@@ -1,11 +1,13 @@
 'use client';
-
+import React, { useState } from 'react';
 import { useRegistrationForm } from '../hooks/useRegistrationForm';
 import { usoGoogleAuth }  from '../../google/hooks/usoGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
+import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
 
-export const RegistrationForm: React.FC = () => { 
+
+export const RegistrationForm: React.FC = () => {
   const {
     datosFormulario,
     errores,
@@ -26,7 +28,6 @@ export const RegistrationForm: React.FC = () => {
     }
   };
 
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -43,6 +44,10 @@ export const RegistrationForm: React.FC = () => {
       console.log('Registro con Google exitoso');
     }
   };
+//  Nueva lógica para habilitar/deshabilitar el botón
+const formularioValido =
+  Object.keys(errores).length === 0 &&
+  Object.values(datosFormulario).every((v) => v.trim() !== "");
 
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">{/* contenedor azul */}
@@ -222,12 +227,12 @@ export const RegistrationForm: React.FC = () => {
           </div>      
         
           {/*botn de registrarse con google*/}    
-
-           <GoogleButton 
+          <GoogleButton 
             onClick={handleGoogleClick}
             isLoading={googleLoading}
             type="register"
-          />
+            ></GoogleButton>
+
 
           {/*boton de registrarse con apple*/} 
 
@@ -253,7 +258,8 @@ export const RegistrationForm: React.FC = () => {
           </a>
           </button>
 
-          {/*campos obligatorios*/}
+
+          {/*parrafo de ¡ya tienes una cuenta?*/}
           
           <div className="flex justify-center items-center gap-2 mt-4">
             <p className = "text-sm text-gray-600">Rellene los campos obligatioramente*</p>
@@ -263,3 +269,4 @@ export const RegistrationForm: React.FC = () => {
     </div>
   );
 };
+
