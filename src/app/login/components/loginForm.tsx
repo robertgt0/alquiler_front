@@ -5,6 +5,7 @@ import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { loginUsuario } from '@/app/teamsys/services/UserService';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -17,12 +18,24 @@ export const LoginForm: React.FC = () => {
     validarFormulario,
   } = useLoginForm();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validarFormulario()) {
-      console.log('Login exitoso:', datosFormulario);
-    router.push('/home'); // Redirige al usuario
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!validarFormulario()) return;
+
+  try {
+    const res = await loginUsuario(
+      datosFormulario.email,
+      datosFormulario.contraseña
+    );
+
+    console.log('Login exitoso:', res);
+    router.push('/home');
+  } catch (error: any) {
+    console.error('Error al iniciar sesión:', error.message);
   }
+};
+
 };
 
   return (

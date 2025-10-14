@@ -71,15 +71,19 @@ export default function RegistroImagen() {
 
   // Recuperar datosFormulario desde query string
   useEffect(() => {
-    const datos = searchParams.get('datos');
-    if (datos) {
-      try {
-        setDatosFormulario(JSON.parse(datos));
-      } catch (err) {
-        console.error("Error al parsear datosFormulario:", err);
-      }
+  const datos = searchParams.get('datos');
+  if (datos) {
+    try {
+      const decoded = decodeURIComponent(datos);
+      const parsed = JSON.parse(decoded);
+      console.log("Datos parseados desde URL:", parsed);
+      setDatosFormulario(parsed);
+    } catch (err) {
+      console.error(" Error al parsear datosFormulario:", err);
     }
-  }, [searchParams]);
+  }
+}, [searchParams]);
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -117,20 +121,21 @@ export default function RegistroImagen() {
   const buffer = Buffer.from(arrayBuffer);
 
   const usuario: UsuarioDocument = {
-    nombre: datosFormulario?.nombre || "",
-    apellido: datosFormulario?.apellido,
-    telefono: datosFormulario?.telefono || "",
-    correoElectronico: datosFormulario?.correoElectronico || "",
-    password: datosFormulario?.password || "",
-    fotoPerfil: buffer,
-    ubicacion: {
-      type: "Point",
-      coordinates: [ubicacion.lng, ubicacion.lat],
-    },
-    terminosYCondiciones: accepted,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  nombre: datosFormulario?.nombre || "",
+  apellido: datosFormulario?.apellido || "",
+  telefono: datosFormulario?.telefono || "",
+  correoElectronico: datosFormulario?.email || "", // 👈 CAMBIO
+  password: datosFormulario?.["contraseña"] || "", // 👈 CAMBIO
+  fotoPerfil: buffer,
+  ubicacion: {
+    type: "Point",
+    coordinates: [ubicacion.lng, ubicacion.lat],
+  },
+  terminosYCondiciones: accepted,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
 
     console.log("Datos completos a enviar:", usuario);
     crearUsuario(usuario)
