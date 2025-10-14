@@ -2,18 +2,56 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Job, JobStatus } from './interfaces/types';
 import { fetchTrabajosProveedor } from './services/api';
-import { fmt, STATUS_META } from './utils/helpers';
+import { fmt } from './utils/helpers';
 
-const TABS: Array<{ key: 'all' | JobStatus; title: string }> = [
-  { key: 'all', title: 'Todos' },
-  { key: 'confirmed', title: 'Confirmados' },
-  { key: 'pending', title: 'Pendientes' },
-  { key: 'cancelled', title: 'Cancelados' },
-  { key: 'done', title: 'Terminados' },
-];
+/* Paleta */
+const C = {
+  title:'#0C4FE9',
+  text:'#1140BC',
+  borderMain:'#0C4FE9',
+  borderBtn:'#1366FD',
+  confirmed:'#1366FD',
+  pending:'#F0D92B',
+  done:'#31C950',
+  cancelled:'#E84141',
+  white:'#FFFFFF',
+  line:'#1140BC',
+  active:'#1366FD',
+} as const;
+
+type TabKey = 'all' | JobStatus;
+
+/* Íconos */
+const IcoUser = ({size=24,color=C.text}:{size?:number;color?:string}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" />
+  </svg>
+);
+const IcoCalendar = ({size=24,color=C.text}:{size?:number;color?:string}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+const IcoBrief = ({size=24,color=C.text}:{size?:number;color?:string}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="7" width="18" height="13" rx="2" />
+    <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+  </svg>
+);
+const IcoClock = ({size=24,color=C.text}:{size?:number;color?:string}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+  </svg>
+);
 
 export default function TrabajosAgendadosPage() {
-  const [tab, setTab] = useState<'all' | JobStatus>('all');
+  const [tab, setTab] = useState<TabKey>('all');
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<Job | null>(null);
@@ -22,161 +60,212 @@ export default function TrabajosAgendadosPage() {
     let alive = true;
     setLoading(true);
     fetchTrabajosProveedor('proveedor1')
-      .then(data => { if (alive) { setJobs(data); setLoading(false); } })
-      .catch(err => { console.error(err); setLoading(false); });
+      .then(d => { if (alive) setJobs(d); })
+      .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, []);
 
+  const counts = useMemo(() => {
+    const c = { confirmed: 0, pending: 0, cancelled: 0, done: 0 } as Record<JobStatus, number>;
+    (jobs ?? []).forEach(j => c[j.status]++);
+    return c;
+  }, [jobs]);
+
   const filtered = useMemo(() => {
     if (!jobs) return [];
-    if (tab === 'all') return jobs;
-    return jobs.filter(j => j.status === tab);
+    return tab === 'all' ? jobs : jobs.filter(j => j.status === tab);
   }, [jobs, tab]);
 
-  if (!loading && (jobs?.length ?? 0) === 0) {
-    return (
-      <main style={{ padding: 16 }}>
-        <h1 style={{ fontSize: 24, marginBottom: 12 }}>Trabajos Agendados</h1>
-        <p role="status">No tienes trabajos asignados.</p>
-      </main>
-    );
-  }
-
   return (
-    <main style={{ padding: 16, maxWidth: 900, margin: '0 auto', background: 'white' }}>
-      <h1 style={{ fontSize: 24, marginBottom: 12 }}>Trabajos Agendados</h1>
+    <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 400 }}>
+      {/* Título */}
+      <h1 style={{ fontSize: 36, fontWeight: 400, color: C.title, marginTop: 2, marginBottom: 0}}>
+        Trabajos Agendados
+      </h1>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }} role="tablist" aria-label="Filtros de estado">
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            role="tab"
-            aria-selected={tab === t.key}
-            onClick={() => setTab(t.key)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 8,
-              border: '1px solid #2563eb',
-              background: tab === t.key ? '#2563eb' : 'transparent',
-              color: tab === t.key ? 'white' : '#2563eb',
-              fontWeight: 600,
-            }}
-          >
-            {t.title}
-          </button>
-        ))}
+      {/* Línea más delgada */}
+      <div style={{
+        height: 1.5,
+        width: '660px',
+        background: C.line,
+        marginBottom: 10
+      }} />
+
+      {/* Tabs */}
+      <div role="tablist" aria-label="Filtros de estado"
+           style={{ display:'flex', gap:14, flexWrap:'wrap', marginBottom: 14 }}>
+        {(['all','confirmed','pending','cancelled','done'] as TabKey[]).map(k => {
+          const active = tab === k;
+          const badge =
+            k === 'all' ? (jobs?.length ?? 0) :
+            k === 'confirmed' ? counts.confirmed :
+            k === 'pending' ? counts.pending :
+            k === 'cancelled' ? counts.cancelled : counts.done;
+
+          const baseBtn: React.CSSProperties = {
+            borderRadius: 8,
+            border: `2px solid ${C.borderBtn}`,
+            background: active ? C.active : C.white,
+            color: active ? C.white : C.text,
+            fontWeight: 400,
+            fontSize: 16,
+            display:'flex',
+            alignItems:'center',
+            justifyContent:'center',
+            gap:8,
+            cursor:'pointer',
+            transition: 'all 0.2s ease',
+            padding: '8px 14px',
+            lineHeight: '22px',
+          };
+
+          const isAll = k === 'all';
+          const allSize: React.CSSProperties = isAll ? {
+            padding: '8px 16px',
+            minWidth: 120,
+            height: 40
+          } : {};
+
+          return (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              style={{ ...baseBtn, ...allSize }}
+            >
+              {k === 'all' ? 'Todos'
+               : k === 'confirmed' ? 'Confirmados'
+               : k === 'pending' ? `Pendientes${badge>0 ? ` (${badge})` : ''}`
+               : k === 'cancelled' ? 'Cancelados'
+               : 'Terminados'}
+            </button>
+          );
+        })}
       </div>
 
-      <div style={{
-        display: 'grid',
-        gap: 12,
-        maxHeight: 520,
-        overflow: 'auto',
-        paddingRight: 4,
-        scrollbarColor: '#2563eb #f0f0f0',
-      }}>
-        {loading ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} style={{ height: 96, border: '1px solid #e5e7eb', borderRadius: 12, background: '#f8fafc' }} />
-          ))
-        ) : (
-          filtered.map(job => {
-            const s = STATUS_META[job.status];
-            const { fecha, hora } = fmt(job.startISO);
-            const { hora: horaFin } = fmt(job.endISO);
-            const cancelable = job.status === 'pending' || job.status === 'confirmed';
+      {/* Lista */}
+      <div className="scrollwrap"
+           style={{ display:'grid', gap: 14, maxHeight: 520, overflow:'auto', paddingRight: 8 }}>
+        {(filtered ?? []).map(job => {
+          const { fecha, hora } = fmt(job.startISO);
+          const { hora: horaFin } = fmt(job.endISO);
+          const chipBg =
+            job.status === 'confirmed' ? C.confirmed :
+            job.status === 'pending'   ? C.pending   :
+            job.status === 'done'      ? C.done      : C.cancelled;
 
-            return (
-              <article key={job.id} style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 12 }}>
-                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontWeight: 700 }}>Cliente</span>
-                    <span>{job.clientName}</span>
+          return (
+            <article key={job.id} style={{
+              border: `2.5px solid ${C.borderMain}`,
+              borderRadius: 8,
+              background: C.white,
+              padding: '14px 18px',  // espaciamiento más uniforme
+              width: '660px'          // igual ancho que tabs
+            }}>
+              <div style={{
+                display:'grid',
+                gridTemplateColumns:'1.2fr 1fr 1fr auto',
+                gridTemplateRows:'auto auto',
+                columnGap: 16,
+                rowGap: 6,
+                alignItems:'center'
+              }}>
+                {/* Cliente */}
+                <div style={{ gridColumn:'1', gridRow:'1', display:'flex', gap:8, alignItems:'center'}}>
+                  <IcoUser />
+                  <div>
+                    <span style={{ color: C.text }}>Cliente</span><br />
+                    <span style={{ color:'#000' }}>{job.clientName}</span>
                   </div>
-                  <span style={{ padding: '4px 10px', borderRadius: 999, background: s.bg, color: s.color, fontWeight: 700 }}>
-                    {s.label}
-                  </span>
-                </header>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 8 }}>
-                  <div><strong>Fecha</strong><br />{fecha}</div>
-                  <div><strong>Servicio</strong><br />{job.service}</div>
-                  <div><strong>Hora Inicio</strong><br />{hora}</div>
-                  <div><strong>Hora Fin</strong><br />{horaFin}</div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                {/* Fecha */}
+                <div style={{ gridColumn:'2', gridRow:'1', display:'flex', gap:8, alignItems:'center'}}>
+                  <IcoCalendar />
+                  <div style={{ transform:'translateY(3px)' }}>
+                    <span style={{ color: C.text }}>Fecha</span><br />
+                    <span style={{ color:'#000' }}>{fecha.replaceAll('-', '/')}</span>
+                  </div>
+                </div>
+
+                {/* Hora inicio */}
+                <div style={{ gridColumn:'3', gridRow:'1', display:'flex', gap:8, alignItems:'center'}}>
+                  <IcoClock />
+                  <div style={{ transform:'translateY(3px)' }}>
+                    <span style={{ color: C.text }}>Hora Inicio</span><br />
+                    <span style={{ color:'#000' }}>{hora.replace(/^0/,'')}</span>
+                  </div>
+                </div>
+
+                {/* Botón “Ver Detalles” */}
+                <div style={{ gridColumn:'4', gridRow:'1 / span 2', display:'flex', justifyContent:'flex-end' }}>
                   <button
                     onClick={() => setDetails(job)}
-                    style={{ padding: '8px 12px', borderRadius: 8, background: '#2563eb', color: 'white', fontWeight: 700 }}
+                    style={{
+                      padding: '8px 14px',
+                      minWidth: 110,
+                      height: 36,
+                      borderRadius: 8,
+                      background: C.confirmed,
+                      color: C.white,
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
                   >
                     Ver Detalles
                   </button>
-                  <button
-                    disabled={!cancelable}
-                    title={cancelable ? 'Cancelar trabajo' : 'Solo se puede cancelar si está Pendiente o Confirmado'}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: 8,
-   background: cancelable ? '#ef4444' : '#f3f4f6',
-                      color: cancelable ? 'white' : '#9ca3af',
-                      fontWeight: 700,
-                      border: 'none',
-                    }}
-                    onClick={() => {
-                      if (!cancelable) return;
-                      const reason = prompt('Motivo de cancelación (se notificará al cliente):');
-                      if (!reason) return;
-                      // Aquí podrías hacer un PATCH real al backend
-                      setJobs(prev =>
-                        (prev ?? []).map(j =>
-                          j.id === job.id ? { ...j, status: 'cancelled', cancelReason: reason } : j
-                        )
-                      );
-                      alert('Trabajo cancelado (mock). Se notificará al cliente.');
-                    }}
-                  >
-                    Cancelar Trabajo
-                  </button>
                 </div>
-              </article>
-            );
-          })
-        )}
+
+                {/* Estado (radio 12px) */}
+                <div style={{ gridColumn:'1', gridRow:'2' }}>
+                  <div style={{
+                    display:'inline-block',
+                    padding: '8px 16px',
+                    borderRadius: 12,
+                    background: chipBg,
+                    color: job.status === 'pending' ? '#000000' : C.white  // ← negro solo para “Pendiente”
+                  }}>
+                    {job.status === 'confirmed' ? 'Confirmado'
+                      : job.status === 'pending' ? 'Pendiente'
+                      : job.status === 'done' ? 'Terminado' : 'Cancelado'}
+                  </div>
+                </div>
+
+                {/* Servicio */}
+                <div style={{ gridColumn:'2', gridRow:'2', display:'flex', gap:8, alignItems:'center' }}>
+                  <IcoBrief />
+                  <div>
+                    <span style={{ color: C.text }}>Servicio</span><br />
+                    <span style={{ color:'#000' }}>{job.service}</span>
+                  </div>
+                </div>
+
+                {/* Hora fin */}
+                <div style={{ gridColumn:'3', gridRow:'2', display:'flex', gap:8, alignItems:'center' }}>
+                  <IcoClock />
+                  <div>
+                    <span style={{ color: C.text }}>Hora Fin</span><br />
+                    <span style={{ color:'#000' }}>{horaFin.replace(/^0/,'')}</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
       </div>
 
-      {/* Modal Detalles */}
-      {details && (
-        <div role="dialog" aria-modal="true" style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,.35)',
-          display: 'grid',
-          placeItems: 'center',
-          padding: 16,
-        }}>
-          <div style={{ background: 'white', borderRadius: 12, padding: 16, maxWidth: 560, width: '100%' }}>
-            <h2 style={{ fontSize: 20, marginBottom: 8 }}>Detalle del trabajo</h2>
-            <p><strong>Cliente:</strong> {details.clientName}</p>
-            <p><strong>Servicio:</strong> {details.service}</p>
-            <p><strong>Descripción:</strong> {details.description ?? '—'}</p>
-            <p><strong>Inicio:</strong> {fmt(details.startISO).fecha} {fmt(details.startISO).hora}</p>
-            <p><strong>Fin:</strong> {fmt(details.endISO).fecha} {fmt(details.endISO).hora}</p>
-            <p><strong>Estado:</strong> {STATUS_META[details.status].label}</p>
-            {details.status === 'cancelled' && (
-              <p><strong>Motivo:</strong> {details.cancelReason ?? '—'}</p>
-            )}
-            <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => setDetails(null)}
-                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb' }}
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Scrollbar */}
+      <style jsx global>{`
+        .scrollwrap::-webkit-scrollbar { width: 10px; }
+        .scrollwrap::-webkit-scrollbar-track { background: #cbd9ff; }
+        .scrollwrap::-webkit-scrollbar-thumb { background: ${C.text}; border-radius: 0; }
+        .scrollwrap { scrollbar-color: ${C.text} #cbd9ff; }
+
+        button:active {
+          background: ${C.active} !important;
+          border-color: ${C.active} !important;
+          color: ${C.white} !important;
+        }
+      `}</style>
     </main>
   );
 }
