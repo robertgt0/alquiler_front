@@ -16,3 +16,18 @@ export interface ErroresFormulario {
   confirmarContraseña?: string;
   telefono?: string;
 }
+export interface UsuarioDocument {
+  nombre: string;
+  apellido?: string;
+  telefono: string;
+  correoElectronico: string;
+  password: string;
+  fotoPerfil?: Buffer; // Binario (imagen)
+  ubicacion?: {
+    type: 'Point';
+    coordinates: [number, number]; // [longitud, latitud]
+  };
+  terminosYCondiciones: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
