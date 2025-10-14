@@ -20,8 +20,9 @@ export async function loginUsuario( correoElectronico: string , password:string 
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({correoElectronico,password})
   });
-
+  console.log("Respuesta del servidor:", res.body);
   if (!res.ok) throw new Error("datos Incorrectos");
+  
   return res.json();
     
   }

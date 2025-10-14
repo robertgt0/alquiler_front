@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { MapContainer, TileLayer, Marker, Circle, useMapEvents } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
 import L from "leaflet";
@@ -59,6 +59,8 @@ const SelectableMap: React.FC<SelectableMapProps> = ({ ubicacion, setUbicacion, 
 
 export default function RegistroImagen() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [datosFormulario, setDatosFormulario] = useState<any>(null); // datos del formulario anterior
   const [file, setFile] = useState<File | null>(null);
   const [ubicacion, setUbicacion] = useState<Location | null>(null);
@@ -69,35 +71,29 @@ export default function RegistroImagen() {
   const maxSize = 2 * 1024 * 1024;
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
 
-  // Recuperar datosFormulario desde query string
-  // Recuperar datosFormulario desde query string
-// Recuperar datosFormulario desde sessionStorage
-useEffect(() => {
-  const datosGuardados = sessionStorage.getItem("datosUsuarioParcial");
-  if (datosGuardados) {
-    try {
-      const datos = JSON.parse(datosGuardados);
+  // Recuperar datosFormulario desde sessionStorage
+  useEffect(() => {
+    const datosGuardados = sessionStorage.getItem("datosUsuarioParcial");
+    if (datosGuardados) {
+      try {
+        const datos = JSON.parse(datosGuardados);
 
-      // Adaptar nombres de campos
-      const datosAdaptados = {
-        nombre: datos.nombre,
-        apellido: datos.apellido,
-        telefono: datos.telefono,
-        correoElectronico: datos.email || "",  // mapear 'email'
-        password: datos.contraseña || "",      // mapear 'contraseña'
-        terminosYCondiciones: datos.terminosYCondiciones || false,
-      };
-      console.log("Datos del formulario recuperados:", datosAdaptados);
-      
-      setDatosFormulario(datosAdaptados);
-    } catch (err) {
-      console.error("Error al parsear datos del formulario:", err);
+        // Adaptar nombres de campos
+        const datosAdaptados = {
+          nombre: datos.nombre,
+          apellido: datos.apellido,
+          telefono: datos.telefono,
+          correoElectronico: datos.email || "",  // mapear 'email'
+          password: datos.contraseña || "",      // mapear 'contraseña'
+          terminosYCondiciones: datos.terminosYCondiciones || false,
+        };
+        console.log("Datos del formulario recuperados:", datosAdaptados);
+        setDatosFormulario(datosAdaptados);
+      } catch (err) {
+        console.error("Error al parsear datos del formulario:", err);
+      }
     }
-  }
-}, []);
-
-
-
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
@@ -131,24 +127,24 @@ useEffect(() => {
     }
 
     // Aquí tienes todos los datos juntos
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-  const usuario: UsuarioDocument = {
-    nombre: datosFormulario?.nombre || "",
-    apellido: datosFormulario?.apellido,
-    telefono: datosFormulario?.telefono || "",
-    correoElectronico: datosFormulario?.correoElectronico || "",
-    password: datosFormulario?.password || "",
-    fotoPerfil: buffer,
-    ubicacion: {
-      type: "Point",
-      coordinates: [ubicacion.lng, ubicacion.lat],
-    },
-    terminosYCondiciones: accepted,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+    const usuario: UsuarioDocument = {
+      nombre: datosFormulario?.nombre || "",
+      apellido: datosFormulario?.apellido,
+      telefono: datosFormulario?.telefono || "",
+      correoElectronico: datosFormulario?.correoElectronico || "",
+      password: datosFormulario?.password || "",
+      fotoPerfil: buffer,
+      ubicacion: {
+        type: "Point",
+        coordinates: [ubicacion.lng, ubicacion.lat],
+      },
+      terminosYCondiciones: accepted,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
     console.log("Datos completos a enviar:", usuario);
     crearUsuario(usuario)
@@ -163,7 +159,6 @@ useEffect(() => {
     // sendToAPI(datosCompletos);
     alert("Formulario listo para enviar. Revisa la consola.");
     sessionStorage.removeItem("datosUsuarioParcial");
-
   };
 
   return (
@@ -214,13 +209,25 @@ useEffect(() => {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <button
-      type="button"
-      onClick={handleContinuar}
-      className="bg-blue-600 text-white py-2 px-6 rounded-xl hover:bg-red-600 w-full"
-       >
-        Terminar Registro
-      </button>
+     <button
+  type="button"
+  onClick={async () => {
+    await handleContinuar(); // tu función original
+
+    // 👇 Reemplaza el contenido de la página por un "Home" simple
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#fff;">
+        <h1 style="font-size:3rem;font-family:sans-serif;">Home ya funciona almenos chicos pipipi</h1>
+      </div>
+      <p style="text-align:center;font-family:sans-serif;">¡tengo hambre!</p>
+   
+    `;
+  }}
+  className="bg-blue-600 text-white py-2 px-6 rounded-xl hover:bg-red-600 w-full"
+>
+  Terminar Registro
+</button>
+
     </form>
   );
 }
