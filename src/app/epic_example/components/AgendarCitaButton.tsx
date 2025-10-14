@@ -3,16 +3,8 @@
 import { useState } from "react";
 import { AppointmentModal } from "./appointment-modal";
 
-//import ModalWrapper from "./ModalWrapper";
-//import CalendarPicker from "./CalendarPicker";
-
 export default function AgendarCitaButton() {
   const [open, setOpen] = useState(false);
-
-  //const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  //const handleDateSelect = (date: Date) => {
-    //setSelectedDate(date);
-  //};
 
   return (
     <>
@@ -25,7 +17,6 @@ export default function AgendarCitaButton() {
 
       {/* 🪟 Modal */}
       <AppointmentModal open={open} onOpenChange={(v) => setOpen(v)} />
-
     </>
   );
 }
