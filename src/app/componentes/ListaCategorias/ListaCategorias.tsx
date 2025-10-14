@@ -92,7 +92,7 @@ export default function ListaCategorias({
       {/* misma grilla que ya usabas: 2 cols en sm, 4 en lg */}
       <div
         ref={gridRef}
-        className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6"
+        className="mt-6 grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4 lg:gap-6"
       >
         {items.map((c) => (
           <TarjetaCategoria key={c.id} categoria={c} onClick={undefined} data-card />
