@@ -256,8 +256,13 @@ const formularioValido =
   onClick={(e) => {
     e.preventDefault();
     if (formularioValido) {
-  router.push(`/ImagenLocalizacion?datos=${encodeURIComponent(JSON.stringify(datosFormulario))}`);
-}
+  // Guardar los datos temporalmente
+  sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormulario));
+
+  // Redirigir sin mostrar nada en la URL
+  router.push("/ImagenLocalizacion");
+  }
+
 
   }}
   disabled={!formularioValido}

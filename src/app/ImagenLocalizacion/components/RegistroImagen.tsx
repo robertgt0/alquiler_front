@@ -70,19 +70,33 @@ export default function RegistroImagen() {
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
 
   // Recuperar datosFormulario desde query string
-  useEffect(() => {
-  const datos = searchParams.get('datos');
-  if (datos) {
+  // Recuperar datosFormulario desde query string
+// Recuperar datosFormulario desde sessionStorage
+useEffect(() => {
+  const datosGuardados = sessionStorage.getItem("datosUsuarioParcial");
+  if (datosGuardados) {
     try {
-      const decoded = decodeURIComponent(datos);
-      const parsed = JSON.parse(decoded);
-      console.log("Datos parseados desde URL:", parsed);
-      setDatosFormulario(parsed);
+      const datos = JSON.parse(datosGuardados);
+
+      // Adaptar nombres de campos
+      const datosAdaptados = {
+        nombre: datos.nombre,
+        apellido: datos.apellido,
+        telefono: datos.telefono,
+        correoElectronico: datos.email || "",  // mapear 'email'
+        password: datos.contraseña || "",      // mapear 'contraseña'
+        terminosYCondiciones: datos.terminosYCondiciones || false,
+      };
+      console.log("Datos del formulario recuperados:", datosAdaptados);
+      
+      setDatosFormulario(datosAdaptados);
     } catch (err) {
-      console.error(" Error al parsear datosFormulario:", err);
+      console.error("Error al parsear datos del formulario:", err);
     }
   }
-}, [searchParams]);
+}, []);
+
+
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,21 +135,20 @@ export default function RegistroImagen() {
   const buffer = Buffer.from(arrayBuffer);
 
   const usuario: UsuarioDocument = {
-  nombre: datosFormulario?.nombre || "",
-  apellido: datosFormulario?.apellido || "",
-  telefono: datosFormulario?.telefono || "",
-  correoElectronico: datosFormulario?.email || "", // 👈 CAMBIO
-  password: datosFormulario?.["contraseña"] || "", // 👈 CAMBIO
-  fotoPerfil: buffer,
-  ubicacion: {
-    type: "Point",
-    coordinates: [ubicacion.lng, ubicacion.lat],
-  },
-  terminosYCondiciones: accepted,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
+    nombre: datosFormulario?.nombre || "",
+    apellido: datosFormulario?.apellido,
+    telefono: datosFormulario?.telefono || "",
+    correoElectronico: datosFormulario?.correoElectronico || "",
+    password: datosFormulario?.password || "",
+    fotoPerfil: buffer,
+    ubicacion: {
+      type: "Point",
+      coordinates: [ubicacion.lng, ubicacion.lat],
+    },
+    terminosYCondiciones: accepted,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
     console.log("Datos completos a enviar:", usuario);
     crearUsuario(usuario)
@@ -149,11 +162,13 @@ export default function RegistroImagen() {
     // Llama aquí a tu función para enviar al backend o API
     // sendToAPI(datosCompletos);
     alert("Formulario listo para enviar. Revisa la consola.");
+    sessionStorage.removeItem("datosUsuarioParcial");
+
   };
 
   return (
     <form className="flex flex-col gap-4 items-center border p-6 rounded shadow-md w-full max-w-md bg-white mx-auto">
-      <h2 className="text-xl font-bold text-center">Subir Imagen</h2>
+      <h2 className="text-xl font-bold text-center">Subir Imagen y añade una Ubicacion</h2>
 
       <div className="flex gap-4 items-start">
         {/* Foto */}
@@ -199,8 +214,12 @@ export default function RegistroImagen() {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <button type="button" onClick={handleContinuar} className="bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 w-full">
-        Continuar
+      <button
+      type="button"
+      onClick={handleContinuar}
+      className="bg-blue-600 text-white py-2 px-6 rounded-xl hover:bg-red-600 w-full"
+       >
+        Terminar Registro
       </button>
     </form>
   );
