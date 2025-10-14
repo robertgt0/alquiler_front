@@ -102,13 +102,13 @@ export default function RegisterForm() {
         style={{
           backgroundColor: '#0e418dff',
           color: 'white',
-          padding: '0.7rem',
+          padding: '0.8rem',
           border: 'none',
-          borderRadius: '5px',
+          borderRadius: '50px',
           cursor: 'pointer',
         }}
       >
-        Enviar
+        siguiente
       </button>
 
       {message && (
