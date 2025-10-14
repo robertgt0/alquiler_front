@@ -3,13 +3,29 @@ import "./ordenamiento.css";
 import { useState, useMemo, useEffect } from "react";
 import { Search } from "lucide-react";
 
+// Función para llamar al backend
+const ordenarBorbotones = async (criterio: string) => {
+  try {
+    const response = await fetch(`http://localhost:5000/api/borbotones/orden?orden=${criterio}`);
+    
+    if (!response.ok) {
+      throw new Error('Error al ordenar borbotones');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error:', error);
+    throw error;
+  }
+};
+
 interface Item {
   nombre: string;
   fecha: string;
   calificacion: number;
 }
 
-// Función de ordenamiento
+// Función de ordenamiento LOCAL (como respaldo)
 const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
   if (!lista || lista.length === 0) return [];
 
@@ -37,7 +53,6 @@ const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
   return sorted;
 };
 
-
 interface OrdenamientoProps {
   items?: Item[];
   sortValue?: string;
@@ -56,6 +71,8 @@ export default function Ordenamiento({
   const [search, setSearch] = useState(searchValue);
   const [sort, setSort] = useState(sortValue);
   const [activeFilters, setActiveFilters] = useState({});
+  const [itemsFromBackend, setItemsFromBackend] = useState<Item[]>([]);
+  const [cargando, setCargando] = useState(false);
 
   const opciones = [
     "Nombre A-Z",
@@ -64,12 +81,38 @@ export default function Ordenamiento({
     "Mayor Calificación (⭐)",
   ];
 
-  
+  // Mapeo entre opciones locales y criterios del backend
+  const criterioMap: { [key: string]: string } = {
+    "Nombre A-Z": "nombre_A-Z",
+    "Nombre Z-A": "nombre_Z-A", 
+    "Fecha (Reciente)": "fecha",
+    "Mayor Calificación (⭐)": "calificacion"
+  };
+
+  // Función para ordenar con el backend
+  const handleOrdenarBackend = async (criterioLocal: string) => {
+    const criterioBackend = criterioMap[criterioLocal];
+    if (!criterioBackend) return;
+
+    setCargando(true);
+    try {
+      const datos = await ordenarBorbotones(criterioBackend);
+      setItemsFromBackend(datos);
+    } catch (error) {
+      console.error('Error al ordenar con backend:', error);
+      // Si falla el backend, usa ordenamiento local
+      setItemsFromBackend([]);
+    } finally {
+      setCargando(false);
+    }
+  };
+
   useEffect(() => {
     onSortChange?.(sort);
+    // Cuando cambia el sort, llamar al backend
+    handleOrdenarBackend(sort);
   }, [sort]);
 
- 
   useEffect(() => {
     onSearchChange?.(search);
   }, [search]);
@@ -81,7 +124,7 @@ export default function Ordenamiento({
   }, [search]);
 
   const filteredItems = useMemo(() => {
-    let list = items;
+    let list = itemsFromBackend.length > 0 ? itemsFromBackend : items;
 
     if (search) {
       list = list.filter((item) =>
@@ -90,11 +133,16 @@ export default function Ordenamiento({
     }
 
     return list;
-  }, [search, activeFilters, items]);
+  }, [search, activeFilters, items, itemsFromBackend]);
 
   const itemsToRender = useMemo(() => {
+    // Si tenemos datos del backend, los mostramos directamente
+    if (itemsFromBackend.length > 0) {
+      return filteredItems;
+    }
+    // Si no, usamos ordenamiento local
     return ordenarItems(sort, filteredItems);
-  }, [sort, filteredItems]);
+  }, [sort, filteredItems, itemsFromBackend]);
 
   const handleSearch = () => {
     alert(`Búsqueda terminada. Elementos encontrados: ${itemsToRender.length}`);
@@ -130,6 +178,7 @@ export default function Ordenamiento({
             value={sort}
             onChange={(e) => setSort(e.target.value)}
             className="sort-select"
+            disabled={cargando}
           >
             {opciones.map((opcion) => (
               <option key={opcion} value={opcion}>
@@ -137,6 +186,30 @@ export default function Ordenamiento({
               </option>
             ))}
           </select>
+          {cargando && <span className="loading-text">Cargando...</span>}
+        </div>
+
+        {/* Mostrar resultados */}
+        <div className="results-section">
+          {itemsToRender.length > 0 && (
+            <div className="results-count">
+              Mostrando {itemsToRender.length} elementos
+            </div>
+          )}
+          
+          <div className="items-list">
+            {itemsToRender.map((item, index) => (
+              <div key={index} className="item-card">
+                <h3 className="item-name">{item.nombre}</h3>
+                <p className="item-date">Fecha: {item.fecha}</p>
+                <p className="item-rating">Calificación: {item.calificacion} ⭐</p>
+              </div>
+            ))}
+          </div>
+
+          {showNoOrderMessage && (
+            <p className="no-results">No se encontraron resultados</p>
+          )}
         </div>
       </div>
     </div>
