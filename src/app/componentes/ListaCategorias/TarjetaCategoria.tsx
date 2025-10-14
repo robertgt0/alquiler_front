@@ -1,44 +1,72 @@
 "use client";
+
+import { useRouter } from "next/navigation";
 import type { Categoria } from "./tipos";
 
-type Props = { categoria: Categoria; onClick?: (c: Categoria) => void };
+type Props = {
+  categoria: Categoria;
+  onClick?: () => void;
+};
 
 export default function TarjetaCategoria({ categoria, onClick }: Props) {
-  const goMain = () => onClick?.(categoria);
-  const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      goMain();
-    }
+  const router = useRouter();
+
+  const goMain = () => {
+    onClick?.(); // dispara el callback opcional si lo pasas desde arriba
+    router.push(`/servicios/${categoria.slug ?? ""}`);
   };
+
+  const goKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") goMain();
+  };
+
+  // --- Soporte icono como URL/ruta o como emoji/texto ---
+  const icon = (categoria as any).iconoUrl ?? (categoria as any).icono ?? "";
+  const isImage =
+    typeof icon === "string" &&
+    (
+      /^(https?:\/\/|\/|\.{1,2}\/)/i.test(icon) ||          // http(s), /, ./, ../
+      /\.(svg|png|jpg|jpeg|webp|gif)$/i.test(icon)          // extensiones típicas
+    );
 
   return (
     <article
       role="button"
       tabIndex={0}
       onClick={goMain}
-      onKeyDown={onKey}
-      aria-label={`Abrir categoría ${categoria.nombre}`}
-      className="
-        w-full rounded-2xl border border-blue-600/70 bg-white p-4 md:p-5
-        transition-all duration-200
-        hover:-translate-y-0.5 hover:shadow-lg hover:border-blue-400
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-      "
+      onKeyDown={goKey}
+      aria-label={`Abrir categoría ${categoria.titulo}`}
+      className="w-full rounded-2xl border border-blue-600/70 bg-white p-4 md:p-5
+                 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg
+                 hover:border-blue-400 focus-visible:outline-none
+                 focus-visible:ring-2 focus-visible:ring-blue-500"
     >
-      {/* Ícono en círculo */}
-      <div className="flex justify-center">
-        <div className="h-10 w-10 md:h-14 md:w-14 rounded-2xl border-2 border-blue-600/70 bg-blue-50 flex items-center justify-center shrink-0">
-          <span className="text-lg md:text-xl text-blue-600" style={{ minWidth: 24, minHeight: 24 }}>
-            {categoria.icono ?? "🔧"}
-          </span>
+      {/* Ícono */}
+      <div className="flex justify-center mb-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400 bg-blue-50/20">
+          {isImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={icon}
+              alt={categoria.titulo}
+              className="h-6 w-6 object-contain"
+              onError={(e) => {
+                // Si la URL existe pero no carga, escondemos la imagen y dejamos el contorno
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          ) : (
+            <span className="text-base" aria-hidden>
+              {icon || "🔧"}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Título / descripción */}
-      <div className="mt-3 md:mt-4 text-center">
-        <h3 className="text-base md:text-lg font-semibold text-blue-900 break-words">
-          {categoria.nombre}
+      <div className="text-center">
+        <h3 className="font-semibold text-sm sm:text-base text-blue-900">
+          {categoria.titulo}
         </h3>
         {categoria.descripcion && (
           <p className="mt-1 text-xs md:text-sm text-blue-700/90 line-clamp-2">
@@ -47,21 +75,20 @@ export default function TarjetaCategoria({ categoria, onClick }: Props) {
         )}
       </div>
 
-      {/* Chip contador: botón separado, sin anidar botones */}
-      {typeof categoria.trabajos === "number" && (
+      {/* Chip contador */}
+      {typeof categoria.totalServicios === "number" && (
         <div className="mt-3 md:mt-4 flex justify-center">
           <button
             type="button"
-            className="rounded-full border border-blue-600/50 bg-blue-50 px-3 py-1 text-[11px] md:text-xs font-medium text-blue-800 hover:bg-blue-100 focus-visible:ring-2 focus-visible:ring-blue-500"
-            aria-label={`${categoria.trabajos} servicios en ${categoria.nombre}`}
+            className="rounded-full border border-blue-600/50 bg-blue-50 px-3 py-1 text-[11px] sm:text-xs text-blue-700
+                       hover:bg-blue-100 focus-visible:ring-2 focus-visible:ring-blue-500"
+            aria-label={`${categoria.totalServicios} servicios en ${categoria.titulo}`}
             onClick={(e) => {
-              e.stopPropagation(); // evita activar el click del contenedor
-              // aquí navegas a la lista de servicios de la categoría
-              // router.push(`/servicios/${categoria.slug}?tab=resultados`);
-              onClick?.(categoria);
+              e.stopPropagation(); // evita que dispare el click del <article>
+              router.push(`/servicios/${categoria.slug ?? ""}?tab=resultados`);
             }}
           >
-            {categoria.trabajos} servicios
+            {categoria.totalServicios} servicios
           </button>
         </div>
       )}

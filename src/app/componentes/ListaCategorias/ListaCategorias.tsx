@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, KeyboardEvent } from "react";
 import TarjetaCategoria from "./TarjetaCategoria";
 import BotonVerMas from "./BotonVerMas";
 import type { Categoria } from "./tipos";
@@ -11,6 +11,8 @@ type Props = {
   filasIniciales?: number; // 2 por defecto
   /** filas que se agregan por clic */
   filasPorClic?: number;   // 3 por defecto
+  /** callback opcional al hacer click en una tarjeta */
+  onCategoriaClick?: (c: Categoria) => void;
 };
 
 /** Detecta cuántas tarjetas caben por fila según breakpoints de Tailwind usados en la grilla */
@@ -24,7 +26,7 @@ function useTarjetasPorFila() {
     ];
     const update = () => {
       for (const { mq, val } of rules) {
-        if (window.matchMedia(mq).matches) return setPorFila(val);
+        if (window.matchMedia(mq).matches) { setPorFila(val); return; }
       }
       setPorFila(1); // < sm
     };
@@ -45,29 +47,39 @@ export default function ListaCategorias({
   categorias,
   filasIniciales = 2,
   filasPorClic = 3,
+  onCategoriaClick,
 }: Props) {
+  // Orden A–Z sin mutar la prop original
+  const categoriasOrdenadas = useMemo(
+    () =>
+      [...categorias].sort((a, b) =>
+        a.titulo.localeCompare(b.titulo, "es", { sensitivity: "base" })
+      ),
+    [categorias]
+  );
+
   const porFila = useTarjetasPorFila();
   const [visible, setVisible] = useState(0);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
-  // establece visibles según filasIniciales x porFila
+  // visibles según filasIniciales x porFila, con mínimo 4 en móvil
   useEffect(() => {
-    // calcula el número base de tarjetas visibles
-    const base = filasIniciales * porFila; // por ejemplo 2*1=2 en móvil
-    // si está en móvil (1 tarjeta por fila), fuerza un mínimo de 4
-    const minimoMovil = porFila === 1 ? 4 : base;
-    // muestra al menos 4 en móvil o el total si hay menos
-    setVisible(Math.min(categorias.length, Math.max(minimoMovil, base)));
-  }, [categorias.length, porFila, filasIniciales]);
+    const base = filasIniciales * porFila;        // p.ej. 2*1=2 en móvil
+    const minimoMovil = porFila === 1 ? 4 : base; // al menos 4 en móvil
+    setVisible(Math.min(categoriasOrdenadas.length, Math.max(minimoMovil, base)));
+  }, [categoriasOrdenadas.length, porFila, filasIniciales]);
 
-  const hayMas = visible < categorias.length;
+  const hayMas = visible < categoriasOrdenadas.length;
 
   const handleVerMas = () => {
     const previo = visible;
-    const nuevo = Math.min(categorias.length, visible + filasPorClic * porFila);
+    const nuevo = Math.min(
+      categoriasOrdenadas.length,
+      visible + filasPorClic * porFila
+    );
     setVisible(nuevo);
 
-    // scroll suave al primer item recién revelado
+    // scroll suave al primer ítem recién revelado
     requestAnimationFrame(() => {
       const cards = gridRef.current?.querySelectorAll<HTMLElement>("[data-card]");
       if (cards && cards.length > previo) {
@@ -76,7 +88,11 @@ export default function ListaCategorias({
     });
   };
 
-  const items = useMemo(() => categorias.slice(0, visible), [categorias, visible]);
+  // ✅ AQUÍ definimos 'items' antes de usarlo
+  const items = useMemo(
+    () => categoriasOrdenadas.slice(0, visible),
+    [categoriasOrdenadas, visible]
+  );
 
   return (
     <section className="mx-auto max-w-6xl px-3 py-6 sm:px-4 sm:py-10">
@@ -89,13 +105,19 @@ export default function ListaCategorias({
         </p>
       </div>
 
-      {/* misma grilla que ya usabas: 2 cols en sm, 4 en lg */}
+      {/* 2 cols en sm, 4 en lg. gap-4 = 16px mínimo */}
       <div
         ref={gridRef}
         className="mt-6 grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4 lg:gap-6"
       >
         {items.map((c) => (
-          <TarjetaCategoria key={c.id} categoria={c} onClick={undefined} data-card />
+          // data-card debe estar en un nodo DOM real para el scroll
+          <div key={c.id} data-card>
+            <TarjetaCategoria
+              categoria={c}
+              onClick={() => onCategoriaClick?.(c)}
+            />
+          </div>
         ))}
       </div>
 
