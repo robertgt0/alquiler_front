@@ -31,16 +31,20 @@ export default function TarjetaCategoria({ categoria, onClick }: Props) {
 
   return (
     <article
-      role="button"
-      tabIndex={0}
-      onClick={goMain}
-      onKeyDown={goKey}
-      aria-label={`Abrir categoría ${categoria.titulo}`}
-      className="w-full rounded-2xl border border-blue-600/70 bg-white p-4 md:p-5
-                 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg
-                 hover:border-blue-400 focus-visible:outline-none
-                 focus-visible:ring-2 focus-visible:ring-blue-500"
+          role="button"
+          tabIndex={0}
+          onClick={goMain}
+          onKeyDown={goKey}
+          aria-label={`Abrir categoría ${categoria.titulo}`}
+          className="w-full rounded-2xl border-2 border-blue-400 bg-white p-4 md:p-5
+                    shadow-sm hover:shadow-xl hover:border-blue-500
+                    transition-all duration-300 ease-in-out
+                    hover:-translate-y-1
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+                    hover:shadow-blue-300/50 focus-visible:shadow-blue-400/60"
     >
+
+
       {/* Ícono */}
       <div className="flex justify-center mb-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400 bg-blue-50/20">
