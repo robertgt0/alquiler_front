@@ -1,10 +1,10 @@
-//componentes/mapa.tsx
 "use client";
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
+import ReactDOM from "react-dom/client"; // MODIFICADO: Importamos ReactDOM para React 18+
 import ReactDOMServer from "react-dom/server";
 import UbicacionIcon from "./UbicacionIcon";
 import MarkerClusterGroup from "./MarkerClusterGroup";
@@ -17,7 +17,6 @@ interface IconDefaultWithPrivate extends L.Icon.Default {
 
 delete (L.Icon.Default.prototype as unknown as IconDefaultWithPrivate)._getIconUrl;
 
-// Ícono clásico de Leaflet pero color azul
 const blueMarkerIcon = new L.Icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
@@ -50,6 +49,52 @@ function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
     if (ubicacion) map.flyTo(ubicacion.posicion, 17, { duration: 2 });
   }, [ubicacion, map]);
   return null;
+}
+
+// ==================================================================
+// ✅ NUEVO COMPONENTE PARA MOSTRAR EL CONTADOR DE FIXERS
+// ==================================================================
+function FixerCountControl({ fixerCount }: { fixerCount: number }) {
+  const map = useMap();
+
+  useEffect(() => {
+    // Creamos una clase para el control personalizado
+    const FixerCounter = L.Control.extend({
+      onAdd: function () {
+        // Creamos el contenedor del DOM para nuestro contador
+        const div = L.DomUtil.create("div", "fixer-counter-control");
+        // Evitamos que los clics en el contador se propaguen al mapa
+        L.DomEvent.disableClickPropagation(div);
+        return div;
+      },
+    });
+
+    const control = new FixerCounter({ position: "topright" });
+    control.addTo(map);
+
+    // Renderizamos nuestro componente React dentro del contenedor del control
+    const controlContainer = control.getContainer();
+    if (controlContainer) {
+      const message =
+        fixerCount > 0 ? (
+          <div style={{ backgroundColor: '#e0f2fe', color: '#0c4a6e', padding: '6px 12px', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '14px', whiteSpace: 'nowrap' }}>
+            <strong style={{ fontWeight: 'bold' }}>{fixerCount}</strong> Fixers Activos
+          </div>
+        ) : (
+          <div style={{ backgroundColor: '#ffedd5', color: '#9a3412', padding: '6px 12px', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '14px', whiteSpace: 'nowrap' }}>
+            ¡No hay fixers cerca!
+          </div>
+        );
+      ReactDOM.createRoot(controlContainer).render(message);
+    }
+
+    // Función de limpieza para eliminar el control cuando el componente se desmonte
+    return () => {
+      map.removeControl(control);
+    };
+  }, [map, fixerCount]); // Se vuelve a ejecutar si el mapa o el contador cambian
+
+  return null; // Este componente no renderiza nada directamente en el DOM de React
 }
 
 export default function Mapa({
@@ -118,7 +163,9 @@ export default function Mapa({
             </h3>
             <p style="margin:2px 0 0 0;font-size:12px;color:#6b7280;">
               ⭐ ${f.rating || 4.9} 
-              <span style="color:#9ca3af;">(${f.rating || "156 reseñas"})</span>
+              <span style="color:#9ca3af;">(${
+                f.rating || "156 reseñas"
+              })</span>
             </p>
           </div>
         </div>
@@ -131,14 +178,19 @@ export default function Mapa({
 
         ${
           f.whatsapp
-            ? `<a href="https://wa.me/${f.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
-                "Hola " + f.nombre + ", vi tu perfil en FixerMap y quiero más información."
+            ? `<a href="https://wa.me/${f.whatsapp.replace(
+                /\D/g,
+                ""
+              )}?text=${encodeURIComponent(
+                "Hola " +
+                  f.nombre +
+                  ", vi tu perfil en FixerMap y quiero más información."
               )}" target="_blank"
-               style="display:flex;align-items:center;justify-content:center;gap:6px;
-               background:#25D366;color:white;font-weight:500;border-radius:6px;
-               text-decoration:none;padding:8px 0;font-size:13px;margin-top:8px;">
-               Contactar por WhatsApp
-             </a>`
+                style="display:flex;align-items:center;justify-content:center;gap:6px;
+                background:#25D366;color:white;font-weight:500;border-radius:6px;
+                text-decoration:none;padding:8px 0;font-size:13px;margin-top:8px;">
+                Contactar por WhatsApp
+              </a>`
             : ""
         }
       </div>
@@ -182,6 +234,9 @@ export default function Mapa({
 
         {/* 🔁 Centra vista al seleccionar */}
         <ActualizarVista ubicacion={ubicacionSeleccionada} />
+
+        {/* ✅ MODIFICADO: Añadimos el nuevo control al mapa */}
+        <FixerCountControl fixerCount={fixers.length} />
       </MapContainer>
     </div>
   );

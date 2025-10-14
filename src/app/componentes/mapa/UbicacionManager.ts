@@ -1,5 +1,5 @@
 // utils/UbicacionManager.ts
-import { Fixer, Ubicacion } from "../types";
+import { Fixer, Ubicacion } from "../../types";
 
 export class UbicacionManager {
   private static instancia: UbicacionManager;
