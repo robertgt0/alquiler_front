@@ -1,8 +1,11 @@
 
 import { UsuarioDocument } from "../../registro/interfaces/types";
 const API_URL = "http://localhost:5000";
+import { UsuarioDocument } from "../../registro/interfaces/types";
+const API_URL = "http://localhost:5000";
 
 export async function crearUsuario(usuario:UsuarioDocument) {
+export async function crearUsuario(usuario: UsuarioDocument) {
   const res = await fetch(`${API_URL}/api/teamsys/usuario`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

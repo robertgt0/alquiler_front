@@ -5,9 +5,10 @@ import { usoGoogleAuth }  from '../../google/hooks/usoGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
 import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
-
+import { useRouter } from "next/navigation";
 
 export const RegistrationForm: React.FC = () => {
+  const router = useRouter();
   const {
     datosFormulario,
     errores,
@@ -246,17 +247,29 @@ const formularioValido =
           />
             Registrarse con Apple
           </button>
+          
 
           {/*boton de continuar*/} 
 
           <button
-            type="submit"
-            className="w-120 mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
-            >
-          <a href="/ImagenLocalizacion" className="w-full h-full flex items-center justify-center">
-            Continuar
-          </a>
-          </button>
+  type="submit"
+  onClick={(e) => {
+    e.preventDefault();
+    if (formularioValido) {
+  router.push(`/ImagenLocalizacion?datos=${encodeURIComponent(JSON.stringify(datosFormulario))}`);
+}
+
+  }}
+  disabled={!formularioValido}
+  className={`w-64 mx-auto py-2 px-4 rounded-2xl border border-gray-300 flex items-center justify-center gap-3 transition-colors duration-200
+    ${
+      formularioValido
+        ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
+        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+    }`}
+>
+  Continuar
+</button>
 
 
           {/*parrafo de ¡ya tienes una cuenta?*/}
