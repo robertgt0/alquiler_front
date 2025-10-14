@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 
-export const useGoogleAuth = () => {
+export const usoGoogleAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleAuth = async () => {
