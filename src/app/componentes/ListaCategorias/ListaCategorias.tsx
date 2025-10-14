@@ -52,7 +52,12 @@ export default function ListaCategorias({
 
   // establece visibles según filasIniciales x porFila
   useEffect(() => {
-    setVisible(Math.min(categorias.length, filasIniciales * porFila));
+    // calcula el número base de tarjetas visibles
+    const base = filasIniciales * porFila; // por ejemplo 2*1=2 en móvil
+    // si está en móvil (1 tarjeta por fila), fuerza un mínimo de 4
+    const minimoMovil = porFila === 1 ? 4 : base;
+    // muestra al menos 4 en móvil o el total si hay menos
+    setVisible(Math.min(categorias.length, Math.max(minimoMovil, base)));
   }, [categorias.length, porFila, filasIniciales]);
 
   const hayMas = visible < categorias.length;
