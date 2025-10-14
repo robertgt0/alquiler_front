@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link"; // ← Importa Link
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const slides = [
   {
@@ -26,10 +28,14 @@ const CarruselInspirador: React.FC = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length);
+      nextSlide();
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [current]);
+
+  const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length);
+  const prevSlide = () =>
+    setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl bg-gradient-to-r from-blue-50 to-white border border-blue-100 mx-auto max-w-[95%] md:max-w-[90%]">
@@ -42,16 +48,16 @@ const CarruselInspirador: React.FC = () => {
             key={index}
             className="flex flex-col md:flex-row items-center justify-center w-full flex-shrink-0"
           >
-            {/* Imagen a la izquierda (o arriba en móvil) */}
+            {/* Imagen */}
             <div className="md:w-1/2 w-full flex justify-center items-center bg-blue-100">
               <img
                 src={slide.image}
                 alt={slide.title}
-                className="w-full h-64 sm:h-80 md:h-[500px] object-cover rounded-l-2xl shadow-md"
+                className="w-full h-auto max-h-72 sm:max-h-80 md:max-h-[420px] object-contain rounded-l-2xl shadow-md bg-white"
               />
             </div>
 
-            {/* Texto a la derecha (o abajo en móvil) */}
+            {/* Texto */}
             <div className="md:w-1/2 w-full p-6 sm:p-8 flex flex-col justify-center text-center md:text-left">
               <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-[#2a87ff]">
                 {slide.title}
@@ -59,13 +65,34 @@ const CarruselInspirador: React.FC = () => {
               <p className="text-gray-700 text-base sm:text-lg mb-4">
                 {slide.description}
               </p>
-              <button className="self-center md:self-start bg-[#2a87ff] text-white px-6 py-3 rounded-lg text-base sm:text-lg hover:bg-blue-600 transition">
-                Ver más
-              </button>
+
+              {/* 🔴 Botón que redirige a una ruta inexistente */}
+              <Link href="/no-encontrado">
+                <button className="self-center md:self-start bg-[#2a87ff] text-white px-6 py-3 rounded-lg text-base sm:text-lg hover:bg-blue-600 transition">
+                  Ver más
+                </button>
+              </Link>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Botones de navegación */}
+      <button
+        onClick={prevSlide}
+        className="absolute top-1/2 left-3 -translate-y-1/2 bg-white/80 hover:bg-white text-[#2a87ff] rounded-full p-2 shadow-md transition"
+        aria-label="Anterior"
+      >
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+
+      <button
+        onClick={nextSlide}
+        className="absolute top-1/2 right-3 -translate-y-1/2 bg-white/80 hover:bg-white text-[#2a87ff] rounded-full p-2 shadow-md transition"
+        aria-label="Siguiente"
+      >
+        <ChevronRight className="w-6 h-6" />
+      </button>
 
       {/* Indicadores */}
       <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
