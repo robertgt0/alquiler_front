@@ -131,7 +131,7 @@ export const LoginForm: React.FC = () => {
             {/* Enlace para registrarse */}
            <div className="flex justify-center items-center gap-2 mt-4">
            <p className="text-sm text-gray-600">¿Aún no tienes una cuenta?</p>
-           <Link href="/register">
+           <Link href="/registro">
            <span className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline cursor-pointer">
              Regístrate
             </span>
