@@ -1,5 +1,5 @@
 
-import { Usuario } from "../interfaces/types";
+import { Usuario } from "../../registro/interfaces/types";
 const API_URL = "http://localhost:5080";
 
 export async function crearUsuario(usuario:Usuario) {
