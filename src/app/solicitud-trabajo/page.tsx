@@ -13,10 +13,11 @@ export default function SolicitarTrabajoPage() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-white px-4 sm:px-6">
       <div className="w-full max-w-sm sm:max-w-md">
-        <h1 className="text-[#0C4FE9] Poppins text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 leading-snug">
-          Solicitar trabajo para {titulo}
+        <h1 className="text-[#0C4FE9] Poppins text-3xl font-bold leading-snug text-center">
+          Solicitar trabajo para:
+          <br />
+          <span className="block mt-1">{titulo}</span>
         </h1>
-
         <SolicitarTrabajoForm />
       </div>
     </div>
