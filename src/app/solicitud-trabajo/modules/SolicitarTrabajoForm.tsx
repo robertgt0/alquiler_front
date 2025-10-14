@@ -32,6 +32,7 @@ export default function SolicitarTrabajoForm() {
         disabled={loading || !horaInicio}
       />
 
+      {/* Botón principal */}
       <button
         type="submit"
         disabled={loading}
@@ -39,14 +40,24 @@ export default function SolicitarTrabajoForm() {
       >
         {loading ? "Enviando…" : "Solicitar trabajo"}
       </button>
-      
+
+      {/* Botón Atrás */}
+      <button
+        type="button"
+        onClick={() => window.history.back()}
+        className="w-full bg-[#0C4FE9] hover:bg-blue-700 text-white Poppins rounded-lg h-12 sm:h-11"
+        aria-label="Volver a la página anterior"
+      >
+        Atrás
+      </button>
+
       {!!mensaje && (
         <div
           className="w-full text-center rounded-lg border border-gray-200 bg-gray-50 
-                    text-gray-600 text-sm px-4 py-3 mt-2 Poppins"
+                     text-gray-600 text-sm px-4 py-3 mt-2 Poppins"
         >
           {mensaje}
-         </div>
+        </div>
       )}
     </form>
   );

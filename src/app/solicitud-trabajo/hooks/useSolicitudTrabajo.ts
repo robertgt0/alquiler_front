@@ -5,7 +5,7 @@ import { ISolicitud } from "../interfaces/Solicitud.interface";
 export function useSolicitudTrabajo() {
   const [loading, setLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
-  const [mensaje, setMensaje] = useState("");   // ⬅️ añadimos estado
+  const [mensaje, setMensaje] = useState("");
 
   const enviar = async (data: ISolicitud) => {
     setMensaje("");
@@ -31,6 +31,6 @@ export function useSolicitudTrabajo() {
     }
   };
 
-  // ⬅️ devolvemos mensaje
+  //devolvemos mensaje
   return { loading, enviado, mensaje, enviar };
 }

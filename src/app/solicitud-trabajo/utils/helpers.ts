@@ -1,10 +1,9 @@
-/** ===========================
- * helpers.ts  (Solicitar Trabajo)
+/**
  * Funciones auxiliares reutilizables:
- * - formatearHora: normaliza una cadena HH:mm
- * - validarRango: valida que fin > inicio
- * - formatEsDateTitle: “Jueves 10 de Mayo” desde YYYY-MM-DD
- * ============================*/
+   - formatearHora: normaliza una cadena HH:mm
+   - validarRango: valida que fin > inicio
+   - formatEsDateTitle: “Jueves 10 de Mayo” desde YYYY-MM-DD
+*/
 
 /**
  * Normaliza una hora tipo "HH:mm".
@@ -29,7 +28,7 @@ export function validarRango(horaInicio: string, horaFin: string): string | null
 
 /**
  * Convierte una fecha ISO (YYYY-MM-DD) a título legible en español,
- * capitalizando palabras: ej. "Jueves 10 de Mayo".
+ * ej. "Jueves 10 de Mayo".
  */
 export function formatEsDateTitle(iso: string): string {
   const d = new Date(iso);
