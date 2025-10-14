@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Opcion, Filtro } from "../Types/filtro.types";
+import { Opcion, Filtro } from "../Types/filtroType";
 import {
   getCiudades,
   getProvincias,
@@ -14,17 +14,36 @@ export const useFiltros = () => {
   const [especialidades, setEspecialidades] = useState<Opcion[]>([]);
   const [filtro, setFiltro] = useState<Filtro>({});
 
+  // Cargar datos iniciales
   useEffect(() => {
     (async () => {
       setCiudades(await getCiudades());
-      setProvincias(await getProvincias());
       setDisponibilidad(await getDisponibilidad());
       setEspecialidades(await getTiposEspecialidad());
     })();
   }, []);
 
+  // Cuando cambia la ciudad, actualizamos las provincias
+  useEffect(() => {
+  const fetchProvincias = async () => {
+    if (filtro.ciudad) {
+      const provincias = await getProvincias(filtro.ciudad);
+      setProvincias(provincias);
+    } else {
+      setProvincias([]);
+    }
+  };
+
+  fetchProvincias();
+}, [filtro.ciudad]);
+
+  // Manejo de cambios de filtros
   const handleChange = (campo: keyof Filtro, valor: string) => {
-    setFiltro((prev) => ({ ...prev, [campo]: valor }));
+    setFiltro((prev) => ({
+      ...prev,
+      [campo]: valor,
+      ...(campo === "ciudad" ? { provincia: undefined } : {}), // Resetea provincia si cambia ciudad
+    }));
   };
 
   return {

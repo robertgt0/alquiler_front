@@ -1,0 +1,147 @@
+.filtros-container {
+  font-family: Arial, sans-serif;
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+}
+
+/* 🔍 Buscador */
+.buscador {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.buscador-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+.buscador-btn {
+  background-color: #0066ff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.buscador-btn:hover {
+  background-color: #0050d4;
+}
+
+/* 🧭 Título */
+.titulo {
+  color: #0033cc;
+  margin-bottom: 10px;
+}
+
+/* 🧩 Selects */
+.filtros-selects {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.filtros-selects select {
+  padding: 8px;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  background: #f9f9f9;
+  font-size: 14px;
+  color: #333;
+}
+
+.filtros-selects select:focus {
+  border-color: #0066ff;
+  outline: none;
+}
+
+/* 📱 Responsive: 2 columnas en pantallas pequeñas */
+@media (max-width: 768px) {
+  .filtros-selects {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .buscador {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .buscador-btn {
+    width: 100%;
+  }
+}
+
+/* 📱 Extra pequeño: 1 columna en pantallas muy chicas */
+@media (max-width: 480px) {
+  .filtros-selects {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 🔢 Paginación */
+.paginacion {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.paginacion button {
+  border: 1px solid #0066ff;
+  background: white;
+  color: #0066ff;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.paginacion button:hover {
+  background: #0066ff;
+  color: white;
+}
+
+.paginacion .activo {
+  background: #0066ff;
+  color: white;
+  font-weight: bold;
+}
+
+.paginacion .siguiente {
+  margin-left: 10px;
+  background: #e6f0ff;
+  color: #003399;
+}
+
+/* Por defecto 4 columnas */
+.filtros-selects {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Hasta 600px de ancho, pasa a 2 columnas */
+@media (max-width: 600px) {
+  .filtros-selects {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Y en pantallas muy pequeñas menos de 400px, 1 columna */
+@media (max-width: 400px) {
+  .filtros-selects {
+    grid-template-columns: 1fr;
+  }
+}
