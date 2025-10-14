@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-// 1. Importa tu componente Header
-import Header from "./componentes/Header/Header"; // Asegúrate de que la ruta sea correcta
+import Header from "./componentes/Header/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,14 +25,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // ✨ SOLUCIÓN DE HIDRATACIÓN 1: Añadir al <html> para silenciar errores de extensiones ✨
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        suppressHydrationWarning={true}
-      > 
-        {/* 2. Añade el componente Header aquí, antes de {children} */}
+        // ✨ SOLUCIÓN DE HIDRATACIÓN 2: También al <body> (por si acaso) ✨
+        suppressHydrationWarning={true} 
+      >
         <Header />
-        {children}
+        
+        {/* ✨ SOLUCIÓN DE ESPACIO: Aplicar padding condicional para móviles ✨ */}
+        <div className="pt-32 pb-28 sm:pt-0 sm:pb-0">
+          {children}
+        </div>
       </body>
     </html>
   );
