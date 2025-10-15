@@ -132,7 +132,7 @@ export default function  CarruselOfertas() {
                         {servicio.descripcion}
                       </p>
                  
-                 
+
                     </div>
                   </div>
                 </div>
@@ -159,6 +159,9 @@ export default function  CarruselOfertas() {
 
         {/* CTA Section */}
         <div className="text-center mt-12">
+          <button className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-transform duration-300">
+            Descubrir todos los servicios
+          </button>
      
         </div>
       </div>
