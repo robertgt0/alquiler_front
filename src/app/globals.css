@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --background: #ffffff;
@@ -24,3 +24,83 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ==== UI Base (PDF) ======================================= */
+/* Títulos y encabezados usan Poppins; color de encabezado */
+h1,
+h2,
+h3,
+.heading {
+  font-family:
+    var(--font-poppins),
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+  color: var(--color-header);
+  line-height: 1.25;
+}
+
+/* Variantes de color según PDF */
+.title {
+  color: var(--color-title);
+} /* #0c4fe9 */
+.subtitle {
+  color: var(--color-subtitle);
+} /* #1366fd */
+
+/* Texto normal usa Inter */
+body,
+p,
+span,
+li,
+a,
+button,
+input,
+textarea {
+  font-family:
+    var(--font-inter),
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
+}
+
+/* Color sugerido para párrafos (si lo quieres aplicado global) */
+.p-text {
+  color: var(--color-text);
+} /* #2a87ff */
+
+/* Utilidades para botones según el PDF (ya definimos en theme.css, refuerzo aquí por si Tailwind no está en todos los sitios) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+.btn-gray {
+  background: var(--color-graybtn);
+  color: #222;
+}
+.btn-danger {
+  background: var(--color-error);
+  color: #fff;
+}
+
+/* Contenedor común de páginas (como en el mock) */
+.container-page {
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* ========================================================== */
