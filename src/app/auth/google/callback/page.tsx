@@ -25,7 +25,8 @@ export default function GoogleCallbackPage() {
         }
 
         // 🔄 ENVIAR CÓDIGO AL BACKEND
-        const response = await fetch('/api/auth/google', {
+        const backend = "http://localhost:5000";
+        const response = await fetch(`${backend}/api/teamsys/google/callback`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -48,7 +49,7 @@ export default function GoogleCallbackPage() {
 
         // Redirigir al dashboard
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/ImagenLocalizacion');
         }, 1500);
 
       } catch (error) {

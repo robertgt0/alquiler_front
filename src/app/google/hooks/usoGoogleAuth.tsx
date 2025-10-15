@@ -21,7 +21,7 @@ export const usoGoogleAuth = () => {
       // Redirigir a Google OAuth
       const authParams = new URLSearchParams({
         client_id: clientId,
-        redirect_uri: 'http://127.0.0.1:2000/auth/google/callback',
+        redirect_uri: 'http://localhost:3000/auth/google/callback',
         response_type: 'code',
         scope: 'openid email profile',
         access_type: 'offline',
