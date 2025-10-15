@@ -2,9 +2,9 @@
 
 import Mapa from "./componentes/mapa/MapaWrapper";
 import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
-
 import HomeFixer from "./componentes/ListaCategorias/HomeFixer";
 import type { Categoria } from "./componentes/ListaCategorias/tipos"; // tipos
+import Footer from "./componentes/Footer/Footer"; // ✅ Import correcto según tu estructura
 
 // Solo datos (sin funciones aquí)
 const categoriasDemo: Categoria[] = [
@@ -48,7 +48,6 @@ const categoriasDemo: Categoria[] = [
   { id: 36, titulo: "Impresión y Copiado",   descripcion: "Servicios de impresión",            totalServicios: 39,  icono: "🖨️" },
 ];
 
-
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -57,7 +56,7 @@ export default function Home() {
       <h1 className="text-4xl font-bold text-center">¡Bienvenido a Servineo!</h1>
       <p className="mt-4 text-lg text-center">Tu plataforma de servicios.</p>
 
-       <section className="my-5">
+      <section className="my-5">
         <Mapa />
       </section>
 
