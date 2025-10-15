@@ -6,6 +6,8 @@ import { GoogleButton } from '../../google/components/GoogleButton';
 import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
 import { useRouter } from "next/navigation";
+import { checkEmailExists } from '../../teamsys/services/checkEmailExists';
+
 
 export const RegistrationForm: React.FC = () => {
   const router = useRouter();
@@ -253,15 +255,24 @@ const formularioValido =
 
           <button
   type="submit"
-  onClick={(e) => {
-    e.preventDefault();
-    if (formularioValido) {
-  // Guardar los datos temporalmente
-  sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormulario));
+  onClick={async (e) => {
+  e.preventDefault();
 
-  // Redirigir sin mostrar nada en la URL
-  router.push("/ImagenLocalizacion");
+  if (formularioValido) {
+    // Importamos la función
+    const { checkEmailExists } = await import('../../teamsys/services/checkEmailExists');
+    const correoExiste = await checkEmailExists(datosFormulario.email);
+
+    if (correoExiste) {
+      alert('Este correo ya está registrado. Por favor inicia sesión.');
+      return; // Detenemos aquí
+    }
+
+    // Si no existe, continúa normalmente
+    sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormulario));
+    router.push("/ImagenLocalizacion");
   }
+
 
 
   }}
