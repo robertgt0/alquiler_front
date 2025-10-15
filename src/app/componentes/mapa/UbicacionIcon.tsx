@@ -1,3 +1,4 @@
+// components/UbicacionIcon.tsx
 
 export default function UbicacionIcon({ onClick }: { onClick?: () => void }) {
   return (

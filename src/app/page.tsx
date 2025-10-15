@@ -1,6 +1,5 @@
-import Header from "./componentes/Header/Header";
-import Footer from "./componentes/Footer/Footer";
-import CarruselInspirador from "./componentes/CarruselInspirador/CarruselInspirador";
+// src/app/page.tsx
+
 import Mapa from "./componentes/mapa/MapaWrapper";
 import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
 
@@ -50,18 +49,21 @@ const categoriasDemo: Categoria[] = [
 ];
 
 
-export default function HomePage() {
+export default function Home() {
   return (
-    <main className="container-fluid p-0">
-      <Header />
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      {/* Puedes colocar aquí el contenido de tu página principal */}
 
-      <section className="my-5">
-        <CarruselInspirador />
-      </section>
+      <h1 className="text-4xl font-bold text-center">¡Bienvenido a Servineo!</h1>
+      <p className="mt-4 text-lg text-center">Tu plataforma de servicios.</p>
 
-      <section className="my-5">
+       <section className="my-5">
         <Mapa />
       </section>
+
+      {/* Aquí podrías añadir otros componentes como el CarruselInspirador o CarruselOfertas */}
+      {/* <CarruselInspirador /> */}
+      {/* <CarruselOfertas /> */}
 
       {/* 👇 Aquí usamos el Fixer: recibe datos, no funciones */}
       <section className="my-5">

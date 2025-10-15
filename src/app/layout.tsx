@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+import Header from "./componentes/Header/Header";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -23,13 +25,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // ✨ SOLUCIÓN DE HIDRATACIÓN 1: Añadir al <html> para silenciar errores de extensiones ✨
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        // ✨ SOLUCIÓN DE HIDRATACIÓN 2: También al <body> (por si acaso) ✨
+        suppressHydrationWarning={true} 
       >
-        {children}
+        <Header />
+        
+        {/* ✨ SOLUCIÓN DE ESPACIO: Aplicar padding condicional para móviles ✨ */}
+        <div className="pt-32 pb-28 sm:pt-0 sm:pb-0">
+          {children}
+        </div>
       </body>
     </html>
   );
 }
-

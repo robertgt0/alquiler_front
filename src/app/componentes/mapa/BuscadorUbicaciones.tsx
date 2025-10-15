@@ -1,7 +1,9 @@
+// components/BuscarUbicacion.tsx
+
 "use client";
 
 import { useState } from "react";
-import type { Ubicacion } from "./mapa";
+import type { Ubicacion } from "../../types";
 
 interface BuscadorUbicacionesProps {
   ubicaciones: Ubicacion[];
@@ -12,8 +14,8 @@ export default function BuscadorUbicaciones({ ubicaciones, onBuscar }: BuscadorU
   const [seleccionada, setSeleccionada] = useState<Ubicacion | null>(null);
 
   const handleSeleccionChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = Number(event.target.value);
-    const ubicacion = ubicaciones.find(u => u.id === id) || null;
+    const id = event.target.value;
+    const ubicacion = ubicaciones.find(u => u.id.toString() === id) || null;
     setSeleccionada(ubicacion);
   };
 
@@ -24,7 +26,8 @@ export default function BuscadorUbicaciones({ ubicaciones, onBuscar }: BuscadorU
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-6 w-full max-w-6xl mx-auto px-4 transition-all duration-300">
+    <div className="bg-white rounded-lg shadow-lg p-6 mb-1 w-full max-w-6xl mx-1 px-1 transition-all duration-300">
+
 
       <h2 className="text-xl font-bold text-gray-900 mb-2">Buscar ubicación</h2>
       <div className="flex flex-row flex-wrap gap-4 items-end">
