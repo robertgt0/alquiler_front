@@ -18,32 +18,10 @@ export const RegistrationForm: React.FC = () => {
     validarFormulario
   } = useRegistrationForm();
 
-  const { isLoading: googleLoading, handleGoogleAuth } = usoGoogleAuth();
-  const handleGoogleRegister = async () => {
-    const result = await handleGoogleAuth();
-    if (result.success) {
-      console.log('Registro con Google exitoso');
-      // Redirección o manejo de éxito
-    } else {
-      console.error('Error en registro Google:', result.error);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (validarFormulario()) {
-      console.log('Formulario válido:', datosFormulario);
-    }
-  };
+  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = usoGoogleAuth();
 
   const handleGoogleClick = async () => {
-
-    const result = await handleGoogleAuth();
-
-    if (result.success) {
-      console.log('Registro con Google exitoso');
-    }
+    await handleGoogleAuth();
   };
 //  Nueva lógica para habilitar/deshabilitar el botón
 const formularioValido =
@@ -57,7 +35,16 @@ const formularioValido =
           <h2 className="text-2xl font-bold text-blue-500">Crear cuenta</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+
+        {/* Mostrar errores de Google */}
+        {googleError && (
+          <div className="w-120 mx-auto mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{googleError}</p>
+          </div>
+        )}
+
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+          
 
           {/* Nombre */}
           <div className="flex justify-center">
@@ -227,13 +214,12 @@ const formularioValido =
             <a href="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500">Iniciar sesión</a>
           </div>      
         
-          {/*botn de registrarse con google*/}    
+          {/* Botón de Google */}
           <GoogleButton 
             onClick={handleGoogleClick}
             isLoading={googleLoading}
             type="register"
-            ></GoogleButton>
-
+          />
 
           {/*boton de registrarse con apple*/} 
 
