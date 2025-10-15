@@ -4,7 +4,6 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
-import ReactDOM from "react-dom/client"; // MODIFICADO: Importamos ReactDOM para React 18+
 import ReactDOMServer from "react-dom/server";
 import UbicacionIcon from "./UbicacionIcon";
 import MarkerClusterGroup from "./MarkerClusterGroup";
@@ -49,52 +48,6 @@ function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
     if (ubicacion) map.flyTo(ubicacion.posicion, 17, { duration: 2 });
   }, [ubicacion, map]);
   return null;
-}
-
-// ==================================================================
-// ✅ NUEVO COMPONENTE PARA MOSTRAR EL CONTADOR DE FIXERS
-// ==================================================================
-function FixerCountControl({ fixerCount }: { fixerCount: number }) {
-  const map = useMap();
-
-  useEffect(() => {
-    // Creamos una clase para el control personalizado
-    const FixerCounter = L.Control.extend({
-      onAdd: function () {
-        // Creamos el contenedor del DOM para nuestro contador
-        const div = L.DomUtil.create("div", "fixer-counter-control");
-        // Evitamos que los clics en el contador se propaguen al mapa
-        L.DomEvent.disableClickPropagation(div);
-        return div;
-      },
-    });
-
-    const control = new FixerCounter({ position: "topright" });
-    control.addTo(map);
-
-    // Renderizamos nuestro componente React dentro del contenedor del control
-    const controlContainer = control.getContainer();
-    if (controlContainer) {
-      const message =
-        fixerCount > 0 ? (
-          <div style={{ backgroundColor: '#e0f2fe', color: '#0c4a6e', padding: '6px 12px', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '14px', whiteSpace: 'nowrap' }}>
-            <strong style={{ fontWeight: 'bold' }}>{fixerCount}</strong> Fixers Activos
-          </div>
-        ) : (
-          <div style={{ backgroundColor: '#ffedd5', color: '#9a3412', padding: '6px 12px', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '14px', whiteSpace: 'nowrap' }}>
-            ¡No hay fixers cerca!
-          </div>
-        );
-      ReactDOM.createRoot(controlContainer).render(message);
-    }
-
-    // Función de limpieza para eliminar el control cuando el componente se desmonte
-    return () => {
-      map.removeControl(control);
-    };
-  }, [map, fixerCount]); // Se vuelve a ejecutar si el mapa o el contador cambian
-
-  return null; // Este componente no renderiza nada directamente en el DOM de React
 }
 
 export default function Mapa({
@@ -163,9 +116,7 @@ export default function Mapa({
             </h3>
             <p style="margin:2px 0 0 0;font-size:12px;color:#6b7280;">
               ⭐ ${f.rating || 4.9} 
-              <span style="color:#9ca3af;">(${
-                f.rating || "156 reseñas"
-              })</span>
+              <span style="color:#9ca3af;">(${f.rating || "156 reseñas"})</span>
             </p>
           </div>
         </div>
@@ -205,39 +156,68 @@ export default function Mapa({
   });
 
   return (
-    <div className="w-full max-w-6xl h-[300px] sm:h-[350px] md:h-[500px] lg:h-[400px] mx-auto px-4">
-      <MapContainer
-        center={centroInicial}
-        zoom={13}
-        className="w-full h-full rounded-lg shadow-lg z-0"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+    <div className="w-full max-w-6xl mx-auto px-4">
+      <div className="h-[300px] sm:h-[350px] md:h-[500px] lg:h-[400px]">
+        <MapContainer
+          center={centroInicial}
+          zoom={13}
+          className="w-full h-full rounded-lg shadow-lg z-0"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
 
-        {/* 🔵 Solo muestra una ubicación azul: la seleccionada */}
-        {ubicacionSeleccionada && (
-          <Marker
-            position={ubicacionSeleccionada.posicion}
-            icon={blueMarkerIcon}
-            eventHandlers={{
-              click: () => onUbicacionClick?.(ubicacionSeleccionada),
+          {ubicacionSeleccionada && (
+            <Marker
+              position={ubicacionSeleccionada.posicion}
+              icon={blueMarkerIcon}
+              eventHandlers={{
+                click: () => onUbicacionClick?.(ubicacionSeleccionada),
+              }}
+            >
+              <Popup>{ubicacionSeleccionada.nombre}</Popup>
+            </Marker>
+          )}
+
+          <MarkerClusterGroup markers={fixerMarkers} color="#1366fd" />
+          <ActualizarVista ubicacion={ubicacionSeleccionada} />
+        </MapContainer>
+      </div>
+
+      {/* ✅ Contador debajo del mapa */}
+      <div className="mt-2 text-center">
+        {fixers.length > 0 ? (
+          <div
+            style={{
+              backgroundColor: "#e0f2fe",
+              color: "#0c4a6e",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+              fontSize: "14px",
+              display: "inline-block",
             }}
           >
-            <Popup>{ubicacionSeleccionada.nombre}</Popup>
-          </Marker>
+            <strong style={{ fontWeight: "bold" }}>{fixers.length}</strong>{" "}
+            Fixers Activos
+          </div>
+        ) : (
+          <div
+            style={{
+              backgroundColor: "#ffedd5",
+              color: "#9a3412",
+              padding: "6px 12px",
+              borderRadius: "6px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+              fontSize: "14px",
+              display: "inline-block",
+            }}
+          >
+            ¡No hay fixers cerca!
+          </div>
         )}
-
-        {/* 🔧 Fixers con icono personalizado */}
-        <MarkerClusterGroup markers={fixerMarkers} color="#1366fd" />
-
-        {/* 🔁 Centra vista al seleccionar */}
-        <ActualizarVista ubicacion={ubicacionSeleccionada} />
-
-        {/* ✅ MODIFICADO: Añadimos el nuevo control al mapa */}
-        <FixerCountControl fixerCount={fixers.length} />
-      </MapContainer>
+      </div>
     </div>
   );
 }
