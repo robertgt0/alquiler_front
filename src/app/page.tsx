@@ -5,6 +5,8 @@ import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
 import HomeFixer from "./componentes/ListaCategorias/HomeFixer";
 import type { Categoria } from "./componentes/ListaCategorias/tipos";
 import Footer from "./componentes/Footer/Footer";
+import CarruselInspirador from "./componentes/CarruselInspirador/CarruselInspirador";
+
 
 // Usaremos un tipo sin el campo que ya no se usa
 type CategoriaBase = Omit<Categoria, "totalServicios">;
@@ -60,6 +62,10 @@ export default function Home() {
       </section>
         <section className="my-10">
         <Mapa />
+      </section>
+      <section className="my-5 w-full">
+        {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
+        <HomeFixer categorias={categoriasDemo} />
       </section>
       <section className="my-5 w-full">
         <CarruselOfertas />
