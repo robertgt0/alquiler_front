@@ -105,12 +105,13 @@ const Footer = () => {
 
                 <div className="space-y-4">
                     <h4 className="text-xl font-semibold">Enlaces Rápidos</h4>
-                    <nav className="flex flex-col space-y-2">
-                        <a href="/trabajos-recientes" className="hover:text-[#52abff] transition-colors">Trabajos recientes</a>
-                        <a href="/mapa" className="hover:text-[#52abff] transition-colors">Mapa</a>
-                        <a href="/servicios" className="hover:text-[#52abff] transition-colors">Lista de servicios</a>
-                        <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-center md:text-left">¿Cómo funciona?</button>
-                    </nav>
+          <nav className="flex flex-col space-y-2">
+            {/* In-page fragment links to navigate within the same tab */}
+            <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors">Trabajos recientes</a>
+            <a href="#mapa" className="hover:text-[#52abff] transition-colors">Mapa</a>
+            <a href="#servicios" className="hover:text-[#52abff] transition-colors">Lista de servicios</a>
+            <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-center md:text-left">¿Cómo funciona?</button>
+          </nav>
                 </div>
                 
                 <div className="space-y-4">
