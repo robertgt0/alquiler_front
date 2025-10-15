@@ -134,7 +134,7 @@ export function AppointmentModal({
             <div>
               <Calendar
                 mode="single"
-                selected={selectedDate ?? undefined} // ✅ null reemplazado por undefined
+                selected={selectedDate ?? undefined} 
                 onSelect={handleDateSelect}
                 className="w-full"
                 captionLayout="dropdown-months"
