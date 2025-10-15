@@ -64,29 +64,40 @@ export default function ListaCategorias({
 
   // visibles según filasIniciales x porFila, con mínimo 4 en móvil
   useEffect(() => {
-    const base = filasIniciales * porFila;        // p.ej. 2*1=2 en móvil
-    const minimoMovil = porFila === 1 ? 4 : base; // al menos 4 en móvil
-    setVisible(Math.min(categoriasOrdenadas.length, Math.max(minimoMovil, base)));
-  }, [categoriasOrdenadas.length, porFila, filasIniciales]);
+  // filas iniciales que ya usas (p.ej. 2) multiplicado por columnas detectadas
+  const base = filasIniciales * porFila;
+
+  // reglas por breakpoint
+  const minimoMovil = porFila === 1 ? 4 : 0;         // 4 items min en móvil
+  const minimoDesktop = porFila >= 4 ? 5 * 4 : 0;    // 20 items min en desktop (5x4)
+
+  const objetivo = Math.max(base, minimoMovil, minimoDesktop);
+
+  setVisible(Math.min(categorias.length, objetivo));
+}, [categorias.length, porFila, filasIniciales]);
+
 
   const hayMas = visible < categoriasOrdenadas.length;
 
   const handleVerMas = () => {
-    const previo = visible;
-    const nuevo = Math.min(
-      categoriasOrdenadas.length,
-      visible + filasPorClic * porFila
-    );
-    setVisible(nuevo);
+  const previo = visible;
 
-    // scroll suave al primer ítem recién revelado
-    requestAnimationFrame(() => {
-      const cards = gridRef.current?.querySelectorAll<HTMLElement>("[data-card]");
-      if (cards && cards.length > previo) {
-        cards[previo]?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-  };
+  // en desktop (>=4 columnas) agregamos 3 filas por clic; en otros tamaños, lo que ya tengas
+  const filasExtra = porFila >= 4 ? 3 : filasPorClic;  // 3 filas en desktop
+  const incremento = filasExtra * porFila;
+
+  const nuevo = Math.min(categorias.length, visible + incremento);
+  setVisible(nuevo);
+
+  // scroll suave al primer item recién revelado
+  requestAnimationFrame(() => {
+    const cards = gridRef.current?.querySelectorAll<HTMLElement>("[data-card]");
+    if (cards && cards.length > previo) {
+      cards[previo]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+};
+
 
   // ✅ AQUÍ definimos 'items' antes de usarlo
   const items = useMemo(
@@ -108,7 +119,7 @@ export default function ListaCategorias({
       {/* 2 cols en sm, 4 en lg. gap-4 = 16px mínimo */}
       <div
         ref={gridRef}
-        className="mt-6 grid grid-cols-2 gap-4 sm:gap-4 lg:grid-cols-4 lg:gap-6"
+        className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6"
       >
         {items.map((c) => (
           // data-card debe estar en un nodo DOM real para el scroll
