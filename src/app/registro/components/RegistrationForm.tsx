@@ -239,40 +239,38 @@ const formularioValido =
 
           {/*boton de continuar*/} 
 
-          <button
-  type="submit"
-  onClick={async (e) => {
-  e.preventDefault();
+        <button
+        type="submit"
+        onClick={async (e) => {
+        e.preventDefault();
 
-  if (formularioValido) {
-    // Importamos la función
-    const { checkEmailExists } = await import('../../teamsys/services/checkEmailExists');
-    const correoExiste = await checkEmailExists(datosFormulario.email);
+        if (formularioValido) {
+          // Importamos la función
+          const { checkEmailExists } = await import('../../teamsys/services/checkEmailExists');
+          const correoExiste = await checkEmailExists(datosFormulario.email);
 
-    if (correoExiste) {
-      alert('Este correo ya está registrado. Por favor inicia sesión.');
-      return; // Detenemos aquí
-    }
+          if (correoExiste) {
+            alert('Este correo ya está registrado. Por favor inicia sesión.');
+            return; // Detenemos aquí
+          }
 
-    // Si no existe, continúa normalmente
-    sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormulario));
-    router.push("/ImagenLocalizacion");
-  }
+            // Si no existe, continúa normalmente
+            sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormulario));
+            router.push("/ImagenLocalizacion");
+          }
 
 
-
-  }}
-  disabled={!formularioValido}
-  className={`w-64 mx-auto py-2 px-4 rounded-2xl border border-gray-300 flex items-center justify-center gap-3 transition-colors duration-200
-    ${
-      formularioValido
-        ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
-        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-    }`}
->
-  Continuar
-</button>
-
+          }}
+          disabled={!formularioValido}
+          className={`w-64 mx-auto py-2 px-4 rounded-2xl border border-gray-300 flex items-center justify-center gap-3 transition-colors duration-200
+            ${
+              formularioValido
+                ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+        >
+          Continuar
+        </button>
 
           {/*parrafo de ¡ya tienes una cuenta?*/}
           
