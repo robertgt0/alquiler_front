@@ -2,11 +2,13 @@
 import { useState } from 'react';
 
 export default function ImageCarousel({ images = [] as string[] }) {
-  if (!images || images.length === 0) {
+  const [idx, setIdx] = useState(0); // llamar siempre al hook
+  const hasImages = images && images.length > 0;
+
+  if (!hasImages) {
     return <p>Esta oferta no tiene imágenes.</p>;
   }
 
-  const [idx, setIdx] = useState(0);
   const prev = () => setIdx((idx - 1 + images.length) % images.length);
   const next = () => setIdx((idx + 1) % images.length);
 
