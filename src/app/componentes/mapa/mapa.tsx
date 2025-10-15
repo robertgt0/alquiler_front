@@ -156,12 +156,13 @@ export default function Mapa({
   });
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4">
-      <div className="h-[300px] sm:h-[350px] md:h-[500px] lg:h-[400px]">
+    <div className="w-full px-2 sm:px-4">
+      {/* Contenedor del mapa */}
+      <div className="h-[300px] sm:h-[350px] md:h-[500px] lg:h-[400px] relative">
         <MapContainer
           center={centroInicial}
           zoom={13}
-          className="w-full h-full rounded-lg shadow-lg z-0"
+          className="w-full h-full rounded-none sm:rounded-lg shadow-lg z-0"
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
@@ -183,10 +184,44 @@ export default function Mapa({
           <MarkerClusterGroup markers={fixerMarkers} color="#1366fd" />
           <ActualizarVista ubicacion={ubicacionSeleccionada} />
         </MapContainer>
+
+        {/* ✅ Contador ENCIMA del mapa - Solo visible en desktop/tablet */}
+        <div className="absolute top-2 right-2 hidden sm:block z-[1000]">
+          {fixers.length > 0 ? (
+            <div
+              style={{
+                backgroundColor: "#e0f2fe",
+                color: "#0c4a6e",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                fontSize: "14px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <strong style={{ fontWeight: "bold" }}>{fixers.length}</strong>{" "}
+              Fixers Activos
+            </div>
+          ) : (
+            <div
+              style={{
+                backgroundColor: "#ffedd5",
+                color: "#9a3412",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                fontSize: "14px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              ¡No hay fixers cerca!
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ✅ Contador debajo del mapa */}
-      <div className="mt-2 text-center">
+      {/* ✅ Contador DEBAJO del mapa - Solo visible en móvil */}
+      <div className="mt-2 text-center block sm:hidden">
         {fixers.length > 0 ? (
           <div
             style={{

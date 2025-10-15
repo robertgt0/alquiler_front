@@ -1,4 +1,3 @@
-// components/MapaWeapper.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +5,7 @@ import dynamic from "next/dynamic";
 import BuscadorUbicaciones from "./BuscadorUbicaciones";
 import FixersHeader from "./FixersHeader";
 import { Ubicacion, Fixer, UserLocation, UbicacionFromAPI } from "../../types";
-import { UbicacionManager } from "./UbicacionManager"; // ✅ import correcto
+import { UbicacionManager } from "./UbicacionManager";
 
 const Mapa = dynamic(() => import("./mapa"), { ssr: false });
 
@@ -49,9 +48,7 @@ export default function MapaWrapper() {
             posicion: [latitude, longitude] as [number, number],
           };
 
-          // ✅ Guardamos la ubicación en UbicacionManager
           ubicacionManager.setUbicacion(ubicacionTemporal);
-
           setUbicacionSeleccionada(ubicacionTemporal);
           setMostrarSenalizacion(true);
           setPermisoDecidido(true);
@@ -112,8 +109,6 @@ export default function MapaWrapper() {
           const data = await resFixers.json();
           if (data.success) {
             setFixers(data.data);
-
-            // ✅ Filtrar automáticamente los fixers cercanos
             const cercanos = ubicacionManager.filtrarFixersCercanos(data.data);
             setFixersFiltrados(cercanos);
           }
@@ -153,33 +148,35 @@ export default function MapaWrapper() {
     );
 
   return (
-    <div className="flex flex-col items-center">
-      <BuscadorUbicaciones
-        ubicaciones={ubicaciones}
-        onBuscar={(u) => {
-          setUbicacionSeleccionada(u);
-          ubicacionManager.setUbicacion(u);
-          const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
-          setFixersFiltrados(cercanos);
-        }}
-      />
-      <FixersHeader />
+    <div className="flex flex-col items-center w-full">
+      {/* ✅ BUSCADOR con ancho limitado */}
+      <div className="w-full max-w-6xl mx-auto px-4">
+        <BuscadorUbicaciones
+          ubicaciones={ubicaciones}
+          onBuscar={(u) => {
+            setUbicacionSeleccionada(u);
+            ubicacionManager.setUbicacion(u);
+            const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
+            setFixersFiltrados(cercanos);
+          }}
+        />
+        <FixersHeader />
+      </div>
 
-      {/* ✅ Mostrar el mapa solo con los fixers cercanos */}
-      <Mapa
-        ubicaciones={ubicaciones}
-        fixers={fixersFiltrados}
-        ubicacionSeleccionada={ubicacionSeleccionada}
-        onUbicacionClick={(u) => {
-          setUbicacionSeleccionada(u);
-          ubicacionManager.setUbicacion(u);
-          const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
-          setFixersFiltrados(cercanos);
-        }}
-      />
-
-      {/* 🗑️ LOS MENSAJES EMERGENTES HAN SIDO ELIMINADOS DE AQUÍ */}
-      
+      {/* ✅ MAPA con ancho completo */}
+      <div className="w-full">
+        <Mapa
+          ubicaciones={ubicaciones}
+          fixers={fixersFiltrados}
+          ubicacionSeleccionada={ubicacionSeleccionada}
+          onUbicacionClick={(u) => {
+            setUbicacionSeleccionada(u);
+            ubicacionManager.setUbicacion(u);
+            const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
+            setFixersFiltrados(cercanos);
+          }}
+        />
+      </div>
     </div>
   );
 }
