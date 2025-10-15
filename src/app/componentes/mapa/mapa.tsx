@@ -205,7 +205,7 @@ export default function Mapa({
   });
 
   return (
-    <div className="w-full max-w-6xl h-[300px] sm:h-[400px] md:h-[500px] lg:h-[500px] mx-auto px-4">
+    <div className="w-full max-w-6xl h-[300px] sm:h-[350px] md:h-[500px] lg:h-[400px] mx-auto px-4">
       <MapContainer
         center={centroInicial}
         zoom={13}
