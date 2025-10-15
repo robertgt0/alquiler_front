@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link"; // ← Importa Link
+import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const slides = [
@@ -39,6 +39,7 @@ const CarruselInspirador: React.FC = () => {
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl shadow-2xl bg-gradient-to-r from-blue-50 to-white border border-blue-100 mx-auto max-w-[95%] md:max-w-[90%]">
+      {/* Contenedor deslizante */}
       <div
         className="flex transition-transform duration-700 ease-in-out"
         style={{ transform: `translateX(-${current * 100}%)` }}
@@ -46,29 +47,30 @@ const CarruselInspirador: React.FC = () => {
         {slides.map((slide, index) => (
           <div
             key={index}
-            className="flex flex-col md:flex-row items-center justify-center w-full flex-shrink-0"
+            className="flex flex-col md:flex-row items-center justify-center w-full flex-shrink-0 p-4 md:p-0"
           >
             {/* Imagen */}
-            <div className="md:w-1/2 w-full flex justify-center items-center bg-blue-100">
+            <div className="w-full md:w-1/2 flex justify-center items-center bg-blue-100 rounded-2xl md:rounded-none md:rounded-l-2xl">
               <img
                 src={slide.image}
                 alt={slide.title}
-                className="w-full h-auto max-h-72 sm:max-h-80 md:max-h-[420px] object-contain rounded-l-2xl shadow-md bg-white"
+                className="w-3/4 sm:w-2/3 md:w-full h-auto max-h-64 sm:max-h-80 md:max-h-[420px] object-contain rounded-2xl md:rounded-none md:rounded-l-2xl shadow-md bg-white"
               />
             </div>
 
             {/* Texto */}
-            <div className="md:w-1/2 w-full p-6 sm:p-8 flex flex-col justify-center text-center md:text-left">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-[#2a87ff]">
+            <div className="w-full md:w-1/2 p-4 sm:p-8 flex flex-col justify-center items-center md:items-start text-center md:text-left">
+              {/* En celular el título va arriba de la descripción */}
+              <h2 className="text-lg sm:text-2xl md:text-3xl font-bold mb-3 text-[#2a87ff]">
                 {slide.title}
               </h2>
-              <p className="text-gray-700 text-base sm:text-lg mb-4">
+              <p className="text-gray-700 text-sm sm:text-base md:text-lg mb-4 max-w-[85%] md:max-w-none">
                 {slide.description}
               </p>
 
-              {/* 🔴 Botón que redirige a una ruta inexistente */}
+              {/* Botón centrado en móvil */}
               <Link href="/no-encontrado">
-                <button className="self-center md:self-start bg-[#2a87ff] text-white px-6 py-3 rounded-lg text-base sm:text-lg hover:bg-blue-600 transition">
+                <button className="bg-[#2a87ff] text-white px-5 py-2 sm:px-6 sm:py-3 rounded-lg text-sm sm:text-base hover:bg-blue-600 transition">
                   Ver más
                 </button>
               </Link>
@@ -111,3 +113,4 @@ const CarruselInspirador: React.FC = () => {
 };
 
 export default CarruselInspirador;
+
