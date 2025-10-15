@@ -13,7 +13,6 @@ body {
   margin: 2rem auto;
 }
 
-
 .register-form label {
   color: #ec0c0c;
   font-weight: bold;
@@ -31,14 +30,11 @@ body {
 }
 /*letra dentro de los inputs*/
 input::placeholder {
- 
-  color: rgb(179, 158, 158); 
-  opacity: 6; 
+  color: rgb(179, 158, 158);
+  opacity: 6;
 }
 .register-form input {
-  
-  outline: none; 
-  
+  outline: none;
 }
 /*efecto de concentracion en los iputs*/
 .register-form input:focus {

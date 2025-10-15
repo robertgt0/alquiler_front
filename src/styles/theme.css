@@ -1,0 +1,32 @@
+:root {
+  --color-title: #0c4fe9; /* Títulos */
+  --color-subtitle: #1366fd; /* Subtítulos */
+  --color-text: #2a87ff; /* Párrafos */
+  --color-header: #11255a; /* Encabezados */
+  --color-bg: #ffffff; /* Fondo */
+  --color-primary: #0c4fe9; /* Botón principal */
+  --color-graybtn: #f0f2f5; /* Botón gris */
+  --color-error: #e55451; /* Errores/alertas */
+}
+
+/* Utilidades mínimas para botones según PDF */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+.btn-gray {
+  background: var(--color-graybtn);
+  color: #222;
+}
+.btn-danger {
+  background: var(--color-error);
+  color: #fff;
+}

@@ -1,20 +1,20 @@
 'use client';
 
-import { useState ,type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
 type Props = {
   onSuccess: (data: { ci: string; email: string }) => void;
-}; 
+};
 
 export default function RegisterForm({ onSuccess }: Props) {
-  const [ci, setCi] = useState("");
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [ci, setCi] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessage("");
+    setMessage('');
 
     // Validar que el CI tenga solo números
     if (!/^\d+$/.test(ci)) {
@@ -32,19 +32,18 @@ export default function RegisterForm({ onSuccess }: Props) {
       const data = await res.json();
 
       if (!res.ok || !data?.success) {
-        setMessage(data?.message ?? "❌ Error de validación.");
+        setMessage(data?.message ?? '❌ Error de validación.');
         setLoading(false);
         return;
       }
-      setMessage(data.message ?? "✅ OK, continuemos.");
-      onSuccess({ ci, email }); 
+      setMessage(data.message ?? '✅ OK, continuemos.');
+      onSuccess({ ci, email });
     } catch (error) {
       console.error(error);
-      setMessage("❌ Error al conectar con el servidor.");
+      setMessage('❌ Error al conectar con el servidor.');
     } finally {
       setLoading(false);
     }
-
   };
 
   return (
@@ -109,7 +108,7 @@ export default function RegisterForm({ onSuccess }: Props) {
 
       <button
         type="submit"
-        disabled = {loading}
+        disabled={loading}
         style={{
           backgroundColor: '#0e418dff',
           color: 'white',
@@ -119,8 +118,7 @@ export default function RegisterForm({ onSuccess }: Props) {
           cursor: 'pointer',
         }}
       >
-        {loading ? "Validando..." : "Siguiente"}
-        
+        {loading ? 'Validando...' : 'Siguiente'}
       </button>
 
       {message && (

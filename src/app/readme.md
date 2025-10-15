@@ -36,16 +36,16 @@ app/
 
 ## 📋 Descripción de Carpetas
 
-| Carpeta | Descripción |
-|---------|-------------|
-| `assets/` | Imágenes, iconos y recursos estáticos de la epic |
-| `components/` | Componentes reutilizables (botones, modales, formularios) |
-| `hooks/` | Custom hooks para manejo de estado y lógica local |
-| `interfaces/` | Definiciones de tipos e interfaces TypeScript |
-| `services/` | Funciones para llamadas al backend/API |
-| `utils/` | Funciones helper específicas de la epic |
-| `modules/` | Sub-módulos o secciones cuando una página se deriva en otras |
-| `page.tsx` | **Punto de entrada principal** de la ruta de la epic |
+| Carpeta       | Descripción                                                  |
+| ------------- | ------------------------------------------------------------ |
+| `assets/`     | Imágenes, iconos y recursos estáticos de la epic             |
+| `components/` | Componentes reutilizables (botones, modales, formularios)    |
+| `hooks/`      | Custom hooks para manejo de estado y lógica local            |
+| `interfaces/` | Definiciones de tipos e interfaces TypeScript                |
+| `services/`   | Funciones para llamadas al backend/API                       |
+| `utils/`      | Funciones helper específicas de la epic                      |
+| `modules/`    | Sub-módulos o secciones cuando una página se deriva en otras |
+| `page.tsx`    | **Punto de entrada principal** de la ruta de la epic         |
 
 ## 💡 Ejemplo de Uso
 

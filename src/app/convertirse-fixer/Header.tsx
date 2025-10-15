@@ -1,31 +1,31 @@
-"use client";
-import React from "react";
+'use client';
+import React from 'react';
 
 export default function Header() {
   return (
     <header
       style={{
-        backgroundColor: "#92b8ff",
-        color: "white",
-        padding: "1rem 2rem",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
+        backgroundColor: '#92b8ff',
+        color: 'white',
+        padding: '1rem 2rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
       }}
     >
-      <h1 style={{ margin: 0, fontSize: "1.5rem", cursor: "pointer" }}>
+      <h1 style={{ margin: 0, fontSize: '1.5rem', cursor: 'pointer' }}>
         Servineo
       </h1>
 
-      <nav style={{ display: "flex", gap: "1.5rem" }}>
-        <a href="#" style={{ color: "white", textDecoration: "none" }}>
+      <nav style={{ display: 'flex', gap: '1.5rem' }}>
+        <a href="#" style={{ color: 'white', textDecoration: 'none' }}>
           Ayuda
         </a>
-        <a href="#" style={{ color: "white", textDecoration: "none" }}>
+        <a href="#" style={{ color: 'white', textDecoration: 'none' }}>
           Sobre Nosotros
         </a>
-        <a href="#" style={{ color: "white", textDecoration: "none" }}>
+        <a href="#" style={{ color: 'white', textDecoration: 'none' }}>
           Contacto
         </a>
       </nav>
