@@ -24,7 +24,7 @@ export default function GoogleCallbackPage() {
           throw new Error('No se recibió el código de autorización');
         }
 
-        // 🔄 ENVIAR CÓDIGO AL BACKEND
+        // ENVIAR CÓDIGO AL BACKEND
         const backend = "http://localhost:5000";
         const response = await fetch(`${backend}/api/teamsys/google/callback`, {
           method: 'POST',
@@ -40,7 +40,7 @@ export default function GoogleCallbackPage() {
           throw new Error(data.error || 'Error en la autenticación');
         }
 
-        // ✅ ÉXITO - Backend devolvió usuario y token
+        // ÉXITO - Backend devolvió usuario y token
         localStorage.setItem('userToken', data.token);
         localStorage.setItem('userData', JSON.stringify(data.user));
         
@@ -53,7 +53,7 @@ export default function GoogleCallbackPage() {
         }, 1500);
 
       } catch (error) {
-        console.error('❌ Error en callback:', error);
+        console.error(' Error en callback:', error);
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Error desconocido');
         
