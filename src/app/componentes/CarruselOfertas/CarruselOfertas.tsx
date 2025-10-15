@@ -55,6 +55,16 @@ export default function  CarruselOfertas() {
     setCurrentIndex(index);
   };
 
+  // Auto-play functionality
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [currentIndex, isAutoPlaying, maxIndex]);
 
   return (
     <div className="py-12 bg-gray-50">
@@ -131,8 +141,12 @@ export default function  CarruselOfertas() {
                       <p className="text-gray-600 flex-1 leading-relaxed">
                         {servicio.descripcion}
                       </p>
-                 
-
+                      <button className="mt-4 text-blue-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all duration-300 hover:text-blue-700">
+                        Más información
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -162,7 +176,6 @@ export default function  CarruselOfertas() {
           <button className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-transform duration-300">
             Descubrir todos los servicios
           </button>
-     
         </div>
       </div>
     </div>
