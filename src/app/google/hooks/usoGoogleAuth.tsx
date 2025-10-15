@@ -39,7 +39,7 @@ export const usoGoogleAuth = () => {
       return { success: true };
 
     } catch (error) {
-      console.error('❌ Error en autenticación con Google:', error);
+      console.error(' Error en autenticación con Google:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       setError(errorMessage);
       return { success: false, error: errorMessage };

@@ -249,7 +249,7 @@ const formularioValido =
     const { checkEmailExists } = await import('../../teamsys/services/checkEmailExists');
     const correoExiste = await checkEmailExists(datosFormulario.email);
 
-    if (!correoExiste) {
+    if (correoExiste) {
       alert('Este correo ya está registrado. Por favor inicia sesión.');
       return; // Detenemos aquí
     }
