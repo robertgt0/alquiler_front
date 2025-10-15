@@ -3,13 +3,20 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { usoGoogleAuth }  from '../../../google/hooks/usoGoogleAuth';
+
 
 export default function GoogleCallbackPage() {
   const router = useRouter();
+  const {
+      datosFormularioGoogle,
+      
+    } = usoGoogleAuth();
+
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
-
+    
   useEffect(() => {
     const handleCallback = async () => {
       try {
@@ -37,8 +44,8 @@ export default function GoogleCallbackPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || 'Error en la autenticación');
-        }
+          router.push('/home');
+        }else{
 
         // ÉXITO - Backend devolvió usuario y token
         localStorage.setItem('userToken', data.token);
@@ -49,9 +56,10 @@ export default function GoogleCallbackPage() {
 
         // Redirigir al dashboard
         setTimeout(() => {
+          sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormularioGoogle));
           router.push('/ImagenLocalizacion');
         }, 1500);
-
+      }
       } catch (error) {
         console.error(' Error en callback:', error);
         setStatus('error');
