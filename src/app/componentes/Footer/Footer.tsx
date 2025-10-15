@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
-// Link ya no es necesario aquí si 'Cómo funciona' abre un modal
+// LÍNEA CORREGIDA: useState está dentro de las llaves {}
+import React, { useState } from 'react'; 
+import Image from 'next/image';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
 import Modal from './../reutilizables/Modal';
 
 // Contenido para cada modal
 const modalContents = {
-  // ... (los contenidos de privacy, terms y cookies se mantienen igual)
   privacy: {
     title: 'Política de Privacidad',
     content: (
@@ -44,7 +44,6 @@ const modalContents = {
       </>
     )
   },
-  // NUEVO: Contenido para el modal "¿Cómo funciona?"
   howItWorks: {
     title: '¿Cómo Funciona?',
     content: (
@@ -86,22 +85,37 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="border-t border-[#1140bc] mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+                
                 <div className="space-y-4">
-                    <h3 className="text-2xl font-bold">Servineo</h3>
+                    <div className="flex items-center justify-center md:justify-start">
+                        <Image 
+                          src="/logo-servineo.jpg"
+                          alt="Logo de Servineo"
+                          width={50}
+                          height={50}
+                          className="mr-3"
+                        />
+                        <h3 className="text-2xl font-bold">Servineo</h3>
+                    </div>
                     <p className="text-[#b9ddff]">La plataforma líder que conecta clientes con proveedores de servicios profesionales. Encuentra el fixer perfecto para tu proyecto.</p>
                 </div>
+
                 <div className="space-y-4">
                     <h4 className="text-xl font-semibold">Enlaces Rápidos</h4>
-                    <nav className="flex flex-col space-y-2 text-center md:text-left">
+                    <nav className="flex flex-col space-y-2">
                         <a href="/trabajos-recientes" className="hover:text-[#52abff] transition-colors">Trabajos recientes</a>
                         <a href="/mapa" className="hover:text-[#52abff] transition-colors">Mapa</a>
                         <a href="/servicios" className="hover:text-[#52abff] transition-colors">Lista de servicios</a>
-                        {/* NUEVO: El enlace ahora es un botón que abre el modal */}
-                        <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-left">¿Cómo Funciona?</button>
+                        {/* 
+                          AQUÍ ESTÁ LA CORRECCIÓN:
+                          Se cambió "text-left" por "text-center md:text-left" 
+                          para que esté centrado en móviles y alineado a la izquierda en pantallas grandes.
+                        */}
+                        <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-center md:text-left">¿Cómo funciona?</button>
                     </nav>
                 </div>
                 <div className="space-y-4">
-                    <h4 className="text-xl font-semibold">Soportes</h4>
+                    <h4 className="text-xl font-semibold">Soporte</h4>
                     <ul className="space-y-3">
                         <li className="flex items-center justify-center md:justify-start"><FaPhone className="mr-3 text-[#52abff]" /><span>+591 73782241</span></li>
                         <li className="flex items-center justify-center md:justify-start"><FaEnvelope className="mr-3 text-[#52abff]" /><span>servineo@gmail.com</span></li>
@@ -121,7 +135,6 @@ const Footer = () => {
         </div>
       </footer>
 
-      {/* El renderizado del modal funciona igual, pero ahora soporta "howItWorks" */}
       {activeModal && (
         <Modal
           isOpen={!!activeModal}
