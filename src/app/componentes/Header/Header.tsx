@@ -162,7 +162,7 @@ export default function Header() {
       {/* ---------------------------------------------------- */}
       <footer
         className={`
-          sm:hidden fixed bottom-0 left-0 w-full p-4 bg-[#EEF7FF] shadow-md z-20 // z-20 para estar encima del header superior
+          sm:hidden fixed bottom-0 left-0 w-full p-4 bg-[#EEF7FF] shadow-md z-20 
           transform transition-transform duration-300 ease-in-out
           ${areButtonsVisible ? 'translate-y-0' : 'translate-y-full'} // Animación abajo para ocultar/mostrar
         `}
