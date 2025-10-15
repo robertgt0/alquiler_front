@@ -7,6 +7,10 @@ import AppleIcon from '../assets/icons8-apple-50.png';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { loginUsuario } from '@/app/teamsys/services/UserService';
+import { usoGoogleAuth }  from '../../google/hooks/usoGoogleAuth';
+import { GoogleButton } from '../../google/components/GoogleButton';
+import { checkEmailExists } from '../../teamsys/services/checkEmailExists';
+
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -19,6 +23,12 @@ export const LoginForm: React.FC = () => {
     validarFormulario,
   } = useLoginForm();
    const [errorLogin, setErrorLogin] = useState<string | null>(null);
+
+ const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = usoGoogleAuth();
+
+  const handleGoogleClick = async () => {
+    await handleGoogleAuth();
+  };
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -118,18 +128,12 @@ const handleSubmit = async (e: React.FormEvent) => {
             <span className="text-gray-500 text-sm font-medium">o</span>
           </div>
 
-          {/* botón de registrarse con Google */}
-          <button
-            type="button"
-            className="w-[500px] mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
-          >
-            <img
-              src={googleIcon.src}
-              alt="Registrarse con Google"
-              className="w-5 h-5"
-            />
-            Registrarse con Google
-          </button>
+          {/* Botón de Google */}
+          <GoogleButton 
+            onClick={handleGoogleClick}
+            isLoading={googleLoading}
+            type="login"
+          />
 
           {/* botón de registrarse con Apple */}
           <button

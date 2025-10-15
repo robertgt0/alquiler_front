@@ -7,7 +7,7 @@ export const usoGoogleAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleGoogleAuth = useCallback(async () => {
+  const handleGoogleAuth = useCallback(async (type: 'register' | 'login' = 'register' ) => {
     setIsLoading(true);
     setError(null);
     
