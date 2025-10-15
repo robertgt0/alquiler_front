@@ -3,8 +3,8 @@
 import Mapa from "./componentes/mapa/MapaWrapper";
 import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
 import HomeFixer from "./componentes/ListaCategorias/HomeFixer";
-import type { Categoria } from "./componentes/ListaCategorias/tipos"; // tipos
-import Footer from "./componentes/Footer/Footer"; // ✅ Import correcto según tu estructura
+import type { Categoria } from "./componentes/ListaCategorias/tipos";
+import Footer from "./componentes/Footer/Footer";
 
 // Solo datos (sin funciones aquí)
 const categoriasDemo: Categoria[] = [
@@ -28,8 +28,6 @@ const categoriasDemo: Categoria[] = [
   { id: 18, titulo: "Mudanza",               descripcion: "Transporte y mudanzas",             totalServicios: 124, icono: "🚚" },
   { id: 19, titulo: "Costura",               descripcion: "Confección y arreglos",             totalServicios: 67,  icono: "🧵" },
   { id: 20, titulo: "Peluquería",            descripcion: "Corte y peinado",                   totalServicios: 145, icono: "💇" },
-
-  // 👇 nuevas categorías para que aparezca el botón "Ver más"
   { id: 21, titulo: "Domótica",              descripcion: "Automatización del hogar",          totalServicios: 72,  icono: "🏠" },
   { id: 22, titulo: "Pisos y Cerámica",      descripcion: "Colocación y reparación",           totalServicios: 83,  icono: "🧩" },
   { id: 23, titulo: "Toldos y Persianas",    descripcion: "Instalación y mantenimiento",       totalServicios: 44,  icono: "🪟" },
@@ -51,25 +49,18 @@ const categoriasDemo: Categoria[] = [
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      {/* Puedes colocar aquí el contenido de tu página principal */}
-
       <h1 className="text-4xl font-bold text-center">¡Bienvenido a Servineo!</h1>
       <p className="mt-4 text-lg text-center">Tu plataforma de servicios.</p>
 
-      <section className="my-5">
+      <section className="my-5 w-full">
         <Mapa />
       </section>
 
-      {/* Aquí podrías añadir otros componentes como el CarruselInspirador o CarruselOfertas */}
-      {/* <CarruselInspirador /> */}
-      {/* <CarruselOfertas /> */}
-
-      {/* 👇 Aquí usamos el Fixer: recibe datos, no funciones */}
-      <section className="my-5">
+      <section className="my-5 w-full">
         <HomeFixer categorias={categoriasDemo} />
       </section>
 
-      <section className="my-5">
+      <section className="my-5 w-full">
         <CarruselOfertas />
       </section>
 
