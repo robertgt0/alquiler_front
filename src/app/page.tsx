@@ -2,6 +2,7 @@
 
 import Mapa from "./componentes/mapa/MapaWrapper";
 import Footer from "./componentes/Footer/Footer";
+import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
 import CarruselInspirador from "./componentes/CarruselInspirador/CarruselInspirador";
 
 export default function Home() {
@@ -16,7 +17,9 @@ export default function Home() {
         <section className="my-10">
         <Mapa />
       </section>
-      
+      <section className="my-5 w-full">
+        <CarruselOfertas />
+      </section>
       <Footer />
     </main>
     
