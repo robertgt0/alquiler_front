@@ -39,5 +39,3 @@ const FixerPopup: FC<{ fixer: Fixer }> = ({ fixer }) => {
 };
 
 export default FixerPopup;
-
-
