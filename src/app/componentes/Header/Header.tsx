@@ -44,7 +44,7 @@ export default function Header() {
         <div className="flex items-center">
           <Link href="/">
               <Image
-                src="/header_img/logo1.jpg"
+                src="/header_img/logo2.jpg"
                 alt="Servineo Logo"
                 width={40}
                 height={40}
