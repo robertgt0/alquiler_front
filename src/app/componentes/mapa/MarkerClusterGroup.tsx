@@ -25,6 +25,7 @@ const MarkerClusterGroup = ({ markers, color = "#2563eb" }: MarkerClusterGroupPr
     if (!map) return;
 
     const clusterGroup = (L as any).markerClusterGroup({
+    const clusterGroup: L.MarkerClusterGroup = L.markerClusterGroup({
       iconCreateFunction: (cluster) => {
         const count = cluster.getChildCount();
 
