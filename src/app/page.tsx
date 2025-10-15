@@ -55,8 +55,8 @@ export default function Home() {
   return (
     <main>
       {/* Puedes colocar aquí el contenido de tu página principal */}
-      <h1 className="text-4xl font-bold text-center">¡Bienvenido a Servineo!</h1>
-      <p className="mt-4 text-lg text-center">Tu plataforma de servicios.</p>
+      <h1 className="text-4xl font-bold text-center"></h1>
+      <p className="mt-1 text-lg text-center"></p>
       <section className="my-5">
         <CarruselInspirador />
       </section>
