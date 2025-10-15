@@ -11,7 +11,6 @@ export interface Offer {
 }
 
 export async function getOfferById(id: string): Promise<Offer> {
-  // Simula llamada a backend (mock)
   await new Promise((r) => setTimeout(r, 300));
   return {
     id,
@@ -24,9 +23,9 @@ export async function getOfferById(id: string): Promise<Offer> {
     ownerId: 'fixer-123',
     contact: { name: 'Manuel Quispe', whatsapp: '+591 625-4517' },
     images: [
-      '/images/ofertas/grifo-1.jpg',
-      '/images/ofertas/grifo-2.jpg',
-      '/images/ofertas/grifo-3.jpg',
+      'https://picsum.photos/seed/oferta1/800/500',
+      'https://picsum.photos/seed/oferta2/800/500',
+      'https://picsum.photos/seed/oferta3/800/500',
     ],
   };
 }
