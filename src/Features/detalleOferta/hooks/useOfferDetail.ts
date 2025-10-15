@@ -19,7 +19,7 @@ export function useOfferDetail(id: string | undefined) {
           setData(res);
           setStatus('success');
         }
-      } catch (_e) {
+      } catch {} {
         if (active) setStatus('error');
       }
     })();
