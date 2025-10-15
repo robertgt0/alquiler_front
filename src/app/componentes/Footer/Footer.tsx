@@ -1,18 +1,22 @@
+// components/Footer/Footer.tsx
+
 'use client';
 
-// LÍNEA CORREGIDA: useState está dentro de las llaves {}
-import React, { useState } from 'react'; 
-import Image from 'next/image';
+import React, { useState } from 'react';
+// ELIMINADO: Ya no se usa Image
+// import Image from 'next/image';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
 import Modal from './../reutilizables/Modal';
+// AÑADIDO: Importamos tu componente de icono
+import Icono from './../Header/Icono';
 
-// Contenido para cada modal
+// Contenido para cada modal (sin cambios)
 const modalContents = {
   privacy: {
     title: 'Política de Privacidad',
     content: (
       <>
-        <p>En **Servineo**, valoramos la privacidad de nuestros usuarios. Esta política explica cómo recopilamos, usamos y protegemos tu información personal:</p>
+        <p>En <strong>Servineo</strong>, valoramos la privacidad de nuestros usuarios. Esta política explica cómo recopilamos, usamos y protegemos tu información personal:</p>
         <p><strong>Datos recopilados:</strong> nombre, correo electrónico, teléfono y datos necesarios para prestar el servicio.</p>
         <p><strong>Uso de la información:</strong> solo utilizamos tus datos para gestionar solicitudes, brindar soporte y mejorar nuestros servicios.</p>
         <p><strong>Protección:</strong> aplicamos medidas técnicas y organizativas para resguardar tu información.</p>
@@ -88,13 +92,12 @@ const Footer = () => {
                 
                 <div className="space-y-4">
                     <div className="flex items-center justify-center md:justify-start">
-                        <Image 
-                          src="/logo-servineo.jpg"
-                          alt="Logo de Servineo"
-                          width={50}
-                          height={50}
-                          className="mr-3"
-                        />
+                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                        {/* Se reemplaza <Image> por <Icono> */}
+                        <div className="mr-3">
+                            <Icono size={50} />
+                        </div>
+                        {/* --- FIN DE LA MODIFICACIÓN --- */}
                         <h3 className="text-2xl font-bold">Servineo</h3>
                     </div>
                     <p className="text-[#b9ddff]">La plataforma líder que conecta clientes con proveedores de servicios profesionales. Encuentra el fixer perfecto para tu proyecto.</p>
@@ -109,26 +112,23 @@ const Footer = () => {
                         <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-center md:text-left">¿Cómo funciona?</button>
                     </nav>
                 </div>
-                {/* --- SECCIÓN DE SOPORTE MODIFICADA --- */}
+                
                 <div className="space-y-4">
                     <h4 className="text-xl font-semibold">Soporte</h4>
                     <ul className="space-y-3">
                         <li className="flex items-center justify-center md:justify-start">
-                            {/* Enlace para abrir WhatsApp en una nueva pestaña */}
                             <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors">
                                 <FaPhone className="mr-3 text-[#52abff]" />
                                 <span>+591 73782241</span>
                             </a>
                         </li>
                         <li className="flex items-center justify-center md:justify-start">
-                            {/* Enlace para abrir el cliente de correo */}
                             <a href="mailto:servineo@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors">
                                 <FaEnvelope className="mr-3 text-[#52abff]" />
                                 <span>servineo@gmail.com</span>
                             </a>
                         </li>
                         <li className="flex items-center justify-center md:justify-start">
-                            {/* Enlace para abrir Google Maps en una nueva pestaña */}
                             <a href="https://www.google.com/maps/search/?api=1&query=Cochabamba,Cercado" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors">
                                 <FaMapMarkerAlt className="mr-3 text-[#52abff]" />
                                 <span>Cochabamba, Cercado</span>
@@ -136,11 +136,10 @@ const Footer = () => {
                         </li>
                     </ul>
                 </div>
-                {/* --- FIN DE LA SECCIÓN MODIFICADA --- */}
             </div>
           
           <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-sm text-[#89c9ff]">&copy; {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
+            <p className="text-sm text-[#89c9ff]">© {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
             <div className="flex flex-wrap justify-center gap-4">
               <button onClick={() => setActiveModal('privacy')} className="text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-3 py-1 rounded-md">Política de privacidad</button>
               <button onClick={() => setActiveModal('terms')} className="text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-3 py-1 rounded-md">Términos de uso</button>

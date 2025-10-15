@@ -1,7 +1,7 @@
 // src/app/page.tsx
 
 import Mapa from "./componentes/mapa/MapaWrapper";
-
+import Footer from "./componentes/Footer/Footer";
 export default function Home() {
   return (
     <main>
@@ -11,7 +11,7 @@ export default function Home() {
         <section className="my-10">
         <Mapa />
       </section>
-     
+      <Footer />
     </main>
     
 
