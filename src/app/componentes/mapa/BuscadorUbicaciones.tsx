@@ -1,4 +1,4 @@
-// components/BuscarUbicaciones.tsx
+// components/BuscarUbicacion.tsx
 
 "use client";
 
