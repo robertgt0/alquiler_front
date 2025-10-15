@@ -65,9 +65,7 @@ export default function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF]">
-            Ser Fixer
-          </button>
+                              
           <Link href="/login">
             <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF]">
               Iniciar Sesión
