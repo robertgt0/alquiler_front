@@ -35,7 +35,7 @@ export default function RootLayout({
         <Header />
         
         {/* ✨ SOLUCIÓN DE ESPACIO: Aplicar padding condicional para móviles ✨ */}
-        <div className="pt-32 pb-28 sm:pt-0 sm:pb-0">
+        <div className="pt-8 pb-5 sm:pt-0 sm:pb-0">
           {children}
         </div>
       </body>
