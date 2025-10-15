@@ -1,3 +1,4 @@
+// components/MakerClusterGroup.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -14,15 +15,49 @@ interface MarkerClusterGroupProps {
     popup?: string;
     icon?: L.DivIcon | L.Icon;
   }[];
+  color?: string; // Nuevo parámetro opcional
 }
 
-const MarkerClusterGroup = ({ markers }: MarkerClusterGroupProps) => {
+const MarkerClusterGroup = ({ markers, color = "#2563eb" }: MarkerClusterGroupProps) => {
   const map = useMap();
 
   useEffect(() => {
     if (!map) return;
 
-    const clusterGroup = (L as any).markerClusterGroup();
+    const clusterGroup = (L as any).markerClusterGroup({
+      iconCreateFunction: (cluster) => {
+        const count = cluster.getChildCount();
+
+        // Color del círculo y texto dinámico
+        const size =
+          count < 10 ? "small" : count < 50 ? "medium" : "large";
+
+        const html = `
+          <div style="
+            background-color: ${color};
+            color: white;
+            border-radius: 50%;
+            width: ${size === "small" ? 30 : size === "medium" ? 40 : 50}px;
+            height: ${size === "small" ? 30 : size === "medium" ? 40 : 50}px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: ${size === "small" ? 12 : size === "medium" ? 14 : 16}px;
+            font-weight: bold;
+            border: 2px solid white;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+          ">
+            ${count}
+          </div>
+        `;
+
+        return L.divIcon({
+          html,
+          className: "custom-cluster-icon",
+          iconSize: L.point(40, 40, true),
+        });
+      },
+    });
 
     markers.forEach((m) => {
       const marker = L.marker(m.position, { icon: m.icon });
@@ -35,7 +70,7 @@ const MarkerClusterGroup = ({ markers }: MarkerClusterGroupProps) => {
     return () => {
       map.removeLayer(clusterGroup);
     };
-  }, [map, markers]);
+  }, [map, markers, color]);
 
   return null;
 };

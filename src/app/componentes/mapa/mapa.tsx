@@ -4,23 +4,36 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect } from "react";
+import ReactDOM from "react-dom/client"; // MODIFICADO: Importamos ReactDOM para React 18+
 import ReactDOMServer from "react-dom/server";
 import UbicacionIcon from "./UbicacionIcon";
 import MarkerClusterGroup from "./MarkerClusterGroup";
-import { Ubicacion, Fixer } from "../../types";
+import { Fixer } from "./FixerPopup";
+import { Ubicacion } from "../../types";
 
-// 🔹 Tipado seguro para Leaflet
 interface IconDefaultWithPrivate extends L.Icon.Default {
   _getIconUrl?: () => void;
 }
 
-// Corrige los íconos de Leaflet sin usar 'any'
 delete (L.Icon.Default.prototype as unknown as IconDefaultWithPrivate)._getIconUrl;
 
+const blueMarkerIcon = new L.Icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png",
+  shadowUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  shadowUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
 interface MapaProps {
@@ -32,14 +45,56 @@ interface MapaProps {
 
 function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
   const map = useMap();
+  useEffect(() => {
+    if (ubicacion) map.flyTo(ubicacion.posicion, 17, { duration: 2 });
+  }, [ubicacion, map]);
+  return null;
+}
+
+// ==================================================================
+// ✅ NUEVO COMPONENTE PARA MOSTRAR EL CONTADOR DE FIXERS
+// ==================================================================
+function FixerCountControl({ fixerCount }: { fixerCount: number }) {
+  const map = useMap();
 
   useEffect(() => {
-    if (ubicacion) {
-      map.flyTo(ubicacion.posicion, 18, { duration: 2 });
-    }
-  }, [ubicacion, map]);
+    // Creamos una clase para el control personalizado
+    const FixerCounter = L.Control.extend({
+      onAdd: function () {
+        // Creamos el contenedor del DOM para nuestro contador
+        const div = L.DomUtil.create("div", "fixer-counter-control");
+        // Evitamos que los clics en el contador se propaguen al mapa
+        L.DomEvent.disableClickPropagation(div);
+        return div;
+      },
+    });
 
-  return null;
+    const control = new FixerCounter({ position: "topright" });
+    control.addTo(map);
+
+    // Renderizamos nuestro componente React dentro del contenedor del control
+    const controlContainer = control.getContainer();
+    if (controlContainer) {
+      const message =
+        fixerCount > 0 ? (
+          <div style={{ backgroundColor: '#e0f2fe', color: '#0c4a6e', padding: '6px 12px', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '14px', whiteSpace: 'nowrap' }}>
+            <strong style={{ fontWeight: 'bold' }}>{fixerCount}</strong> Fixers Activos
+          </div>
+        ) : (
+          <div style={{ backgroundColor: '#ffedd5', color: '#9a3412', padding: '6px 12px', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', fontSize: '14px', whiteSpace: 'nowrap' }}>
+            ¡No hay fixers cerca!
+          </div>
+        );
+      ReactDOM.createRoot(controlContainer).render(message);
+    }
+
+    // Función de limpieza para eliminar el control cuando el componente se desmonte
+    return () => {
+      map.removeControl(control);
+    };
+  }, [map, fixerCount]); // Se vuelve a ejecutar si el mapa o el contador cambian
+
+  return null; // Este componente no renderiza nada directamente en el DOM de React
 }
 
 export default function Mapa({
@@ -50,8 +105,7 @@ export default function Mapa({
 }: MapaProps) {
   const centroInicial: [number, number] = [-17.3895, -66.1568];
 
-  // 🔹 Crea un ícono HTML con el componente UbicacionIcon
-  const crearIcono = (onClick?: () => void) =>
+  const crearIconoFixer = (onClick?: () => void) =>
     L.divIcon({
       className: "custom-marker",
       html: ReactDOMServer.renderToString(<UbicacionIcon onClick={onClick} />),
@@ -59,28 +113,99 @@ export default function Mapa({
       iconAnchor: [15, 30],
     });
 
-  // 🔹 Preparar markers de fixers para el cluster
-  const fixerMarkers = fixers.map((f) => ({
-    id: f._id,
-    position: [f.posicion.lat, f.posicion.lng] as [number, number],
-    popup: `
-      <div style="width: 220px; padding: 8px;">
-        <h3 style="margin: 0 0 5px 0; color: #2563eb; font-size: 14px;">${f.nombre}</h3>
-        <p style="margin: 0 0 5px 0; font-size: 12px; color: #666; background: #f3f4f6; padding: 4px; border-radius: 4px;">
-          🛠️ ${f.especialidad}
-        </p>
-        <p style="margin: 0 0 8px 0; font-size: 11px; color: #4b5563;">${f.descripcion || 'Especialista disponible'}</p>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="color: #16a34a; font-size: 11px;">⭐ ${f.rating || 4.5}/5</span>
-          ${f.verified ? '<span style="color: #059669; font-size: 10px;">✅ Verificado</span>' : ''}
+  const fixerMarkers = fixers.map((f) => {
+    const iniciales = f.nombre
+      ? f.nombre
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .substring(0, 2)
+          .toUpperCase()
+      : "FX";
+
+    const especialidades =
+      f.especialidad
+        ?.split(",")
+        .map(
+          (esp) => `
+          <span style="
+            background:#eff6ff;
+            color:#2563eb;
+            font-size:11px;
+            padding:3px 8px;
+            border-radius:12px;
+            margin-right:4px;
+            display:inline-block;
+          ">${esp.trim()}</span>`
+        )
+        .join("") || "";
+
+    const popupHtml = `
+      <div style="width:250px;font-family:'Inter',sans-serif;padding:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="
+            background:#2563eb;
+            color:white;
+            border-radius:50%;
+            width:40px;
+            height:40px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-weight:600;
+          ">
+            ${iniciales}
+          </div>
+          <div style="flex:1;">
+            <h3 style="margin:0;font-size:14px;color:#111827;display:flex;align-items:center;gap:5px;">
+              ${f.nombre}
+              ${f.verified ? '<span style="color:#2563eb;">✔️</span>' : ""}
+            </h3>
+            <p style="margin:2px 0 0 0;font-size:12px;color:#6b7280;">
+              ⭐ ${f.rating || 4.9} 
+              <span style="color:#9ca3af;">(${
+                f.rating || "156 reseñas"
+              })</span>
+            </p>
+          </div>
         </div>
+
+        <p style="margin:8px 0 6px 0;font-size:12px;color:#374151;">
+          ${f.descripcion || "Especialista en instalaciones domésticas"}
+        </p>
+
+        <div style="margin-bottom:8px;">${especialidades}</div>
+
+        ${
+          f.whatsapp
+            ? `<a href="https://wa.me/${f.whatsapp.replace(
+                /\D/g,
+                ""
+              )}?text=${encodeURIComponent(
+                "Hola " +
+                  f.nombre +
+                  ", vi tu perfil en FixerMap y quiero más información."
+              )}" target="_blank"
+                style="display:flex;align-items:center;justify-content:center;gap:6px;
+                background:#25D366;color:white;font-weight:500;border-radius:6px;
+                text-decoration:none;padding:8px 0;font-size:13px;margin-top:8px;">
+                Contactar por WhatsApp
+              </a>`
+            : ""
+        }
       </div>
-    `,
-    icon: crearIcono(),
-  }));
+    `;
+
+    return {
+      id: f._id,
+      position: [f.posicion.lat, f.posicion.lng] as [number, number],
+      popup: popupHtml,
+      icon: crearIconoFixer(),
+    };
+  });
 
   return (
-    <div className="w-full max-w-6xl h-[300px] sm:h-[400px] md:h-[500px] lg:h-[550px] mx-auto px-4">
+    <div className="w-full max-w-6xl h-[300px] sm:h-[400px] md:h-[500px] lg:h-[500px] mx-auto px-4">
       <MapContainer
         center={centroInicial}
         zoom={13}
@@ -91,22 +216,27 @@ export default function Mapa({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Marcadores normales */}
-        {ubicaciones.map((u) => (
+        {/* 🔵 Solo muestra una ubicación azul: la seleccionada */}
+        {ubicacionSeleccionada && (
           <Marker
-            key={u.id}
-            position={u.posicion}
-            icon={crearIcono(() => onUbicacionClick?.(u))}
+            position={ubicacionSeleccionada.posicion}
+            icon={blueMarkerIcon}
+            eventHandlers={{
+              click: () => onUbicacionClick?.(ubicacionSeleccionada),
+            }}
           >
-            <Popup>{u.nombre}</Popup>
+            <Popup>{ubicacionSeleccionada.nombre}</Popup>
           </Marker>
-        ))}
+        )}
 
-        {/* Fixers agrupados en clusters */}
-        <MarkerClusterGroup markers={fixerMarkers} />
+        {/* 🔧 Fixers con icono personalizado */}
+        <MarkerClusterGroup markers={fixerMarkers} color="#1366fd" />
 
-        {/* Actualiza vista */}
+        {/* 🔁 Centra vista al seleccionar */}
         <ActualizarVista ubicacion={ubicacionSeleccionada} />
+
+        {/* ✅ MODIFICADO: Añadimos el nuevo control al mapa */}
+        <FixerCountControl fixerCount={fixers.length} />
       </MapContainer>
     </div>
   );
