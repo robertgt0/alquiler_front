@@ -1,22 +1,33 @@
-//Componente del botón agendar cita + estado de abrir/cerrar el modal
 "use client";
-import { useState } from "react";
-import { AppointmentModal } from "./appointment-modal";
 
-export default function AgendarCitaButton() {
+import { useState } from "react";
+import { Button } from "@/app/epic_example/components/ui/button";
+import { AppointmentModal } from "@/app/epic_example/components/appointment-modal";
+
+export default function AppointmentButton() {
   const [open, setOpen] = useState(false);
+
+  const providerId = "68e867119573cfe163a27fb3"; // tu proveedor real
+  const clienteId  = "68e867119573cfe163a27fb1"; // tu cliente real
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setOpen(true)}
-        className="px-5 py-2 bg-[#4289CC] text-white rounded-lg hover:bg-blue-700 transition transform hover:scale-105 duration-300 font-medium"
+        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 py-2 transition"
       >
-        + Appointment
-      </button>
+        Agendar Cita
+      </Button>
 
-      {/* 🪟 Modal */}
-      <AppointmentModal open={open} onOpenChange={(v) => setOpen(v)} />
+      <AppointmentModal
+        open={open}
+        onOpenChange={setOpen}
+        patientName="Juan Pérez"
+        providerId={providerId}
+        clienteId={clienteId}        // 👈 nuevo
+        slotMinutes={30}
+        hours="08:00-12:00,14:00-18:00"
+      />
     </>
   );
 }
