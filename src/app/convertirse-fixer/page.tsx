@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import RegisterForm from "./components/RegisterForm";
-import RegisterFormPrefPago from "./components/registerform_prefpago";
+import RegisterFormPrefPago from "./components/registerformTermyCond";
 import Header from "./Header";
 
 type Step = 0 | 1;

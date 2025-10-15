@@ -21,6 +21,19 @@ export default function RegisterForm({ onSuccess }: Props) {
       setMessage('❌ El carnet debe contener solo números.');
       return;
     }
+
+    // ============================
+    // 🔧 MODO PRUEBA (sin backend)
+    // Avanza al siguiente paso sin llamar a /api/test
+    // ============================
+    setMessage("🧪 Modo prueba: saltando validación del servidor…");
+    onSuccess({ ci, email });
+    return; // <-- Importante para NO ejecutar el bloque comentado de abajo
+
+    // ============================================================
+    // ✅ MODO REAL (descomenta para volver a validar con el backend)
+    // ============================================================
+    /*
     setLoading(true);
     try {
       const res = await fetch('/api/test', {
@@ -44,7 +57,7 @@ export default function RegisterForm({ onSuccess }: Props) {
     } finally {
       setLoading(false);
     }
-
+    */
   };
 
   return (
@@ -109,7 +122,7 @@ export default function RegisterForm({ onSuccess }: Props) {
 
       <button
         type="submit"
-        disabled = {loading}
+        disabled={loading}
         style={{
           backgroundColor: '#0e418dff',
           color: 'white',
@@ -120,7 +133,6 @@ export default function RegisterForm({ onSuccess }: Props) {
         }}
       >
         {loading ? "Validando..." : "Siguiente"}
-        
       </button>
 
       {message && (
