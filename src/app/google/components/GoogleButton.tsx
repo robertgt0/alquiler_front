@@ -1,3 +1,4 @@
+// src/app/google/components/GoogleButton.tsx
 'use client';
 
 import React from 'react';
