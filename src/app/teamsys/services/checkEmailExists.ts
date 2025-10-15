@@ -3,7 +3,7 @@ export async function checkEmailExists(email: string): Promise<boolean> {
   if (!email) return false;
 
   try {
-    const res = await fetch(`/api/users/exists?email=${encodeURIComponent(email)}`);
+    const res = await fetch(`http://localhost:5000/api/teamsys/exists?email=${encodeURIComponent(email)}`);
     if (!res.ok) throw new Error('Error en la solicitud');
 
     const data = await res.json();
