@@ -156,13 +156,12 @@ export default function Mapa({
   });
 
   return (
-    <div className="w-full px-2 sm:px-4">
-      {/* Contenedor del mapa */}
+    <div className="w-full max-w-6xl mx-auto px-4">
       <div className="h-[300px] sm:h-[350px] md:h-[500px] lg:h-[400px] relative">
         <MapContainer
           center={centroInicial}
           zoom={13}
-          className="w-full h-full rounded-none sm:rounded-lg shadow-lg z-0"
+          className="w-full h-full rounded-lg shadow-lg z-0"
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
@@ -185,7 +184,7 @@ export default function Mapa({
           <ActualizarVista ubicacion={ubicacionSeleccionada} />
         </MapContainer>
 
-        {/* ✅ Contador ENCIMA del mapa - Solo visible en desktop/tablet */}
+        {/* ✅ Contador ENCIMA del mapa - Solo en PC/Tablet */}
         <div className="absolute top-2 right-2 hidden sm:block z-[1000]">
           {fixers.length > 0 ? (
             <div
@@ -220,7 +219,7 @@ export default function Mapa({
         </div>
       </div>
 
-      {/* ✅ Contador DEBAJO del mapa - Solo visible en móvil */}
+      {/* ✅ Contador DEBAJO del mapa - Solo en móvil */}
       <div className="mt-2 text-center block sm:hidden">
         {fixers.length > 0 ? (
           <div
