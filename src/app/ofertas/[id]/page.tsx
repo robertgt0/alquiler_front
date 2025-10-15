@@ -1,12 +1,14 @@
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import OfferDetailModal from '@/Features/detalleOferta/components/OfferDetailModal';
-import { useOfferDetail } from '@/Features/detalleOferta/hooks/useOfferDetail';
+import OfferDetailModal from '../../../Features/detalleOferta/components/OfferDetailModal';
+import { useOfferDetail } from '../../../Features/detalleOferta/hooks/useOfferDetail';
 
 export default function OfferDetailPage() {
   const router = useRouter();
-  const params = useParams<{ id: string }>();
-  const id = params?.id;
+  const params = useParams<{ id: string | string[] }>();
+  const rawId = params?.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
   const { data, status } = useOfferDetail(id);
 
   const close = () => router.back(); // o router.push('/ofertas')
