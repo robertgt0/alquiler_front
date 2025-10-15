@@ -106,22 +106,37 @@ const Footer = () => {
                         <a href="/trabajos-recientes" className="hover:text-[#52abff] transition-colors">Trabajos recientes</a>
                         <a href="/mapa" className="hover:text-[#52abff] transition-colors">Mapa</a>
                         <a href="/servicios" className="hover:text-[#52abff] transition-colors">Lista de servicios</a>
-                        {/* 
-                          AQUÍ ESTÁ LA CORRECCIÓN:
-                          Se cambió "text-left" por "text-center md:text-left" 
-                          para que esté centrado en móviles y alineado a la izquierda en pantallas grandes.
-                        */}
                         <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-center md:text-left">¿Cómo funciona?</button>
                     </nav>
                 </div>
+                {/* --- SECCIÓN DE SOPORTE MODIFICADA --- */}
                 <div className="space-y-4">
                     <h4 className="text-xl font-semibold">Soporte</h4>
                     <ul className="space-y-3">
-                        <li className="flex items-center justify-center md:justify-start"><FaPhone className="mr-3 text-[#52abff]" /><span>+591 73782241</span></li>
-                        <li className="flex items-center justify-center md:justify-start"><FaEnvelope className="mr-3 text-[#52abff]" /><span>servineo@gmail.com</span></li>
-                        <li className="flex items-center justify-center md:justify-start"><FaMapMarkerAlt className="mr-3 text-[#52abff]" /><span>Cochabamba, Cercado</span></li>
+                        <li className="flex items-center justify-center md:justify-start">
+                            {/* Enlace para abrir WhatsApp en una nueva pestaña */}
+                            <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors">
+                                <FaPhone className="mr-3 text-[#52abff]" />
+                                <span>+591 73782241</span>
+                            </a>
+                        </li>
+                        <li className="flex items-center justify-center md:justify-start">
+                            {/* Enlace para abrir el cliente de correo */}
+                            <a href="mailto:servineo@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors">
+                                <FaEnvelope className="mr-3 text-[#52abff]" />
+                                <span>servineo@gmail.com</span>
+                            </a>
+                        </li>
+                        <li className="flex items-center justify-center md:justify-start">
+                            {/* Enlace para abrir Google Maps en una nueva pestaña */}
+                            <a href="https://www.google.com/maps/search/?api=1&query=Cochabamba,Cercado" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors">
+                                <FaMapMarkerAlt className="mr-3 text-[#52abff]" />
+                                <span>Cochabamba, Cercado</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
+                {/* --- FIN DE LA SECCIÓN MODIFICADA --- */}
             </div>
           
           <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
