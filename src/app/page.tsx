@@ -60,14 +60,20 @@ export default function Home() {
       <section className="my-5">
         <CarruselInspirador />
       </section>
-        <section className="my-10">
+
+      {/* Mapa: target for footer "#mapa" link */}
+      <section id="mapa" className="my-10">
         <Mapa />
       </section>
-      <section className="my-5 w-full">
+
+      {/* Lista de servicios: target for footer "#servicios" link */}
+      <section id="servicios" className="my-5 w-full">
         {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
         <HomeFixer categorias={categoriasDemo} />
       </section>
-      <section className="my-5 w-full">
+
+      {/* Trabajos recientes / Ofertas: target for footer "#trabajos-recientes" link */}
+      <section id="trabajos-recientes" className="my-5 w-full">
         <CarruselOfertas />
       </section>
       <Footer />

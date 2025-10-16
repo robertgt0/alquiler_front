@@ -25,6 +25,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Smooth in-page scrolling for fragment links */
+html {
+  scroll-behavior: smooth;
+}
 .user-location-marker {
   animation: pulse 2s infinite;
 }
