@@ -3,32 +3,18 @@ import React from "react";
 
 export default function Header() {
   return (
-    <header
-      style={{
-        backgroundColor: "#92b8ff",
-        color: "white",
-        padding: "1rem 2rem",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
-      }}
-    >
-      <h1 style={{ margin: 0, fontSize: "1.5rem", cursor: "pointer" }}>
-        Servineo
-      </h1>
+    <header className="flex justify-between items-center px-10 py-3 border-b border-gray-200">
+        <div className="flex items-center gap-4">
+          <div className="w-4 h-4 bg-gray-900 rounded-sm" />
+          <h1 className="text-lg font-bold text-gray-900">Servineo</h1>
+        </div>
 
-      <nav style={{ display: "flex", gap: "1.5rem" }}>
-        <a href="#" style={{ color: "white", textDecoration: "none" }}>
-          Ayuda
-        </a>
-        <a href="#" style={{ color: "white", textDecoration: "none" }}>
-          Sobre Nosotros
-        </a>
-        <a href="#" style={{ color: "white", textDecoration: "none" }}>
-          Contacto
-        </a>
-      </nav>
-    </header>
+        <nav className="flex gap-9 text-sm font-medium text-gray-900">
+          <a href="#" className="hover:text-blue-600">Encontrar Fixers</a>
+          <a href="#" className="hover:text-blue-600">Fixer</a>
+          <a href="#" className="hover:text-blue-600">Mis Ofertas</a>
+          <a href="#" className="hover:text-blue-600">Ayuda</a>
+        </nav>
+      </header>
   );
 }
