@@ -11,9 +11,9 @@ export interface DatosFormulario {
 export interface UsuarioDocument {
   nombre: string;
   apellido?: string;
-  telefono: string;
+  telefono?: string;
   correoElectronico: string;
-  password: string;
+  password?: string;
   fotoPerfil?: Buffer; // Binario (imagen)
   ubicacion?: {
     type: 'Point';

@@ -1,14 +1,15 @@
 'use client';
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { MapContainer, TileLayer, Marker, Circle, useMapEvents } from "react-leaflet";
 import 'leaflet/dist/leaflet.css';
 import L from "leaflet";
 import Modal from "react-modal";
 import { UsuarioDocument } from "@/app/registro/interfaces/types";
 import { crearUsuario } from "@/app/teamsys/services/UserService";
-// Leaflet icon fix
+
+// 🧭 Fix de íconos Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -58,126 +59,178 @@ const SelectableMap: React.FC<SelectableMapProps> = ({ ubicacion, setUbicacion, 
 };
 
 export default function RegistroImagen() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-
-  const [datosFormulario, setDatosFormulario] = useState<any>(null); // datos del formulario anterior
+  const [datosFormulario, setDatosFormulario] = useState<any>(null);
   const [file, setFile] = useState<File | null>(null);
   const [ubicacion, setUbicacion] = useState<Location | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState("");
+  const [previewImage, setPreviewImage] = useState<string | null>(null); // URL (Google o blob)
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
+  const isHttpUrl = (v: any) =>
+  typeof v === "string" && /^https?:\/\//i.test(v);
+  
   const maxSize = 2 * 1024 * 1024;
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
 
-  // Recuperar datosFormulario desde sessionStorage
-  useEffect(() => {
-    const datosGuardados = sessionStorage.getItem("datosUsuarioParcial");
-    if (datosGuardados) {
-      try {
-        const datos = JSON.parse(datosGuardados);
+  // 🧠 Recuperar datos del sessionStorage (Google o formulario manual)
+  // Función auxiliar para verificar si es una URL HTTP válida
+useEffect(() => {
+  const datosGuardados = sessionStorage.getItem("datosUsuarioParcial");
+  if (!datosGuardados) {
+    console.warn("⚠️ No hay datos en sessionStorage.");
+    return;
+  }
 
-        // Adaptar nombres de campos
-        const datosAdaptados = {
-          nombre: datos.nombre,
-          apellido: datos.apellido,
-          telefono: datos.telefono,
-          correoElectronico: datos.email || "",  // mapear 'email'
-          password: datos.contraseña || "",      // mapear 'contraseña'
-          terminosYCondiciones: datos.terminosYCondiciones || false,
-        };
-        console.log("Datos del formulario recuperados:", datosAdaptados);
-        setDatosFormulario(datosAdaptados);
-      } catch (err) {
-        console.error("Error al parsear datos del formulario:", err);
-      }
+  try {
+    const datos = JSON.parse(datosGuardados);
+    console.log("🔍 Datos en sessionStorage:", datos);
+
+    let datosAdaptados: any = {};
+
+    // ✅ Caso 1: formulario tradicional
+    if (datos.contraseña && datos.email) {
+      datosAdaptados = {
+        nombre: datos.nombre,
+        apellido: datos.apellido,
+        telefono: datos.telefono,
+        correoElectronico: datos.email,
+        password: datos.contraseña,
+        terminosYCondiciones: datos.terminosYCondiciones,
+      };
     }
-  }, []);
 
+    // ✅ Caso 2: viene de Google
+    else if (datos.correoElectronico) {
+      datosAdaptados = {
+        nombre: datos.nombre,
+        correoElectronico: datos.correoElectronico,
+        fotoPerfil:datos.fotoPerfil,
+        terminosYCondiciones: false,
+      };
+    }
+
+    setDatosFormulario(datosAdaptados);
+    console.log("✅ Datos adaptados para envío:", datosAdaptados);
+
+    // 🖼️ Si hay una foto de Google, mostrarla
+    if (isHttpUrl(datos.fotoPerfil)) {
+      setPreviewImage(datos.fotoPerfil);
+    }
+
+  } catch (err) {
+    console.error("❌ Error al parsear sessionStorage:", err);
+  }
+}, []);
+
+
+  // 📸 Manejar imagen
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
-    if (!allowedTypes.includes(selected.type)) {
-      setError("Formato no permitido. Usa JPG o PNG.");
-      setFile(null);
-      return;
-    }
-    if (selected.size > maxSize) {
-      setError("Archivo demasiado grande. Máx 2MB.");
-      setFile(null);
-      return;
-    }
-    setError("");
-    setFile(selected);
+  const selected = e.target.files?.[0];
+  if (!selected) return;
+
+  if (!allowedTypes.includes(selected.type)) {
+    setError("Formato no permitido. Usa JPG o PNG.");
+    setFile(null);
+    setFilePreview(null);
+    return;
+  }
+  if (selected.size > maxSize) {
+    setError("Archivo demasiado grande. Máx 2MB.");
+    setFile(null);
+    setFilePreview(null);
+    return;
+  }
+
+  setError("");
+  setFile(selected);
+
+  // crea una URL local para previsualizar el file
+  const url = URL.createObjectURL(selected);
+  setFilePreview(url);
+};
+
+// Limpia la objectURL cuando cambie el archivo o se desmonte
+useEffect(() => {
+  return () => {
+    if (filePreview) URL.revokeObjectURL(filePreview);
   };
+}, [filePreview]);
 
+
+  // 🚀 Continuar registro
   const handleContinuar = async () => {
-    if (!file) {
-      setError("Selecciona una imagen antes de continuar.");
-      return;
-    }
-    if (!accepted) {
-      setError("Debes aceptar los términos y condiciones.");
-      return;
-    }
-    if (!ubicacion) {
-      setError("Selecciona tu ubicación en el mapa.");
-      return;
+  if (!accepted) return setError("Debes aceptar los términos y condiciones.");
+  if (!ubicacion) return setError("Selecciona tu ubicación en el mapa.");
+
+  try {
+    let fotoBuffer: Buffer | undefined = undefined;
+
+    if (file) {
+      // Caso 1: el usuario subió un archivo
+      const arrayBuffer = await file.arrayBuffer();
+      fotoBuffer = Buffer.from(arrayBuffer);
+    } else if (isHttpUrl(previewImage)) {
+      // Caso 2: imagen de Google
+      const res = await fetch(previewImage as string);
+      const arrayBuffer = await res.arrayBuffer();
+      fotoBuffer = Buffer.from(arrayBuffer);
+    } else {
+      return setError("Selecciona una imagen o usa tu foto de Google.");
     }
 
-    // Aquí tienes todos los datos juntos
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const usuario: UsuarioDocument = {
-      nombre: datosFormulario?.nombre || "",
-      apellido: datosFormulario?.apellido,
-      telefono: datosFormulario?.telefono || "",
-      correoElectronico: datosFormulario?.correoElectronico || "",
-      password: datosFormulario?.password || "",
-      fotoPerfil: buffer,
+    // 🧩 Crear objeto base
+    const usuario: any = {
+      nombre: datosFormulario?.nombre ?? "",
+      correoElectronico: datosFormulario?.correoElectronico ?? "",
+      terminosYCondiciones: accepted,
+      fotoPerfil: fotoBuffer,
       ubicacion: {
         type: "Point",
         coordinates: [ubicacion.lng, ubicacion.lat],
       },
-      terminosYCondiciones: accepted,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    console.log("Datos completos a enviar:", usuario);
-    crearUsuario(usuario)
-      .then((response) => {
-        console.log("Usuario creado exitosamente:", response);
-      })
-      .catch((error) => {
-        console.error("Error al crear usuario:", error);
-      });
+    // 🧱 Agregar campos opcionales solo si existen
+    if (datosFormulario?.apellido) usuario.apellido = datosFormulario.apellido;
+    if (datosFormulario?.telefono) usuario.telefono = datosFormulario.telefono;
+    if (datosFormulario?.password) usuario.password = datosFormulario.password;
 
-    // Llama aquí a tu función para enviar al backend o API
-    // sendToAPI(datosCompletos);
-    alert("Formulario listo para enviar. Revisa la consola.");
+    console.log("📤 Usuario listo para crear:", usuario);
+
+    await crearUsuario(usuario);
+
+    alert("Usuario registrado exitosamente 🎉");
     sessionStorage.removeItem("datosUsuarioParcial");
-  };
+    router.push("/");
+  } catch (err) {
+    console.error("❌ Error al crear usuario:", err);
+    setError("Hubo un error al registrar el usuario.");
+  }
+};
 
+  // 🧩 Render
   return (
     <form className="flex flex-col gap-4 items-center border p-6 rounded shadow-md w-full max-w-md bg-white mx-auto">
-      <h2 className="text-xl font-bold text-center">Subir Imagen y añade una Ubicacion</h2>
+      <h2 className="text-xl font-bold text-center">Subir Imagen y añadir una Ubicación</h2>
 
       <div className="flex gap-4 items-start">
-        {/* Foto */}
         <div className="w-32 h-32 border rounded overflow-hidden">
-          {file ? (
-            <img src={URL.createObjectURL(file)} alt="preview" className="w-32 h-32 object-cover" />
-          ) : (
-            <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="persona ejemplo" className="w-32 h-32 object-contain" />
-          )}
-        </div>
+  <img
+    src={filePreview ?? previewImage ?? DEFAULT_AVATAR}
+    alt="preview"
+    className="w-32 h-32 object-cover"
+  />
+</div>
 
-        {/* Mini mapa emergente */}
+        {/* Mapa mini */}
         <div onClick={() => setModalOpen(true)} className="cursor-pointer border w-32 h-32 rounded overflow-hidden relative">
-          <SelectableMap ubicacion={ubicacion} setUbicacion={setUbicacion} zoom={15} height="128px" width="128px" />
+          <SelectableMap ubicacion={ubicacion} setUbicacion={setUbicacion} height="128px" width="128px" />
           <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center text-white font-bold">
             📍
           </div>
@@ -193,7 +246,7 @@ export default function RegistroImagen() {
         </button>
       </Modal>
 
-      {/* Archivo */}
+      {/* Subir archivo */}
       <input type="file" accept=".jpg,.jpeg,.png" onChange={handleFileChange} id="fileInput" className="hidden" />
       <label htmlFor="fileInput" className="bg-blue-600 text-white py-1 px-4 rounded cursor-pointer hover:bg-blue-700">
         Insertar Foto
@@ -209,25 +262,13 @@ export default function RegistroImagen() {
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
-     <button
-  type="button"
-  onClick={async () => {
-    await handleContinuar(); // tu función original
-
-    // 👇 Reemplaza el contenido de la página por un "Home" simple
-    document.body.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#fff;">
-        <h1 style="font-size:3rem;font-family:sans-serif;">Home ya funciona almenos chicos pipipi</h1>
-      </div>
-      <p style="text-align:center;font-family:sans-serif;">¡tengo hambre!</p>
-   
-    `;
-  }}
-  className="bg-blue-600 text-white py-2 px-6 rounded-xl hover:bg-red-600 w-full"
->
-  Terminar Registro
-</button>
-
+      <button
+        type="button"
+        onClick={handleContinuar}
+        className="bg-blue-600 text-white py-2 px-6 rounded-xl hover:bg-red-600 w-full"
+      >
+        Terminar Registro
+      </button>
     </form>
   );
 }

@@ -3,68 +3,77 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { usoGoogleAuth }  from '../../../google/hooks/usoGoogleAuth';
-
+import { usoGoogleAuth } from '../../../google/hooks/usoGoogleAuth';
 
 export default function GoogleCallbackPage() {
   const router = useRouter();
-  const {
-      datosFormularioGoogle,
-      
-    } = usoGoogleAuth();
-
+  const { finalizeFromGoogleProfile } = usoGoogleAuth(); // ✅ usamos esta función en lugar de datosFormularioGoogle
   const searchParams = useSearchParams();
+
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
-    
+
   useEffect(() => {
     const handleCallback = async () => {
       try {
         const code = searchParams.get('code');
         const error = searchParams.get('error');
 
-        if (error) {
-          throw new Error(`Error de Google: ${error}`);
-        }
+        if (error) throw new Error(`Error de Google: ${error}`);
+        if (!code) throw new Error('No se recibió el código de autorización');
 
-        if (!code) {
-          throw new Error('No se recibió el código de autorización');
-        }
-
-        // ENVIAR CÓDIGO AL BACKEND
-        const backend = "http://localhost:5000";
+        const backend = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
         const response = await fetch(`${backend}/api/teamsys/google/callback`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         });
 
         const data = await response.json();
+        console.log('🔹 Respuesta del backend:', data);
 
         if (!response.ok) {
-          router.push('/home');
-        }else{
+  if (data.message === 'usuario ya registrado') {
+    document.body.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#fff;">
+        <h1 style="font-family:sans-serif;color:#888;">Página Home</h1>
+      </div>
+    `;
+    return;
+  } else {
+    throw new Error(data.message || 'Error en la autenticación con Google');
+  }
+}
 
-        // ÉXITO - Backend devolvió usuario y token
-        localStorage.setItem('userToken', data.token);
-        localStorage.setItem('userData', JSON.stringify(data.user));
-        
-        setStatus('success');
-        setMessage('¡Registro con Google exitoso!');
 
-        // Redirigir al dashboard
-        setTimeout(() => {
-          sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormularioGoogle));
-          router.push('/ImagenLocalizacion');
-        }, 1500);
-      }
+// ✅ Extraer datos correctamente desde data.data
+const user = data.data.user;
+const accessToken = data.data.accessToken;
+const refreshToken = data.data.refreshToken;
+
+// ✅ Guardar token y usuario
+localStorage.setItem('userToken', accessToken);
+localStorage.setItem('refreshToken', refreshToken);
+localStorage.setItem('userData', JSON.stringify(user));
+
+// ✅ Guardar en sessionStorage para ImagenLocalizacion
+sessionStorage.setItem('datosUsuarioParcial', JSON.stringify(user));
+
+// ✅ Si quieres, usa el hook para mantener compatibilida
+
+setStatus('success');
+setMessage('¡Registro con Google exitoso!');
+
+// ✅ Redirigir a /ImagenLocalizacion
+setTimeout(() => {
+    router.push('/ImagenLocalizacion');
+  }, 1500);
+
       } catch (error) {
-        console.error(' Error en callback:', error);
+        console.error('❌ Error en callback:', error);
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Error desconocido');
-        
+
         setTimeout(() => {
           router.push('/registro');
         }, 3000);
@@ -72,7 +81,7 @@ export default function GoogleCallbackPage() {
     };
 
     handleCallback();
-  }, [router, searchParams]);
+  }, [router, searchParams, finalizeFromGoogleProfile]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -85,7 +94,7 @@ export default function GoogleCallbackPage() {
               <p className="text-gray-500 mt-2">Completando autenticación con Google</p>
             </>
           )}
-          
+
           {status === 'success' && (
             <>
               <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -97,7 +106,7 @@ export default function GoogleCallbackPage() {
               <p className="text-gray-500 mt-2">{message}</p>
             </>
           )}
-          
+
           {status === 'error' && (
             <>
               <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
