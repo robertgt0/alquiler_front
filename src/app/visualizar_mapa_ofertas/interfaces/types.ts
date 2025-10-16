@@ -16,10 +16,18 @@ export interface Offer {
   rating: number;
   price: number;
   status: 'active' | 'inactive';
+  isActive?: boolean; // Para HU12: filtrar ofertas activas
 }
 
 // Tipo para configuración del mapa
 export interface MapConfig {
   center: Location;
   zoom: number;
+}
+
+// Tipo para marcadores personalizados (HU12)
+export interface MarkerConfig {
+  category: string;
+  color: string;
+  icon: string;
 }
