@@ -755,9 +755,7 @@ export default function MapaWrapper() {
     <div className="flex flex-col items-center">
       {usandoRespaldo && (
         <div className="w-full max-w-6xl px-4 mb-4">
-          <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded">
-            <strong>Modo demostración:</strong> Usando datos de ejemplo
-          </div>
+        
         </div>
       )}
 
