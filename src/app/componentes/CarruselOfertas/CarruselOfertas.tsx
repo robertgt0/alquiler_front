@@ -5,16 +5,16 @@ import { useState, useRef, useEffect } from 'react';
 
 export default function  CarruselOfertas() {
   const servicios = [
-    { id: 1, nombre: 'Consultoría Digital', descripcion: 'Soluciones tecnológicas personalizadas para tu negocio', img: '/img1.jpg' },
-    { id: 2, nombre: 'Desarrollo Web', descripcion: 'Aplicaciones web modernas y escalables', img: '/img1.jpg' },
-    { id: 3, nombre: 'Diseño UX/UI', descripcion: 'Experiencias de usuario intuitivas y atractivas', img: '/img1.jpg' },
-    { id: 4, nombre: 'Marketing Digital', descripcion: 'Estrategias de crecimiento online', img: '/img1.jpg' },
-    { id: 5, nombre: 'Cloud Solutions', descripcion: 'Infraestructura en la nube optimizada', img: '/img1.jpg' },
-    { id: 6, nombre: 'Analítica Avanzada', descripcion: 'Insights basados en datos para decisiones inteligentes', img: '/img1.jpg' },
-    { id: 7, nombre: 'Ciberseguridad', descripcion: 'Protección integral de tus activos digitales', img: '/img1.jpg' },
-    { id: 8, nombre: 'Soporte Técnico', descripcion: 'Asistencia especializada 24/7', img: '/img1.jpg' },
-    { id: 9, nombre: 'Transformación Digital', descripcion: 'Modernización completa de procesos', img: '/img1.jpg' },
-    { id: 10, nombre: 'E-commerce', descripcion: 'Plataformas de venta online optimizadas', img: '/img1.jpg' },
+    { id: 1, nombre: 'Consultoría Digital', descripcion: 'Soluciones tecnológicas personalizadas para tu negocio', img: '/servicio1.jpg' },
+    { id: 2, nombre: 'Desarrollo Web', descripcion: 'Aplicaciones web modernas y escalables', img: '/servicio2.jpg' },
+    { id: 3, nombre: 'Diseño UX/UI', descripcion: 'Experiencias de usuario intuitivas y atractivas', img: '/servicio3.jpg' },
+    { id: 4, nombre: 'Marketing Digital', descripcion: 'Estrategias de crecimiento online', img: '/servicio4.jpg' },
+    { id: 5, nombre: 'Cloud Solutions', descripcion: 'Infraestructura en la nube optimizada', img: '/servicio5.jpg' },
+    { id: 6, nombre: 'Analítica Avanzada', descripcion: 'Insights basados en datos para decisiones inteligentes', img: '/servicio6.jpg' },
+    { id: 7, nombre: 'Ciberseguridad', descripcion: 'Protección integral de tus activos digitales', img: '/servicio7.jpg' },
+    { id: 8, nombre: 'Soporte Técnico', descripcion: 'Asistencia especializada 24/7', img: '/servicio8.jpg' },
+    { id: 9, nombre: 'Transformación Digital', descripcion: 'Modernización completa de procesos', img: '/servicio9.jpg' },
+    { id: 10, nombre: 'E-commerce', descripcion: 'Plataformas de venta online optimizadas', img: '/servicio10.jpg' },
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
