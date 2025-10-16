@@ -16,7 +16,8 @@ export default function BusquedaPage() {
     handlePageChange,
     handleNextPage,
     handlePrevPage,
-    totalItems
+    totalItems,
+    isLoading
   } = usePagination(allJobs, itemsPerPage);
 
   const handleViewDetails = (job: any) => {
@@ -41,13 +42,19 @@ export default function BusquedaPage() {
         
         {/* Lista de trabajos */}
         <div className="space-y-6">
-          {currentItems.map((job, index) => (
-            <JobCard
-              key={`${job.title}-${job.company}-${index}`}
-              {...job}
-              onViewDetails={() => handleViewDetails(job)}
-            />
-          ))}
+          {isLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          ) : (
+            currentItems.map((job, index) => (
+              <JobCard
+                key={`${job.title}-${job.company}-${index}`}
+                {...job}
+                onViewDetails={() => handleViewDetails(job)}
+              />
+            ))
+          )}
         </div>
         
         {/* Pagination */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 
 interface PaginationProps {
   currentPage: number;
@@ -18,6 +18,22 @@ export default function Pagination({
   handlePrevPage
 }: PaginationProps) {
 
+  // Memoizar el array de páginas para evitar recálculos innecesarios
+  const pageNumbers = useMemo(() => {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }, [totalPages]);
+
+  // Memoizar las funciones de callback para evitar re-renderizados
+  const handlePageClick = useCallback((page: number) => {
+    if (page !== currentPage) {
+      handlePageChange(page);
+    }
+  }, [currentPage, handlePageChange]);
+
+  // Validaciones para botones deshabilitados
+  const isPrevDisabled = currentPage === 1;
+  const isNextDisabled = currentPage === totalPages || totalPages === 0;
+
   if (totalPages === 0) return null;
     
   return (
@@ -32,12 +48,13 @@ export default function Pagination({
         {/* Botón Anterior */}
         <button 
           onClick={handlePrevPage}
-          disabled={currentPage === 1}
+          disabled={isPrevDisabled}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-            currentPage === 1 
+            isPrevDisabled
               ? 'text-gray-400 cursor-not-allowed bg-gray-100' 
               : 'text-blue-600 hover:text-white hover:bg-blue-600 hover:shadow-lg transform hover:scale-105 bg-blue-50'
           }`}
+          aria-label="Página anterior"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -47,15 +64,17 @@ export default function Pagination({
         
         {/* Números de página */}
         <div className="flex items-center space-x-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          {pageNumbers.map((page) => (
             <button 
               key={page}
-              onClick={() => handlePageChange(page)}
+              onClick={() => handlePageClick(page)}
               className={`w-12 h-12 rounded-xl font-bold transition-all duration-200 ${
                 page === currentPage
                   ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg transform scale-110'
                   : 'text-blue-600 hover:text-white hover:bg-blue-500 hover:shadow-md bg-blue-50'
               }`}
+              aria-label={`Ir a página ${page}`}
+              aria-current={page === currentPage ? 'page' : undefined}
             >
               {page}
             </button>
@@ -65,12 +84,13 @@ export default function Pagination({
         {/* Botón Siguiente */}
         <button 
           onClick={handleNextPage}
-          disabled={currentPage === totalPages || totalPages === 0}
+          disabled={isNextDisabled}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-            currentPage === totalPages || totalPages === 0 
+            isNextDisabled
               ? 'text-gray-400 cursor-not-allowed bg-gray-100' 
               : 'text-blue-600 hover:text-white hover:bg-blue-600 hover:shadow-lg transform hover:scale-105 bg-blue-50'
           }`}
+          aria-label="Página siguiente"
         >
           Siguiente
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
