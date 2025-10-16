@@ -2,6 +2,7 @@ import { Job } from "../types/job";
 
 // Datos completos de trabajos (más de 10 para probar paginación)
 export const getJobs = (): Job[] => {
+  // Array de trabajos con datos de prueba para la paginación
   const jobs = [
       
     {
@@ -801,6 +802,56 @@ export const getJobs = (): Job[] => {
       location: "Santa Cruz, Bolivia",
       postedDate: "Publicado hace 35 días",
       salaryRange: "Bs 10,000 - Bs 17,000",
+      employmentType: "Tiempo Completo",
+      employmentTypeColor: "bg-blue-100 text-blue-800"
+    },
+    {
+      title: "Desarrollador Angular",
+      company: "Angular Solutions Bolivia",
+      service: "Servicio: Desarrollo Angular",
+      location: "La Paz, Bolivia",
+      postedDate: "Publicado hace 36 días",
+      salaryRange: "Bs 13,500 - Bs 21,500",
+      employmentType: "Tiempo Completo",
+      employmentTypeColor: "bg-blue-100 text-blue-800"
+    },
+    {
+      title: "Especialista en Customer Success",
+      company: "Customer Success Bolivia",
+      service: "Servicio: Éxito del Cliente",
+      location: "Cochabamba, Bolivia",
+      postedDate: "Publicado hace 37 días",
+      salaryRange: "Bs 8,500 - Bs 14,500",
+      employmentType: "Tiempo Completo",
+      employmentTypeColor: "bg-blue-100 text-blue-800"
+    },
+    {
+      title: "Diseñador de Experiencia de Usuario",
+      company: "UX Design Studio Bolivia",
+      service: "Servicio: Diseño UX",
+      location: "Santa Cruz, Bolivia",
+      postedDate: "Publicado hace 38 días",
+      salaryRange: "Bs 11,500 - Bs 19,000",
+      employmentType: "Tiempo Completo",
+      employmentTypeColor: "bg-blue-100 text-blue-800"
+    },
+    {
+      title: "Especialista en Automatización",
+      company: "Automation Pro Bolivia",
+      service: "Servicio: Automatización de Procesos",
+      location: "La Paz, Bolivia",
+      postedDate: "Publicado hace 39 días",
+      salaryRange: "Bs 12,000 - Bs 20,000",
+      employmentType: "Tiempo Completo",
+      employmentTypeColor: "bg-blue-100 text-blue-800"
+    },
+    {
+      title: "Desarrollador Flutter",
+      company: "Flutter Development Bolivia",
+      service: "Servicio: Desarrollo Flutter",
+      location: "Cochabamba, Bolivia",
+      postedDate: "Publicado hace 40 días",
+      salaryRange: "Bs 14,500 - Bs 23,000",
       employmentType: "Tiempo Completo",
       employmentTypeColor: "bg-blue-100 text-blue-800"
     }
