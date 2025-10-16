@@ -15,11 +15,12 @@ const MapComponent = dynamic(
 
 export default function VisualizarMapaOfertas() {
   const { userLocation, loading, error } = useUserLocation();
-
-  // Inicializar filtros solo cuando userLocation estÃ© disponible
-  const filters = userLocation 
-    ? useFilters(mockOffers, userLocation)
-    : null;
+  
+  // UbicaciÃ³n por defecto (centro de Cochabamba) para inicializar filtros
+  const defaultLocation = { lat: -17.3935, lng: -66.1570 };
+  
+  // Usar ubicaciÃ³n real o default para los filtros (siempre llamar el hook)
+  const filters = useFilters(mockOffers, userLocation || defaultLocation);
 
   if (loading) {
     return (
@@ -49,11 +50,6 @@ export default function VisualizarMapaOfertas() {
         </div>
       </div>
     );
-  }
-
-  // Si no hay filtros, no renderizar (protecciÃ³n)
-  if (!filters) {
-    return <div>Cargando filtros...</div>;
   }
 
   const activeOffers = mockOffers.filter(offer => offer.isActive);
