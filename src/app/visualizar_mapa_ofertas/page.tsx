@@ -7,7 +7,7 @@ import { mockOffers } from './services/mockOffersData';
 import { useFilters } from './hooks/useFilters';
 import { FilterBar } from './components/FilterBar';
 
-// Importar MapComponent dinámicamente para evitar errores de SSR con Leaflet
+// Importar MapComponent dinÃ¡micamente para evitar errores de SSR con Leaflet
 const MapComponent = dynamic(
   () => import('./components/MapComponent').then((mod) => mod.MapComponent),
   { ssr: false, loading: () => <div className="flex items-center justify-center h-screen">Cargando mapa...</div> }
@@ -16,16 +16,10 @@ const MapComponent = dynamic(
 export default function VisualizarMapaOfertas() {
   const { userLocation, loading, error } = useUserLocation();
 
-  // Hook de filtros (HU14)
-  const {
-    selectedCategories,
-    maxDistance,
-    allCategories,
-    filteredOffers,
-    toggleCategory,
-    setMaxDistance,
-    clearFilters
-  } = useFilters(mockOffers, userLocation || { lat: -17.3935, lng: -66.1570 });
+  // Inicializar filtros solo cuando userLocation estÃ© disponible
+  const filters = userLocation 
+    ? useFilters(mockOffers, userLocation)
+    : null;
 
   if (loading) {
     return (
@@ -57,6 +51,13 @@ export default function VisualizarMapaOfertas() {
     );
   }
 
+  // Si no hay filtros, no renderizar (protecciÃ³n)
+  if (!filters) {
+    return <div>Cargando filtros...</div>;
+  }
+
+  const activeOffers = mockOffers.filter(offer => offer.isActive);
+
   return (
     <div className="h-screen w-full flex flex-col">
       {/* Header */}
@@ -71,26 +72,26 @@ export default function VisualizarMapaOfertas() {
       <div className="flex-1 relative">
         {/* Barra de filtros (HU14) */}
         <FilterBar
-          allCategories={allCategories}
-          selectedCategories={selectedCategories}
-          maxDistance={maxDistance}
-          onToggleCategory={toggleCategory}
-          onDistanceChange={setMaxDistance}
-          onClearFilters={clearFilters}
-          totalOffers={mockOffers.filter(o => o.isActive).length}
-          filteredCount={filteredOffers.length}
+          allCategories={filters.allCategories}
+          selectedCategories={filters.selectedCategories}
+          maxDistance={filters.maxDistance}
+          onToggleCategory={filters.toggleCategory}
+          onDistanceChange={filters.setMaxDistance}
+          onClearFilters={filters.clearFilters}
+          totalOffers={activeOffers.length}
+          filteredCount={filters.filteredOffers.length}
         />
 
         {/* Mapa */}
         <MapComponent 
           userLocation={userLocation} 
-          offers={filteredOffers} 
+          offers={filters.filteredOffers} 
         />
       </div>
 
       {/* Footer Info */}
       <div className="bg-gray-800 text-white p-3 text-center text-sm">
-        Mostrando {filteredOffers.length} ofertas activas | 
+        Mostrando {filters.filteredOffers.length} ofertas activas | 
         Tu ubicacion: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
       </div>
     </div>
