@@ -6,6 +6,11 @@ import L from 'leaflet';
 import { Offer, Location } from '../interfaces/types';
 import { calculateDistance, formatDistance } from '../utils/mapHelpers';
 import { getMarkerIcon } from '../config/markerIcons';
+ HEAD
+import { OfferDetailModal } from './OfferDetailModal';
+import { useModal } from '../hooks/useModal';
+
+ origin/dev/los_scrum-piones
 import 'leaflet/dist/leaflet.css';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -64,6 +69,19 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   const [mapZoom, setMapZoom] = useState<number>(13);
   const mapRef = useRef<L.Map | null>(null);
 
+ HEAD
+  // Estados para el modal (HU13)
+  const { isOpen, openModal, closeModal } = useModal();
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+
+  // Función para abrir el modal con una oferta
+  const handleOfferClick = (offer: Offer) => {
+    setSelectedOffer(offer);
+    openModal();
+  };
+
+
+ origin/dev/los_scrum-piones
   const activeOffers = offers.filter(offer => offer.isActive === true);
 
   const userIcon = new L.Icon({
@@ -150,6 +168,17 @@ export const MapComponent: React.FC<MapComponentProps> = ({
                   <p className="text-sm mb-3">
                     <strong>Precio:</strong> Bs. {offer.price}
                   </p>
+ HEAD
+                  
+                  <button
+                    onClick={() => handleOfferClick(offer)}
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm inline-block w-full text-center mb-2"
+                  >
+                    Ver mas detalles
+                  </button>
+                  
+
+ origin/dev/los_scrum-piones
                   <a
                     href={'https://wa.me/' + offer.whatsapp.replace('+', '')}
                     target="_blank"
@@ -223,6 +252,15 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           Total: {activeOffers.length} ofertas activas
         </div>
       </div>
+ HEAD
+
+      <OfferDetailModal
+        offer={selectedOffer}
+        isOpen={isOpen}
+        onClose={closeModal}
+        userLocation={userLocation}
+      />
+ origin/dev/los_scrum-piones
     </div>
   );
 };
