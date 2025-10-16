@@ -1,3 +1,4 @@
+'use client';
 import JobCard from "./alquiler/paginacion/components/jobCard";
 import Pagination from "./alquiler/paginacion/components/Pagination";
 import { getJobs } from "./alquiler/paginacion/services/jobService";

@@ -1,4 +1,5 @@
 'use client';
+// Componente de paginación visual y accesible
 
 import React, { useMemo, useCallback } from "react";
 

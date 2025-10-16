@@ -1,4 +1,5 @@
 import { Job } from "../types/job";
+// Fuente de datos estática para demo. En producción esto vendría de una API.
 
 // Datos completos de trabajos (más de 10 para probar paginación)
 export const getJobs = (): Job[] => {

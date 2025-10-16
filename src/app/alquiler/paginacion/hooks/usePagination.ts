@@ -1,4 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
+/**
+ * Hook de paginación controlada por estado local.
+ * Mantiene la página actual, calcula elementos visibles y expone handlers.
+ */
 import { Job } from "../types/job";
 
 export const usePagination = (items: Job[], itemsPerPage: number = 10) => {
@@ -50,7 +54,6 @@ export const usePagination = (items: Job[], itemsPerPage: number = 10) => {
     handlePageChange,
     handleNextPage,
     handlePrevPage,
-    totalItems,
-    isLoading
+    totalItems
   };
 };
