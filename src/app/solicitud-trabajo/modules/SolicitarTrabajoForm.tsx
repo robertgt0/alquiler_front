@@ -5,8 +5,9 @@ import TimeInput from "../components/CampoHora";
 import { useSolicitudTrabajo } from "../hooks/useSolicitudTrabajo";
 
 export default function SolicitarTrabajoForm() {
-  const [horaInicio, setHoraInicio] = useState("");
-  const [horaFin, setHoraFin] = useState("");
+  // Valores iniciales por defecto
+  const [horaInicio, setHoraInicio] = useState("00:00");
+  const [horaFin, setHoraFin] = useState("00:00");
   const { loading, mensaje, enviar } = useSolicitudTrabajo();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -19,7 +20,10 @@ export default function SolicitarTrabajoForm() {
       <TimeInput
         label="Hora Inicio"
         value={horaInicio}
-        onChange={(e) => { setHoraInicio(e.target.value); setHoraFin(""); }}
+        onChange={(e) => {
+          setHoraInicio(e.target.value);
+          setHoraFin("00:00"); //Resetear hora fin al cambiar inicio
+        }}
         step={1800}
         disabled={loading}
       />
@@ -38,7 +42,7 @@ export default function SolicitarTrabajoForm() {
         disabled={loading}
         className="w-full bg-[#0C4FE9] hover:bg-blue-700 text-white Poppins rounded-lg mt-1 sm:mt-2 h-12 sm:h-11 disabled:opacity-70"
       >
-        {loading ? "Enviando…" : "Solicitar trabajo"}
+        {loading ? "Enviando…" : "Enviar solicitud"}
       </button>
 
       {/* Botón Atrás */}
