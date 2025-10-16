@@ -6,13 +6,11 @@ import L from 'leaflet';
 import { Offer, Location } from '../interfaces/types';
 import { calculateDistance, formatDistance } from '../utils/mapHelpers';
 import { getMarkerIcon } from '../config/markerIcons';
- HEAD
 import { OfferDetailModal } from './OfferDetailModal';
 import { useModal } from '../hooks/useModal';
-
- origin/dev/los_scrum-piones
 import 'leaflet/dist/leaflet.css';
 
+// Arreglar los iconos de Leaflet en Next.js
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -27,6 +25,7 @@ interface MapComponentProps {
   onZoomChange?: (zoom: number) => void;
 }
 
+// Componente auxiliar para controlar el mapa
 const MapController: React.FC<{ center: Location; zoom: number }> = ({ center, zoom }) => {
   const map = useMap();
   
@@ -37,6 +36,7 @@ const MapController: React.FC<{ center: Location; zoom: number }> = ({ center, z
   return null;
 };
 
+// Función para crear íconos dinámicos con colores según categoría
 const createCategoryIcon = (category: string): L.Icon => {
   const colorMap: Record<string, string> = {
     'Plomería': 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
@@ -69,7 +69,6 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   const [mapZoom, setMapZoom] = useState<number>(13);
   const mapRef = useRef<L.Map | null>(null);
 
- HEAD
   // Estados para el modal (HU13)
   const { isOpen, openModal, closeModal } = useModal();
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
@@ -80,10 +79,10 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     openModal();
   };
 
-
- origin/dev/los_scrum-piones
+  // Filtrar solo ofertas activas (HU12)
   const activeOffers = offers.filter(offer => offer.isActive === true);
 
+  // Icono personalizado para el usuario
   const userIcon = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
@@ -121,6 +120,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         
         <MapController center={mapCenter} zoom={mapZoom} />
 
+        {/* Marcador del usuario */}
         <Marker position={[userLocation.lat, userLocation.lng]} icon={userIcon}>
           <Popup>
             <div className="text-center">
@@ -129,6 +129,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           </Popup>
         </Marker>
 
+        {/* Marcadores de ofertas activas con colores por categoría (HU12) */}
         {activeOffers.map((offer) => {
           const distance = calculateDistance(userLocation, offer.location);
           const categoryIcon = createCategoryIcon(offer.category);
@@ -140,6 +141,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
               position={[offer.location.lat, offer.location.lng]}
               icon={categoryIcon}
             >
+              {/* Tooltip al pasar el cursor (HU12) */}
               <Tooltip 
                 direction="top" 
                 offset={[0, -35]} 
@@ -152,6 +154,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
                 </div>
               </Tooltip>
 
+              {/* Popup con detalles completos */}
               <Popup maxWidth={300}>
                 <div className="p-2">
                   <h3 className="font-bold text-lg mb-2">{emoji} {offer.fixerName}</h3>
@@ -168,8 +171,8 @@ export const MapComponent: React.FC<MapComponentProps> = ({
                   <p className="text-sm mb-3">
                     <strong>Precio:</strong> Bs. {offer.price}
                   </p>
- HEAD
                   
+                  {/* Botón para abrir modal (HU13) */}
                   <button
                     onClick={() => handleOfferClick(offer)}
                     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm inline-block w-full text-center mb-2"
@@ -177,10 +180,8 @@ export const MapComponent: React.FC<MapComponentProps> = ({
                     Ver mas detalles
                   </button>
                   
-
- origin/dev/los_scrum-piones
                   <a
-                    href={'https://wa.me/' + offer.whatsapp.replace('+', '')}
+                    href={`https://wa.me/${offer.whatsapp.replace('+', '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm inline-block w-full text-center"
@@ -194,6 +195,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         })}
       </MapContainer>
 
+      {/* Controles personalizados */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <button
           onClick={handleCenterUser}
@@ -218,6 +220,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         </button>
       </div>
 
+      {/* Leyenda de categorías (HU12) */}
       <div className="absolute bottom-4 left-4 z-[1000] bg-gray-800 text-white p-4 rounded-lg shadow-lg max-w-[220px]">
         <h4 className="font-bold mb-3 text-sm border-b border-gray-600 pb-2">
           Categorias
@@ -252,15 +255,14 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           Total: {activeOffers.length} ofertas activas
         </div>
       </div>
- HEAD
 
+      {/* Modal de detalle (HU13) */}
       <OfferDetailModal
         offer={selectedOffer}
         isOpen={isOpen}
         onClose={closeModal}
         userLocation={userLocation}
       />
- origin/dev/los_scrum-piones
     </div>
   );
 };
