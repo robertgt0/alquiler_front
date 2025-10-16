@@ -85,70 +85,67 @@ const Footer = () => {
 
   return (
     <>
-      <footer className="bg-[#11255a] text-[#d8ecff]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="border-t border-[#1140bc] mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+    <footer className="bg-[#11255a] text-[#d8ecff]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="border-t border-[#1140bc] mb-8"></div>
+      {/* Grid: stack on small screens, three columns on md+ */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 text-center md:text-left">
                 
-                <div className="space-y-4">
-                    <div className="flex items-center justify-center md:justify-start">
-                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
-                        {/* Se reemplaza <Image> por <Icono> */}
-                        <div className="mr-3">
-                            <Icono size={50} />
-                        </div>
-                        {/* --- FIN DE LA MODIFICACIÓN --- */}
-                        <h3 className="text-2xl font-bold">Servineo</h3>
-                    </div>
-                    <p className="text-[#b9ddff]">La plataforma líder que conecta clientes con proveedores de servicios profesionales. Encuentra el fixer perfecto para tu proyecto.</p>
-                </div>
-
-                <div className="space-y-4">
-                    <h4 className="text-xl font-semibold">Enlaces Rápidos</h4>
-          <nav className="flex flex-col space-y-2">
-            {/* In-page fragment links to navigate within the same tab */}
-            <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors">Trabajos recientes</a>
-            <a href="#mapa" className="hover:text-[#52abff] transition-colors">Mapa</a>
-            <a href="#servicios" className="hover:text-[#52abff] transition-colors">Lista de servicios</a>
-            <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-center md:text-left">¿Cómo funciona?</button>
-          </nav>
-                </div>
-                
-                <div className="space-y-4">
-                    <h4 className="text-xl font-semibold">Soporte</h4>
-                    <ul className="space-y-3">
-                        <li className="flex items-center justify-center md:justify-start">
-                            <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors">
-                                <FaPhone className="mr-3 text-[#52abff]" />
-                                <span>+591 73782241</span>
-                            </a>
-                        </li>
-                        <li className="flex items-center justify-center md:justify-start">
-                            <a href="mailto:servineo@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors">
-                                <FaEnvelope className="mr-3 text-[#52abff]" />
-                                <span>servineo@gmail.com</span>
-                            </a>
-                        </li>
-                        <li className="flex items-center justify-center md:justify-start">
-                            <a href="https://www.google.com/maps/search/?api=1&query=Cochabamba,Cercado" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors">
-                                <FaMapMarkerAlt className="mr-3 text-[#52abff]" />
-                                <span>Cochabamba, Cercado</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-center md:justify-start">
+            <div className="mr-3 flex-shrink-0">
+              <Icono size={50} />
             </div>
-          
-          <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-sm text-[#89c9ff]">© {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <button onClick={() => setActiveModal('privacy')} className="text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-3 py-1 rounded-md">Política de privacidad</button>
-              <button onClick={() => setActiveModal('terms')} className="text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-3 py-1 rounded-md">Términos de uso</button>
-              <button onClick={() => setActiveModal('cookies')} className="text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-3 py-1 rounded-md">Política de cookies</button>
-            </div>
+            <h3 className="text-2xl font-bold">Servineo</h3>
           </div>
+          <p className="text-[#b9ddff] text-sm sm:text-base">La plataforma líder que conecta clientes con proveedores de servicios profesionales. Encuentra el fixer perfecto para tu proyecto.</p>
         </div>
-      </footer>
+
+        <div className="space-y-4">
+          <h4 className="text-xl font-semibold">Enlaces Rápidos</h4>
+      <nav className="flex flex-col space-y-2 items-center md:items-start">
+      <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
+      <a href="#mapa" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
+      <a href="#servicios" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
+      <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-center md:text-left focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
+      </nav>
+        </div>
+                
+        <div className="space-y-4">
+          <h4 className="text-xl font-semibold">Soporte</h4>
+          <ul className="space-y-3">
+            <li className="flex items-center justify-center md:justify-start">
+              <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                <FaPhone className="mr-3 text-[#52abff]" />
+                <span className="text-sm">+591 73782241</span>
+              </a>
+            </li>
+            <li className="flex items-center justify-center md:justify-start">
+              <a href="mailto:servineo@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                <FaEnvelope className="mr-3 text-[#52abff]" />
+                <span className="text-sm">servineo@gmail.com</span>
+              </a>
+            </li>
+            <li className="flex items-center justify-center md:justify-start">
+              <a href="https://www.google.com/maps/search/?api=1&query=Cochabamba,Cercado" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                <FaMapMarkerAlt className="mr-3 text-[#52abff]" />
+                <span className="text-sm">Cochabamba, Cercado</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+          
+      <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+      <p className="text-sm text-[#89c9ff]">© {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
+      <div className="flex flex-wrap justify-center gap-4 w-full md:w-auto">
+        <button onClick={() => setActiveModal('privacy')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de privacidad</button>
+        <button onClick={() => setActiveModal('terms')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Términos de uso</button>
+        <button onClick={() => setActiveModal('cookies')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de cookies</button>
+      </div>
+      </div>
+    </div>
+    </footer>
 
       {activeModal && (
         <Modal
