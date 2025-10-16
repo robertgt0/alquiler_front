@@ -26,17 +26,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // ✨ SOLUCIÓN DE HIDRATACIÓN 1: Añadir al <html> para silenciar errores de extensiones ✨
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        // ✨ SOLUCIÓN DE HIDRATACIÓN 2: También al <body> (por si acaso) ✨
         suppressHydrationWarning={true} 
       >
         <Header />
         
-        {/* ✨ SOLUCIÓN DE ESPACIO: Aplicar padding condicional para móviles ✨ */}
-        <div className="pt-32 pb-28 sm:pt-0 sm:pb-0">
+        {/* SOLUCIÓN: Cambiar el padding para que funcione en todos los dispositivos */}
+        <div className="pt-16 sm:pt-20"> {/* Aumenté el padding-top */}
           {children}
         </div>
       </body>
