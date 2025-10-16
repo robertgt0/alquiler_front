@@ -1,4 +1,37 @@
+"use client";
+
+import { useState } from "react";
+import { crearOferta, NuevaOfertaData } from "@/lib/api";
+
 export default function NuevaOferta() {
+  const [descripcion, setDescripcion] = useState("");
+  const [categoria, setCategoria] = useState("Seleccionar categoría");
+  const [loading, setLoading] = useState(false);
+  const [mensaje, setMensaje] = useState("");
+
+  const handleSubmit = async () => {
+    if (!descripcion || categoria === "Seleccionar categoría") {
+      setMensaje("Por favor completa todos los campos");
+      return;
+    }
+
+    setLoading(true);
+    setMensaje("");
+
+    try {
+      const nuevaOferta: NuevaOfertaData = { descripcion, categoria };
+      await crearOferta(nuevaOferta);
+      setMensaje("Oferta creada exitosamente ✅");
+      setDescripcion("");
+      setCategoria("Seleccionar categoría");
+    } catch (err) {
+      setMensaje("Error al crear la oferta ❌");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="flex flex-col bg-white w-full min-h-screen">
       {/* NAVBAR */}
@@ -30,6 +63,8 @@ export default function NuevaOferta() {
             <label className="block mb-2 text-gray-900 font-medium">Descripción</label>
             <input
               type="text"
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Describe tu servicio en 100 caracteres o menos."
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
@@ -38,7 +73,11 @@ export default function NuevaOferta() {
           {/* CATEGORÍA */}
           <div className="p-4 max-w-[480px]">
             <label className="block mb-2 text-gray-900 font-medium">Categoría</label>
-            <select className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <select
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
               <option>Seleccionar categoría</option>
               <option>Plomería</option>
               <option>Electricidad</option>
@@ -46,24 +85,27 @@ export default function NuevaOferta() {
             </select>
           </div>
 
-          {/* ADJUNTAR IMÁGENES */}
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-14 space-y-6">
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-gray-900">Adjuntar Imágenes</h3>
-              <p className="text-sm text-gray-600">Sube imágenes para una mejor descripción de tu servicio</p>
-            </div>
-            <button className="bg-gray-100 text-gray-500 rounded-lg px-6 py-2 hover:bg-gray-200">
-              Subir imagen
-            </button>
-          </div>
+          {/* MENSAJE */}
+          {mensaje && <p className="text-sm text-red-500">{mensaje}</p>}
 
           {/* BOTONES */}
           <div className="flex justify-between p-4">
-            <button className="bg-gray-100 text-gray-900 font-bold rounded-lg px-6 py-2 hover:bg-gray-200">
+            <button
+              onClick={() => {
+                setDescripcion("");
+                setCategoria("Seleccionar categoría");
+                setMensaje("");
+              }}
+              className="bg-gray-100 text-gray-900 font-bold rounded-lg px-6 py-2 hover:bg-gray-200"
+            >
               Cancelar
             </button>
-            <button className="bg-blue-600 text-white font-bold rounded-lg px-6 py-2 hover:bg-blue-700">
-              Crear oferta de servicio
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="bg-blue-600 text-white font-bold rounded-lg px-6 py-2 hover:bg-blue-700"
+            >
+              {loading ? "Creando..." : "Crear oferta de servicio"}
             </button>
           </div>
         </div>
@@ -71,3 +113,4 @@ export default function NuevaOferta() {
     </main>
   );
 }
+
