@@ -1,6 +1,7 @@
 
 /* === Buscador === */
 .search-container {
+  color: black;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -62,6 +63,7 @@
 }
 
 .sort-select {
+  color: black;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   padding: 0.25rem 0.75rem;
