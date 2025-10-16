@@ -34,7 +34,6 @@ export default function Header() {
       <header className="hidden sm:flex items-center justify-between p-4 bg-[#EEF7FF] shadow-md fixed top-0 left-0 w-full z-10">
         <div className="flex items-center">
           <Link href="/">
-            {/* 🔹 Reemplazamos el PNG por el componente SVG */}
             <Icono size={40} />
           </Link>
           <span className="ml-2 text-xl font-bold text-[#11255A]">Servineo</span>
@@ -65,12 +64,19 @@ export default function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
-                              
+          {/* 🔹 Nuevo botón "Ser Fixxer" */}
+          <Link href="/ser-fixer">
+            <button className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
+              Ser Fixer
+            </button>
+          </Link>
+
           <Link href="/login">
             <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF]">
               Iniciar Sesión
             </button>
           </Link>
+
           <Link href="/register">
             <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF]">
               Registrarse
@@ -85,7 +91,6 @@ export default function Header() {
       <header className="sm:hidden fixed top-0 left-0 w-full p-2 bg-[#EEF7FF] shadow-md z-10">
         <div className="flex items-center space-x-2 w-full">
           <Link href="/">
-            {/* 🔹 Versión pequeña del ícono */}
             <Icono size={28} />
           </Link>
           <div className="flex-1 relative">
@@ -123,11 +128,13 @@ export default function Header() {
         <div className="flex flex-col items-center space-y-1">
           <span className="text-[#11255A] font-bold text-sm">Servineo</span>
           <div className="flex w-full space-x-1">
+            
             <Link href="/login" className="flex-1">
               <button className="px-2 py-1.5 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] w-full text-xs">
                 Iniciar Sesión
               </button>
             </Link>
+
             <Link href="/register" className="flex-1">
               <button className="px-2 py-1.5 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF] w-full text-xs">
                 Registrarse
