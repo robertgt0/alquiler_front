@@ -8,7 +8,6 @@ import AppleIcon from '../assets/icons8-apple-50.png';
 import { useRouter } from "next/navigation";
 import { checkEmailExists } from '../../teamsys/services/checkEmailExists';
 
-
 export const RegistrationForm: React.FC = () => {
   const router = useRouter();
   const {
@@ -25,34 +24,31 @@ export const RegistrationForm: React.FC = () => {
   const handleGoogleClick = async () => {
     await handleGoogleAuth();
   };
-//  Nueva lógica para habilitar/deshabilitar el botón
-const formularioValido =
-  Object.keys(errores).length === 0 &&
-  Object.values(datosFormulario).every((v) => v.trim() !== "");
+
+  // Nueva lógica para habilitar/deshabilitar el botón
+  const formularioValido =
+    Object.keys(errores).length === 0 &&
+    Object.values(datosFormulario).every((v) => v.trim() !== "");
 
   return (
-    <div className="min-h-screen bg-blue-500 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">{/* contenedor azul */}
-      <div className="max-w-2xl w-full bg-white rounded-3xl shadow-md p-6"> {/* contenedor blanco dond eesta el formulario*/}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-blue-500">Crear cuenta</h2>
+    <div className="min-h-screen bg-blue-500 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md lg:max-w-2xl bg-white rounded-3xl shadow-md p-4 sm:p-6 lg:p-8">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-blue-500">Crear cuenta</h2>
         </div>
-
 
         {/* Mostrar errores de Google */}
         {googleError && (
-          <div className="w-120 mx-auto mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="w-full max-w-xs sm:max-w-sm mx-auto mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-600">{googleError}</p>
           </div>
         )}
 
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-3 sm:space-y-4">
           
-
           {/* Nombre */}
           <div className="flex justify-center">
-            <div className="w-120">
-              <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
-              </label>
+            <div className="w-full max-w-xs sm:max-w-sm">
               <input
                 id="nombre"
                 name="nombre"
@@ -60,24 +56,22 @@ const formularioValido =
                 value={datosFormulario.nombre}
                 onChange={(e) => manejarCambio('nombre', e.target.value)}
                 onBlur={() => manejarBlur('nombre')}
-                className={`w-120 px-3 py-2 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent  ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent ${
                   errores.nombre && tocados.nombre 
                     ? 'border-red-300 focus:ring-red-500' 
-                    : 'border-gray-300'
+                    : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 placeholder="Nombre(s)"
               />
-              {/* Mostrar error SIEMPRE que exista */}
-                  {errores.nombre && (
-                  <p className="mt-1 text-sm text-red-600">{errores.nombre}</p>
-                )}
+              {errores.nombre && (
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errores.nombre}</p>
+              )}
             </div>
           </div>
-            {/*apellido*/}
+
+          {/* Apellido */}
           <div className="flex justify-center">
-            <div className="w-120">
-              <label htmlFor="apellido" className="block text-sm font-medium text-gray-700 mb-1">  
-              </label>
+            <div className="w-full max-w-xs sm:max-w-sm">
               <input
                 id="apellido"
                 name="apellido"
@@ -85,22 +79,22 @@ const formularioValido =
                 value={datosFormulario.apellido}
                 onChange={(e) => manejarCambio('apellido', e.target.value)}
                 onBlur={() => manejarBlur('apellido')}
-                className={`w-120 px-3 py-2 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent mx-auto block ${
-                  errores.apellido && tocados.apellido 
-                    ? 'border-red-300 focus:ring-red-500' 
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent ${
+                  errores.apellido && tocados.apellido
+                    ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 placeholder="Apellidos"
               />
               {errores.apellido && (
-              <p className="mt-1 text-sm text-red-600">{errores.apellido}</p>
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errores.apellido}</p>
               )}
             </div>
           </div>
 
           {/* Teléfono */}
           <div className="flex justify-center">
-            <div className="w-120">
+            <div className="w-full max-w-xs sm:max-w-sm">
               <input
                 id="telefono"
                 name="telefono"
@@ -110,18 +104,16 @@ const formularioValido =
                 title="El teléfono debe contener exactamente 8 dígitos"
                 value={datosFormulario.telefono}
                 onChange={(e) => {
-                  // Permitir solo números y limitar a 8 dígitos
                   const soloNumeros = e.target.value.replace(/\D/g, '').slice(0, 8);
                   manejarCambio('telefono', soloNumeros);
                 }}
                 onKeyPress={(e) => {
-                  // Prevenir caracteres no numéricos
                   if (!/[0-9]/.test(e.key)) {
                     e.preventDefault();
                   }
                 }}
                 onBlur={() => manejarBlur('telefono')}
-                className={`w-120 px-3 py-2 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent mx-auto block ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent ${
                   errores.telefono && tocados.telefono 
                     ? 'border-red-300 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
@@ -130,156 +122,148 @@ const formularioValido =
                 maxLength={8}
               />
               {errores.telefono && tocados.telefono && (
-                <p className="mt-1 text-sm text-red-600">{errores.telefono}</p>
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errores.telefono}</p>
               )}
             </div>
           </div>
 
           {/* Email */}
           <div className="flex justify-center">
-            <div className="w-120">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={datosFormulario.email}
-              onChange={(e) => manejarCambio('email', e.target.value)}
-              onBlur={() => manejarBlur('email')}
-              className={`w-120 px-3 py-2 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent mx-auto block ${
-                errores.email && tocados.email 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-gray-300 focus:ring-blue-500'
-              }`}
-              placeholder="Correo electronico"
-            />
-            {errores.email && tocados.email && (
-              <p className="mt-1 text-sm text-red-600">{errores.email}</p>
-            )}
+            <div className="w-full max-w-xs sm:max-w-sm">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                value={datosFormulario.email}
+                onChange={(e) => manejarCambio('email', e.target.value)}
+                onBlur={() => manejarBlur('email')}
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent ${
+                  errores.email && tocados.email 
+                    ? 'border-red-300 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+                placeholder="Correo electrónico"
+              />
+              {errores.email && tocados.email && (
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errores.email}</p>
+              )}
+            </div>
           </div>
-        </div>
+
           {/* Contraseña */}
           <div className="flex justify-center">
-            <div className="w-120">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={datosFormulario.contraseña}
-              onChange={(e) => manejarCambio('contraseña', e.target.value)}
-              onBlur={() => manejarBlur('contraseña')}
-              className={`w-120 px-3 py-2 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent mx-auto block ${
-                errores.contraseña && tocados.contraseña 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-gray-300 focus:ring-blue-500'
-              }`}
-              placeholder="Contraseña"
-            />
-            {errores.contraseña && tocados.contraseña && (
-              <p className="mt-1 text-sm text-red-600">{errores.contraseña}</p>
-            )}
+            <div className="w-full max-w-xs sm:max-w-sm">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={datosFormulario.contraseña}
+                onChange={(e) => manejarCambio('contraseña', e.target.value)}
+                onBlur={() => manejarBlur('contraseña')}
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent ${
+                  errores.contraseña && tocados.contraseña
+                    ? 'border-red-300 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+                placeholder="Contraseña"
+              />
+              {errores.contraseña && tocados.contraseña && (
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errores.contraseña}</p>
+              )}
+            </div>
           </div>
-        </div>
+
           {/* Confirmar Contraseña */}
           <div className="flex justify-center">
-            <div className="w-120">
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-              
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              value={datosFormulario.confirmarContraseña}
-              onChange={(e) => manejarCambio('confirmarContraseña', e.target.value)}
-              onBlur={() => manejarBlur('confirmarContraseña')}
-              className={`w-120 px-3 py-2  border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent mx-auto block ${
-                errores.confirmarContraseña && tocados.confirmarContraseña 
-                  ? 'border-red-300 focus:ring-red-500' 
-                  : 'border-gray-300 focus:ring-blue-500'
-              }`}
-              placeholder="Confirma contraseña"
-            />
-            {errores.confirmarContraseña && tocados.confirmarContraseña && (
-              <p className="mt-1 text-sm text-red-600">{errores.confirmarContraseña}</p>
-            )}
+            <div className="w-full max-w-xs sm:max-w-sm">
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={datosFormulario.confirmarContraseña}
+                onChange={(e) => manejarCambio('confirmarContraseña', e.target.value)}
+                onBlur={() => manejarBlur('confirmarContraseña')}
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent ${
+                  errores.confirmarContraseña && tocados.confirmarContraseña 
+                    ? 'border-red-300 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+                placeholder="Confirma contraseña"
+              />
+              {errores.confirmarContraseña && tocados.confirmarContraseña && (
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errores.confirmarContraseña}</p>
+              )}
+            </div>
           </div>
-        </div>
-        {/*parrafo de ¡ya tienes una cuenta?*/}
-          <div className="flex justify-center items-center gap-2 mt-4">
-            <p className = "text-sm text-gray-600">¿Ya tienes una cuenta?</p>
-            <a href="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500">Iniciar sesión</a>
-          </div>      
-        
+
+          {/* ¿Ya tienes una cuenta? */}
+          <div className="flex justify-center items-center gap-2 mt-3 sm:mt-4">
+            <p className="text-xs sm:text-sm text-gray-600">¿Ya tienes una cuenta?</p>
+            <a href="/login" className="text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-500">
+              Iniciar sesión
+            </a>
+          </div>
+
           {/* Botón de Google */}
-          <GoogleButton 
-            onClick={handleGoogleClick}
-            isLoading={googleLoading}
-            type="register"
-          />
+          <div className="flex justify-center">
+            <div className="w-full max-w-xs sm:max-w-sm">
+              <GoogleButton 
+                onClick={handleGoogleClick}
+                isLoading={googleLoading}
+                type="register"
+              />
+            </div>
+          </div>
 
-          {/*boton de registrarse con apple*/} 
+          {/*Botón de registrarse con Apple*/ }
+          <div className="flex justify-center">
+            <button
+              type="button"
+              className="w-full max-w-xs sm:max-w-sm bg-white text-black py-2 sm:py-3 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3 text-xs sm:text-sm"
+            >
+              <img
+                src={AppleIcon.src}
+                alt="Registrarse con Apple"
+                className="w-4 h-4 sm:w-5 sm:h-5"
+              />
+              Registrarse con Apple
+            </button>
+          </div>
 
-          <button
-            type="button"
-            className="w-120 mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
-          >
-          <img src={AppleIcon.src}
-            alt="Registrarse con Apple" 
-            className="w-5 h-5"
-          />
-            Registrarse con Apple
-          </button>
+          {/* Botón de continuar */}
           
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              onClick={async (e) => {
+                e.preventDefault();
+                if (formularioValido) {
+                  const { checkEmailExists } = await import('../../teamsys/services/checkEmailExists');
+                  const correoExiste = await checkEmailExists(datosFormulario.email);
+                  if (correoExiste) {
+                    alert('Este correo ya está registrado. Por favor inicia sesión.');
+                    return;
+                  }
+                  sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormulario));
+                  router.push("/ImagenLocalizacion");}
+              }}
+              disabled={!formularioValido}
+              className={`w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 rounded-2xl border border-gray-300 flex items-center justify-center gap-3 transition-colors duration-200 text-sm sm:text-base ${
+                formularioValido
+                  ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            >
+              Continuar
+            </button>
+          </div>
 
-          {/*boton de continuar*/} 
-
-        <button
-        type="submit"
-        onClick={async (e) => {
-        e.preventDefault();
-
-        if (formularioValido) {
-          // Importamos la función
-          const { checkEmailExists } = await import('../../teamsys/services/checkEmailExists');
-          const correoExiste = await checkEmailExists(datosFormulario.email);
-
-          if (correoExiste) {
-            alert('Este correo ya está registrado. Por favor inicia sesión.');
-            return; // Detenemos aquí
-          }
-
-            // Si no existe, continúa normalmente
-            sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormulario));
-            router.push("/ImagenLocalizacion");
-          }
-
-
-          }}
-          disabled={!formularioValido}
-          className={`w-64 mx-auto py-2 px-4 rounded-2xl border border-gray-300 flex items-center justify-center gap-3 transition-colors duration-200
-            ${
-              formularioValido
-                ? "bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-        >
-          Continuar
-        </button>
-
-          {/*parrafo de ¡ya tienes una cuenta?*/}
-          
-          <div className="flex justify-center items-center gap-2 mt-4">
-            <p className = "text-sm text-gray-600">Rellene los campos obligatioramente*</p>
+          {/* Texto de campos obligatorios */}
+          <div className="flex justify-center items-center gap-2 mt-3 sm:mt-4">
+            <p className="text-xs sm:text-sm text-gray-600">Rellene los campos obligatoriamente*</p>
           </div>
         </form>
       </div>
     </div>
   );
 };
-

@@ -11,7 +11,6 @@ import { usoGoogleAuth }  from '../../google/hooks/usoGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
 import { checkEmailExists } from '../../teamsys/services/checkEmailExists';
 
-
 export const LoginForm: React.FC = () => {
   const router = useRouter();
   const {
@@ -22,49 +21,54 @@ export const LoginForm: React.FC = () => {
     manejarBlur,
     validarFormulario,
   } = useLoginForm();
-   const [errorLogin, setErrorLogin] = useState<string | null>(null);
+  const [errorLogin, setErrorLogin] = useState<string | null>(null);
 
- const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = usoGoogleAuth();
+  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = usoGoogleAuth();
 
   const handleGoogleClick = async () => {
     await handleGoogleAuth();
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setErrorLogin(null); // limpia error previo si existía
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorLogin(null);
 
-  if (!validarFormulario()) return;
+    if (!validarFormulario()) return;
 
-  console.log('Formulario válido, listo para enviar:', datosFormulario);
+    console.log('Formulario válido, listo para enviar:', datosFormulario);
 
-  try {
-    const res = await loginUsuario(
-      datosFormulario.email,
-      datosFormulario.contraseña
-    );
+    try {
+      const res = await loginUsuario(
+        datosFormulario.email,
+        datosFormulario.contraseña
+      );
 
-    console.log('Login exitoso:', res);
-    router.push('/home');
-  } catch (error: any) {
-    console.error('Error al iniciar sesión:', error.message);
-    setErrorLogin('Datos incorrectos. Verifica tu correo o contraseña.');
-  }
-};
-
+      console.log('Login exitoso:', res);
+      router.push('/home');
+    } catch (error: any) {
+      console.error('Error al iniciar sesión:', error.message);
+      setErrorLogin('Datos incorrectos. Verifica tu correo o contraseña.');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-blue-500 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full bg-white rounded-3xl shadow-md p-6">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-blue-500">Iniciar sesión</h2>
+    <div className="min-h-screen bg-blue-500 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md lg:max-w-2xl bg-white rounded-3xl shadow-md p-4 sm:p-6 lg:p-8">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-blue-500">Iniciar sesión</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Mostrar errores de Google */}
+        {googleError && (
+          <div className="w-full max-w-xs sm:max-w-sm mx-auto mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{googleError}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {/* Email */}
           <div className="flex justify-center">
-            <div className="w-120">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1"></label>
+            <div className="w-full max-w-xs sm:max-w-sm">
               <input
                 id="email"
                 name="email"
@@ -72,23 +76,22 @@ const handleSubmit = async (e: React.FormEvent) => {
                 value={datosFormulario.email}
                 onChange={(e) => manejarCambio('email', e.target.value)}
                 onBlur={() => manejarBlur('email')}
-                className={`w-[500px] px-3 py-2 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent mx-auto block ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent ${
                   errores.email && tocados.email
                     ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
-                placeholder="Correo electronico"
+                placeholder="Correo electrónico"
               />
               {errores.email && tocados.email && (
-                <p className="mt-1 text-sm text-red-600">{errores.email}</p>
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errores.email}</p>
               )}
             </div>
           </div>
 
           {/* Contraseña */}
           <div className="flex justify-center">
-            <div className="w-120">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1"></label>
+            <div className="w-full max-w-xs sm:max-w-sm">
               <input
                 id="password"
                 name="password"
@@ -96,7 +99,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 value={datosFormulario.contraseña}
                 onChange={(e) => manejarCambio('contraseña', e.target.value)}
                 onBlur={() => manejarBlur('contraseña')}
-                className={`w-[500px] px-3 py-2 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent mx-auto block ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent ${
                   errores.contraseña && tocados.contraseña
                     ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
@@ -104,28 +107,29 @@ const handleSubmit = async (e: React.FormEvent) => {
                 placeholder="Contraseña"
               />
               {errores.contraseña && tocados.contraseña && (
-                <p className="mt-1 text-sm text-red-600">{errores.contraseña}</p>
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errores.contraseña}</p>
               )}
             </div>
           </div>
 
           {/* Botón de Iniciar sesión */}
-          <div className="mt-8 flex justify-center my-8">
+          <div className="mt-6 sm:mt-8 flex justify-center">
             <button
               type="submit"
-              className="w-full max-w-md bg-blue-500 text-white py-2 px-4 border border-gray-300 rounded-2xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors duration-200 flex items-center justify-center gap-3"
+              className="w-full max-w-xs sm:max-w-sm bg-blue-500 text-white py-2 sm:py-3 px-4 border border-gray-300 rounded-2xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors duration-200 flex items-center justify-center gap-3 text-sm sm:text-base"
             >
               Iniciar sesión
             </button>
           </div>
-          {/* 👇 NUEVO: mensaje de error global */}
-{errorLogin && (
-  <p className="text-red-600 text-sm text-center">{errorLogin}</p>
-)}
 
-          {/* Separador visual con “o” */}
-          <div className="flex items-center justify-center my-6">
-            <span className="text-gray-500 text-sm font-medium">o</span>
+          {/* Mensaje de error global */}
+          {errorLogin && (
+            <p className="text-red-600 text-xs sm:text-sm text-center">{errorLogin}</p>
+          )}
+
+          {/* Separador visual con "o" */}
+          <div className="flex items-center justify-center my-4 sm:my-6">
+            <span className="text-gray-500 text-xs sm:text-sm font-medium">o</span>
           </div>
 
           {/* Botón de Google */}
@@ -135,24 +139,28 @@ const handleSubmit = async (e: React.FormEvent) => {
             type="login"
           />
 
-          {/* botón de registrarse con Apple */}
-          <button
-            type="button"
-            className="w-[500px] mx-auto bg-white text-black py-2 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3"
-          >
-            <img
-              src={AppleIcon.src}
-              alt="Registrarse con Apple"
-              className="w-5 h-5"
-            />
-            Registrarse con Apple
-          </button>
+          { /*Botón de registrarse con Apple*/ }
 
-          {/* Enlace para registrarse */}
-          <div className="flex justify-center items-center gap-2 mt-4">
-            <p className="text-sm text-gray-600">¿Aún no tienes una cuenta?</p>
+          <div className="flex justify-center">
+            <button
+              type="button"
+              className="w-full max-w-xs sm:max-w-sm bg-white text-black py-2 sm:py-3 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3 text-xs sm:text-sm"
+            >
+              <img
+                src={AppleIcon.src}
+                alt="Registrarse con Apple"
+                className="w-4 h-4 sm:w-5 sm:h-5"
+              />
+              Registrarse con Apple
+            </button>
+          </div>
+
+          {/* Boton de continuar*/}
+          
+          <div className="flex justify-center items-center gap-2 mt-3 sm:mt-4">
+            <p className="text-xs sm:text-sm text-gray-600">¿Aún no tienes una cuenta?</p>
             <Link href="/registro">
-              <span className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline cursor-pointer">
+              <span className="text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline cursor-pointer">
                 Regístrate
               </span>
             </Link>
