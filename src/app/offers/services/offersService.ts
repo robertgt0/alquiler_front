@@ -1,72 +1,94 @@
-// 1) Tipos para tener autocompletado y validar estructura de datos
-export type Offer = {
+// src/app/offers/services/offersService.ts
+// Servicio de listado/paginación/búsqueda de ofertas (con saneo del mock JSON)
+
+import offersData from '../mocks/offers.mock.json';
+
+export type OfferStatus = 'active' | 'inactive' | 'deleted';
+
+export interface Offer {
   id: string;
+  title: string;
   description: string;
   category: string;
-  contact: { whatsapp: string; email: string };
-  status: "active" | "inactive" | "deleted";
-  createdAt: string; // ISO date string
-};
+  contact: {
+    whatsapp?: string;
+    phone?: string;
+    email?: string;
+  };
+  createdAt: string; // ISO date
+  status: OfferStatus;
+}
 
-// 2) Importamos el JSON local (Next permite importar JSON estático)
-import data from "../mocks/offers.mock.json";
+export interface ListOffersParams {
+  query?: string;
+  page?: number;      // 1-based
+  pageSize?: number;  // default 10
+  includeInactive?: boolean; // para “Mis ofertas activas”
+}
 
-// 3) Normalizamos y pre-procesamos:
-//    - Convertimos a Offer[]
-//    - Filtramos eliminadas (no deben listarse)
-//    - Ordenamos por fecha DESC (más recientes primero)
-const ALL_OFFERS: Offer[] = (data as Offer[])
-  .filter((o) => o.status !== "deleted")
-  .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+export interface ListOffersResult {
+  total: number;
+  items: Offer[];
+}
 
-// 4) Pequeña utilidad para simular latencia de red (mejora percepción UX)
-const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+const normalize = (s: string) => s.toLowerCase().trim();
 
-// 5) Parámetros que acepta nuestro listado (paginación + búsqueda + modo offline)
-export type ListParams = {
-  page: number;   // página actual (1-based)
-  limit: number;  // ítems por página
-  q?: string;     // texto de búsqueda (opcional)
-  offline?: boolean; // si true, simulamos “sin conexión”
-};
+export async function listOffers(params: ListOffersParams = {}): Promise<ListOffersResult> {
+  const {
+    query = '',
+    page = 1,
+    pageSize = 10,
+    includeInactive = true,
+  } = params;
 
-// 6) Función principal para Listado (HU9):
-//    - Simula error si offline
-//    - Aplica búsqueda simple por description/category/contact
-//    - Aplica paginación
-export async function fetchOffers(params: ListParams) {
-  // 6.1) Simular “sin conexión” (para testear estados de error)
-  if (params.offline) {
-    await delay(300);
-    throw new Error("offline");
-  }
+  // Simula pequeña latencia de red (opcional)
+  await new Promise((r) => setTimeout(r, 200));
 
-  // 6.2) Simular latencia normal
-  await delay(250);
+  // --- S A N E O  D E  D A T O S ---
+  // Convertimos el JSON a Offer[], garantizando defaults seguros.
+  let data: Offer[] = (offersData as any[]).map((o, i) => ({
+    id: String(o?.id ?? `tmp-${i + 1}`),
+    title: typeof o?.title === 'string' ? o.title : 'Oferta sin título',
+    description: typeof o?.description === 'string' ? o.description : '', // evita undefined
+    category: typeof o?.category === 'string' ? o.category : 'General',
+    contact: {
+      whatsapp: typeof o?.contact?.whatsapp === 'string' ? o.contact.whatsapp : undefined,
+      phone: typeof o?.contact?.phone === 'string' ? o.contact.phone : undefined,
+      email: typeof o?.contact?.email === 'string' ? o.contact.email : undefined,
+    },
+    createdAt: new Date(o?.createdAt ?? Date.now()).toISOString(),
+    status: ((): OfferStatus => {
+      if (o?.status === 'inactive' || o?.status === 'deleted') return o.status;
+      return 'active';
+    })(),
+  }));
 
-  // 6.3) Búsqueda simple (si viene q)
-  let filtered = ALL_OFFERS;
-  if (params.q && params.q.trim()) {
-    const q = params.q.toLowerCase();
-    filtered = ALL_OFFERS.filter((o) =>
-      o.description.toLowerCase().includes(q) ||
-      o.category.toLowerCase().includes(q) ||
-      o.contact.whatsapp.includes(q) ||
-      o.contact.email.toLowerCase().includes(q)
+  // Excluir eliminadas (criterio 18)
+  data = data.filter((o) => o.status !== 'deleted');
+
+  // Búsqueda por título/descr/categoría
+  const q = normalize(query);
+  if (q) {
+    data = data.filter(
+      (o) =>
+        normalize(o.title).includes(q) ||
+        normalize(o.description).includes(q) ||
+        normalize(o.category).includes(q)
     );
   }
 
-  // 6.4) Paginación (1-based)
-  const total = filtered.length;
-  const start = (params.page - 1) * params.limit;
-  const end = start + params.limit;
-  const pageItems = filtered.slice(start, end);
+  // Solo activas si se solicita (criterio 4)
+  if (!includeInactive) {
+    data = data.filter((o) => o.status === 'active');
+  }
 
-  // 6.5) Estructura de retorno (contrato estable para la UI)
-  return {
-    data: pageItems,
-    page: params.page,
-    pageSize: params.limit,
-    total
-  };
+  // Ordenar por fecha más reciente (criterio 10)
+  data.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+
+  // Paginación (criterio 8)
+  const total = data.length;
+  const start = (page - 1) * pageSize;
+  const items = data.slice(start, start + pageSize);
+
+  return { total, items };
 }
