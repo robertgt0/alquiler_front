@@ -36,12 +36,15 @@ export default function LocationForm({ onSubmit }: LocationFormProps) {
 
       <div>
         <label className="block text-sm font-medium mb-1">Notas Adicionales (Opcional)</label>
-        <Input
-          type="text"
-          placeholder="Ej: Edificio azul, segundo piso, apartamento 201"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
+        // En src/components/LocationForms.tsx (cerca de la línea 357)
+<Input
+  type="text"
+  placeholder="Ej: Edificio azul, segundo piso, apartamento 201"
+  value={notes}
+  onChange={(e) => setNotes(e.target.value)}
+  // Añadir el límite aquí:
+  maxLength={200}
+/>
       </div>
 
       <div className="border rounded-lg p-4 text-center text-sm text-gray-600">
