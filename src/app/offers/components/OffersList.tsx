@@ -4,6 +4,7 @@ import React from 'react';
 import OfferCard from './OfferCard';
 import { listOffers } from '../services/offersService';
 import type { Offer } from '../services/offersService';
+import { useRouter } from 'next/navigation';
 
 const PAGE_SIZE = 10;
 
@@ -14,9 +15,10 @@ export default function OffersList() {
   const [items, setItems] = React.useState<Offer[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [includeInactive] = React.useState(false); // "Mis ofertas activas"
+  const [includeInactive] = React.useState(false);
 
-  // ---- FIX HYDRATION: offline solo después de montar ----
+  const router = useRouter();
+
   const [offline, setOffline] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
@@ -31,18 +33,12 @@ export default function OffersList() {
       window.removeEventListener('offline', update);
     };
   }, []);
-  // --------------------------------------------------------
 
   const fetchData = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await listOffers({
-        query,
-        page,
-        pageSize: PAGE_SIZE,
-        includeInactive,
-      });
+      const res = await listOffers({ query, page, pageSize: PAGE_SIZE, includeInactive });
       setTotal(res.total);
       setItems(res.items);
     } catch {
@@ -52,33 +48,20 @@ export default function OffersList() {
     }
   }, [query, page, includeInactive]);
 
-  // Cargar datos cuando haya montado (evita desajustes entre SSR y CSR)
   React.useEffect(() => {
     if (mounted) fetchData();
   }, [fetchData, mounted]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  function handleRefresh() {
-    fetchData();
-  }
-
   function onOpenOffer(offer: Offer) {
-    alert(`Abrir detalle de oferta: ${offer.title}`);
+    router.push(`/offers/${offer.id}`);
   }
 
   return (
     <section style={{ display: 'grid', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2
-          style={{
-            margin: 0,
-            color: '#0c4fe9',
-            fontFamily: 'Poppins, system-ui, sans-serif',
-            fontWeight: 700,
-            fontSize: 22,
-          }}
-        >
+        <h2 style={{ margin: 0, color: '#0c4fe9', fontFamily: 'Poppins, system-ui, sans-serif', fontWeight: 700, fontSize: 22 }}>
           Ofertas Disponibles
         </h2>
         <span style={{ color: '#616E8A' }}>Total: {total}</span>
@@ -89,33 +72,13 @@ export default function OffersList() {
           aria-label="Buscar mis ofertas"
           placeholder="Buscar mis ofertas"
           value={query}
-          onChange={(e) => {
-            setPage(1);
-            setQuery(e.target.value);
-          }}
-          style={{
-            width: '100%',
-            padding: '10px 14px',
-            borderRadius: 999,
-            border: '1px solid #DBDEE5',
-            outline: 'none',
-            color: '#616E8A',
-            background: '#fff',
-          }}
+          onChange={(e) => { setPage(1); setQuery(e.target.value); }}
+          style={{ width: '100%', padding: '10px 14px', borderRadius: 999, border: '1px solid #DBDEE5', outline: 'none', color: '#616E8A', background: '#fff' }}
         />
         <button
           type="button"
-          onClick={handleRefresh}
-          style={{
-            marginLeft: 8,
-            padding: '10px 14px',
-            borderRadius: 8,
-            border: '1px solid #DBDEE5',
-            background: '#F0F2F5',
-            color: '#0c4fe9',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
+          onClick={() => fetchData()}
+          style={{ marginLeft: 8, padding: '10px 14px', borderRadius: 8, border: '1px solid #DBDEE5', background: '#F0F2F5', color: '#0c4fe9', fontWeight: 600, cursor: 'pointer' }}
           aria-label="Refrescar listado"
           title="Refrescar"
         >
@@ -123,26 +86,14 @@ export default function OffersList() {
         </button>
       </div>
 
-      {/* Mostrar el aviso offline solo tras montar (evita mismatch) */}
       {mounted && offline && (
-        <div
-          role="alert"
-          style={{
-            border: '1px solid #E55451',
-            background: '#fff',
-            color: '#E55451',
-            padding: '10px 12px',
-            borderRadius: 8,
-          }}
-        >
+        <div role="alert" style={{ border: '1px solid #E55451', background: '#fff', color: '#E55451', padding: '10px 12px', borderRadius: 8 }}>
           Error al cargar ofertas
         </div>
       )}
 
       {error && !(mounted && offline) && (
-        <div role="alert" style={{ color: '#E55451' }}>
-          {error}
-        </div>
+        <div role="alert" style={{ color: '#E55451' }}>{error}</div>
       )}
 
       {loading ? (
@@ -159,37 +110,13 @@ export default function OffersList() {
 
       {totalPages > 1 && (
         <nav aria-label="Paginación" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 8,
-              border: '1px solid #DBDEE5',
-              background: page === 1 ? '#F0F2F5' : '#fff',
-              color: '#0c4fe9',
-              cursor: page === 1 ? 'not-allowed' : 'pointer',
-            }}
-          >
+          <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #DBDEE5', background: page === 1 ? '#F0F2F5' : '#fff', color: '#0c4fe9', cursor: page === 1 ? 'not-allowed' : 'pointer' }}>
             Anterior
           </button>
-          <span style={{ alignSelf: 'center', color: '#616E8A' }}>
-            {page} / {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 8,
-              border: '1px solid #DBDEE5',
-              background: page === totalPages ? '#F0F2F5' : '#fff',
-              color: '#0c4fe9',
-              cursor: page === totalPages ? 'not-allowed' : 'pointer',
-            }}
-          >
+          <span style={{ alignSelf: 'center', color: '#616E8A' }}>{page} / {totalPages}</span>
+          <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #DBDEE5', background: page === totalPages ? '#F0F2F5' : '#fff', color: '#0c4fe9', cursor: page === totalPages ? 'not-allowed' : 'pointer' }}>
             Siguiente
           </button>
         </nav>
