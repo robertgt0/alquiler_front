@@ -3,12 +3,24 @@
 import { useState } from "react";
 import TimeInput from "../components/CampoHora";
 import { useSolicitudTrabajo } from "../hooks/useSolicitudTrabajo";
+import { IFranjaDisponible } from "../interfaces/Solicitud.interface";
 
-export default function SolicitarTrabajoForm() {
+type Props = {
+  franjas: IFranjaDisponible[];
+  date: string;
+  providerId: string;
+};
+
+export default function SolicitarTrabajoForm({ franjas, date, providerId }: Props) {
   // Valores iniciales por defecto
   const [horaInicio, setHoraInicio] = useState("00:00");
   const [horaFin, setHoraFin] = useState("00:00");
-  const { loading, mensaje, enviar } = useSolicitudTrabajo();
+
+  const { loading, mensaje, setMensaje, enviar } = useSolicitudTrabajo(
+    franjas,
+    date,
+    providerId
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -22,7 +34,8 @@ export default function SolicitarTrabajoForm() {
         value={horaInicio}
         onChange={(e) => {
           setHoraInicio(e.target.value);
-          setHoraFin("00:00"); //Resetear hora fin al cambiar inicio
+          setHoraFin("00:00"); // Resetear hora fin al cambiar inicio
+          if (mensaje) setMensaje("");
         }}
         step={1800}
         disabled={loading}
@@ -31,7 +44,10 @@ export default function SolicitarTrabajoForm() {
       <TimeInput
         label="Hora Fin"
         value={horaFin}
-        onChange={(e) => setHoraFin(e.target.value)}
+        onChange={(e) => {
+          setHoraFin(e.target.value);
+          if (mensaje) setMensaje("");
+        }}
         step={1800}
         disabled={loading || !horaInicio}
       />
