@@ -51,8 +51,7 @@ export default function NuevaOferta() {
 
       {/* CONTENIDO */}
       <section className="flex justify-center p-5">
-        <div className="flex flex-col w-[960px] space-y-6">
-          
+        <form onSubmit={(e) => e.preventDefault()} className="flex flex-col w-[960px] space-y-6">
           {/* TÍTULO */}
           <div className="p-4">
             <h2 className="text-3xl font-bold text-gray-900">Crear nueva Oferta de Servicio</h2>
@@ -67,7 +66,11 @@ export default function NuevaOferta() {
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Describe tu servicio en 100 caracteres o menos."
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
             />
+            <div className="text-right text-xs text-gray-500 mt-1">
+              {descripcion.length}/100
+            </div>
           </div>
 
           {/* CATEGORÍA */}
@@ -108,9 +111,8 @@ export default function NuevaOferta() {
               {loading ? "Creando..." : "Crear oferta de servicio"}
             </button>
           </div>
-        </div>
+        </form>
       </section>
     </main>
   );
 }
-
