@@ -1,11 +1,61 @@
-import React from "react";
+// Server Component (por defecto). Importa el Client Component directamente.
+import OffersList from './components/OffersList';
 
-export default function Page() {
+export default function OffersPage() {
   return (
-    <main style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
-      <h1 style={{ color: "#11255a" }}>Ofertas Disponibles</h1>
-      <p style={{ color: "#555" }}>Aquí irá el listado (HU9).</p>
+    <main
+      style={{
+        background: '#ffffff',
+        minHeight: '100dvh',
+        padding: '24px 20px'
+      }}
+    >
+      <header
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 24
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              background: '#0c4fe9',
+              display: 'inline-block'
+            }}
+            aria-hidden="true"
+          />
+          <strong
+            style={{
+              color: '#11255a',
+              fontFamily: 'Poppins, system-ui, sans-serif'
+            }}
+          >
+            Servineo
+          </strong>
+        </div>
+
+        <nav style={{ display: 'flex', gap: 16, color: '#616E8A' }}>
+          <a href="#" style={{ textDecoration: 'none', color: '#616E8A' }}>
+            Encontrar Fixers
+          </a>
+          <a href="#" style={{ textDecoration: 'none', color: '#616E8A' }}>
+            Fixer
+          </a>
+          <a href="#" style={{ textDecoration: 'none', color: '#616E8A' }}>
+            Mis Ofertas
+          </a>
+          <a href="#" style={{ textDecoration: 'none', color: '#616E8A' }}>
+            Ayuda
+          </a>
+        </nav>
+      </header>
+
+      <OffersList />
     </main>
   );
 }
-
