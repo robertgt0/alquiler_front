@@ -1,101 +1,69 @@
 [
-    [
   {
-    "id": "ofr_001",
-    "description": "Arreglar grifo con goteo en baño principal",
+    "id": "1",
+    "ownerId": "fixer-1",
+    "title": "Arreglar grifo con goteo",
+    "description": "Revisión de grifería en cocina, fuga leve y goteo constante. Material básico disponible.",
     "category": "Plomería",
-    "contact": { "whatsapp": "+59170000001", "email": "fix1@mail.com" },
+    "contact": { "whatsapp": "555-123-4567" },
+    "createdAt": "2025-10-15T13:45:00.000Z",
     "status": "active",
-    "createdAt": "2025-10-15T10:00:00Z"
+    "images": [
+      "https://images.unsplash.com/photo-1503174971373-b1f69850bded?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1523419409543-8a3e06d8c65b?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1400&auto=format"
+    ]
   },
   {
-    "id": "ofr_002",
-    "description": "Instalar luces LED en sala y comedor",
+    "id": "2",
+    "ownerId": "fixer-2",
+    "title": "Instalar luces en la sala de estar",
+    "description": "Instalación de 4 focos LED empotrables y verificación de apagadores existentes.",
     "category": "Electricidad",
-    "contact": { "whatsapp": "+59170000002", "email": "fix2@mail.com" },
+    "contact": { "whatsapp": "555-987-6543" },
+    "createdAt": "2025-10-14T17:10:00.000Z",
     "status": "active",
-    "createdAt": "2025-10-14T09:30:00Z"
+    "images": [
+      "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1400&auto=format"
+    ]
   },
   {
-    "id": "ofr_003",
-    "description": "Arreglar marco de puerta roto",
+    "id": "3",
+    "ownerId": "fixer-3",
+    "title": "Arreglar marco de puerta roto",
+    "description": "Marco astillado por golpe, requiere encolado y ajuste de bisagras.",
     "category": "Carpintería",
-    "contact": { "whatsapp": "+59170000003", "email": "fix3@mail.com" },
-    "status": "inactive",
-    "createdAt": "2025-10-13T08:10:00Z"
+    "contact": { "whatsapp": "555-246-8013" },
+    "createdAt": "2025-10-12T08:30:00.000Z",
+    "status": "active",
+    "images": []
   },
   {
-    "id": "ofr_004",
-    "description": "Pintar paredes del cuarto (incluye preparación de superficie)",
+    "id": "4",
+    "ownerId": "fixer-4",
+    "title": "Pintar paredes del cuarto",
+    "description": "Pintura de dormitorio 3x4 m, se provee pintura lavable tono claro.",
     "category": "Pintura",
-    "contact": { "whatsapp": "+59170000004", "email": "fix4@mail.com" },
-    "status": "active",
-    "createdAt": "2025-10-12T16:45:00Z"
+    "contact": { "whatsapp": "555-369-1470" },
+    "createdAt": "2025-10-10T10:05:00.000Z",
+    "status": "inactive",
+    "images": []
   },
   {
-    "id": "ofr_005",
-    "description": "Destapar lavaplatos de la cocina con obstrucción leve",
+    "id": "5",
+    "ownerId": "fixer-5",
+    "title": "Destapar lavaplatos de la cocina",
+    "description": "Lavaplatos obstruido, requiere destape y limpieza de sifón en U.",
     "category": "Plomería",
-    "contact": { "whatsapp": "+59170000005", "email": "fix5@mail.com" },
+    "contact": { "whatsapp": "555-789-0123" },
+    "createdAt": "2025-10-09T09:20:00.000Z",
     "status": "active",
-    "createdAt": "2025-10-12T14:20:00Z"
-  },
-  {
-    "id": "ofr_006",
-    "description": "Cambio de enchufes y tomacorrientes en dormitorio",
-    "category": "Electricidad",
-    "contact": { "whatsapp": "+59170000006", "email": "fix6@mail.com" },
-    "status": "deleted",
-    "createdAt": "2025-10-11T12:00:00Z"
-  },
-  {
-    "id": "ofr_007",
-    "description": "Sellado de filtraciones menores en techo",
-    "category": "Albañilería",
-    "contact": { "whatsapp": "+59170000007", "email": "fix7@mail.com" },
-    "status": "active",
-    "createdAt": "2025-10-11T10:10:00Z"
-  },
-  {
-    "id": "ofr_008",
-    "description": "Armado de mueble modular para cocina",
-    "category": "Carpintería",
-    "contact": { "whatsapp": "+59170000008", "email": "fix8@mail.com" },
-    "status": "active",
-    "createdAt": "2025-10-10T18:30:00Z"
-  },
-  {
-    "id": "ofr_009",
-    "description": "Instalación de cortinas y rieles en sala",
-    "category": "Decoración",
-    "contact": { "whatsapp": "+59170000009", "email": "fix9@mail.com" },
-    "status": "active",
-    "createdAt": "2025-10-10T15:05:00Z"
-  },
-  {
-    "id": "ofr_010",
-    "description": "Mantenimiento preventivo de lavadora",
-    "category": "Electrodomésticos",
-    "contact": { "whatsapp": "+59170000010", "email": "fix10@mail.com" },
-    "status": "active",
-    "createdAt": "2025-10-09T09:00:00Z"
-  },
-  {
-    "id": "ofr_011",
-    "description": "Reparación de cerradura en puerta principal",
-    "category": "Cerrajería",
-    "contact": { "whatsapp": "+59170000011", "email": "fix11@mail.com" },
-    "status": "active",
-    "createdAt": "2025-10-08T11:40:00Z"
-  },
-  {
-    "id": "ofr_012",
-    "description": "Lijado y barnizado de mesa de comedor",
-    "category": "Carpintería",
-    "contact": { "whatsapp": "+59170000012", "email": "fix12@mail.com" },
-    "status": "active",
-    "createdAt": "2025-10-07T17:25:00Z"
+    "images": [
+      "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1503174971373-b1f69850bded?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1523419409543-8a3e06d8c65b?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1520880867055-1e30d1cb001c?q=80&w=1400&auto=format"
+    ]
   }
-]
-
 ]
