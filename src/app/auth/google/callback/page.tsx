@@ -1,13 +1,17 @@
 // src/app/auth/google/callback/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { usoGoogleAuth } from '../../../google/hooks/usoGoogleAuth';
 
-export default function GoogleCallbackPage() {
+// Evita prerender estático: esta ruta depende de query params
+export const dynamic = 'force-dynamic';
+
+// 👇 Tu lógica actual va dentro de este componente "Inner"
+function Inner() {
   const router = useRouter();
-  const { finalizeFromGoogleProfile } = usoGoogleAuth(); // ✅ usamos esta función en lugar de datosFormularioGoogle
+  const { finalizeFromGoogleProfile } = usoGoogleAuth();
   const searchParams = useSearchParams();
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -33,41 +37,41 @@ export default function GoogleCallbackPage() {
         console.log('🔹 Respuesta del backend:', data);
 
         if (!response.ok) {
-  if (data.message === 'usuario ya registrado') {
-    document.body.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#fff;">
-        <h1 style="font-family:sans-serif;color:#888;">Página Home</h1>
-      </div>
-    `;
-    return;
-  } else {
-    throw new Error(data.message || 'Error en la autenticación con Google');
-  }
-}
+          if (data.message === 'usuario ya registrado') {
+            document.body.innerHTML = `
+              <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#fff;">
+                <h1 style="font-family:sans-serif;color:#888;">Página Home</h1>
+              </div>
+            `;
+            return;
+          } else {
+            throw new Error(data.message || 'Error en la autenticación con Google');
+          }
+        }
 
+        // ✅ Extraer datos correctamente desde data.data
+        const user = data.data.user;
+        const accessToken = data.data.accessToken;
+        const refreshToken = data.data.refreshToken;
 
-// ✅ Extraer datos correctamente desde data.data
-const user = data.data.user;
-const accessToken = data.data.accessToken;
-const refreshToken = data.data.refreshToken;
+        // ✅ Guardar token y usuario
+        localStorage.setItem('userToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('userData', JSON.stringify(user));
 
-// ✅ Guardar token y usuario
-localStorage.setItem('userToken', accessToken);
-localStorage.setItem('refreshToken', refreshToken);
-localStorage.setItem('userData', JSON.stringify(user));
+        // ✅ Guardar en sessionStorage para ImagenLocalizacion
+        sessionStorage.setItem('datosUsuarioParcial', JSON.stringify(user));
 
-// ✅ Guardar en sessionStorage para ImagenLocalizacion
-sessionStorage.setItem('datosUsuarioParcial', JSON.stringify(user));
+        // (Si luego usas finalizeFromGoogleProfile, aquí lo puedes llamar)
+        // await finalizeFromGoogleProfile?.(user);
 
-// ✅ Si quieres, usa el hook para mantener compatibilida
+        setStatus('success');
+        setMessage('¡Registro con Google exitoso!');
 
-setStatus('success');
-setMessage('¡Registro con Google exitoso!');
-
-// ✅ Redirigir a /ImagenLocalizacion
-setTimeout(() => {
-    router.push('/ImagenLocalizacion');
-  }, 1500);
+        // ✅ Redirigir a /ImagenLocalizacion
+        setTimeout(() => {
+          router.push('/ImagenLocalizacion');
+        }, 1500);
 
       } catch (error) {
         console.error('❌ Error en callback:', error);
@@ -122,5 +126,14 @@ setTimeout(() => {
         </div>
       </div>
     </div>
+  );
+}
+
+// 👇 La página (Server por defecto) solo envuelve en Suspense al componente cliente
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense fallback={<p>Redirigiendo…</p>}>
+      <Inner />
+    </Suspense>
   );
 }

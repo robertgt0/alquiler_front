@@ -56,7 +56,7 @@ export const usoGoogleAuth = () => {
     // Construimos el objeto que quieres
     const datosFormularioGoogle = {
       nombre: profile?.name ?? '',
-      correoElectronico: profile?.email ?? '',
+      correo: profile?.email ?? '',
       fotoPerfil: profile?.picture, // si luego lo quieres usar en otro paso
       terminosYCondiciones: true,
     };

@@ -2,20 +2,17 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MapContainer, TileLayer, Marker, Circle, useMapEvents } from "react-leaflet";
+import dynamic from "next/dynamic";
 import 'leaflet/dist/leaflet.css';
-import L from "leaflet";
 import Modal from "react-modal";
 import { UsuarioDocument } from "@/app/registro/interfaces/types";
 import { crearUsuario } from "@/app/teamsys/services/UserService";
 
-// 🧭 Fix de íconos Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
+// 👇 Importa react-leaflet solo en cliente
+const MapContainer = dynamic(() => import("react-leaflet").then(m => m.MapContainer), { ssr: false });
+const TileLayer     = dynamic(() => import("react-leaflet").then(m => m.TileLayer),     { ssr: false });
+const Marker        = dynamic(() => import("react-leaflet").then(m => m.Marker),        { ssr: false });
+const Circle        = dynamic(() => import("react-leaflet").then(m => m.Circle),        { ssr: false });
 
 interface Location {
   lat: number;
@@ -31,10 +28,12 @@ interface SelectableMapProps {
 }
 
 const SelectableMap: React.FC<SelectableMapProps> = ({ ubicacion, setUbicacion, zoom = 15, height = "200px", width = "200px" }) => {
-  const ClickHandler = () => {
+  // Cargamos useMapEvents solo en cliente
+  const ClickHandler = ({ onPick }: { onPick: (lat: number, lng: number) => void }) => {
+    const { useMapEvents } = require("react-leaflet");
     useMapEvents({
-      click(e) {
-        setUbicacion({ lat: e.latlng.lat, lng: e.latlng.lng });
+      click(e: any) {
+        onPick(e.latlng.lat, e.latlng.lng);
       },
     });
     return null;
@@ -47,7 +46,7 @@ const SelectableMap: React.FC<SelectableMapProps> = ({ ubicacion, setUbicacion, 
       style={{ width, height, borderRadius: "0.5rem" }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <ClickHandler />
+      <ClickHandler onPick={(lat, lng) => setUbicacion({ lat, lng })} />
       {ubicacion && (
         <>
           <Marker position={ubicacion} />
@@ -69,150 +68,209 @@ export default function RegistroImagen() {
   const [previewImage, setPreviewImage] = useState<string | null>(null); // URL (Google o blob)
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+  const [ready, setReady] = useState(false);
+
+  // Setup de Modal y Leaflet SOLO en cliente
+  useEffect(() => {
+    Modal.setAppElement('body');
+    (async () => {
+      const L = await import('leaflet');
+      // @ts-ignore
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      });
+      setReady(true);
+    })();
+  }, []);
 
   const isHttpUrl = (v: any) =>
-  typeof v === "string" && /^https?:\/\//i.test(v);
-  
+    typeof v === "string" && /^https?:\/\//i.test(v);
+
   const maxSize = 2 * 1024 * 1024;
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
 
   // 🧠 Recuperar datos del sessionStorage (Google o formulario manual)
-  // Función auxiliar para verificar si es una URL HTTP válida
-useEffect(() => {
-  const datosGuardados = sessionStorage.getItem("datosUsuarioParcial");
-  if (!datosGuardados) {
-    console.warn("⚠️ No hay datos en sessionStorage.");
-    return;
-  }
-
-  try {
-    const datos = JSON.parse(datosGuardados);
-    console.log("🔍 Datos en sessionStorage:", datos);
-
-    let datosAdaptados: any = {};
-
-    // ✅ Caso 1: formulario tradicional
-    if (datos.contraseña && datos.email) {
-      datosAdaptados = {
-        nombre: datos.nombre,
-        apellido: datos.apellido,
-        telefono: datos.telefono,
-        correoElectronico: datos.email,
-        password: datos.contraseña,
-        terminosYCondiciones: datos.terminosYCondiciones,
-      };
+  useEffect(() => {
+    const datosGuardados = sessionStorage.getItem("datosUsuarioParcial");
+    if (!datosGuardados) {
+      console.warn("⚠️ No hay datos en sessionStorage.");
+      return;
     }
 
-    // ✅ Caso 2: viene de Google
-    else if (datos.correoElectronico) {
-      datosAdaptados = {
-        nombre: datos.nombre,
-        correoElectronico: datos.correoElectronico,
-        fotoPerfil:datos.fotoPerfil,
-        terminosYCondiciones: false,
-      };
+    try {
+      const datos = JSON.parse(datosGuardados);
+      console.log("🔍 Datos en sessionStorage:", datos);
+
+      let datosAdaptados: any = {};
+
+      // ✅ Caso 1: formulario tradicional
+      if (datos.contraseña && datos.email) {
+        datosAdaptados = {
+          nombre: datos.nombre,
+          apellido: datos.apellido,
+          telefono: datos.telefono,
+          correo: datos.email,
+          password: datos.contraseña,
+          terminosYCondiciones: datos.terminosYCondiciones,
+        };
+      }
+      // ✅ Caso 2: viene de Google
+      else if (datos.correo) {
+        datosAdaptados = {
+          nombre: datos.nombre,
+          correo: datos.correo,
+          fotoPerfil: datos.fotoPerfil,
+          terminosYCondiciones: false,
+        };
+      }
+
+      setDatosFormulario(datosAdaptados);
+      console.log("✅ Datos adaptados para envío:", datosAdaptados);
+
+      // 🖼️ Si hay una foto de Google, mostrarla
+      if (isHttpUrl(datos.fotoPerfil)) {
+        setPreviewImage(datos.fotoPerfil);
+      }
+
+    } catch (err) {
+      console.error("❌ Error al parsear sessionStorage:", err);
     }
-
-    setDatosFormulario(datosAdaptados);
-    console.log("✅ Datos adaptados para envío:", datosAdaptados);
-
-    // 🖼️ Si hay una foto de Google, mostrarla
-    if (isHttpUrl(datos.fotoPerfil)) {
-      setPreviewImage(datos.fotoPerfil);
-    }
-
-  } catch (err) {
-    console.error("❌ Error al parsear sessionStorage:", err);
-  }
-}, []);
-
+  }, []);
 
   // 📸 Manejar imagen
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const selected = e.target.files?.[0];
-  if (!selected) return;
+    const selected = e.target.files?.[0];
+    if (!selected) return;
 
-  if (!allowedTypes.includes(selected.type)) {
-    setError("Formato no permitido. Usa JPG o PNG.");
-    setFile(null);
-    setFilePreview(null);
-    return;
-  }
-  if (selected.size > maxSize) {
-    setError("Archivo demasiado grande. Máx 2MB.");
-    setFile(null);
-    setFilePreview(null);
-    return;
-  }
+    if (!allowedTypes.includes(selected.type)) {
+      setError("Formato no permitido. Usa JPG o PNG.");
+      setFile(null);
+      setFilePreview(null);
+      return;
+    }
+    if (selected.size > maxSize) {
+      setError("Archivo demasiado grande. Máx 2MB.");
+      setFile(null);
+      setFilePreview(null);
+      return;
+    }
 
-  setError("");
-  setFile(selected);
+    setError("");
+    setFile(selected);
 
-  // crea una URL local para previsualizar el file
-  const url = URL.createObjectURL(selected);
-  setFilePreview(url);
-};
-
-// Limpia la objectURL cuando cambie el archivo o se desmonte
-useEffect(() => {
-  return () => {
-    if (filePreview) URL.revokeObjectURL(filePreview);
+    // crea una URL local para previsualizar el file
+    const url = URL.createObjectURL(selected);
+    setFilePreview(url);
   };
-}, [filePreview]);
 
+  // Limpia la objectURL cuando cambie el archivo o se desmonte
+  useEffect(() => {
+    return () => {
+      if (filePreview) URL.revokeObjectURL(filePreview);
+    };
+  }, [filePreview]);
 
-  // 🚀 Continuar registro
   const handleContinuar = async () => {
   if (!accepted) return setError("Debes aceptar los términos y condiciones.");
   if (!ubicacion) return setError("Selecciona tu ubicación en el mapa.");
 
   try {
-    let fotoBuffer: Buffer | undefined = undefined;
+    const CLOUD_NAME = 'ddjrzszrw';
+    const UPLOAD_PRESET = 'servineo_unsigned';
 
-    if (file) {
-      // Caso 1: el usuario subió un archivo
-      const arrayBuffer = await file.arrayBuffer();
-      fotoBuffer = Buffer.from(arrayBuffer);
-    } else if (isHttpUrl(previewImage)) {
-      // Caso 2: imagen de Google
-      const res = await fetch(previewImage as string);
-      const arrayBuffer = await res.arrayBuffer();
-      fotoBuffer = Buffer.from(arrayBuffer);
-    } else {
-      return setError("Selecciona una imagen o usa tu foto de Google.");
+    async function uploadToCloudinary(fileOrUrl: File | string): Promise<string> {
+      const fd = new FormData();
+      fd.append('file', fileOrUrl);
+      fd.append('upload_preset', UPLOAD_PRESET);
+
+      const resp = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: fd
+      });
+
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        const msg = (data?.error?.message) || resp.statusText;
+        throw new Error(`Cloudinary ${resp.status}: ${msg}`);
+      }
+      if (!data?.secure_url) throw new Error('Cloudinary no devolvió secure_url');
+      return String(data.secure_url);
     }
 
-    // 🧩 Crear objeto base
-    const usuario: any = {
-      nombre: datosFormulario?.nombre ?? "",
-      correoElectronico: datosFormulario?.correoElectronico ?? "",
-      terminosYCondiciones: accepted,
-      fotoPerfil: fotoBuffer,
+    // 1) Resolver fotoPerfil a URL (NUNCA binario)
+    let fotoUrl: string | undefined;
+    if (file instanceof File) {
+      fotoUrl = await uploadToCloudinary(file);
+    } else if (isHttpUrl(previewImage)) {
+      fotoUrl = String(previewImage);
+    } else {
+      setError('Selecciona una imagen o usa tu foto de Google.');
+      return;
+    }
+
+    // 2) Payload alineado con el back
+    const payload: any = {
+      nombre: (datosFormulario?.nombre ?? "").trim(),
+      correo: (datosFormulario?.correoElectronico ?? datosFormulario?.correo ?? "").trim(),
+      terminosYCondiciones: !!accepted,
+      fotoPerfil: fotoUrl,
       ubicacion: {
         type: "Point",
-        coordinates: [ubicacion.lng, ubicacion.lat],
+        coordinates: [Number(ubicacion.lng), Number(ubicacion.lat)],
       },
+      // ⬇️ agrega estos si tu schema los marca required
+      authProvider: 'local',
+      rol: 'requester',
+
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    if (typeof payload.fotoPerfil !== 'string' || !/^https?:\/\//.test(payload.fotoPerfil)) {
+    setError('fotoPerfil debe ser una URL pública. Vuelve a seleccionar/subir la imagen.');
+    console.warn('fotoPerfil inválido en payload:', payload.fotoPerfil);
+    return;
+  }
 
-    // 🧱 Agregar campos opcionales solo si existen
-    if (datosFormulario?.apellido) usuario.apellido = datosFormulario.apellido;
-    if (datosFormulario?.telefono) usuario.telefono = datosFormulario.telefono;
-    if (datosFormulario?.password) usuario.password = datosFormulario.password;
+    if (datosFormulario?.apellido) payload.apellido = datosFormulario.apellido;
+    if (datosFormulario?.telefono) payload.telefono = datosFormulario.telefono;
+    if (datosFormulario?.password) payload.password = datosFormulario.password;
+    console.log(payload)
+    console.log("📤 Usuario listo para crear (payload final):", payload);
 
-    console.log("📤 Usuario listo para crear:", usuario);
+    const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
+    const resp = await fetch(`${baseUrl}/api/teamsys/usuario`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-    await crearUsuario(usuario);
+    // 3) Mostrar motivos exactos del 400
+    const text = await resp.text();
+    let body: any = null;
+    try { body = text ? JSON.parse(text) : null; } catch { /* deja text tal cual */ }
+
+    if (!resp.ok) {
+      const detalle = body?.error || body?.message || text || `HTTP ${resp.status}`;
+      console.error(' Respuesta del servidor:', body ?? text);
+      throw new Error(detalle);
+    }
 
     alert("Usuario registrado exitosamente 🎉");
     sessionStorage.removeItem("datosUsuarioParcial");
     router.push("/");
-  } catch (err) {
-    console.error("❌ Error al crear usuario:", err);
-    setError("Hubo un error al registrar el usuario.");
+  } catch (err: any) {
+    console.error(" Error al crear usuario:", err);
+    setError(err?.message || "Hubo un error al registrar el usuario.");
   }
 };
+
+
+
+  // Evita renderizar mapa/modal hasta que Leaflet esté listo en cliente
+  if (!ready) return null;
 
   // 🧩 Render
   return (
@@ -221,12 +279,12 @@ useEffect(() => {
 
       <div className="flex gap-4 items-start">
         <div className="w-32 h-32 border rounded overflow-hidden">
-  <img
-    src={filePreview ?? previewImage ?? DEFAULT_AVATAR}
-    alt="preview"
-    className="w-32 h-32 object-cover"
-  />
-</div>
+          <img
+            src={filePreview ?? previewImage ?? DEFAULT_AVATAR}
+            alt="preview"
+            className="w-32 h-32 object-cover"
+          />
+        </div>
 
         {/* Mapa mini */}
         <div onClick={() => setModalOpen(true)} className="cursor-pointer border w-32 h-32 rounded overflow-hidden relative">
@@ -238,7 +296,12 @@ useEffect(() => {
       </div>
 
       {/* Modal mapa grande */}
-      <Modal isOpen={modalOpen} onRequestClose={() => setModalOpen(false)} className="mx-auto mt-20 bg-white rounded shadow-lg p-4 max-w-lg" overlayClassName="fixed inset-0 bg-black bg-opacity-50">
+      <Modal
+        isOpen={modalOpen}
+        onRequestClose={() => setModalOpen(false)}
+        className="mx-auto mt-20 bg-white rounded shadow-lg p-4 max-w-lg"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+      >
         <h3 className="text-center mb-2 font-bold">Selecciona tu ubicación</h3>
         <SelectableMap ubicacion={ubicacion} setUbicacion={setUbicacion} zoom={15} height="400px" width="100%" />
         <button onClick={() => setModalOpen(false)} className="mt-4 bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700 mx-auto block">

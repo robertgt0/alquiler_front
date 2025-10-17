@@ -38,8 +38,8 @@ export const useRegistrationForm = () => {
       return resultado || '';
     },
     apellido: (valor: string) =>{
-     const resultado =  validarApellido(valor);
-     return resultado || '';
+    const resultado =  validarApellido(valor);
+    return resultado || '';
     },
     telefono: (valor: string) => {
       const resultado = validacionTelf(valor);

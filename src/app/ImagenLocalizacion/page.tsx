@@ -1,7 +1,9 @@
-"use client";
+import ImagenLocalizacionClient from './ClientPage';
 
-import  RegistroImagen  from '../ImagenLocalizacion/components/RegistroImagen';
+// Fuerza que la ruta no se prerenderice ni se cachee
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-export default function ImagenPage() {
-  return <RegistroImagen />;
+export default function ImagenLocalizacionPage() {
+  return <ImagenLocalizacionClient />;
 }
