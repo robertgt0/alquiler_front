@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Calendario from "./register_a_job/calendario";
 
 export default function Home() {
   return (
@@ -97,6 +98,7 @@ export default function Home() {
           />
           Go to nextjs.org →
         </a>
+
       </footer>
     </div>
   );
