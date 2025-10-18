@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Calendario from "./client/calendario";
 
 export default function Home() {
   return (
@@ -98,9 +97,6 @@ export default function Home() {
           />
           Go to nextjs.org →
         </a>
-        <Calendario/>
-        
-
       </footer>
     </div>
   );
