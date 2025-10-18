@@ -1,11 +1,6 @@
-// Servicio unificado HU9 + HU10
-// - listOffers (HU9)
-// - getOfferById (HU10)
-// - canEditOffer (HU10)
+// src/app/offers/services/offersService.ts
+// Cliente de la API para HU9 (listado) y HU10 (detalle)
 
-import offersData from '../mocks/offers.mock.json';
-
-// ---- Tipos ----
 export type OfferStatus = 'active' | 'inactive' | 'deleted';
 
 export interface Offer {
@@ -28,61 +23,77 @@ export interface ListOffersParams {
 }
 export interface ListOffersResult { total: number; items: Offer[]; }
 
-// ---- Utilidades ----
-const normalize = (s: string) => s.toLowerCase().trim();
+// Base URL: toma env del front o usa localhost:4000
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, '') || 'http://localhost:4000';
 
-function sanitizeAll(): Offer[] {
-  return (offersData as any[]).map((o, i) => ({
-    id: String(o?.id ?? `tmp-${i + 1}`),
-    ownerId: typeof o?.ownerId === 'string' ? o.ownerId : undefined,
-    title: typeof o?.title === 'string' ? o.title : 'Oferta sin título',
-    description: typeof o?.description === 'string' ? o.description : '',
-    category: typeof o?.category === 'string' ? o.category : 'General',
-    contact: {
-      whatsapp: typeof o?.contact?.whatsapp === 'string' ? o.contact.whatsapp : undefined,
-      phone: typeof o?.contact?.phone === 'string' ? o.contact.phone : undefined,
-      email: typeof o?.contact?.email === 'string' ? o.contact.email : undefined,
-    },
-    createdAt: new Date(o?.createdAt ?? Date.now()).toISOString(),
-    status: (o?.status === 'inactive' || o?.status === 'deleted') ? o.status : 'active',
-    images: Array.isArray(o?.images) ? o.images.filter((x: any) => typeof x === 'string') : [],
-  }));
+// Pequeña ayuda para armar querystrings
+function qs(params: Record<string, any>) {
+  const url = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v === undefined || v === null) return;
+    url.set(k, String(v));
+  });
+  return url.toString();
 }
 
 // ---- HU9: Listado ----
 export async function listOffers(params: ListOffersParams = {}): Promise<ListOffersResult> {
-  const { query = '', page = 1, pageSize = 10, includeInactive = true } = params;
-  await new Promise((r) => setTimeout(r, 80)); // latencia simulada
+  const {
+    query = '',
+    page = 1,
+    pageSize = 10,
+    includeInactive = true,
+  } = params;
 
-  let data = sanitizeAll().filter((o) => o.status !== 'deleted');
+  const url = `${API_BASE}/api/offers?${qs({
+    query,
+    page,
+    pageSize,
+    includeInactive,
+  })}`;
 
-  const q = normalize(query);
-  if (q) {
-    data = data.filter(
-      (o) =>
-        normalize(o.title).includes(q) ||
-        normalize(o.description).includes(q) ||
-        normalize(o.category).includes(q)
-    );
-  }
-  if (!includeInactive) data = data.filter((o) => o.status === 'active');
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Error al cargar ofertas');
+  const data = (await res.json()) as ListOffersResult;
 
-  data.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  // Saneo mínimo por si algún campo viene raro
+  const items = (data.items || []).map((o) => ({
+    ...o,
+    id: String(o.id),
+    title: o.title ?? 'Oferta sin título',
+    description: o.description ?? '',
+    category: o.category ?? 'General',
+    contact: o.contact ?? {},
+    createdAt: o.createdAt ?? new Date().toISOString(),
+    status: (o.status === 'inactive' || o.status === 'deleted') ? o.status : 'active',
+    images: Array.isArray(o.images) ? o.images.filter((x) => typeof x === 'string') : [],
+  }));
 
-  const total = data.length;
-  const start = (page - 1) * pageSize;
-  const items = data.slice(start, start + pageSize);
-  return { total, items };
+  return { total: Number(data.total ?? items.length), items };
 }
 
 // ---- HU10: Detalle ----
 export async function getOfferById(id: string): Promise<Offer | null> {
-  await new Promise((r) => setTimeout(r, 80));
-  const item = sanitizeAll().find((o) => o.id === id && o.status !== 'deleted');
-  return item ?? null;
+  const res = await fetch(`${API_BASE}/api/offers/${id}`, { cache: 'no-store' });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error('No se pudo cargar la oferta');
+  const o = (await res.json()) as Offer;
+  return {
+    ...o,
+    id: String(o.id),
+    title: o.title ?? 'Oferta sin título',
+    description: o.description ?? '',
+    category: o.category ?? 'General',
+    contact: o.contact ?? {},
+    createdAt: o.createdAt ?? new Date().toISOString(),
+    status: (o.status === 'inactive' || o.status === 'deleted') ? o.status : 'active',
+    images: Array.isArray(o.images) ? o.images.filter((x) => typeof x === 'string') : [],
+  };
 }
 
 // ---- HU10: Permisos (simulado) ----
+// Mantén esto igual que antes (el backend aún no valida dueño).
 export async function canEditOffer(offer: Offer, currentUserId: string): Promise<boolean> {
   return offer.ownerId === currentUserId;
 }
