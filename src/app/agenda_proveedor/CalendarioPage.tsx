@@ -1,5 +1,5 @@
 // CalendarioPage.tsx
-import Calendario from "./calendario";
+import Calendario from "./components/calendario";
 
 export default function CalendarioPage() {
   return (
