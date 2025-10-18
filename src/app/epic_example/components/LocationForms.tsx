@@ -1,20 +1,50 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Input } from "./ui/input"
 import { Button } from "./ui/button"
+import Map, { Marker } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface LocationFormProps {
-  onSubmit: (location: { address: string; notes: string }) => void
+  onSubmit: (location: { direccion: string; notas: string; lng?: number; lat?: number }) => void
 }
 
 export default function LocationForm({ onSubmit }: LocationFormProps) {
-  const [address, setAddress] = useState("")
-  const [notes, setNotes] = useState("")
+  const [direccion, setDireccion] = useState("")
+  const [notas, setNotas] = useState("")
+  const [marker, setMarker] = useState<{ lng: number; lat: number } | null>(null)
+  const [viewport, setViewport] = useState({
+    longitude: -99.1332, // Default to Mexico City or something
+    latitude: 19.4326,
+    zoom: 10,
+  })
+
+  const apiKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY
+
+  const handleMapClick = useCallback(async (event: any) => {
+    const { lng, lat } = event.lngLat
+    setMarker({ lng, lat })
+    // Reverse geocode to get address
+    try {
+      const response = await fetch(`https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${apiKey}`)
+      const data = await response.json()
+      if (data.features && data.features.length > 0) {
+        setDireccion(data.features[0].place_name)
+      }
+    } catch (error) {
+      console.error('Error fetching address:', error)
+    }
+  }, [apiKey])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit({ address, notes })
+    onSubmit({ 
+      direccion, 
+      notas, 
+      lng: marker?.lng, 
+      lat: marker?.lat 
+    })
   }
 
   return (
@@ -28,30 +58,38 @@ export default function LocationForm({ onSubmit }: LocationFormProps) {
         <Input
           type="text"
           placeholder="Ej: Av. Central #123, Col. Centro"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          value={direccion}
+          onChange={(e) => setDireccion(e.target.value)}
           required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Notas Adicionales (Opcional)</label>
+        <label className="block text-sm font-medium mb-1">Descripción Breve (Opcional)</label>
         <Input
           type="text"
           placeholder="Ej: Edificio azul, segundo piso, apartamento 201"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
+          value={notas}
+          onChange={(e) => setNotas(e.target.value)}
         />
       </div>
 
-      <div className="border rounded-lg p-4 text-center text-sm text-gray-600">
-        <p>¿Prefieres seleccionar en el mapa?</p>
-        <button
-          type="button"
-          className="text-blue-600 font-medium hover:underline mt-1"
-        >
-          Abrir Selector de Mapa
-        </button>
+      <div>
+        <label className="block text-sm font-medium mb-1">Seleccionar Ubicación en el Mapa</label>
+        <div className="border rounded-lg overflow-hidden" style={{ height: '400px' }}>
+          <Map
+            {...viewport}
+            onMove={(evt) => setViewport(evt.viewState)}
+            style={{ width: '100%', height: '100%' }}
+            mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${apiKey}`}
+            onClick={handleMapClick}
+          >
+            {marker && (
+              <Marker longitude={marker.lng} latitude={marker.lat} />
+            )}
+          </Map>
+        </div>
+        <p className="text-xs text-gray-500 mt-1">Haz clic en el mapa para seleccionar la ubicación.</p>
       </div>
 
       <div className="flex justify-end">

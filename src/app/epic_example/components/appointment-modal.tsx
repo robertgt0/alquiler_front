@@ -4,12 +4,16 @@ import { useState, useRef, useEffect } from "react";
 import { Calendar } from "../components/ui/calendar";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Dialog, DialogContent } from "../components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "../components/ui/dialog";
 import { cn } from "@/lib/utils";
 import LocationForm from "../components/LocationForms";
 import ModalConfirmacion from "../components/ModalConfirmacion";
 
 type UISlot = { label: string; startISO: string; endISO: string };
+
+interface LocationFormProps {
+  onSubmit: (location: { direccion: string; notas: string }) => void
+}
 
 interface AppointmentModalProps {
   open: boolean;
@@ -101,51 +105,33 @@ export function AppointmentModal({
     }, 100)
   }
 
+  const handleFormSubmit = (location: any) => {
+    console.log("Datos de ubicación:", location)
+    setLocationData(location)
+    setFormSubmitted(true)
+  }
 
   // ---- Carga de disponibilidad desde backend ----
   async function loadAvailable(date: Date) {
     if (!date || !providerId) return;
 
-    if (!API_URL) {
-      setSlotsError("Falta NEXT_PUBLIC_API_URL en .env.local del frontend.");
-      return;
-    }
-
-  const handleFormSubmit = (location: any) => {
-    console.log("Datos de ubicación:", location)
-    setFormSubmitted(true)
-  }
+    // Mock: Simular horarios disponibles sin fetch
     setLoadingSlots(true);
     setSlotsError(null);
     setAvailableSlots([]);
 
     try {
-      const ymd = toYYYYMMDD(date);
-      const url = `${API_URL}/api/providers/${providerId}/available-slots?date=${ymd}&slot=${slotMinutes}&hours=${encodeURIComponent(
-        hours
-      )}`;
+      // Simular delay
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      const res = await fetch(url);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message || `HTTP ${res.status}`);
-      }
-      const data = await res.json();
-
-      const slots: UISlot[] = (data.available || []).map((s: any) => {
-        const start = new Date(s.start);
-        const end = new Date(s.end);
-        const label = `${start.toLocaleTimeString("es-ES", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })} - ${end.toLocaleTimeString("es-ES", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })}`;
-        return { label, startISO: s.start, endISO: s.end };
-      });
+      const slots: UISlot[] = [
+        { label: "08:00 - 08:30", startISO: `${toYYYYMMDD(date)}T08:00:00`, endISO: `${toYYYYMMDD(date)}T08:30:00` },
+        { label: "08:30 - 09:00", startISO: `${toYYYYMMDD(date)}T08:30:00`, endISO: `${toYYYYMMDD(date)}T09:00:00` },
+        { label: "09:00 - 09:30", startISO: `${toYYYYMMDD(date)}T09:00:00`, endISO: `${toYYYYMMDD(date)}T09:30:00` },
+        { label: "10:00 - 10:30", startISO: `${toYYYYMMDD(date)}T10:00:00`, endISO: `${toYYYYMMDD(date)}T10:30:00` },
+        { label: "14:00 - 14:30", startISO: `${toYYYYMMDD(date)}T14:00:00`, endISO: `${toYYYYMMDD(date)}T14:30:00` },
+        { label: "15:00 - 15:30", startISO: `${toYYYYMMDD(date)}T15:00:00`, endISO: `${toYYYYMMDD(date)}T15:30:00` },
+      ];
 
       setAvailableSlots(slots);
     } catch (e: any) {
@@ -194,6 +180,8 @@ export function AppointmentModal({
         duracionMinutos: slotMinutes,
         ubicacion: locationData?.direccion || "Sin dirección",
         notas: locationData?.notas || "",
+        lng: locationData?.lng,
+        lat: locationData?.lat,
         estado: "pendiente",
       };
 
@@ -228,9 +216,9 @@ export function AppointmentModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!w-[50vw] !max-w-none !sm:max-w-none bg-white rounded-xl shadow-2xl overflow-x-auto max-h-[90vh] overflow-y-auto p-0">
         <div className="p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-800">
+          <DialogTitle className="text-2xl font-bold text-gray-800">
             Agendar Cita - {patientName}
-          </h2>
+          </DialogTitle>
         </div>
 
         <div className="p-6">
