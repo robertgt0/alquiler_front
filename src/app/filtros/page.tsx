@@ -1,5 +1,5 @@
 "use client";
-import FiltroForm from "../../Feature/Componentes/FiltroForm";
+import FiltroForm from "../alquiler/Feature/Componentes/FiltroForm";
 
 export default function FiltrosPage() {
   return (

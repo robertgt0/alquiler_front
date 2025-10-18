@@ -7,6 +7,7 @@ export interface Job {
   salaryRange: string;
   employmentType: string;
   employmentTypeColor: string;
+  rating?: number;
 }
 
 
