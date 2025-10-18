@@ -7,7 +7,6 @@ import { mockOffers } from './services/mockOffersData';
 import { useFilters } from './hooks/useFilters';
 import { FilterBar } from './components/FilterBar';
 
-// Importar MapComponent dinÃ¡micamente para evitar errores de SSR con Leaflet
 const MapComponent = dynamic(
   () => import('./components/MapComponent').then((mod) => mod.MapComponent),
   { ssr: false, loading: () => <div className="flex items-center justify-center h-screen">Cargando mapa...</div> }
@@ -16,10 +15,7 @@ const MapComponent = dynamic(
 export default function VisualizarMapaOfertas() {
   const { userLocation, loading, error } = useUserLocation();
   
-  // UbicaciÃ³n por defecto (centro de Cochabamba) para inicializar filtros
   const defaultLocation = { lat: -17.3935, lng: -66.1570 };
-  
-  // Usar ubicaciÃ³n real o default para los filtros (siempre llamar el hook)
   const filters = useFilters(mockOffers, userLocation || defaultLocation);
 
   if (loading) {
@@ -56,7 +52,6 @@ export default function VisualizarMapaOfertas() {
 
   return (
     <div className="h-screen w-full flex flex-col">
-      {/* Header */}
       <div className="bg-blue-600 text-white p-4 shadow-lg">
         <h1 className="text-2xl font-bold">Mapa de Ofertas - Servineo</h1>
         <p className="text-sm">
@@ -64,9 +59,7 @@ export default function VisualizarMapaOfertas() {
         </p>
       </div>
 
-      {/* Mapa con filtros */}
       <div className="flex-1 relative">
-        {/* Barra de filtros (HU14) */}
         <FilterBar
           allCategories={filters.allCategories}
           selectedCategories={filters.selectedCategories}
@@ -78,17 +71,17 @@ export default function VisualizarMapaOfertas() {
           filteredCount={filters.filteredOffers.length}
         />
 
-        {/* Mapa */}
         <MapComponent 
           userLocation={userLocation} 
-          offers={filters.filteredOffers} 
+          offers={filters.filteredOffers}
+          maxDistance={filters.maxDistance}
         />
       </div>
 
-      {/* Footer Info */}
       <div className="bg-gray-800 text-white p-3 text-center text-sm">
         Mostrando {filters.filteredOffers.length} ofertas activas | 
-        Tu ubicacion: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
+        Tu ubicacion: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)} |
+        Radio: {filters.maxDistance} km
       </div>
     </div>
   );
