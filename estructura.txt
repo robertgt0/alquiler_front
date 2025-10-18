@@ -1,0 +1,15 @@
+Listado de rutas de carpetas para el volumen OS
+El número de serie del volumen es E2ED-099E
+C:\USERS\DELL\DOCUMENTS\BRYAN VASQUEZ\UMSS\LL-2025\IS\SERVINEO\ALQUILER_FRONT\SRC
++---app
+|   |   globals.css
+|   |   layout.tsx
+|   |   page.tsx
+|   |   
+|   \---notifications
+|           SendNotificationForm.tsx
+|           
+\---lib
+        api.ts
+        notifications.ts
+        
