@@ -1,6 +1,12 @@
 "use client";
 import React from "react";
-import { diasSemanaCompletos, mesesNombres, horariosDisponibles, type Horario } from "./constantes";
+import { useRouter } from "next/navigation"; // 👈 nuevo
+import {
+  diasSemanaCompletos,
+  mesesNombres,
+  horariosDisponibles,
+  type Horario,
+} from "./constantes";
 
 interface HorarioProps {
   fechaSeleccionada: Date;
@@ -22,11 +28,26 @@ function getFechaKey(fecha: Date): string {
 }
 
 const Horario: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
+  const router = useRouter(); // 👈 nuevo
   const fechaKey = getFechaKey(fechaSeleccionada);
   const horarios: Horario[] = horariosDisponibles[fechaKey] || [];
 
+  // ⬇️ Enviar a la HU3 (/solicitud-trabajo) con date + franjas s=HH:mm-HH:mm
   const solicitarTrabajo = () => {
-    alert(`Solicitud de trabajo confirmada para: ${formatearFecha(fechaSeleccionada)}`);
+    if (horarios.length === 0) return;
+
+    const params = new URLSearchParams();
+    params.set("date", fechaKey); // YYYY-MM-DD
+
+    // cada franja como s=HH:mm-HH:mm
+    horarios.forEach((h) => {
+      params.append("s", `${h.horaInicio}-${h.horaFin}`);
+    });
+
+    // ⚠️ Asegúrate que esta ruta coincide con la carpeta de tu HU3.
+    // Si tu HU3 está en src/app/solicitud-trabajo => "/solicitud-trabajo"
+    // (si fuera "solicitar-trabajo", cambia la ruta aquí)
+    router.push(`/solicitud-trabajo?${params.toString()}`);
   };
 
   return (
@@ -49,7 +70,10 @@ const Horario: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
                 HORARIOS DISPONIBLES
               </h3>
               <p className="text-gray-700 text-sm">
-                Para: <span className="font-semibold">{formatearFecha(fechaSeleccionada)}</span>
+                Para:{" "}
+                <span className="font-semibold">
+                  {formatearFecha(fechaSeleccionada)}
+                </span>
               </p>
             </div>
           </div>
@@ -81,20 +105,20 @@ const Horario: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
                     </div>
                     <div className="text-center">
                       <span className="text-3xl font-bold text-gray-800">
-                        {h.horaInicio.split(':')[0]}
+                        {h.horaInicio.split(":")[0]}
                       </span>
                       <span className="text-2xl text-gray-800 mx-1">:</span>
                       <span className="text-3xl font-bold text-gray-800">
-                        {h.horaInicio.split(':')[1]}
+                        {h.horaInicio.split(":")[1]}
                       </span>
                     </div>
                     <div className="text-center">
                       <span className="text-3xl font-bold text-gray-800">
-                        {h.horaFin.split(':')[0]}
+                        {h.horaFin.split(":")[0]}
                       </span>
                       <span className="text-2xl text-gray-800 mx-1">:</span>
                       <span className="text-3xl font-bold text-gray-800">
-                        {h.horaFin.split(':')[1]}
+                        {h.horaFin.split(":")[1]}
                       </span>
                     </div>
                     <div className="text-center text-base font-semibold text-gray-800">
@@ -109,7 +133,7 @@ const Horario: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
           <div className="flex justify-center gap-6 pt-4">
             <button
               onClick={solicitarTrabajo}
-              className="bg-gray-400 text-white px-10 py-3 rounded-lg text-base font-bold hover:bg-gray-500 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-blue-600 text-white px-10 py-3 rounded-lg text-base font-bold hover:bg-gray-500 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={horarios.length === 0}
             >
               Solicitar Trabajo
