@@ -22,18 +22,6 @@ export default function RegisterForm({ onSuccess }: Props) {
       return;
     }
 
-    // ============================
-    // 🔧 MODO PRUEBA (sin backend)
-    // Avanza al siguiente paso sin llamar a /api/test
-    // ============================
-    setMessage("🧪 Modo prueba: saltando validación del servidor…");
-    onSuccess({ ci, email });
-    return; // <-- Importante para NO ejecutar el bloque comentado de abajo
-
-    // ============================================================
-    // ✅ MODO REAL (descomenta para volver a validar con el backend)
-    // ============================================================
-    /*
     setLoading(true);
     try {
       const res = await fetch('/api/test', {
@@ -57,7 +45,7 @@ export default function RegisterForm({ onSuccess }: Props) {
     } finally {
       setLoading(false);
     }
-    */
+    
   };
 
   return (
@@ -65,20 +53,23 @@ export default function RegisterForm({ onSuccess }: Props) {
       onSubmit={handleSubmit}
       className="register-form"
       style={{
+        
         display: 'flex',
         flexDirection: 'column',
         gap: '2rem',
         maxWidth: '800px',
         margin: '2rem auto',
-        backgroundColor: '#d2eaebff',
+        backgroundColor: '#e0edeeff',
         color: 'white',
         padding: '2rem',
         borderRadius: '60px',
       }}
     >
-      <h2>Registro como Fixer</h2>
-
+      
+      <h2>CUAL ES TU NUMERO DE CI ?</h2>
+      
       <label>
+        
         Carnet de identidad:
         <input
           type="text"
@@ -88,7 +79,7 @@ export default function RegisterForm({ onSuccess }: Props) {
             const value = e.target.value.replace(/\D/g, '');
             setCi(value);
           }}
-          placeholder="Solo números"
+          placeholder="INGRESA TU CI"
           required
           style={{
             width: '100%',
