@@ -586,7 +586,7 @@ export default function BusquedaAutocompletado({
     }, []);
 
     return (
-        <div className="busqueda-container" ref={containerRef}>
+        
             <div className="contenedor-busqueda">
                 <div className="busqueda-barra">
                     <Search className="icono-busqueda" size={20} />
@@ -731,6 +731,5 @@ export default function BusquedaAutocompletado({
                     </>
                 )}
             </div>
-        </div>
     );
 }

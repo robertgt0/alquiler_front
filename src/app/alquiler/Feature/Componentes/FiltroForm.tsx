@@ -53,22 +53,6 @@ export default function FiltrosForm({
     return (
         <div className="w-full bg-white rounded-xl p-6 md:p-8 shadow-2xl shadow-gray-200/50 border border-gray-100">
             
-            {/* BARRA DE BÚSQUEDA RÁPIDA  */}
-            <div className="flex w-full gap-3 mb-6">
-                <input 
-                    type="text" 
-                    placeholder="Buscar servicio (ej: Limpieza, Montaje de muebles...)"
-                    value={search} 
-                    onChange={(e) => setSearch(e.target.value)} 
-                    className="flex-grow border border-gray-300 rounded-lg px-4 py-3 text-base focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-                <button 
-                    onClick={handleBuscarProfesional} 
-                    className="bg-blue-600 text-white font-medium px-6 py-3 rounded-lg hover:bg-blue-700 transition shadow-md whitespace-nowrap"
-                >
-                    Buscar
-                </button>
-            </div>
             
             {/*FILTROS SECUNDARIOS DESPLEGABLES */}
             <div className={`pt-4 ${mostrarFiltros ? 'border-t' : ''}`}>
