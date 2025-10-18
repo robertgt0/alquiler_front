@@ -8,6 +8,7 @@ const ordenarBorbotones = async (criterio: string) => {
   try {
     const response = await fetch(`http://localhost:5000/api/borbotones/orden?orden=${criterio}`);
     if (!response.ok) throw new Error("Error al ordenar borbotones");
+
     return await response.json();
   } catch (error) {
     console.error("Error:", error);
@@ -144,8 +145,8 @@ export default function Ordenamiento({
           {itemsToRender.length > 0 && (
             <div className="results-count mb-2">Mostrando {itemsToRender.length} elementos</div>
           )}
-
           <div className="items-list space-y-2">
+a
             {itemsToRender.map((item, index) => (
               <div key={index} className="item-card border p-2 rounded-md hover:bg-gray-50 transition">
                 <h3 className="item-name font-semibold">{item.nombre}</h3>
