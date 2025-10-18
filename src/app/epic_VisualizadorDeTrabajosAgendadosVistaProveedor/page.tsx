@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Job, JobStatus } from './interfaces/types';
 import { fetchTrabajosProveedor } from './services/api';
 import { fmt } from './utils/helpers';
+import { useRouter } from 'next/navigation';
 
 /* Paleta */
 const C = {
@@ -53,13 +54,14 @@ const IcoClock = ({size=24,color=C.text}:{size?:number;color?:string}) => (
 export default function TrabajosAgendadosPage() {
   const [tab, setTab] = useState<TabKey>('all');
   const [jobs, setJobs] = useState<Job[] | null>(null);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<Job | null>(null);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetchTrabajosProveedor('proveedor1')
+    fetchTrabajosProveedor('proveedor_123')
       .then(d => { if (alive) setJobs(d); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
@@ -199,7 +201,12 @@ export default function TrabajosAgendadosPage() {
                 {/* Botón “Ver Detalles” */}
                 <div style={{ gridColumn:'4', gridRow:'1 / span 2', display:'flex', justifyContent:'flex-end' }}>
                   <button
-                    onClick={() => setDetails(job)}
+                    onClick={() => {
+                    router.push(
+                     `/epic_VisualizadorDeTrabajosAgendadosVistaCliente/detalles/${encodeURIComponent(job.id)}`
+                      );
+                    }
+                  }
                     style={{
                       padding: '8px 14px',
                       minWidth: 110,
