@@ -7,11 +7,11 @@ import { Search } from "lucide-react";
 const ordenarBorbotones = async (criterio: string) => {
   try {
     const response = await fetch(`http://localhost:5000/api/borbotones/orden?orden=${criterio}`);
-    
+
     if (!response.ok) {
       throw new Error('Error al ordenar borbotones');
     }
-    
+
     return await response.json();
   } catch (error) {
     console.error('Error:', error);
@@ -84,7 +84,7 @@ export default function Ordenamiento({
   // Mapeo entre opciones locales y criterios del backend
   const criterioMap: { [key: string]: string } = {
     "Nombre A-Z": "nombre_A-Z",
-    "Nombre Z-A": "nombre_Z-A", 
+    "Nombre Z-A": "nombre_Z-A",
     "Fecha (Reciente)": "fecha",
     "Mayor Calificación (⭐)": "calificacion"
   };
@@ -119,7 +119,7 @@ export default function Ordenamiento({
 
   useEffect(() => {
     if (search === "") {
-      setSort(sortValue); 
+      setSort(sortValue);
     }
   }, [search]);
 
@@ -196,7 +196,7 @@ export default function Ordenamiento({
               Mostrando {itemsToRender.length} elementos
             </div>
           )}
-          
+
           <div className="items-list">
             {itemsToRender.map((item, index) => (
               <div key={index} className="item-card">
