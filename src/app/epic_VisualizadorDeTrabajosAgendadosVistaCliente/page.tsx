@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Job, JobStatus } from './interfaces/types';
 import { fetchTrabajosCliente } from './services/api';
 import { fmt } from './utils/helpers';
+import { useRouter } from 'next/navigation';
+
 
 /* Paleta */
 const C = {
@@ -18,6 +20,7 @@ const C = {
   line:'#1140BC',
   active:'#1366FD',
 } as const;
+
 
 type TabKey = 'all' | JobStatus;
 
@@ -53,13 +56,14 @@ const IcoClock = ({size=24,color=C.text}:{size?:number;color?:string}) => (
 export default function TrabajosAgendadosPage() {
   const [tab, setTab] = useState<TabKey>('all');
   const [jobs, setJobs] = useState<Job[] | null>(null);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<Job | null>(null);
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetchTrabajosCliente('cliente1')
+    fetchTrabajosCliente('cliente_abc')
       .then(d => { if (alive) setJobs(d); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
@@ -80,7 +84,7 @@ export default function TrabajosAgendadosPage() {
     <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 400 }}>
       {/* Título */}
       <h1 style={{ fontSize: 36, fontWeight: 400, color: C.title, marginTop: 2, marginBottom: 0}}>
-        Trabajos Agendados
+        Mis Trabajos 
       </h1>
 
       {/* Línea más delgada */}
@@ -199,7 +203,12 @@ export default function TrabajosAgendadosPage() {
                 {/* Botón “Ver Detalles” */}
                 <div style={{ gridColumn:'4', gridRow:'1 / span 2', display:'flex', justifyContent:'flex-end' }}>
                   <button
-                    onClick={() => setDetails(job)}
+                    onClick={() => {
+                    router.push(
+                     `/epic_VisualizadorDeTrabajosAgendadosVistaCliente/detalles/${encodeURIComponent(job.id)}`
+                      );
+                    }
+                  }
                     style={{
                       padding: '8px 14px',
                       minWidth: 110,
