@@ -1,3 +1,4 @@
+
 //Entorno de prueba para ver el contenido del componete Agendar Cita
 //
 import AppointmentButton from "../epic_example/components/AgendarCitaButton";
@@ -24,3 +25,4 @@ export default function Home() {
     </div>
   );
 }
+
