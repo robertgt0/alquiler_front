@@ -51,11 +51,6 @@ const Calendario: React.FC = () => {
     setFechaSeleccionada(null);
   };
 
-  const continuarConFecha = () => {
-    if (fechaSeleccionada) {
-      // El componente ya renderiza Horario automáticamente
-    }
-  };
 
   const generarDias = (): React.ReactElement[] => {
     const daysInMonth = getDaysInMonth(currentMonth, currentYear);
@@ -167,17 +162,7 @@ const Calendario: React.FC = () => {
           </div>
 
           <div className="flex justify-end">
-            <button
-              onClick={continuarConFecha}
-              disabled={!fechaSeleccionada}
-              className={`px-20 py-3 rounded-lg text-base font-bold transition-all shadow-lg ${
-                fechaSeleccionada
-                  ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-xl cursor-pointer"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              Siguiente
-            </button>
+            
           </div>
         </div>
       </div>

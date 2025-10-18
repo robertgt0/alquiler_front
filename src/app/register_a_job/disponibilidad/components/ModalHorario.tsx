@@ -1,7 +1,7 @@
 // src/app/register_a_job/disponibilidad/components/ModalHorario.tsx
 "use client";
 import React, { useState, useEffect } from "react";
-import type { Horario } from "../Constantes";
+import type { Horario } from "../../Constantes";
 import TimePicker from "./TimePicker";
 
 // --- Props del Componente ---
