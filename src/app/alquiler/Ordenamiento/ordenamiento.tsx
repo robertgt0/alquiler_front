@@ -3,26 +3,31 @@ import "./ordenamiento.css";
 import { useState, useMemo, useEffect } from "react";
 import { Search } from "lucide-react";
 
+// Función para llamar al backend
+const ordenarBorbotones = async (criterio: string) => {
+  try {
+    const response = await fetch(`http://localhost:5000/api/borbotones/orden?orden=${criterio}`);
+    
+    if (!response.ok) {
+      throw new Error('Error al ordenar borbotones');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error:', error);
+    throw error;
+  }
+};
+
 interface Item {
   nombre: string;
   fecha: string;
   calificacion: number;
 }
 
-// Datos iniciales
-const INITIAL_ITEMS: Item[] = [
-  { nombre: "Manzana", fecha: "2026-10-05", calificacion: 4 },
-  { nombre: "Banana", fecha: "2024-10-03", calificacion: 5 },
-  { nombre: "Cereza", fecha: "2024-10-06", calificacion: 3 },
-  { nombre: "Azno", fecha: "2025-10-01", calificacion: 2 },
-  { nombre: "Z", fecha: "2025-10-03", calificacion: 5 },
-  { nombre: "Zen", fecha: "2025-10-06", calificacion: 3 },
-  { nombre: "A", fecha: "2025-10-01", calificacion: 2 },
-];
-
-// Función de ordenamiento
+// Función de ordenamiento LOCAL (como respaldo)
 const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
-  if (lista.length === 0) return [];
+  if (!lista || lista.length === 0) return [];
 
   const sorted = [...lista];
 
@@ -48,11 +53,26 @@ const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
   return sorted;
 };
 
-export default function Ordenamiento() {
-  const defaultSort = "Fecha (Reciente)";
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState(defaultSort);
+interface OrdenamientoProps {
+  items?: Item[];
+  sortValue?: string;
+  searchValue?: string;
+  onSortChange?: (value: string) => void;
+  onSearchChange?: (value: string) => void;
+}
+
+export default function Ordenamiento({
+  items = [],
+  sortValue = "Fecha (Reciente)",
+  searchValue = "",
+  onSortChange,
+  onSearchChange,
+}: OrdenamientoProps) {
+  const [search, setSearch] = useState(searchValue);
+  const [sort, setSort] = useState(sortValue);
   const [activeFilters, setActiveFilters] = useState({});
+  const [itemsFromBackend, setItemsFromBackend] = useState<Item[]>([]);
+  const [cargando, setCargando] = useState(false);
 
   const opciones = [
     "Nombre A-Z",
@@ -61,14 +81,50 @@ export default function Ordenamiento() {
     "Mayor Calificación (⭐)",
   ];
 
+  // Mapeo entre opciones locales y criterios del backend
+  const criterioMap: { [key: string]: string } = {
+    "Nombre A-Z": "nombre_A-Z",
+    "Nombre Z-A": "nombre_Z-A", 
+    "Fecha (Reciente)": "fecha",
+    "Mayor Calificación (⭐)": "calificacion"
+  };
+
+  // Función para ordenar con el backend
+  const handleOrdenarBackend = async (criterioLocal: string) => {
+    const criterioBackend = criterioMap[criterioLocal];
+    if (!criterioBackend) return;
+
+    setCargando(true);
+    try {
+      const datos = await ordenarBorbotones(criterioBackend);
+      setItemsFromBackend(datos);
+    } catch (error) {
+      console.error('Error al ordenar con backend:', error);
+      // Si falla el backend, usa ordenamiento local
+      setItemsFromBackend([]);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    onSortChange?.(sort);
+    // Cuando cambia el sort, llamar al backend
+    handleOrdenarBackend(sort);
+  }, [sort]);
+
+  useEffect(() => {
+    onSearchChange?.(search);
+  }, [search]);
+
   useEffect(() => {
     if (search === "") {
-      setSort(defaultSort);
+      setSort(sortValue); 
     }
   }, [search]);
 
   const filteredItems = useMemo(() => {
-    let list = INITIAL_ITEMS;
+    let list = itemsFromBackend.length > 0 ? itemsFromBackend : items;
 
     if (search) {
       list = list.filter((item) =>
@@ -77,11 +133,16 @@ export default function Ordenamiento() {
     }
 
     return list;
-  }, [search, activeFilters]);
+  }, [search, activeFilters, items, itemsFromBackend]);
 
   const itemsToRender = useMemo(() => {
+    // Si tenemos datos del backend, los mostramos directamente
+    if (itemsFromBackend.length > 0) {
+      return filteredItems;
+    }
+    // Si no, usamos ordenamiento local
     return ordenarItems(sort, filteredItems);
-  }, [sort, filteredItems]);
+  }, [sort, filteredItems, itemsFromBackend]);
 
   const handleSearch = () => {
     alert(`Búsqueda terminada. Elementos encontrados: ${itemsToRender.length}`);
@@ -92,7 +153,6 @@ export default function Ordenamiento() {
   return (
     <div className="container">
       <div className="card">
-        {/* Buscador */}
         <div className="search-container">
           <div className="search-input-container">
             <Search
@@ -112,13 +172,13 @@ export default function Ordenamiento() {
           </button>
         </div>
 
-        {/* Ordenamiento */}
         <div className="sort-section">
           <p className="sort-label">Ordenar por:</p>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
             className="sort-select"
+            disabled={cargando}
           >
             {opciones.map((opcion) => (
               <option key={opcion} value={opcion}>
@@ -126,26 +186,31 @@ export default function Ordenamiento() {
               </option>
             ))}
           </select>
+          {cargando && <span className="loading-text">Cargando...</span>}
         </div>
 
-        <ul className="item-list">
-          {showNoOrderMessage ? (
-            <li className="error-message">
-              No se puede aplicar el ordenamiento.
-            </li>
-          ) : (
-            itemsToRender.map((item) => (
-              <li key={item.nombre} className="item">
-                <span>{item.nombre}</span> - {item.fecha} -{" "}
-                <span className="item-star">⭐ {item.calificacion}</span>
-              </li>
-            ))
+        {/* Mostrar resultados */}
+        <div className="results-section">
+          {itemsToRender.length > 0 && (
+            <div className="results-count">
+              Mostrando {itemsToRender.length} elementos
+            </div>
           )}
+          
+          <div className="items-list">
+            {itemsToRender.map((item, index) => (
+              <div key={index} className="item-card">
+                <h3 className="item-name">{item.nombre}</h3>
+                <p className="item-date">Fecha: {item.fecha}</p>
+                <p className="item-rating">Calificación: {item.calificacion} ⭐</p>
+              </div>
+            ))}
+          </div>
 
-          {!showNoOrderMessage && itemsToRender.length === 0 && (
-            <li className="empty-message">No hay elementos disponibles.</li>
+          {showNoOrderMessage && (
+            <p className="no-results">No se encontraron resultados</p>
           )}
-        </ul>
+        </div>
       </div>
     </div>
   );

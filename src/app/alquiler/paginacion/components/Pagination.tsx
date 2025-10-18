@@ -1,5 +1,6 @@
 'use client';
 
+import { constants } from "buffer";
 import React from "react";
 
 interface PaginationProps {

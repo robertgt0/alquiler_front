@@ -1,41 +1,36 @@
-// hooks/usePagination.ts
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from "react";
+import { Job } from "../types/job";
 
-export const usePagination = (items: any[], itemsPerPage: number) => {
+export const usePagination = (items: Job[], itemsPerPage: number = 10) => {
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Resetear a página 1 cuando los items cambian
+  const totalItems = items.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  //  Reinicia a la página 1 si los items cambian (por búsqueda u ordenamiento)
   useEffect(() => {
     setCurrentPage(1);
   }, [items]);
 
-  const totalItems = items?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-
   const currentItems = useMemo(() => {
-    if (!items || items.length === 0) return [];
-
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return items.slice(startIndex, endIndex);
-  }, [currentPage, items, itemsPerPage]);
+  }, [currentPage, itemsPerPage, items]);
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+    if (currentPage < totalPages) setCurrentPage((p) => p + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return {
@@ -45,6 +40,6 @@ export const usePagination = (items: any[], itemsPerPage: number) => {
     handlePageChange,
     handleNextPage,
     handlePrevPage,
-    totalItems
+    totalItems,
   };
 };
