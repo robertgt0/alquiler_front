@@ -14,22 +14,23 @@ const validarCampo = (nombre: string, valor: string): string => {
 
   switch (nombre) {
     case 'email': {
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      if (!emailRegex.test(valorLimpio)) {
-        return "El formato del correo no es valido. Intenta nuevamente.";
+      const allowedDomainsRegex = /@(gmail\.com|hotmail\.com|yahoo\.com|outlook\.com|umss\.edu\.bo|umss\.edu|est\.umss\.edu|ucb\.edu\.bo|univalle\.edu|harvard\.edu|mit\.edu|empresa\.com\.bo|miempresa\.net)$/i;  
+      if (!allowedDomainsRegex.test(valorLimpio)) {
+        return "correo electronico no valido";
       }
       break;
     };
     case 'contraseña': {
       if (valorLimpio.length < 6) {
-        return "La contraseña debe tener al menos 6 caracteres";
+        return "contraseña incorrecta";
       }
+    if (valorLimpio.length > 16) {
+        return "contraseña incorrecta";
+    }
       break;
     }
-  }
-  return '';
+  }return '';
 }
-
 export const useLoginForm = () => {
 const router = useRouter();
 

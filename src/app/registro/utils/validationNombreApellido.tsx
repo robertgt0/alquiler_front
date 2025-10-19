@@ -10,20 +10,20 @@ export interface FormErrors {
 // Validar nombre 
 export function validarNombre(nombre: string): string | null {
   if (!nombre || nombre.trim() === '') {
-    return 'El nombre es requerido';
+    return 'nombre fuera de rango';
   }
   
-  if (nombre.trim().length < 2) {
-    return 'El nombre debe tener al menos 2 caracteres';
+  if (nombre.trim().length < 3) {
+    return 'nombre fuera de rango';
   }
   
-  if (nombre.length > 50) {
+  if (nombre.length > 15) {
     return 'nombre fuera de rango';
   }
   
   const nombreRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
   if (!nombreRegex.test(nombre)) {
-    return 'El nombre solo puede contener letras y espacios';
+    return 'nombre fuera de rango';
   }
   
   return null;
@@ -32,20 +32,20 @@ export function validarNombre(nombre: string): string | null {
 // Validar apellido 
 export function validarApellido(apellido: string): string | null {
   if (!apellido || apellido.trim() === '') {
-    return 'El apellido es requerido';
+    return 'apellido fuera de rango';
   }
   
-  if (apellido.trim().length < 2) {
-    return 'El apellido debe tener al menos 2 caracteres';
+  if (apellido.trim().length < 5) {
+    return 'apellido fuera de rango';
   }
   
-  if (apellido.length > 50) {
+  if (apellido.length > 30) {
     return 'apellido fuera de rango';
   }
   
   const apellidoRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
   if (!apellidoRegex.test(apellido)) {
-    return 'El apellido solo puede contener letras y espacios';
+    return 'apellido fuera de rango';
   }
   
   return null;
