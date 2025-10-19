@@ -1,7 +1,8 @@
 // src/app/register_a_job/disponibilidad/horarios.tsx
 "use client";
-import React, { useState } from "react";
-import { diasSemanaCompletos, mesesNombres, horariosDisponibles as mockHorarios } from "./Constantes";
+
+import React, { useState, useEffect } from "react";
+import { diasSemanaCompletos, mesesNombres } from "./Constantes";
 import type { Horario as HorarioType } from "./Constantes";
 import ModalHorario from "./disponibilidad/components/ModalHorario";
 
@@ -26,13 +27,47 @@ function getFechaKey(fecha: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+
+
 // --- Componente Principal ---
 const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
   const fechaKey = getFechaKey(fechaSeleccionada);
+  console.log(fechaKey)
   
   // Usaremos 'useState' para que los horarios puedan cambiar (agregarse, eliminarse, etc.)
-  const [horarios, setHorarios] = useState<HorarioType[]>(mockHorarios[fechaKey] || []);
-  
+  const [horarios, setHorarios] = useState<HorarioType[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    const fetchHorarios = async () => {
+      setCargando(true);
+      try {
+        const res = await fetch(`http://localhost:5000/api/los_vengadores/horarios/${fechaKey}`);
+        if (!res.ok) throw new Error("Error al cargar horarios");
+        //const data = await res.json();
+        //setHorarios(data.data || []);
+      
+        const data = await res.json();
+
+        // 🔹 Asegura que cada horario tenga un id único
+        const horariosConId = (data.data || []).map((h: any) => ({
+          ...h,
+          id: h._id?.toString() || crypto.randomUUID(), // todos los ids como string
+        }));
+        setHorarios(horariosConId);
+      
+      } catch (err) {
+        console.error(err);
+        setHorarios([]);
+      } finally {
+        setCargando(false);
+      }
+    };
+    fetchHorarios();
+  }, [fechaKey]);
+  //lista de eliminados temporales
+  const [horariosEliminados, setHorariosEliminados] = useState<string[]>([]);
+
   // Estado para controlar la visibilidad del modal (ventana emergente)
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -77,28 +112,35 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
 
   // --- Manejadores de Eventos ---
   const handleGuardarHorario = (horarioGuardado: HorarioType) => {
-    if (!validarDisponibilidad(horarioGuardado)) {
-        return; // Detiene si la validación falla
-    }
-
-    // Si es un horario nuevo (no tiene id) o el id es 0
-    if (horarioGuardado.id === 0) {
-        // Creamos un nuevo ID (en un caso real, esto lo haría la base de datos)
-        const nuevoHorarioConId = { ...horarioGuardado, id: Date.now() }; 
-        setHorarios([...horarios, nuevoHorarioConId]);
+    if (!validarDisponibilidad(horarioGuardado)) return;
+  
+    if (horarioAEditar) {
+      // Editando un horario existente
+      setHorarios(prev =>
+        prev.map(h => (h.id === horarioAEditar.id ? { ...horarioGuardado, id: h.id } : h))
+      );
     } else {
-        // Es una edición, actualizamos el horario existente
-        setHorarios(horarios.map(h => h.id === horarioGuardado.id ? horarioGuardado : h));
+      // Nuevo horario → ID temporal
+      const nuevoHorario = {
+        ...horarioGuardado,
+        id: "temp-" + crypto.randomUUID(),
+      };
+      setHorarios(prev => [...prev, nuevoHorario]);
     }
-    
+  
     setCambiosSinGuardar(true);
-    setIsModalOpen(false); // Cierra el modal
+    setIsModalOpen(false);
     setHorarioAEditar(null);
   };
   
-  const handleEliminarHorario = (id: number) => {
-    // Filtra el horario con el id a eliminar
-    setHorarios(horarios.filter(h => h.id !== id));
+  const handleEliminarHorario = (id: string) => {
+    setHorarios(prev => prev.filter(h => h.id !== id));
+  
+    // Solo agregar a eliminados si es un ID real de la BD
+    if (!id.startsWith("temp-")) {
+      setHorariosEliminados(prev => [...prev, id]);
+    }
+  
     setCambiosSinGuardar(true);
   };
   
@@ -112,11 +154,61 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
     setIsModalOpen(true);
   };
 
-  const handleGuardarCambiosEnServidor = () => {
-    // Aquí iría la lógica para enviar los datos al backend
-    alert("¡Cambios guardados exitosamente! (Simulación)");
-    setCambiosSinGuardar(false);
-    // En un futuro, aquí llamarías a una función fetch() o axios.post()
+  const handleGuardarCambiosEnServidor = async () => {
+    try {
+      // Primero eliminamos los horarios marcados
+      for (const id of horariosEliminados) {
+        await fetch(`http://localhost:5000/api/los_vengadores/horarios/${id}`, {
+          method: "DELETE",
+        });
+      }
+  
+      // Luego procesamos los nuevos/actualizados horarios
+      for (const horario of horarios) {
+        if (horario.id.startsWith("temp-")) {
+          // Crear nuevo horario
+          const res = await fetch(`http://localhost:5000/api/los_vengadores/horarios`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fecha: fechaKey,
+              horaInicio: horario.horaInicio,
+              horaFin: horario.horaFin,
+              costo: horario.costo,
+            }),
+          });
+          const data = await res.json();
+          // Reemplaza ID temporal con ID real de la BD
+          setHorarios(prev =>
+            prev.map(h => h.id === horario.id ? { ...data.data, id: data.data._id } : h)
+          );
+        } else {
+          // Actualizar horario existente
+          const res = await fetch(`http://localhost:5000/api/los_vengadores/horarios/${horario.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              horaInicio: horario.horaInicio,
+              horaFin: horario.horaFin,
+              costo: horario.costo,
+            }),
+          });
+          const data = await res.json();
+          // Actualiza la lista localmente con la versión más reciente de la BD
+          setHorarios(prev =>
+            prev.map(h => h.id === horario.id ? { ...data.data, id: data.data._id } : h)
+          );
+        }
+      }
+  
+      // Limpia la lista de eliminados
+      setHorariosEliminados([]);
+      setCambiosSinGuardar(false);
+      alert("¡Cambios guardados correctamente!");
+    } catch (err) {
+      console.error(err);
+      alert("Error al guardar los cambios");
+    }
   };
 
   // --- Renderizado del Componente ---
@@ -201,6 +293,6 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
       )}
     </div>
   );
-};
+};//
 
 export default Horarios;
