@@ -238,16 +238,22 @@ export default function BusquedaAutocompletado({
             .toLowerCase();
     }, []);
 
-    const buscarTrabajosLocal = useCallback((texto: string, jobs: Job[]): Job[] => {
-        if (!texto.trim()) return jobs;
-        const textoNormalizado = normalizarTexto(texto);
-        return jobs.filter(job => {
-            return (
-                (job.service && normalizarTexto(job.service).includes(textoNormalizado)) ||
-                (job.title && normalizarTexto(job.title).includes(textoNormalizado))
-            );
-        });
-    }, [normalizarTexto]);
+   const buscarTrabajosLocal = useCallback((texto: string, jobs: Job[]): Job[] => {
+    if (!texto.trim()) return jobs;
+
+    const terminos = normalizarTexto(texto)
+        .split(/[, ]+/) // divide por coma o espacio
+        .filter(Boolean); // elimina vacíos
+
+    return jobs.filter(job => {
+        const servicio = job.service ? normalizarTexto(job.service) : "";
+        const titulo = job.title ? normalizarTexto(job.title) : "";
+
+        // devuelve true si al menos uno de los términos coincide
+        return terminos.some(t => servicio.includes(t) || titulo.includes(t));
+    });
+}, [normalizarTexto]);
+
 
     const guardarEnHistorial = useCallback((texto: string) => {
         const textoNormalizado = texto.trim();
@@ -416,141 +422,123 @@ export default function BusquedaAutocompletado({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-   return (
-        <div className="relative w-full" ref={containerRef}>
-            {/* Contenedor principal con position: relative (clase: relative) para posicionar sugerencias */}
-            <div className="relative w-full">
-                {/* BARRA DE BÚSQUEDA: busqueda-barra */}
-                <div className="flex items-center w-full bg-white px-3 py-2 rounded-lg shadow-md border border-gray-200">
-                    <Search className="absolute left-3 text-gray-500 z-10" size={20} />
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        placeholder={placeholder}
-                        value={query}
-                        onChange={(e) => {
-                            const nuevoValor = e.target.value;
-                            setQuery(nuevoValor);
-                            if (nuevoValor === "") {
-                                setBusquedaRealizada(false);
-                                setEstadoBusqueda("idle");
-                                onSearch("", datos || []);
-                                if (historial.length > 0) { setMostrarHistorial(true); }
-                            }
-                            if (busquedaRealizada && nuevoValor !== terminoBusquedaAnterior.current) {
-                                setBusquedaRealizada(false);
-                                setEstadoBusqueda("idle");
-                            }
-                        }}
-                        onKeyDown={manejarKeyDown}
-                        onFocus={() => {
-                            if (!busquedaRealizada) {
-                                if (!query.trim() && historial.length > 0) {
-                                    setMostrarHistorial(true);
-                                }
-                                if (query.length >= 2) {
-                                    setMostrarSugerencias(true);
-                                }
-                            }
-                        }}
-                        maxLength={80}
-                        className="w-full pl-9 pr-24 py-2 text-base border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-transparent text-black"
-                    />
-                    {query && (
-                        <button
-                            className="absolute right-24 bg-transparent border-none text-gray-500 hover:text-gray-900 cursor-pointer z-10 p-1"
-                            onClick={limpiarBusqueda}
-                            type="button"
-                        >
-                            <X size={16} />
-                        </button>
-                    )}
-                    <button
-                        className="absolute right-2 bg-blue-600 text-white border-none px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-150"
-                        onClick={ejecutarBusqueda}
-                        disabled={!query.trim() || query.trim().length < 2}
-                        type="button"
-                    >
-                        {estadoBusqueda === "loading" ? "Buscando..." : "Buscar"}
-                    </button>
-                </div>
+  return (
+  <div className="relative w-full" ref={containerRef}>
+    {/* Contenedor principal con position: relative */}
+    <div className="relative w-full">
+      {/* BARRA DE BÚSQUEDA */}
+      <div className="flex items-center w-full bg-white px-3 py-2 rounded-lg shadow-md border border-gray-200">
+        <Search className="absolute left-3 text-gray-500 z-10" size={20} />
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder={placeholder}
+          value={query}
+          onChange={(e) => {
+            const nuevoValor = e.target.value;
+            setQuery(nuevoValor);
+            if (nuevoValor === "") {
+              setBusquedaRealizada(false);
+              setEstadoBusqueda("idle");
+              onSearch("", datos || []);
+              if (historial.length > 0) setMostrarHistorial(true);
+            }
+            if (busquedaRealizada && nuevoValor !== terminoBusquedaAnterior.current) {
+              setBusquedaRealizada(false);
+              setEstadoBusqueda("idle");
+            }
+          }}
+          onKeyDown={manejarKeyDown}
+          onFocus={() => {
+            if (!busquedaRealizada) {
+              if (!query.trim() && historial.length > 0) setMostrarHistorial(true);
+              if (query.length >= 2) setMostrarSugerencias(true);
+            }
+          }}
+          maxLength={80}
+          className="w-full pl-9 pr-24 py-2 text-base border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-transparent text-black"
+        />
+        {query && (
+          <button
+            className="absolute right-24 bg-transparent border-none text-gray-500 hover:text-gray-900 cursor-pointer z-10 p-1"
+            onClick={limpiarBusqueda}
+            type="button"
+          >
+            <X size={16} />
+          </button>
+        )}
+        <button
+          className="absolute right-2 bg-blue-600 text-white border-none px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-150"
+          onClick={ejecutarBusqueda}
+          disabled={!query.trim() || query.trim().length < 2}
+          type="button"
+        >
+          {estadoBusqueda === "loading" ? "Buscando..." : "Buscar"}
+        </button>
+      </div>
 
-                {/* CONTADOR DE CARACTERES: CLAVE PARA ELIMINAR ESPACIO */}
-                <div className={`text-right text-xs mt-0 pt-1 px-1 ${query.length > 70 ? 'text-red-600' : 'text-gray-500'}`}>
-                    {query.length}/80 caracteres
-                </div>
+      {/* CONTADOR DE CARACTERES */}
+      <div className={`text-right text-xs mt-0 pt-1 px-1 ${query.length > 70 ? 'text-red-600' : 'text-gray-500'}`}>
+        {query.length}/80 caracteres
+      </div>
 
-                {estadoBusqueda === "error" && mensaje && (
-                    <div className="p-3 bg-red-100 text-red-700 text-sm rounded-md mt-2">
-                        {mensaje}
-                    </div>
-                )}
-
-                {/* CONTENEDOR DE SUGERENCIAS/HISTORIAL */}
-                {!busquedaRealizada && (
-                    <>
-                        {/* Se eliminan las clases personalizadas y se usa directamente Tailwind */}
-                        {mostrarHistorial && historial.length > 0 && (
-                            <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-xl list-none m-0 p-0 z-50 mt-[-1px] max-h-64 overflow-y-auto animate-fadeIn">
-                                <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
-                                    Búsquedas recientes
-                                    {cargandoHistorial && (
-                                        <span className="ml-2 text-blue-500">Cargando...</span>
-                                    )}
-                                </li>
-                                {historial.map((item, i) => (
-                                    <li
-                                        key={i}
-                                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
-                                        onClick={() => seleccionarSugerencia(item)}
-                                    >
-                                        <Clock className="text-gray-500 flex-shrink-0" size={16} />
-                                        {item}
-                                    </li>
-                                ))}
-                                <li
-                                    className="flex items-center gap-2 px-4 py-2 text-xs text-red-500 cursor-pointer hover:bg-red-50 transition-colors border-t border-gray-200"
-                                    onClick={limpiarHistorialBackend}
-                                >
-                                    <Trash2 size={14} />
-                                    Limpiar historial
-                                </li>
-                            </ul>
-                        )}
-
-                        {mostrarSugerencias && query.length >= 2 && (
-                            <>
-                                {estadoSugerencias === "loading" && (
-                                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-xl z-50 mt-[-1px] p-4 flex items-center justify-center text-sm text-gray-600">
-                                        <div className="w-4 h-4 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mr-2"></div>
-                                        Buscando servicios...
-                                    </div>
-                                )}
-
-                                {estadoSugerencias !== "loading" && (
-                                    <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-xl list-none m-0 p-0 z-50 mt-[-1px] max-h-64 overflow-y-auto animate-fadeIn">
-                                        <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
-                                            Sugerencias de servicios
-                                        </li>
-                                        {sugerencias.map((s, i) => (
-                                            <li key={i} onClick={() => seleccionarSugerencia(s)} className="flex items-center px-4 py-2 text-sm text-gray-800 cursor-pointer hover:bg-gray-100 transition-colors">
-                                                <Search className="text-gray-500 mr-2 flex-shrink-0" size={16} />
-                                                {s}
-                                            </li>
-                                        ))}
-                                        {sugerencias.length === 0 && mensaje && (
-                                            <li className="flex items-center px-4 py-3 text-sm text-gray-600 italic justify-center">
-                                                <Search className="text-gray-400 mr-2" size={16} />
-                                                {mensaje}
-                                            </li>
-                                        )}
-                                    </ul>
-                                )}
-                            </>
-                        )}
-                    </>
-                )}
-            </div>
+      {estadoBusqueda === "error" && mensaje && (
+        <div className="p-3 bg-red-100 text-red-700 text-sm rounded-md mt-2">
+          {mensaje}
         </div>
-    );
+      )}
+
+      {/* HISTORIAL Y SUGERENCIAS */}
+      {!busquedaRealizada && (
+        <>
+          {/* Historial */}
+          {mostrarHistorial && historial.length > 0 && (
+            <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-md list-none m-0 p-0 z-50 max-h-64 overflow-y-auto animate-fadeIn top-full -translate-y-1">
+              <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200 flex justify-between items-center">
+                Búsquedas recientes
+                {cargandoHistorial && <span className="text-blue-500 text-xs">Cargando...</span>}
+              </li>
+              {historial.map((item, i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => seleccionarSugerencia(item)}
+                >
+                  <Clock className="text-gray-500 flex-shrink-0" size={16} />
+                  {item}
+                </li>
+              ))}
+              <li
+                className="flex items-center gap-2 px-4 py-2 text-xs text-red-500 cursor-pointer hover:bg-red-50 transition-colors border-t border-gray-200"
+                onClick={limpiarHistorialBackend}
+              >
+                <Trash2 size={14} />
+                Limpiar historial
+              </li>
+            </ul>
+          )}
+
+          {/* Sugerencias */}
+          {mostrarSugerencias && query.length >= 2 && estadoSugerencias !== "loading" && (
+            <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-md list-none m-0 p-0 z-50 max-h-64 overflow-y-auto animate-fadeIn top-full -translate-y-1">
+              <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
+                Sugerencias
+              </li>
+              {sugerencias.map((s, i) => (
+                <li
+                  key={i}
+                  onClick={() => seleccionarSugerencia(s)}
+                  className="flex items-center px-4 py-2 text-sm text-gray-800 cursor-pointer hover:bg-gray-100 transition-colors"
+                >
+                  <Search className="text-gray-500 mr-2 flex-shrink-0" size={16} />
+                  {s}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </div>
+  </div>
+);
 }
