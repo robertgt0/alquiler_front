@@ -55,12 +55,12 @@ export default function FiltrosForm({
             
             
             {/*FILTROS SECUNDARIOS DESPLEGABLES */}
-            <div className={`pt-4 ${mostrarFiltros ? 'border-t' : ''}`}>
+            <div className={`pt-5 ${mostrarFiltros ? 'border-t' : ''}`}>
                 <h3
-                    className="font-semibold text-base text-blue-600 hover:text-blue-700 transition cursor-pointer flex items-center mb-3"
+                    className="font-semibold text-base text-blue-600 hover:text-blue-700 transition cursor-pointer flex items-center mb-1"
                     onClick={() => setMostrarFiltros(!mostrarFiltros)}
                 >
-                    Filtrar por: <span className="ml-2 text-blue-600">{mostrarFiltros ? '▼' : '▶'}</span>
+                Filtrar por <span className="ml-1 text-blue-600">{mostrarFiltros ? '▼' : '▶'}</span>
                 </h3>
             
                 {/* solo se muestran cuando mostrarFiltros  */}
@@ -115,7 +115,7 @@ export default function FiltrosForm({
                 
                 {/* ORDENAR POR (SELECT) */}
                 <div className="flex items-center gap-2 mb-3 sm:mb-0">
-                    <p className="font-semibold text-base text-blue-600">Ordenar por:</p>
+                    <p className="font-semibold text-base text-blue-600">Ordenar por</p>
                     <select
                         value={sort} 
                         onChange={(e) => setSort(e.target.value)} 

@@ -18,12 +18,12 @@ export default function BusquedaPage() {
   // Estados principales
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [searchResults, setSearchResults] = useState<Job[]>([]);
-  const [searchTerm, setSearchTerm] = useState(urlQuery);
+  const [searchTerm, setSearchTerm] = useState(urlQuery); // ← Término de búsqueda
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(""); // Filtro por input extra
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
   const [modoVista, setModoVista] = useState<"jobs" | "usuarios">("jobs");
 
@@ -37,7 +37,7 @@ export default function BusquedaPage() {
     "Mayor Calificación (⭐)"
   ];
 
-  // Función de ordenamiento
+  // ---------------- Ordenamiento ----------------
   const ordenarItems = (opcion: string, lista: Job[]) => {
     const sorted = [...lista];
     switch (opcion) {
@@ -48,10 +48,7 @@ export default function BusquedaPage() {
         sorted.sort((a, b) => b.title.localeCompare(a.title));
         break;
       case "Fecha (Reciente)":
-        sorted.sort(
-          (a, b) =>
-            new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
-        );
+        sorted.sort((a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime());
         break;
       case "Mayor Calificación (⭐)":
         sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -60,20 +57,46 @@ export default function BusquedaPage() {
     return sorted;
   };
 
-  // Determinar qué lista mostrar
+  const ordenarUsuarios = (opcion: string, lista: UsuarioResumen[]) => {
+    const sorted = [...lista];
+    switch (opcion) {
+      case "Nombre A-Z":
+        sorted.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        break;
+      case "Nombre Z-A":
+        sorted.sort((a, b) => b.nombre.localeCompare(a.nombre));
+        break;
+      case "Mayor Calificación (⭐)":
+        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+    }
+    return sorted;
+  };
+
+  // ---------------- Determinar qué lista mostrar ----------------
   const jobsToDisplay = useMemo(() => {
     let data = isSearchActive ? searchResults : allJobs;
 
-    if (search.trim() !== "") {
-      data = data.filter((job) =>
-        job.title.toLowerCase().includes(search.toLowerCase())
+        if (searchTerm.trim() !== "") {
+      const termino = searchTerm.toLowerCase();
+      data = data.filter(job =>
+        job.title.toLowerCase().includes(termino) ||
+        (job.service?.toLowerCase().includes(termino))
       );
+    }
+    if (search.trim() !== "") {
+      const filtro = search.toLowerCase();
+      data = data.filter(job => job.title.toLowerCase().includes(filtro));
     }
 
     return ordenarItems(sortBy, data);
-  }, [isSearchActive, searchResults, allJobs, sortBy, search]);
+  }, [isSearchActive, searchResults, allJobs, sortBy, searchTerm, search]);
 
-  // Hook de paginación
+  const usuariosOrdenados = useMemo(() => {
+    return ordenarUsuarios(sortBy, usuariosFiltrados);
+  }, [sortBy, usuariosFiltrados]);
+
+  // ---------------- Hook de paginación ----------------
   const {
     currentPage,
     totalPages,
@@ -82,27 +105,26 @@ export default function BusquedaPage() {
     handleNextPage,
     handlePrevPage,
     totalItems
+    
   } = usePagination(jobsToDisplay, itemsPerPage);
 
-  // Manejar resultados de búsqueda (desde el autocompletado)
+  // ---------------- Manejar resultados de búsqueda ----------------
   const handleSearchResults = (termino: string, resultados: Job[]) => {
-    console.log("🔍 [BUSQUEDA-PAGE] Búsqueda recibida:", termino);
-    setSearchTerm(termino);
+    setSearchTerm(termino);          
     setSearchResults(resultados);
     setIsSearchActive(!!termino.trim());
   };
 
-  // Cargar trabajos al montar
+  // ---------------- Cargar trabajos al montar ----------------
   useEffect(() => {
     const loadJobs = async () => {
       try {
         setIsLoading(true);
-        console.log("📥 [BUSQUEDA-PAGE] Cargando trabajos...");
         const jobs = await getJobs();
         setAllJobs(jobs);
         setSearchResults(jobs);
       } catch (error) {
-        console.error("❌ Error cargando trabajos:", error);
+        console.error("Error cargando trabajos:", error);
       } finally {
         setIsLoading(false);
       }
@@ -110,12 +132,11 @@ export default function BusquedaPage() {
     loadJobs();
   }, []);
 
-  // Búsqueda automática si hay `q` en la URL
+  // ---------------- Búsqueda automática desde URL ----------------
   useEffect(() => {
     if (urlQuery && allJobs.length > 0) {
-      console.log("🔗 [BUSQUEDA-PAGE] Búsqueda desde URL:", urlQuery);
       const resultados = allJobs.filter(
-        (job) =>
+        job =>
           job.title.toLowerCase().includes(urlQuery.toLowerCase()) ||
           job.service?.toLowerCase().includes(urlQuery.toLowerCase())
       );
@@ -123,7 +144,7 @@ export default function BusquedaPage() {
     }
   }, [urlQuery, allJobs]);
 
-  // Limpiar búsqueda si el término se borra
+  // ---------------- Limpiar búsqueda si se borra ----------------
   useEffect(() => {
     if (!searchTerm.trim() && isSearchActive) {
       setIsSearchActive(false);
@@ -131,21 +152,18 @@ export default function BusquedaPage() {
     }
   }, [searchTerm, isSearchActive, allJobs]);
 
-  // Vista de detalles
   const handleViewDetails = (job: Job) => {
-    console.log("🧾 Ver detalles de:", job);
+    console.log("Ver detalles de:", job);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 to-white">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Título */}
         <h1 className="text-4xl font-extrabold text-blue-600 mb-10 border-l-4 border-blue-600 pl-4 tracking-wide">
           Ofertas de Trabajo Disponibles
         </h1>
 
-        {/* Buscador */}
-        <div className="mb-6">
+        <div className="mb-0">
           <BusquedaAutocompletado
             onSearch={handleSearchResults}
             datos={allJobs}
@@ -154,27 +172,7 @@ export default function BusquedaPage() {
           />
         </div>
 
-        {/* Info de resultados */}
-        <div className="text-lg text-blue-600 font-medium mt-2 mb-4">
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              Cargando ofertas...
-            </div>
-          ) : (
-            <>
-              Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
-              {isSearchActive && searchTerm && (
-                <span className="text-sm text-gray-600 ml-2">
-                  (Búsqueda: "{searchTerm}")
-                </span>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Filtros y ordenamiento */}
-        <div className="mb-12">
+        <div className="mb-5">
           <FiltrosForm
             onResults={(usuarios: UsuarioResumen[]) => {
               setUsuariosFiltrados(usuarios);
@@ -189,13 +187,12 @@ export default function BusquedaPage() {
           />
         </div>
 
-        {/* Vista de usuarios */}
         {modoVista === "usuarios" && usuariosFiltrados.length > 0 ? (
           <div className="space-y-6 mt-6">
             <h2 className="text-2xl font-bold text-blue-600 mb-3">
               Resultados de Profesionales
             </h2>
-            {usuariosFiltrados.map((u) => (
+            {usuariosOrdenados.map((u) => (
               <div
                 key={u._id}
                 className="bg-white rounded-xl p-5 shadow-lg border border-gray-100 hover:shadow-xl transition"
@@ -212,7 +209,6 @@ export default function BusquedaPage() {
           </div>
         ) : (
           <>
-            {/* Vista de jobs */}
             <div className="text-xl text-blue-700 font-semibold mb-6">
               Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
             </div>
@@ -244,4 +240,3 @@ export default function BusquedaPage() {
     </div>
   );
 }
-

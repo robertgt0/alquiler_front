@@ -1,10 +1,9 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Clock, X } from "lucide-react";
-import { Job } from "../paginacion/types/job";
-import "./busqueda.css";
-import { Trash2 } from "lucide-react";
+import { Search, Clock, X, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Job } from "../paginacion/types/job";
+//import "./busqueda.css";
 
 type EstadoSugerencias = "idle" | "loading" | "error" | "success";
 type EstadoBusqueda = "idle" | "loading" | "success" | "error";
@@ -34,22 +33,15 @@ class BusquedaService {
 
     static async searchJobsInBackend(query: string): Promise<Job[]> {
         try {
-            console.log('🔍 [SERVICE] Buscando especialidades en backend:', query);
+            if (!query.trim()) return [];
 
-            if (!query.trim()) {
-                return [];
-            }
-
-            // Validar caracteres según el backend
             if (!this.validarCaracteres(query)) {
                 throw new Error('Caracteres inválidos en la búsqueda');
             }
 
             const response = await fetch(
-                `${this.API_BASE}/borbotones/search/autocomplete?q=${encodeURIComponent(query)}&limit=50`
+                `${this.API_BASE}/busqueda?q=${encodeURIComponent(query)}&limit=50`
             );
-
-            console.log('🔗 [SERVICE] URL de búsqueda:', `${this.API_BASE}/borbotones/search/autocomplete?q=${encodeURIComponent(query)}&limit=50`);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -58,16 +50,11 @@ class BusquedaService {
             }
 
             const data: ApiResponse = await response.json();
-            console.log('📦 [SERVICE] Respuesta de especialidades:', data);
-
             if (data.success && data.data && Array.isArray(data.data)) {
-                console.log('✅ [SERVICE] Especialidades encontradas:', data.data.length);
                 return this.convertEspecialidadesToJobs(data.data);
             }
 
-            console.log('⚠️ [SERVICE] No hay resultados de especialidades');
             return [];
-
         } catch (error) {
             console.error('❌ [SERVICE] Error en búsqueda backend:', error);
             throw error;
@@ -80,12 +67,9 @@ class BusquedaService {
     }
 
     private static convertEspecialidadesToJobs(especialidades: EspecialidadBackend[]): Job[] {
-        console.log('🔄 [SERVICE] Convirtiendo especialidades a jobs:', especialidades);
-
-        const jobs: Job[] = especialidades.map((especialidad: EspecialidadBackend) => {
+        return especialidades.map((especialidad: EspecialidadBackend) => {
             const nombreServicio = especialidad.nombre || "Servicio no disponible";
-
-            const job: Job = {
+            return {
                 title: nombreServicio,
                 company: "Profesionales disponibles",
                 service: nombreServicio,
@@ -95,23 +79,16 @@ class BusquedaService {
                 employmentType: "Servicio",
                 employmentTypeColor: "bg-blue-100 text-blue-800"
             };
-
-            console.log(`🔄 [SERVICE] Job convertido:`, job);
-            return job;
         });
-
-        console.log('🔄 [SERVICE] Total de jobs convertidos:', jobs.length);
-        return jobs;
     }
 
     static async getHistorial(): Promise<string[]> {
         try {
-            const response = await fetch(`${this.API_BASE}/borbotones/search/history`);
-
+            const response = await fetch(`${this.API_BASE}/busqueda/historial`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    return data.data || data.historial || [];
+                    return data.data || [];
                 }
             }
             return [];
@@ -123,7 +100,7 @@ class BusquedaService {
 
     static async clearHistorial(): Promise<boolean> {
         try {
-            const response = await fetch(`${this.API_BASE}/borbotones/search/history`, {
+            const response = await fetch(`${this.API_BASE}/busqueda/historial`, {
                 method: 'DELETE',
             });
 
@@ -140,35 +117,24 @@ class BusquedaService {
 
     static async getAutocompleteSuggestions(query: string): Promise<string[]> {
         try {
-            console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', query);
-
-            // Validar caracteres según el backend
-            if (!this.validarCaracteres(query)) {
-                return [];
-            }
+            if (!this.validarCaracteres(query)) return [];
 
             const response = await fetch(
-                `${this.API_BASE}/borbotones/search/autocomplete?q=${encodeURIComponent(query)}&limit=6`
+                `${this.API_BASE}/busqueda?q=${encodeURIComponent(query)}&limit=6`
             );
 
-            if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
-            }
+            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
 
             const data: ApiResponse = await response.json();
-            console.log('🔍 [SUGERENCIAS] Respuesta:', data);
-
             if (data.success && data.data && Array.isArray(data.data)) {
                 const sugerencias = data.data
                     .map((item: EspecialidadBackend) => item.nombre)
                     .filter((nombre: string) => nombre && nombre.trim())
                     .slice(0, 6);
 
-                console.log('🔍 [SUGERENCIAS] Sugerencias:', sugerencias);
                 return sugerencias;
             }
 
-            console.log('⚠️ [SUGERENCIAS] No hay sugerencias');
             return [];
         } catch (error) {
             console.error('❌ [SERVICE] Error obteniendo sugerencias:', error);
@@ -203,29 +169,22 @@ export default function BusquedaAutocompletado({
     const containerRef = useRef<HTMLDivElement>(null);
     const terminoBusquedaAnterior = useRef("");
 
-    // Actualizado según las validaciones del backend
     const caracteresValidos = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ´'" ,\s\-]*$/;
 
-    // Función para actualizar la URL con el término de búsqueda
     const actualizarURL = useCallback((searchTerm: string) => {
         const params = new URLSearchParams(searchParams.toString());
-
         if (searchTerm.trim()) {
             params.set('q', searchTerm.trim());
         } else {
             params.delete('q');
         }
-
         router.push(`?${params.toString()}`, { scroll: false });
-        console.log('🔗 [URL] URL actualizada:', searchTerm);
     }, [router, searchParams]);
 
-    // Sincronizar con parámetros de URL al cargar
     useEffect(() => {
         const urlQuery = searchParams.get('q');
         if (urlQuery && urlQuery !== query) {
             setQuery(urlQuery);
-            // Ejecutar búsqueda automáticamente si hay query en URL
             setTimeout(() => {
                 ejecutarBusquedaCompleta(urlQuery, false);
             }, 100);
@@ -233,36 +192,28 @@ export default function BusquedaAutocompletado({
     }, [searchParams]);
 
     useEffect(() => {
-        console.log('🔄 [AUTOCOMPLETADO] valorInicial actualizado:', valorInicial);
-        if (valorInicial !== query) {
-            setQuery(valorInicial);
-        }
+        if (valorInicial !== query) setQuery(valorInicial);
     }, [valorInicial]);
 
-    // Cargar historial del backend
     useEffect(() => {
         const cargarHistorialBackend = async () => {
             try {
                 setCargandoHistorial(true);
-                const terminos = await BusquedaService.getHistorial();
-                setHistorial(terminos);
-                console.log('📚 [HISTORIAL] Historial cargado:', terminos);
-            } catch (error) {
-                console.error('Error cargando historial del backend:', error);
-                // Fallback a localStorage si el backend falla
-                try {
+                let terminos: string[] = await BusquedaService.getHistorial();
+
+                if (!terminos || terminos.length === 0) {
                     const stored = localStorage.getItem("historialBusquedas");
-                    if (stored) {
-                        setHistorial(JSON.parse(stored));
-                    }
-                } catch (localError) {
-                    console.error('Error con localStorage:', localError);
+                    if (stored) terminos = JSON.parse(stored);
                 }
+
+                setHistorial(terminos);
+                if (terminos.length > 0) setMostrarHistorial(true);
+            } catch (error) {
+                console.error(error);
             } finally {
                 setCargandoHistorial(false);
             }
         };
-
         cargarHistorialBackend();
     }, []);
 
@@ -273,15 +224,8 @@ export default function BusquedaAutocompletado({
                 setHistorial([]);
                 setMostrarHistorial(false);
                 localStorage.removeItem("historialBusquedas");
-                console.log('✅ Historial limpiado correctamente');
-            } else {
-                console.error('❌ Error al limpiar historial en el backend');
-                setMensaje("Error al limpiar el historial");
             }
-        } catch (error) {
-            console.error('❌ Error limpiando historial:', error);
-            setMensaje("Error de conexión al limpiar historial");
-        }
+        } catch {}
     }, []);
 
     const normalizarTexto = useCallback((texto: string): string => {
@@ -296,9 +240,7 @@ export default function BusquedaAutocompletado({
 
     const buscarTrabajosLocal = useCallback((texto: string, jobs: Job[]): Job[] => {
         if (!texto.trim()) return jobs;
-
         const textoNormalizado = normalizarTexto(texto);
-
         return jobs.filter(job => {
             return (
                 (job.service && normalizarTexto(job.service).includes(textoNormalizado)) ||
@@ -311,60 +253,26 @@ export default function BusquedaAutocompletado({
         const textoNormalizado = texto.trim();
         if (!textoNormalizado) return;
 
-        const nuevoHistorial = Array.from(
-            new Set([textoNormalizado, ...historial])
-        ).slice(0, 10);
-
+        const nuevoHistorial = Array.from(new Set([textoNormalizado, ...historial])).slice(0, 10);
         setHistorial(nuevoHistorial);
         try {
             localStorage.setItem("historialBusquedas", JSON.stringify(nuevoHistorial));
-        } catch (error) {
-            console.error("Error guardando historial en localStorage:", error);
-        }
+        } catch {}
     }, [historial]);
 
     const buscarSugerenciasBackend = useCallback(async (texto: string): Promise<string[]> => {
+        if (!caracteresValidos.test(texto)) return [];
         try {
-            if (!caracteresValidos.test(texto)) {
-                return [];
-            }
-
-            console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', texto);
-
             const sugerenciasBackend = await BusquedaService.getAutocompleteSuggestions(texto);
-            console.log('🔍 [SUGERENCIAS] Sugerencias del backend:', sugerenciasBackend);
+            if (sugerenciasBackend.length > 0) return sugerenciasBackend;
 
-            if (sugerenciasBackend.length > 0) {
-                return sugerenciasBackend;
-            }
-
-            // Fallback a búsqueda local si no hay sugerencias del backend
-            console.log('🔄 [SUGERENCIAS] Usando fallback a búsqueda local');
             const resultadosLocales = buscarTrabajosLocal(texto, datos);
-            const terminosUnicos = Array.from(
-                new Set(
-                    resultadosLocales
-                        .map(job => job.service || job.title)
-                        .filter(Boolean)
-                        .map(term => term as string)
-                )
-            );
+            const terminosUnicos = Array.from(new Set(resultadosLocales.map(job => job.service || job.title).filter(Boolean) as string[]));
             return terminosUnicos.slice(0, 6);
 
-        } catch (error) {
-            console.error('❌ [SUGERENCIAS] Error conectando al backend:', error);
-
-            // Fallback completo a búsqueda local
-            console.log('🔄 [SUGERENCIAS] Usando fallback local por error');
+        } catch {
             const resultadosLocales = buscarTrabajosLocal(texto, datos);
-            const terminosUnicos = Array.from(
-                new Set(
-                    resultadosLocales
-                        .map(job => job.service || job.title)
-                        .filter(Boolean)
-                        .map(term => term as string)
-                )
-            );
+            const terminosUnicos = Array.from(new Set(resultadosLocales.map(job => job.service || job.title).filter(Boolean) as string[]));
             return terminosUnicos.slice(0, 6);
         }
     }, [buscarTrabajosLocal, datos]);
@@ -372,65 +280,27 @@ export default function BusquedaAutocompletado({
     const ejecutarBusquedaCompleta = useCallback(async (texto: string, guardarEnHistorialFlag: boolean = true) => {
         const textoLimpio = texto.trim();
 
-        // Validaciones según el backend
-        if (textoLimpio.length > 80) {
-            setMensaje("La búsqueda no puede exceder 80 caracteres");
-            setEstadoBusqueda("error");
-            return;
-        }
-
-        if (!caracteresValidos.test(textoLimpio)) {
-            setMensaje("Solo se permiten caracteres alfabéticos y los especiales: ´ , - , comilla simple y comilla doble");
-            setEstadoBusqueda("error");
-            return;
-        }
-
-        if (textoLimpio.length < 2) {
-            setMensaje("La búsqueda debe tener al menos 2 caracteres");
-            setEstadoBusqueda("error");
-            return;
-        }
-
-        console.log('✅ [BÚSQUEDA COMPLETA] Ejecutando búsqueda para:', textoLimpio);
+        if (textoLimpio.length > 80) { setMensaje("La búsqueda no puede exceder 80 caracteres"); setEstadoBusqueda("error"); return; }
+        if (!caracteresValidos.test(textoLimpio)) { setMensaje("Solo se permiten caracteres alfabéticos y los especiales: ´ , - , comilla simple y comilla doble"); setEstadoBusqueda("error"); return; }
+        if (textoLimpio.length < 2) { setMensaje("La búsqueda debe tener al menos 2 caracteres"); setEstadoBusqueda("error"); return; }
 
         setEstadoBusqueda("loading");
         setBusquedaRealizada(true);
         setMostrarSugerencias(false);
         setMostrarHistorial(false);
-
         terminoBusquedaAnterior.current = textoLimpio;
 
-        if (guardarEnHistorialFlag) {
-            guardarEnHistorial(textoLimpio);
-        }
-
-        // Actualizar la URL antes de la búsqueda
+        if (guardarEnHistorialFlag) guardarEnHistorial(textoLimpio);
         actualizarURL(textoLimpio);
 
         try {
-            console.log('🔍 [BÚSQUEDA] Conectando al backend...');
             const resultadosBackend = await BusquedaService.searchJobsInBackend(textoLimpio);
-
-            console.log('🔍 [BÚSQUEDA] Resultados:', resultadosBackend);
-
             setResultados(resultadosBackend);
             setEstadoBusqueda("success");
             onSearch(textoLimpio, resultadosBackend);
-
         } catch (error) {
-            console.error("Error en búsqueda backend, usando búsqueda local:", error);
-
-            if (error instanceof Error) {
-                setMensaje(error.message);
-            } else {
-                setMensaje("Error al conectar con el servidor");
-            }
-
             setEstadoBusqueda("error");
-
-            // Fallback a búsqueda local
             const resultadosLocales = buscarTrabajosLocal(textoLimpio, datos);
-            console.log('🔍 [BÚSQUEDA] Resultados locales:', resultadosLocales);
             setResultados(resultadosLocales);
             onSearch(textoLimpio, resultadosLocales);
         }
@@ -458,16 +328,11 @@ export default function BusquedaAutocompletado({
         setResultados([]);
         setMostrarSugerencias(false);
 
-        if (historial.length > 0) {
-            setMostrarHistorial(true);
-        } else {
-            setMostrarHistorial(false);
-        }
+        if (historial.length > 0) setMostrarHistorial(true);
+        else setMostrarHistorial(false);
 
         setBusquedaRealizada(false);
         terminoBusquedaAnterior.current = "";
-
-        // Actualizar URL al limpiar (eliminar parámetro q)
         actualizarURL("");
 
         onSearch("", datos);
@@ -475,41 +340,25 @@ export default function BusquedaAutocompletado({
     }, [datos, onSearch, historial, actualizarURL]);
 
     const manejarKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            ejecutarBusqueda();
-        } else if (e.key === 'Escape') {
-            setMostrarSugerencias(false);
-            setMostrarHistorial(false);
-            inputRef.current?.blur();
-        }
+        if (e.key === 'Enter') ejecutarBusqueda();
+        else if (e.key === 'Escape') { setMostrarSugerencias(false); setMostrarHistorial(false); inputRef.current?.blur(); }
     }, [ejecutarBusqueda]);
 
-    // Efecto para búsqueda en tiempo real y sugerencias
     useEffect(() => {
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
+        if (debounceRef.current) clearTimeout(debounceRef.current);
 
         const texto = query.trim();
 
         const actualizarVisualizacion = () => {
-            const textoLimpio = texto.trim();
-
-            if (!textoLimpio) {
+            if (!texto) {
                 setSugerencias([]);
                 setMensaje("");
                 setEstadoSugerencias("idle");
                 setMostrarSugerencias(false);
-
-                // Mostrar historial cuando no hay texto
-                if (historial.length > 0 && !busquedaRealizada) {
-                    
-                }
                 return;
             }
 
             if (!caracteresValidos.test(texto)) {
-                console.log('❌ [BLOQUEO] Carácter inválido detectado');
                 setMensaje("Solo se permiten caracteres alfabéticos y los especiales: ´ , - , comilla simple y comilla doble");
                 setSugerencias([]);
                 setEstadoSugerencias("error");
@@ -518,7 +367,7 @@ export default function BusquedaAutocompletado({
                 return;
             }
 
-            if (textoLimpio.length >= 2 && !busquedaRealizada) {
+            if (texto.length >= 2 && !busquedaRealizada) {
                 setMostrarHistorial(false);
                 setMostrarSugerencias(true);
             } else {
@@ -534,24 +383,13 @@ export default function BusquedaAutocompletado({
 
         if (texto.length >= 2 && !busquedaRealizada) {
             setEstadoSugerencias("loading");
-
             debounceRef.current = setTimeout(async () => {
                 try {
-                    console.log('🔍 [EFFECT] Buscando sugerencias para:', texto);
                     const sugerenciasBackend = await buscarSugerenciasBackend(texto);
-                    console.log('🔍 [EFFECT] Sugerencias encontradas:', sugerenciasBackend);
-
                     setSugerencias(sugerenciasBackend);
-                    setEstadoSugerencias(sugerenciasBackend.length > 0 ? "success" : "success");
-
-                    if (sugerenciasBackend.length === 0) {
-                        setMensaje(`No se encontraron servicios para "${texto}"`);
-                    } else {
-                        setMensaje("");
-                    }
-
-                } catch (error) {
-                    console.error('❌ [EFFECT] Error buscando sugerencias:', error);
+                    setEstadoSugerencias("success");
+                    setMensaje(sugerenciasBackend.length === 0 ? `No se encontraron servicios para "${texto}"` : "");
+                } catch {
                     setEstadoSugerencias("error");
                     setMensaje("Error al buscar servicios");
                     setSugerencias([]);
@@ -563,14 +401,9 @@ export default function BusquedaAutocompletado({
             setMensaje("");
         }
 
-        return () => {
-            if (debounceRef.current) {
-                clearTimeout(debounceRef.current);
-            }
-        };
+        return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
     }, [query, busquedaRealizada, historial.length, buscarSugerenciasBackend]);
 
-    // Efecto para cerrar sugerencias al hacer click fuera
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -580,16 +413,16 @@ export default function BusquedaAutocompletado({
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    return (
-        
-            <div className="contenedor-busqueda">
-                <div className="busqueda-barra">
-                    <Search className="icono-busqueda" size={20} />
+   return (
+        <div className="relative w-full" ref={containerRef}>
+            {/* Contenedor principal con position: relative (clase: relative) para posicionar sugerencias */}
+            <div className="relative w-full">
+                {/* BARRA DE BÚSQUEDA: busqueda-barra */}
+                <div className="flex items-center w-full bg-white px-3 py-2 rounded-lg shadow-md border border-gray-200">
+                    <Search className="absolute left-3 text-gray-500 z-10" size={20} />
                     <input
                         ref={inputRef}
                         type="text"
@@ -598,16 +431,12 @@ export default function BusquedaAutocompletado({
                         onChange={(e) => {
                             const nuevoValor = e.target.value;
                             setQuery(nuevoValor);
-
                             if (nuevoValor === "") {
                                 setBusquedaRealizada(false);
                                 setEstadoBusqueda("idle");
-                                onSearch("", datos);
-                                if (historial.length > 0) {
-                                    setMostrarHistorial(true);
-                                }
+                                onSearch("", datos || []);
+                                if (historial.length > 0) { setMostrarHistorial(true); }
                             }
-
                             if (busquedaRealizada && nuevoValor !== terminoBusquedaAnterior.current) {
                                 setBusquedaRealizada(false);
                                 setEstadoBusqueda("idle");
@@ -615,7 +444,6 @@ export default function BusquedaAutocompletado({
                         }}
                         onKeyDown={manejarKeyDown}
                         onFocus={() => {
-                           
                             if (!busquedaRealizada) {
                                 if (!query.trim() && historial.length > 0) {
                                     setMostrarHistorial(true);
@@ -626,11 +454,11 @@ export default function BusquedaAutocompletado({
                             }
                         }}
                         maxLength={80}
-                        className="busqueda-input"
+                        className="w-full pl-9 pr-24 py-2 text-base border-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-transparent text-black"
                     />
                     {query && (
                         <button
-                            className="btn-limpiar"
+                            className="absolute right-24 bg-transparent border-none text-gray-500 hover:text-gray-900 cursor-pointer z-10 p-1"
                             onClick={limpiarBusqueda}
                             type="button"
                         >
@@ -638,7 +466,7 @@ export default function BusquedaAutocompletado({
                         </button>
                     )}
                     <button
-                        className="btn-buscar"
+                        className="absolute right-2 bg-blue-600 text-white border-none px-3 py-1.5 rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-150"
                         onClick={ejecutarBusqueda}
                         disabled={!query.trim() || query.trim().length < 2}
                         type="button"
@@ -647,40 +475,41 @@ export default function BusquedaAutocompletado({
                     </button>
                 </div>
 
-                <div className={`contador-caracteres ${query.length > 70 ? 'alerta' : ''}`}>
+                {/* CONTADOR DE CARACTERES: CLAVE PARA ELIMINAR ESPACIO */}
+                <div className={`text-right text-xs mt-0 pt-1 px-1 ${query.length > 70 ? 'text-red-600' : 'text-gray-500'}`}>
                     {query.length}/80 caracteres
                 </div>
 
                 {estadoBusqueda === "error" && mensaje && (
-                    <div className="mensaje-error-global">
+                    <div className="p-3 bg-red-100 text-red-700 text-sm rounded-md mt-2">
                         {mensaje}
                     </div>
                 )}
 
+                {/* CONTENEDOR DE SUGERENCIAS/HISTORIAL */}
                 {!busquedaRealizada && (
                     <>
+                        {/* Se eliminan las clases personalizadas y se usa directamente Tailwind */}
                         {mostrarHistorial && historial.length > 0 && (
-                            <ul className="caja-sugerencias">
-                                <li className="sugerencias-header">
+                            <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-xl list-none m-0 p-0 z-50 mt-[-1px] max-h-64 overflow-y-auto animate-fadeIn">
+                                <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
                                     Búsquedas recientes
                                     {cargandoHistorial && (
-                                        <span className="cargando-indicador">Cargando...</span>
+                                        <span className="ml-2 text-blue-500">Cargando...</span>
                                     )}
                                 </li>
-
                                 {historial.map((item, i) => (
                                     <li
                                         key={i}
-                                        className="item-historial"
+                                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
                                         onClick={() => seleccionarSugerencia(item)}
                                     >
-                                        <Clock className="icono-historial" size={16} />
+                                        <Clock className="text-gray-500 flex-shrink-0" size={16} />
                                         {item}
                                     </li>
                                 ))}
-
                                 <li
-                                    className="item-limpiar-todo"
+                                    className="flex items-center gap-2 px-4 py-2 text-xs text-red-500 cursor-pointer hover:bg-red-50 transition-colors border-t border-gray-200"
                                     onClick={limpiarHistorialBackend}
                                 >
                                     <Trash2 size={14} />
@@ -692,38 +521,29 @@ export default function BusquedaAutocompletado({
                         {mostrarSugerencias && query.length >= 2 && (
                             <>
                                 {estadoSugerencias === "loading" && (
-                                    <div className="caja-sugerencias cargando">
-                                        <div className="spinner"></div>
+                                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-xl z-50 mt-[-1px] p-4 flex items-center justify-center text-sm text-gray-600">
+                                        <div className="w-4 h-4 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mr-2"></div>
                                         Buscando servicios...
                                     </div>
                                 )}
 
                                 {estadoSugerencias !== "loading" && (
-                                    <ul className="caja-sugerencias">
-                                        <li className="sugerencias-header">
+                                    <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-xl list-none m-0 p-0 z-50 mt-[-1px] max-h-64 overflow-y-auto animate-fadeIn">
+                                        <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
                                             Sugerencias de servicios
                                         </li>
                                         {sugerencias.map((s, i) => (
-                                            <li key={i} onClick={() => seleccionarSugerencia(s)}>
-                                                <Search className="icono-sugerencia" size={16} />
+                                            <li key={i} onClick={() => seleccionarSugerencia(s)} className="flex items-center px-4 py-2 text-sm text-gray-800 cursor-pointer hover:bg-gray-100 transition-colors">
+                                                <Search className="text-gray-500 mr-2 flex-shrink-0" size={16} />
                                                 {s}
                                             </li>
                                         ))}
                                         {sugerencias.length === 0 && mensaje && (
-                                            <li className="mensaje-sugerencia">
-                                                <Search className="icono-sugerencia" size={16} />
+                                            <li className="flex items-center px-4 py-3 text-sm text-gray-600 italic justify-center">
+                                                <Search className="text-gray-400 mr-2" size={16} />
                                                 {mensaje}
                                             </li>
                                         )}
-                                    </ul>
-                                )}
-
-                                {estadoSugerencias === "error" && mensaje && (
-                                    <ul className="caja-sugerencias">
-                                        <li className="mensaje-error">
-                                            <Search className="icono-sugerencia" size={16} />
-                                            {mensaje}
-                                        </li>
                                     </ul>
                                 )}
                             </>
@@ -731,5 +551,6 @@ export default function BusquedaAutocompletado({
                     </>
                 )}
             </div>
+        </div>
     );
 }

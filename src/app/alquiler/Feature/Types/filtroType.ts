@@ -13,6 +13,7 @@ export type UsuarioResumen = {
   activo?: boolean;
   fecha_registro?: string;
   ciudad?: Ciudad;
+  rating?: number;
   especialidades?: Array<{ id_especialidad: number; nombre: string; fecha_asignacion?: string }>;
   servicios?: Array<{
     id_servicio: number; nombre: string; precio_personalizado?: number;
