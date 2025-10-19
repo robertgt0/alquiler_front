@@ -1,14 +1,11 @@
 "use client";
-//import "./ordenamiento.css";
 import { useState, useMemo, useEffect } from "react";
 import { Search } from "lucide-react";
 
-// Función para llamar al backend
 const ordenarBorbotones = async (criterio: string) => {
   try {
     const response = await fetch(`http://localhost:5000/api/borbotones/orden?orden=${criterio}`);
     if (!response.ok) throw new Error("Error al ordenar borbotones");
-
     return await response.json();
   } catch (error) {
     console.error("Error:", error);
@@ -22,7 +19,6 @@ interface Item {
   calificacion: number;
 }
 
-// Ordenamiento local como respaldo
 const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
   if (!lista || lista.length === 0) return [];
   const sorted = [...lista];
@@ -49,6 +45,7 @@ interface OrdenamientoProps {
   searchValue?: string;
   onSortChange?: (value: string) => void;
   onSearchChange?: (value: string) => void;
+  paginatedItems?: Item[]; // 🔹 opcional si se usa paginación externa
 }
 
 export default function Ordenamiento({
@@ -57,13 +54,12 @@ export default function Ordenamiento({
   searchValue = "",
   onSortChange,
   onSearchChange,
+  paginatedItems,
 }: OrdenamientoProps) {
   const [search, setSearch] = useState(searchValue);
   const [sort, setSort] = useState(sortValue);
   const [itemsFromBackend, setItemsFromBackend] = useState<Item[]>([]);
   const [cargando, setCargando] = useState(false);
-
-  // Nuevo estado para mostrar/ocultar select de ordenamiento
   const [mostrarOrden, setMostrarOrden] = useState(false);
 
   const opciones = ["Nombre A-Z", "Nombre Z-A", "Fecha (Reciente)", "Mayor Calificación (⭐)"];
@@ -74,6 +70,7 @@ export default function Ordenamiento({
     "Mayor Calificación (⭐)": "calificacion",
   };
 
+  // 🔹 Ordenamiento en backend
   const handleOrdenarBackend = async (criterioLocal: string) => {
     const criterioBackend = criterioMap[criterioLocal];
     if (!criterioBackend) return;
@@ -89,75 +86,112 @@ export default function Ordenamiento({
     }
   };
 
+  // 🔹 Llama al ordenamiento cada vez que cambia el criterio
   useEffect(() => {
     onSortChange?.(sort);
     handleOrdenarBackend(sort);
   }, [sort]);
 
+  // 🔹 Llama al cambio de búsqueda
   useEffect(() => {
     onSearchChange?.(search);
   }, [search]);
 
+  // 🔹 Reset del ordenamiento al limpiar búsqueda
+  useEffect(() => {
+    if (search.trim() === "") {
+      setSort("Fecha (Reciente)");
+    }
+  }, [search]);
+
+  // 🔹 Filtrado
   const filteredItems = useMemo(() => {
     let list = itemsFromBackend.length > 0 ? itemsFromBackend : items;
-    if (search) list = list.filter((item) => item.nombre.toLowerCase().includes(search.toLowerCase()));
+    if (search) {
+      list = list.filter((item) => item.nombre.toLowerCase().includes(search.toLowerCase()));
+    }
     return list;
   }, [search, items, itemsFromBackend]);
 
-  const itemsToRender = useMemo(() => {
-    return itemsFromBackend.length > 0 ? filteredItems : ordenarItems(sort, filteredItems);
-  }, [sort, filteredItems, itemsFromBackend]);
+  // 🔹 Aplicar orden local si no hay backend o paginación externa
+  const orderedItems = useMemo(() => {
+    const baseList = paginatedItems || filteredItems;
+    return itemsFromBackend.length > 0 ? baseList : ordenarItems(sort, baseList);
+  }, [sort, filteredItems, itemsFromBackend, paginatedItems]);
 
+  // 🔹 Mensaje si no hay resultados
   const showNoOrderMessage = search !== "" && filteredItems.length === 0;
 
   return (
-    <div className="container">
-      <div className="card">
+    <div className="container max-w-full p-4 sm:p-6 bg-white rounded-2xl shadow-md">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {/* Título clickeable */}
         <p
-          className="sort-label text-blue-500 font-semibold cursor-pointer hover:text-blue-600 transition"
+          className="text-blue-500 font-semibold cursor-pointer hover:text-blue-600 transition"
           onClick={() => setMostrarOrden(!mostrarOrden)}
         >
           Ordenar
         </p>
 
-        {/* Select de ordenamiento solo se muestra si mostrarOrden = true */}
-        {mostrarOrden && (
-          <div className="sort-section mt-2">
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="sort-select"
-              disabled={cargando}
-            >
-              {opciones.map((opcion) => (
-                <option key={opcion} value={opcion}>
-                  {opcion}
-                </option>
-              ))}
-            </select>
-            {cargando && <span className="loading-text">Cargando...</span>}
+        {/* 🔹 Campo de búsqueda (opcional) */}
+        <div className="relative w-full sm:w-64">
+          <input
+            type="text"
+            placeholder="Buscar trabajo..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2 pl-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <Search size={16} className="absolute left-2 top-2.5 text-gray-400" />
+        </div>
+      </div>
+
+      {/* 🔹 Selector de ordenamiento */}
+      {mostrarOrden && (
+        <div className="mt-3">
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="w-full sm:w-auto border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            disabled={cargando}
+          >
+            {opciones.map((opcion) => (
+              <option key={opcion} value={opcion}>
+                {opcion}
+              </option>
+            ))}
+          </select>
+          {cargando && <span className="ml-2 text-gray-500 text-sm">Cargando...</span>}
+        </div>
+      )}
+
+      {/* 🔹 Mostrar resultados */}
+      <div className="mt-4">
+        {orderedItems.length > 0 && (
+          <div className="text-sm text-gray-500 mb-2">
+            Mostrando {orderedItems.length} elementos
           </div>
         )}
 
-        {/* Mostrar resultados */}
-        <div className="results-section mt-4">
-          {itemsToRender.length > 0 && (
-            <div className="results-count mb-2">Mostrando {itemsToRender.length} elementos</div>
-          )}
-          <div className="items-list space-y-2">
-a
-            {itemsToRender.map((item, index) => (
-              <div key={index} className="item-card border p-2 rounded-md hover:bg-gray-50 transition">
-                <h3 className="item-name font-semibold">{item.nombre}</h3>
-                <p className="item-date text-sm text-gray-600">Fecha: {item.fecha}</p>
-                <p className="item-rating text-sm text-gray-600">Calificación: {item.calificacion} ⭐</p>
-              </div>
-            ))}
-          </div>
-
-          {showNoOrderMessage && <p className="no-results mt-2 text-red-500">No se encontraron resultados</p>}
+        <div className="space-y-2">
+          {orderedItems.map((item, index) => (
+            <div
+              key={index}
+              className="border p-3 rounded-xl hover:bg-gray-50 transition text-sm sm:text-base"
+            >
+              <h3 className="font-semibold">{item.nombre}</h3>
+              <p className="text-gray-600">Fecha: {item.fecha}</p>
+              <p className="text-gray-600">Calificación: {item.calificacion} ⭐</p>
+            </div>
+          ))}
         </div>
+
+        {/* 🔹 Mensaje si no hay resultados */}
+        {showNoOrderMessage && (
+          <p className="mt-3 text-red-500 font-medium text-sm sm:text-base">
+            No se puede aplicar el ordenamiento
+          </p>
+        )}
       </div>
     </div>
   );

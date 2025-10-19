@@ -79,14 +79,11 @@ export default function BusquedaPage() {
 
     const termino = searchTerm.trim().toLowerCase();
     if (termino) {
-      // Dividir la búsqueda en palabras
       const palabras = termino.split(/\s+/).filter(Boolean);
 
       data = data.filter((job) => {
         const title = job.title.toLowerCase();
         const company = job.company.toLowerCase();
-
-        // Retorna true si alguna palabra coincide en title o company
         return palabras.some((palabra) => title.includes(palabra) || company.includes(palabra));
       });
     }
@@ -150,6 +147,7 @@ export default function BusquedaPage() {
   useEffect(() => {
     if (!searchTerm.trim()) {
       setSearchResults(allJobs);
+      setSortBy("Fecha (Reciente)"); // ✅ NUEVO: resetear ordenamiento al limpiar búsqueda
     }
   }, [searchTerm, allJobs]);
 
@@ -162,6 +160,9 @@ export default function BusquedaPage() {
   const handleViewDetails = (job: Job) => {
     console.log("Ver detalles de:", job);
   };
+
+  // ✅ NUEVO: mostrar mensaje si no hay resultados
+  const sinResultados = !isLoading && jobsToDisplay.length === 0 && searchTerm.trim() !== "";
 
   // ---------------- Render ----------------
   return (
@@ -197,6 +198,13 @@ export default function BusquedaPage() {
           />
         </div>
 
+        {/* ✅ NUEVO mensaje si no hay resultados */}
+        {sinResultados && (
+          <p className="text-center text-red-500 mt-6 font-medium text-lg">
+            No se puede aplicar el ordenamiento
+          </p>
+        )}
+
         {/* Vista Usuarios */}
         {modoVista === "usuarios" && usuariosFiltrados.length > 0 ? (
           <section className="mt-10">
@@ -227,9 +235,12 @@ export default function BusquedaPage() {
               <p className="text-center text-gray-500 text-lg">Cargando ofertas...</p>
             ) : (
               <>
-                <div className="text-xl text-blue-700 font-semibold mb-6">
-                  Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
-                </div>
+                {/* ✅ AJUSTE: mostrar conteo solo si hay resultados */}
+                {jobsToDisplay.length > 0 && (
+                  <div className="text-xl text-blue-700 font-semibold mb-6">
+                    Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
+                  </div>
+                )}
 
                 <div className="space-y-6">
                   {currentItems.map((job, index) => (
