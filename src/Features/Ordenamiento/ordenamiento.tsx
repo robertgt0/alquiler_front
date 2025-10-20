@@ -9,7 +9,7 @@ interface Item {
   calificacion: number;
 }
 
-// Datos iniciales
+// Datos iniciales (como respaldo)
 const INITIAL_ITEMS: Item[] = [
   { nombre: "Manzana", fecha: "2026-10-05", calificacion: 4 },
   { nombre: "Banana", fecha: "2024-10-03", calificacion: 5 },
@@ -20,7 +20,24 @@ const INITIAL_ITEMS: Item[] = [
   { nombre: "A", fecha: "2025-10-01", calificacion: 2 },
 ];
 
-// Función de ordenamiento
+// Función para llamar al backend
+const ordenarBorbotones = async (criterio: string): Promise<Item[]> => {
+  try {
+    const response = await fetch(`http://localhost:5000/api/borbotones/orden?orden=${criterio}`);
+    
+    if (!response.ok) {
+      throw new Error('Error al ordenar borbotones');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error conectando con el backend:', error);
+    // Si falla el backend, usa ordenamiento local
+    return INITIAL_ITEMS;
+  }
+};
+
+// Función de ordenamiento LOCAL (como respaldo)
 const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
   if (lista.length === 0) return [];
 
@@ -49,9 +66,11 @@ const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
 };
 
 export default function Ordenamiento() {
-   const defaultSort = "Fecha (Reciente)";
-   const [search, setSearch] = useState("");
-   const [sort, setSort] = useState(defaultSort);
+  const defaultSort = "Fecha (Reciente)";
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState(defaultSort);
+  const [items, setItems] = useState<Item[]>(INITIAL_ITEMS);
+  const [cargando, setCargando] = useState(false);
 
   const opciones = [
     "Nombre A-Z",
@@ -60,6 +79,35 @@ export default function Ordenamiento() {
     "Mayor Calificación (⭐)",
   ];
 
+  // Mapeo entre opciones del frontend y criterios del backend
+  const criterioMap: { [key: string]: string } = {
+    "Nombre A-Z": "nombre_A-Z",
+    "Nombre Z-A": "nombre_Z-A", 
+    "Fecha (Reciente)": "fecha",
+    "Mayor Calificación (⭐)": "calificacion"
+  };
+
+  // Cuando cambia el orden, llamar al backend
+  useEffect(() => {
+    const ordenarConBackend = async () => {
+      setCargando(true);
+      const criterioBackend = criterioMap[sort];
+      
+      if (criterioBackend) {
+        try {
+          const datosBackend = await ordenarBorbotones(criterioBackend);
+          setItems(datosBackend);
+        } catch (error) {
+          console.error('Error usando backend, usando datos locales');
+          // Mantiene los datos locales si falla el backend
+        }
+      }
+      setCargando(false);
+    };
+
+    ordenarConBackend();
+  }, [sort]);
+
   useEffect(() => {
     if (search === "") {
       setSort(defaultSort);
@@ -67,7 +115,7 @@ export default function Ordenamiento() {
   }, [search]);
 
   const filteredItems = useMemo(() => {
-    let list = INITIAL_ITEMS;
+    let list = items;
 
     if (search) {
       list = list.filter((item) =>
@@ -76,7 +124,7 @@ export default function Ordenamiento() {
     }
 
     return list;
-  }, [search]);
+  }, [search, items]);
 
   const itemsToRender = useMemo(() => {
     return ordenarItems(sort, filteredItems);
@@ -118,6 +166,7 @@ export default function Ordenamiento() {
             value={sort}
             onChange={(e) => setSort(e.target.value)}
             className="sort-select"
+            disabled={cargando}
           >
             {opciones.map((opcion) => (
               <option key={opcion} value={opcion}>
@@ -125,6 +174,7 @@ export default function Ordenamiento() {
               </option>
             ))}
           </select>
+          {cargando && <span className="loading-text">Conectando con backend...</span>}
         </div>
 
         <ul className="item-list">
@@ -133,8 +183,8 @@ export default function Ordenamiento() {
               No se puede aplicar el ordenamiento.
             </li>
           ) : (
-            itemsToRender.map((item) => (
-              <li key={item.nombre} className="item">
+            itemsToRender.map((item, index) => (
+              <li key={`${item.nombre}-${index}`} className="item">
                 <span>{item.nombre}</span> - {item.fecha} -{" "}
                 <span className="item-star">⭐ {item.calificacion}</span>
               </li>

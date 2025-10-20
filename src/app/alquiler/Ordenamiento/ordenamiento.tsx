@@ -78,7 +78,7 @@ export default function Ordenamiento({
     "Nombre A-Z",
     "Nombre Z-A",
     "Fecha (Reciente)",
-    "Mayor Calificación (⭐)",
+    "Mayor Calificación (10)",
   ];
 
   // Mapeo entre opciones locales y criterios del backend
@@ -86,7 +86,7 @@ export default function Ordenamiento({
     "Nombre A-Z": "nombre_A-Z",
     "Nombre Z-A": "nombre_Z-A", 
     "Fecha (Reciente)": "fecha",
-    "Mayor Calificación (⭐)": "calificacion"
+    "Mayor Calificación (10)": "calificacion"
   };
 
   // Función para ordenar con el backend
@@ -202,7 +202,7 @@ export default function Ordenamiento({
               <div key={index} className="item-card">
                 <h3 className="item-name">{item.nombre}</h3>
                 <p className="item-date">Fecha: {item.fecha}</p>
-                <p className="item-rating">Calificación: {item.calificacion} ⭐</p>
+                <p className="item-rating">Calificación: {item.calificacion} 10</p>
               </div>
             ))}
           </div>
