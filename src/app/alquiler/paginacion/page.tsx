@@ -15,27 +15,27 @@ export default function BusquedaPage() {
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") || "";
 
-  // ---------------- Estados principales ----------------
+  // Estados principales 
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState(urlQuery);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [sortBy, setSortBy] = useState("Fecha (Reciente)");
+  const [sortBy, setSortBy] = useState("Nombre A-Z");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
   const [modoVista, setModoVista] = useState<"jobs" | "usuarios">("jobs");
+  const [mostrarOrden, setMostrarOrden] = useState(false); // Track si el usuario abrió el selector de orden
 
   const itemsPerPage = 10;
 
-  // ---------------- Opciones de ordenamiento ----------------
   const opcionesOrdenamiento = [
-    "Fecha (Reciente)",
     "Nombre A-Z",
     "Nombre Z-A",
+    "Fecha (Reciente)",
     "Mayor Calificación (⭐)",
   ];
 
-  // ---------------- Funciones de ordenamiento ----------------
+  // Funciones de ordenamiento 
   const ordenarItems = (opcion: string, lista: Job[]) => {
     const sorted = [...lista];
     switch (opcion) {
@@ -46,9 +46,7 @@ export default function BusquedaPage() {
         sorted.sort((a, b) => b.title.localeCompare(a.title));
         break;
       case "Fecha (Reciente)":
-        sorted.sort(
-          (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
-        );
+        sorted.sort((a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime());
         break;
       case "Mayor Calificación (⭐)":
         sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -73,14 +71,13 @@ export default function BusquedaPage() {
     return sorted;
   };
 
-  // ---------------- Filtrado y ordenamiento ----------------
+  // Filtrado y ordenamiento 
   const jobsToDisplay = useMemo(() => {
     let data = searchResults.length > 0 ? searchResults : allJobs;
 
     const termino = searchTerm.trim().toLowerCase();
     if (termino) {
       const palabras = termino.split(/\s+/).filter(Boolean);
-
       data = data.filter((job) => {
         const title = job.title.toLowerCase();
         const company = job.company.toLowerCase();
@@ -96,7 +93,7 @@ export default function BusquedaPage() {
     [sortBy, usuariosFiltrados]
   );
 
-  // ---------------- Hook de paginación ----------------
+  //  Hook de paginación 
   const {
     currentPage,
     totalPages,
@@ -107,7 +104,7 @@ export default function BusquedaPage() {
     totalItems,
   } = usePagination(jobsToDisplay, itemsPerPage);
 
-  // ---------------- Cargar trabajos ----------------
+  //  Cargar trabajos 
   useEffect(() => {
     const loadJobs = async () => {
       try {
@@ -124,7 +121,7 @@ export default function BusquedaPage() {
     loadJobs();
   }, []);
 
-  // ---------------- Buscar desde URL ----------------
+  // Buscar desde URL 
   useEffect(() => {
     if (urlQuery && allJobs.length > 0) {
       const normalizar = (texto: string) =>
@@ -143,15 +140,15 @@ export default function BusquedaPage() {
     }
   }, [urlQuery, allJobs]);
 
-  // ---------------- Limpiar búsqueda ----------------
+  // Limpiar búsqueda 
   useEffect(() => {
     if (!searchTerm.trim()) {
       setSearchResults(allJobs);
-      setSortBy("Fecha (Reciente)"); // ✅ NUEVO: resetear ordenamiento al limpiar búsqueda
+      setSortBy("Nombre A-Z");
     }
   }, [searchTerm, allJobs]);
 
-  // ---------------- Handlers ----------------
+  //  Handlers 
   const handleSearchResults = (termino: string, resultados: Job[]) => {
     setSearchTerm(termino);
     setSearchResults(resultados);
@@ -161,10 +158,11 @@ export default function BusquedaPage() {
     console.log("Ver detalles de:", job);
   };
 
-  // ✅ NUEVO: mostrar mensaje si no hay resultados
-  const sinResultados = !isLoading && jobsToDisplay.length === 0 && searchTerm.trim() !== "";
+  const mostrarMensajeBusqueda = !isLoading && jobsToDisplay.length === 0 && searchTerm.trim() !== "";
+  const mostrarMensajeOrden =
+    mostrarOrden && !isLoading && jobsToDisplay.length === 0 && searchTerm.trim() !== "";
 
-  // ---------------- Render ----------------
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 to-white">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -198,8 +196,14 @@ export default function BusquedaPage() {
           />
         </div>
 
-        {/* ✅ NUEVO mensaje si no hay resultados */}
-        {sinResultados && (
+        {/* Mensaje si no hay resultados de búsqueda */}
+        {mostrarMensajeBusqueda && (
+          <p className="text-center text-red-500 mt-6 font-medium text-lg">
+            No se encontraron resultados para tu búsqueda
+          </p>
+        )}
+        {/* Mensaje de “No se puede aplicar el ordenamiento” */}
+        {mostrarMensajeOrden && (
           <p className="text-center text-red-500 mt-6 font-medium text-lg">
             No se puede aplicar el ordenamiento
           </p>
@@ -217,7 +221,7 @@ export default function BusquedaPage() {
                   key={u._id}
                   className="bg-white rounded-xl p-5 shadow-md border border-gray-100 hover:shadow-lg transition"
                 >
-                  <h3 className="font-semibold text-lg text-gray-900">{u.nombre}</h3>
+                  <h3 className="font-semibold text-lg text-blue-600">{u.nombre}</h3>
                 </div>
               ))}
             </div>
@@ -235,7 +239,6 @@ export default function BusquedaPage() {
               <p className="text-center text-gray-500 text-lg">Cargando ofertas...</p>
             ) : (
               <>
-                {/* ✅ AJUSTE: mostrar conteo solo si hay resultados */}
                 {jobsToDisplay.length > 0 && (
                   <div className="text-xl text-blue-700 font-semibold mb-6">
                     Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
@@ -271,4 +274,3 @@ export default function BusquedaPage() {
     </div>
   );
 }
-

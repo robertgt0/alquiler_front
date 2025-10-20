@@ -32,7 +32,7 @@ const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
     case "Fecha (Reciente)":
       sorted.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
       break;
-    case "Mayor Calificación (⭐)":
+    case "Mayor Calificación (⭐⭐)":
       sorted.sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
       break;
   }
@@ -100,7 +100,7 @@ export default function Ordenamiento({
   // 🔹 Reset del ordenamiento al limpiar búsqueda
   useEffect(() => {
     if (search.trim() === "") {
-      setSort("Fecha (Reciente)");
+      setSort("Nombre A-Z");
     }
   }, [search]);
 
@@ -152,11 +152,11 @@ export default function Ordenamiento({
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="w-full sm:w-auto border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full sm:w-auto border rounded-lg px-3 py-2 text-sm text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-800"
             disabled={cargando}
           >
             {opciones.map((opcion) => (
-              <option key={opcion} value={opcion}>
+              <option key={opcion} value={opcion} className="text-blue-600">
                 {opcion}
               </option>
             ))}
@@ -179,19 +179,13 @@ export default function Ordenamiento({
               key={index}
               className="border p-3 rounded-xl hover:bg-gray-50 transition text-sm sm:text-base"
             >
-              <h3 className="font-semibold">{item.nombre}</h3>
-              <p className="text-gray-600">Fecha: {item.fecha}</p>
-              <p className="text-gray-600">Calificación: {item.calificacion} ⭐</p>
+              <h3 className="font-semibold text-blue-600">{item.nombre}</h3>
+              <p className="text-blue-600">Fecha: {item.fecha}</p>
+              <p className="text-blue-600">Calificación: {item.calificacion} ⭐</p>
             </div>
           ))}
         </div>
 
-        {/* 🔹 Mensaje si no hay resultados */}
-        {showNoOrderMessage && (
-          <p className="mt-3 text-red-500 font-medium text-sm sm:text-base">
-            No se puede aplicar el ordenamiento
-          </p>
-        )}
       </div>
     </div>
   );
