@@ -109,7 +109,7 @@ export default function BusquedaPage() {
     handlePrevPage,
     totalItems,
   } = usePagination(jobsToDisplay, itemsPerPage);
-
+ //
   // ---------------- Cargar trabajos ----------------
   useEffect(() => {
     const loadJobs = async () => {
