@@ -12,7 +12,10 @@ interface JobCardProps {
   employmentType: string;
   employmentTypeColor: string;
   rating?: number;
+  especialidades?: Array<{ id_especialidad: number; nombre: string; fecha_asignacion?: string }>;
+  especialidad?: string;
   onViewDetails?: () => void;
+  
 }
 
 const formatSalary = (salary: string) => {
@@ -51,6 +54,8 @@ const JobCard: React.FC<JobCardProps> = ({
   employmentType,
   employmentTypeColor,
   rating = 0,
+  especialidades = [],
+  especialidad = '',
   onViewDetails
 }) => {
   return (

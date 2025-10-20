@@ -9,6 +9,8 @@ interface UserFromAPI {
   activo: boolean;
   ciudad: { nombre: string };
   servicios: { nombre: string; precio_personalizado: number }[];
+  especialidad?: { nombre: string }[];
+  especialidades?: { id: number, nombre: string }[];
 }
 
 
@@ -34,6 +36,8 @@ export const getJobs = async (): Promise<Job[]> => {
       employmentTypeColor: user.activo
         ? "bg-green-100 text-green-800"
         : "bg-red-100 text-red-800",
+      especialidades: user.especialidades || [],
+      especialidad: user.especialidad?.map(e => e.nombre).join(", ") || ""
     }));
 
     return mappedJobs;

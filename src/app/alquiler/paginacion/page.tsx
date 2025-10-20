@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import JobCard from "./components/jobCard";
 import Pagination from "./components/Pagination";
 import { getJobs } from "./services/jobService";
@@ -11,8 +11,12 @@ import BusquedaAutocompletado from "../Busqueda/busquedaAutocompletado";
 import FiltrosForm from "../Feature/Componentes/FiltroForm";
 import { UsuarioResumen } from "../Feature/Types/filtroType";
 
+// Definir tipo para estado de búsqueda
+type EstadoBusqueda = "idle" | "loading" | "success" | "error" | "no-results";
+
 export default function BusquedaPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const urlQuery = searchParams.get("q") || "";
 
   // ---------------- Estados principales ----------------
@@ -20,6 +24,10 @@ export default function BusquedaPage() {
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState(urlQuery);
   const [isLoading, setIsLoading] = useState(true);
+  const [estadoBusqueda, setEstadoBusqueda] = useState<EstadoBusqueda>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [buscando, setBuscando] = useState(false);
+  const [mensajeNoResultados, setMensajeNoResultados] = useState("");
 
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
@@ -35,25 +43,57 @@ export default function BusquedaPage() {
     "Mayor Calificación (⭐)",
   ];
 
+  // ---------------- Función para actualizar URL ----------------
+  const actualizarURL = (searchTerm: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (searchTerm.trim()) {
+      params.set('q', searchTerm.trim());
+    } else {
+      params.delete('q');
+    }
+
+    // Actualizar la URL sin recargar la página
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    router.push(newUrl, { scroll: false });
+
+    console.log('🔗 [URL] Actualizando URL:', newUrl);
+  };
+
   // ---------------- Funciones de ordenamiento ----------------
   const ordenarItems = (opcion: string, lista: Job[]) => {
+    if (!lista || lista.length === 0) return [];
+
+    console.log('🔄 [ORDENAMIENTO] Ordenando', lista.length, 'jobs por:', opcion);
+
     const sorted = [...lista];
     switch (opcion) {
       case "Nombre A-Z":
-        sorted.sort((a, b) => a.title.localeCompare(b.title));
+        sorted.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
         break;
       case "Nombre Z-A":
-        sorted.sort((a, b) => b.title.localeCompare(a.title));
+        sorted.sort((a, b) => (b.title || "").localeCompare(a.title || ""));
         break;
       case "Fecha (Reciente)":
-        sorted.sort(
-          (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
-        );
+        sorted.sort((a, b) => {
+          const dateA = new Date(a.postedDate).getTime();
+          const dateB = new Date(b.postedDate).getTime();
+          return dateB - dateA; // Más reciente primero
+        });
         break;
       case "Mayor Calificación (⭐)":
         sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
+      default:
+        // Por defecto, fecha reciente
+        sorted.sort((a, b) => {
+          const dateA = new Date(a.postedDate).getTime();
+          const dateB = new Date(b.postedDate).getTime();
+          return dateB - dateA;
+        });
     }
+
+    console.log('🔄 [ORDENAMIENTO] Resultados ordenados:', sorted.length);
     return sorted;
   };
 
@@ -73,26 +113,98 @@ export default function BusquedaPage() {
     return sorted;
   };
 
+  // ---------------- SOLUCIÓN 4: BÚSQUEDA SIMPLIFICADA ----------------
+  const handleSearch = async (searchTerm: string, resultados?: Job[], actualizarUrl: boolean = true) => {
+    console.log('🔍 [BUSQUEDA-PAGE] Iniciando búsqueda:', searchTerm);
+    console.log('🔍 [BUSQUEDA-PAGE] Resultados del autocompletado:', resultados?.length);
+
+    setError(null);
+    setSearchTerm(searchTerm);
+    setBuscando(true);
+    setMensajeNoResultados("");
+
+    try {
+      let resultadosFinales: Job[] = [];
+
+      // 🔥 SOLUCIÓN 4: Solo usar resultados del autocompletado para búsquedas con texto
+      if (resultados && resultados.length > 0) {
+        // ✅ CASO 1: Tenemos resultados del autocompletado (backend)
+        resultadosFinales = resultados;
+        console.log('✅ [BUSQUEDA-PAGE] Usando resultados del autocompletado:', resultadosFinales.length);
+      } else if (searchTerm.trim() === "") {
+        // ✅ CASO 2: Búsqueda vacía - mostrar todos los jobs
+        resultadosFinales = allJobs;
+        console.log('🔄 [BUSQUEDA-PAGE] Búsqueda vacía, mostrando todos los jobs:', allJobs.length);
+      } else {
+        // ✅ CASO 3: Hay término pero NO hay resultados del autocompletado
+        console.log('⏳ [BUSQUEDA-PAGE] Esperando resultados del autocompletado...');
+        resultadosFinales = []; // No mostrar nada hasta tener resultados válidos
+      }
+
+      // Ordenar resultados
+      const resultadosOrdenados = ordenarItems(sortBy, resultadosFinales);
+      setSearchResults(resultadosOrdenados);
+
+      // 🔥 LÓGICA MEJORADA PARA MENSAJES
+      if (searchTerm.trim() !== "") {
+        if (resultadosOrdenados.length === 0) {
+          // NO hay resultados para el término de búsqueda
+          const mensaje = `No se encontraron resultados para "${searchTerm}"`;
+          setMensajeNoResultados(mensaje);
+          setEstadoBusqueda("no-results");
+          console.log('❌ [BUSQUEDA-PAGE] No hay resultados:', mensaje);
+        } else {
+          // Sí hay resultados
+          setMensajeNoResultados("");
+          setEstadoBusqueda("success");
+          console.log('✅ [BUSQUEDA-PAGE] Resultados encontrados:', resultadosOrdenados.length);
+        }
+      } else {
+        // Búsqueda vacía
+        setMensajeNoResultados("");
+        setEstadoBusqueda("idle");
+      }
+
+      // Actualizar URL y paginación
+      if (actualizarUrl) {
+        actualizarURL(searchTerm);
+      }
+      handlePageChange(1);
+
+    } catch (error) {
+      console.error('❌ [BUSQUEDA-PAGE] Error:', error);
+      setError('Error al realizar la búsqueda');
+      setMensajeNoResultados("");
+      setEstadoBusqueda("error");
+    } finally {
+      setBuscando(false);
+    }
+  };
+
+  // Handler para limpiar búsqueda
+  const handleClearSearch = () => {
+    console.log('🧹 Limpiando búsqueda...');
+    setSearchTerm("");
+    setError(null);
+    setEstadoBusqueda("idle");
+    setMensajeNoResultados("");
+
+    // Mostrar todos los jobs ordenados
+    const todosOrdenados = ordenarItems(sortBy, allJobs);
+    setSearchResults(todosOrdenados);
+
+    // Reiniciar paginación
+    handlePageChange(1);
+
+    // 🔥 LIMPIAR URL
+    actualizarURL("");
+  };
+
   // ---------------- Filtrado y ordenamiento ----------------
   const jobsToDisplay = useMemo(() => {
-    let data = searchResults.length > 0 ? searchResults : allJobs;
-
-    const termino = searchTerm.trim().toLowerCase();
-    if (termino) {
-      // Dividir la búsqueda en palabras
-      const palabras = termino.split(/\s+/).filter(Boolean);
-
-      data = data.filter((job) => {
-        const title = job.title.toLowerCase();
-        const company = job.company.toLowerCase();
-
-        // Retorna true si alguna palabra coincide en title o company
-        return palabras.some((palabra) => title.includes(palabra) || company.includes(palabra));
-      });
-    }
-
-    return ordenarItems(sortBy, data);
-  }, [searchResults, allJobs, sortBy, searchTerm]);
+    // Usamos searchResults que ya viene filtrado y ordenado de handleSearch
+    return searchResults.length > 0 ? searchResults : ordenarItems(sortBy, allJobs);
+  }, [searchResults, allJobs, sortBy]);
 
   const usuariosOrdenados = useMemo(
     () => ordenarUsuarios(sortBy, usuariosFiltrados),
@@ -115,11 +227,34 @@ export default function BusquedaPage() {
     const loadJobs = async () => {
       try {
         setIsLoading(true);
+        console.log('📥 [LOAD] Cargando jobs iniciales...');
+
         const jobs = await getJobs();
+        console.log('📥 [LOAD] Jobs cargados:', jobs.length);
+
         setAllJobs(jobs);
-        setSearchResults(jobs);
+
+        // Verificar si hay query en URL
+        const queryFromURL = searchParams.get('q');
+        console.log('🔍 [LOAD] queryFromURL:', queryFromURL);
+
+        if (queryFromURL && queryFromURL.trim() !== "") {
+          // Hay búsqueda en URL - establecer término
+          console.log('✅ [LOAD] Query encontrada en URL:', queryFromURL);
+          setSearchTerm(queryFromURL);
+          // 🔥 IMPORTANTE: No ejecutar búsqueda automática - esperar al autocompletado
+          setEstadoBusqueda("loading");
+        } else {
+          // No hay búsqueda - mostrar todos ordenados
+          console.log('✅ [LOAD] Mostrando todos los jobs ordenados');
+          const jobsOrdenados = ordenarItems(sortBy, jobs);
+          setSearchResults(jobsOrdenados);
+          setEstadoBusqueda("idle");
+        }
+
       } catch (error) {
         console.error("Error cargando trabajos:", error);
+        setError('Error al cargar los trabajos');
       } finally {
         setIsLoading(false);
       }
@@ -127,40 +262,29 @@ export default function BusquedaPage() {
     loadJobs();
   }, []);
 
-  // ---------------- Buscar desde URL ----------------
+  // ---------------- Re-ordenar cuando cambia el criterio ----------------
   useEffect(() => {
-    if (urlQuery && allJobs.length > 0) {
-      const normalizar = (texto: string) =>
-        texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    console.log('🔄 [EFECTO-ORDEN] Criterio cambiado:', sortBy);
+    console.log('🔄 [EFECTO-ORDEN] Jobs actuales:', searchResults.length);
 
-      const terminoNormalizado = normalizar(urlQuery);
-      const palabras = terminoNormalizado.split(/\s+/).filter(Boolean);
-
-      const resultados = allJobs.filter((job) => {
-        const title = normalizar(job.title || "");
-        const company = normalizar(job.company || "");
-        return palabras.some((palabra) => title.includes(palabra) || company.includes(palabra));
-      });
-
-      handleSearchResults(urlQuery, resultados);
+    if (searchResults.length > 0) {
+      const resultadosOrdenados = ordenarItems(sortBy, searchResults);
+      setSearchResults(resultadosOrdenados);
+      console.log('🔄 [EFECTO-ORDEN] Re-ordenamiento completado');
+    } else if (allJobs.length > 0 && estadoBusqueda === "idle") {
+      const resultadosOrdenados = ordenarItems(sortBy, allJobs);
+      setSearchResults(resultadosOrdenados);
     }
-  }, [urlQuery, allJobs]);
-
-  // ---------------- Limpiar búsqueda ----------------
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setSearchResults(allJobs);
-    }
-  }, [searchTerm, allJobs]);
+  }, [sortBy]);
 
   // ---------------- Handlers ----------------
-  const handleSearchResults = (termino: string, resultados: Job[]) => {
-    setSearchTerm(termino);
-    setSearchResults(resultados);
-  };
-
   const handleViewDetails = (job: Job) => {
     console.log("Ver detalles de:", job);
+  };
+
+  // Handler para compatibilidad con FiltrosForm
+  const handleSearchResults = (termino: string, resultados: Job[]) => {
+    handleSearch(termino, resultados);
   };
 
   // ---------------- Render ----------------
@@ -169,17 +293,34 @@ export default function BusquedaPage() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl font-extrabold text-blue-600 mb-10 border-l-4 border-blue-600 pl-4 tracking-wide">
           {modoVista === "jobs"
-            ? "Ofertas de Trabajo Disponibles"
+            ? searchTerm && estadoBusqueda === "success"
+              ? `Resultados para "${searchTerm}"`
+              : "Ofertas de Trabajo Disponibles"
             : "Profesionales Filtrados"}
         </h1>
 
         {/* Búsqueda */}
         <BusquedaAutocompletado
-          onSearch={handleSearchResults}
+          onSearch={handleSearch}
           datos={allJobs}
-          placeholder="Buscar por nombre parcial o encargado..."
-          valorInicial={urlQuery}
+          placeholder="Buscar por especialidad, servicio o nombre del fixer..."
+          valorInicial={searchTerm}
+          campoBusqueda="all"
+          maxResultados={50}
+          mostrarHistorial={true}
         />
+
+        {/* Mensajes de estado de búsqueda */}
+        {searchTerm && estadoBusqueda === "loading" && (
+          <p className="text-lg text-gray-600 mt-2">Buscando "{searchTerm}"...</p>
+        )}
+
+        {/* 🔥 MENSAJE DE ERROR */}
+        {estadoBusqueda === "error" && error && (
+          <div className="p-3 bg-red-100 text-red-700 text-sm rounded-md mt-2">
+            {error}
+          </div>
+        )}
 
         {/* Filtros */}
         <div className="mt-6">
@@ -221,20 +362,60 @@ export default function BusquedaPage() {
             </button>
           </section>
         ) : (
-          /* Vista Jobs */
+          /* 🔥 VISTA JOBS - CON MENSAJE EN EL ÁREA DE TARJETAS */
           <section className="mt-10">
             {isLoading ? (
-              <p className="text-center text-gray-500 text-lg">Cargando ofertas...</p>
+              <div className="text-center py-12">
+                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                <p className="mt-4 text-lg text-gray-600">Cargando ofertas de trabajo...</p>
+              </div>
+            ) : buscando ? (
+              <div className="text-center py-8">
+                <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                <p className="mt-2 text-lg text-gray-600">Buscando resultados para "{searchTerm}"...</p>
+              </div>
+            ) : estadoBusqueda === "no-results" ? (
+              // 🔥 MENSAJE DE NO RESULTADOS EN EL ÁREA DE TARJETAS
+              <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                  No se encontraron resultados
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  {mensajeNoResultados}
+                </p>
+                <button
+                  onClick={handleClearSearch}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Ver todas las ofertas
+                </button>
+              </div>
+            ) : currentItems.length === 0 && !searchTerm ? (
+              // No hay jobs disponibles en general
+              <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+                <div className="text-6xl mb-4">📭</div>
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                  No hay ofertas disponibles
+                </h3>
+                <p className="text-gray-600">
+                  No hay ofertas de trabajo disponibles en este momento.
+                </p>
+              </div>
             ) : (
+              // Mostrar resultados normales
               <>
                 <div className="text-xl text-blue-700 font-semibold mb-6">
-                  Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
+                  {searchTerm && estadoBusqueda === "success"
+                    ? `Mostrando ${currentItems.length} de ${totalItems} Ofertas Disponibles para "${searchTerm}"`
+                    : `Mostrando ${currentItems.length} de ${totalItems} Ofertas Disponibles`
+                  }
                 </div>
 
                 <div className="space-y-6">
                   {currentItems.map((job, index) => (
                     <JobCard
-                      key={`${job.title}-${index}`}
+                      key={`${job.title}-${job.company}-${index}-${currentPage}`}
                       {...job}
                       onViewDetails={() => handleViewDetails(job)}
                     />
@@ -260,4 +441,3 @@ export default function BusquedaPage() {
     </div>
   );
 }
-
