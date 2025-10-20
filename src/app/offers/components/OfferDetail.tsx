@@ -1,13 +1,12 @@
 'use client';
 
 import React from 'react';
-import { getOfferById, canEditOffer, type Offer } from '../services/offersService';
+import { getOfferById, canEditOffer, deleteOffer, type Offer } from '../services/offersService';
 import { useParams, useRouter } from 'next/navigation';
 
 const CURRENT_USER_ID = 'fixer-1';
 
 export default function OfferDetail() {
-  // lee offerId en vez de id
   const { offerId } = useParams<{ offerId: string }>();
   const router = useRouter();
 
@@ -22,7 +21,7 @@ export default function OfferDetail() {
     (async () => {
       try {
         setLoading(true);
-        const data = await getOfferById(String(offerId)); // <-- offerId
+        const data = await getOfferById(String(offerId));
         if (!mounted) return;
         if (!data) { setError('No se pudo cargar la oferta. Intente nuevamente.'); setLoading(false); return; }
         setOffer(data);
@@ -45,6 +44,13 @@ export default function OfferDetail() {
   const hasImages = images.length > 0;
   const prev = () => setIndex(i => (i - 1 + images.length) % images.length);
   const next = () => setIndex(i => (i + 1) % images.length);
+
+  const doDelete = async () => {
+    if (!offer) return;
+    if (!confirm('¿Eliminar esta oferta?')) return;
+    await deleteOffer(offer.id);
+    router.push('/offers');
+  };
 
   return (
     <section style={{ display: 'grid', gap: 16 }}>
@@ -94,8 +100,13 @@ export default function OfferDetail() {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
         <button type="button" onClick={() => router.push('/offers')} style={btnGhost}>← Volver</button>
         <div style={{ display: 'flex', gap: 12 }}>
-          <button type="button" disabled={!isOwner} style={btnPrimary(!isOwner)}>Editar Oferta</button>
-          <button type="button" disabled={!isOwner} style={btnDanger(!isOwner)}>Eliminar Oferta</button>
+          <button type="button" disabled={!isOwner} style={btnPrimary(!isOwner)}
+                  onClick={() => isOwner && router.push(`/aniadir_nueva_oferta_de_trabajo?edit=${offer.id}`)}>
+            Editar Oferta
+          </button>
+          <button type="button" disabled={!isOwner} style={btnDanger(!isOwner)} onClick={doDelete}>
+            Eliminar Oferta
+          </button>
         </div>
       </div>
     </section>
