@@ -24,7 +24,7 @@ export const usoGoogleAuth = () => {
 
     try {
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://alquiler-front-nine.vercel.app';
       if (!clientId) throw new Error('Google Client ID no configurado');
 
       const authParams = new URLSearchParams({
