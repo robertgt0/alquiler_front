@@ -4,6 +4,8 @@ import {
   getProvinciasPorCiudad,
   getUsuariosPorDisponibilidad,
   getEspecialidades,
+  getDepartamentos,
+  getCiudadesPorDepartamento,
   getUsuariosPorEspecialidadId,
   getUsuariosPorServicioNombre, // ✅ solo usamos servicio en la barra
 } from "app/alquiler/Feature/Services/filtro.api";
@@ -21,7 +23,9 @@ export function useFiltros() {
   });
 
   const [ciudades, setCiudades] = useState<Option[]>([]);
+  const [departamentos, setDepartamentos] = useState<Option[]>([]);
   const [provincias, setProvincias] = useState<Option[]>([]);
+  const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState<string>("");
   const [especialidades, setEspecialidades] = useState<Option[]>([]);
 
   const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([]);
@@ -83,7 +87,10 @@ export function useFiltros() {
   // Ciudades + Especialidades al montar
   useEffect(() => {
     setLoadingCiudades(true);
-    getCiudades().then(setCiudades).finally(() => setLoadingCiudades(false));
+    // Ahora cargamos departamentos y especialidades; las ciudades se cargan al seleccionar departamento
+    getDepartamentos()
+      .then((d: Option[]) => setDepartamentos(d))
+      .finally(() => setLoadingCiudades(false));
 
     setLoadingEspecialidades(true);
     getEspecialidades().then(setEspecialidades).finally(() => setLoadingEspecialidades(false));
@@ -106,6 +113,21 @@ export function useFiltros() {
 
     return () => ac.abort();
   }, [filtro.ciudad]);
+
+  // cargar ciudades por departamento (helper expuesto)
+  const loadCiudadesByDepartamento = async (departamento: string) => {
+    if (!departamento) {
+      setCiudades([]);
+      return;
+    }
+    setLoadingCiudades(true);
+    try {
+      const data = await getCiudadesPorDepartamento(departamento);
+      setCiudades(data);
+    } finally {
+      setLoadingCiudades(false);
+    }
+  };
 
   // Usuarios por disponibilidad (automático desde el select)
   useEffect(() => {
@@ -153,8 +175,11 @@ export function useFiltros() {
   }, [filtro.tipoEspecialidad]);
 
   return {
-    // selects
-    ciudades,
+  // selects
+  departamentos,
+  ciudades,
+    departamentoSeleccionado,
+    setDepartamentoSeleccionado,
     provincias,
     disponibilidad,
     especialidades,
@@ -175,6 +200,7 @@ export function useFiltros() {
     loadingCiudades,
     loadingProvincias,
     loadingEspecialidades,
+    loadCiudadesByDepartamento,
   };
 }
 

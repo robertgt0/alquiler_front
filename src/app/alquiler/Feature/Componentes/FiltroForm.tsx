@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useFiltros } from "app/alquiler/Feature/Hooks/useFiltro";
+import { getCiudadesPorDepartamento } from "app/alquiler/Feature/Services/filtro.api";
 
 interface FiltrosFormProps {
     onResults?: (usuarios: any[]) => void;
@@ -25,6 +26,7 @@ export default function FiltrosForm({
     totalItems
 }: FiltrosFormProps) {
     const {
+        departamentos,
         ciudades,
         provincias,
         disponibilidad,
@@ -35,6 +37,9 @@ export default function FiltrosForm({
         usuarios,
         loadingUsuarios,
         errorUsuarios,
+        departamentoSeleccionado,
+        setDepartamentoSeleccionado,
+        loadCiudadesByDepartamento,
     } = useFiltros();
 
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
@@ -66,7 +71,22 @@ export default function FiltrosForm({
                 {/* solo se muestran cuando mostrarFiltros  */}
                 {mostrarFiltros && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                        {/* Ciudad */}
+                        {/* Departamento */}
+                        <select
+                            value={departamentoSeleccionado || ""}
+                            onChange={async (e) => {
+                                const val = e.target.value;
+                                setDepartamentoSeleccionado(val);
+                                handleChange("ciudad", "");
+                                if (val) await loadCiudadesByDepartamento(val);
+                            }}
+                            className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">Elige un departamento</option>
+                            {departamentos.map((d) => (<option key={d.value} value={d.value}>{d.label}</option>))}
+                        </select>
+
+                        {/* Ciudad (se mantiene, pero ahora se espera que ciudades sea actualizado por el hook) */}
                         <select
                             value={filtro.ciudad || ""}
                             onChange={(e) => handleChange("ciudad", e.target.value)}
@@ -76,16 +96,6 @@ export default function FiltrosForm({
                             {ciudades.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
                         </select>
 
-                        {/* Provincia */}
-                        <select
-                            value={filtro.provincia || ""}
-                            onChange={(e) => handleChange("provincia", e.target.value)}
-                            disabled={provincias.length === 0}
-                            className={`border rounded-lg px-3 py-2 text-sm w-full ${provincias.length === 0 ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"}`}
-                        >
-                            <option value="">Elige una provincia</option>
-                            {provincias.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}
-                        </select>
                         
                         {/* Disponibilidad */}
                         <select

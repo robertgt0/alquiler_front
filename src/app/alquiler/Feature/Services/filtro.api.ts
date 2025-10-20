@@ -52,12 +52,14 @@ const isAbortError = (e: unknown): e is DOMException =>
 export async function getCiudades(
   q?: string,
   page = 1,
-  limit = 100
+  limit = 100,
+  soloBolivia?: boolean
 ): Promise<Option[]> {
   const url = new URL(`${BASE_URL}/api/filtros/ciudades`);
   if (q && q.trim()) url.searchParams.set("q", q.trim());
   url.searchParams.set("page", String(page));
   url.searchParams.set("limit", String(limit));
+  if (soloBolivia) url.searchParams.set("soloBolivia", "true");
 
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`Error ${res.status} al obtener ciudades`);
@@ -75,6 +77,42 @@ export async function getCiudades(
     value: c.nombre,
     label: c.nombre,
   }));
+}
+
+/* --------- departamentos (Bolivia) --------- */
+export async function getDepartamentos(): Promise<Option[]> {
+  const url = `${BASE_URL}/api/filtros/departamentos`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Error ${res.status} al obtener departamentos`);
+  const json: unknown = await res.json();
+
+  const ok =
+    typeof json === "object" &&
+    json !== null &&
+    (json as any).success === true &&
+    Array.isArray((json as any).data) &&
+    (json as any).data.every((d: unknown) => typeof d === "string");
+  if (!ok) throw new Error("Respuesta inválida (departamentos)");
+
+  return (json as any).data.map((d: string) => ({ value: d, label: d }));
+}
+
+/* --------- ciudades por departamento (frontend helper) --------- */
+export async function getCiudadesPorDepartamento(departamento: string): Promise<Option[]> {
+  const url = `${BASE_URL}/api/filtros/ciudades/por-departamento?departamento=${encodeURIComponent(
+    departamento
+  )}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Error ${res.status} al obtener ciudades por departamento`);
+  const json: unknown = await res.json();
+  const ok =
+    typeof json === "object" &&
+    json !== null &&
+    (json as any).success === true &&
+    Array.isArray((json as any).data) &&
+    (json as any).data.every((c: unknown) => typeof c === "object" && typeof (c as any).nombre === "string");
+  if (!ok) throw new Error("Respuesta inválida (ciudades por departamento)");
+  return (json as any).data.map((c: any) => ({ value: c.nombre, label: c.nombre }));
 }
 
 /* --------- provincias por ciudad --------- */

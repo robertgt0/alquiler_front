@@ -160,9 +160,11 @@ export default function BusquedaAutocompletado({
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
     const [mostrarHistorial, setMostrarHistorial] = useState(false);
     const [resultados, setResultados] = useState<Job[]>([]);
+
     const [historial, setHistorial] = useState<string[]>([]);
     const [busquedaRealizada, setBusquedaRealizada] = useState(false);
-    const [cargandoHistorial, setCargandoHistorial] = useState(false);
+
+    // Persistencia de resultados
 
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -198,7 +200,6 @@ export default function BusquedaAutocompletado({
     useEffect(() => {
         const cargarHistorialBackend = async () => {
             try {
-                setCargandoHistorial(true);
                 let terminos: string[] = await BusquedaService.getHistorial();
 
                 if (!terminos || terminos.length === 0) {
@@ -210,8 +211,6 @@ export default function BusquedaAutocompletado({
                 if (terminos.length > 0) setMostrarHistorial(true);
             } catch (error) {
                 console.error(error);
-            } finally {
-                setCargandoHistorial(false);
             }
         };
         cargarHistorialBackend();
@@ -290,11 +289,11 @@ export default function BusquedaAutocompletado({
         if (!caracteresValidos.test(textoLimpio)) { setMensaje("Solo se permiten caracteres alfabéticos y los especiales: ´ , - , comilla simple y comilla doble"); setEstadoBusqueda("error"); return; }
         if (textoLimpio.length < 2) { setMensaje("La búsqueda debe tener al menos 2 caracteres"); setEstadoBusqueda("error"); return; }
 
-        setEstadoBusqueda("loading");
-        setBusquedaRealizada(true);
-        setMostrarSugerencias(false);
-        setMostrarHistorial(false);
-        terminoBusquedaAnterior.current = textoLimpio;
+    setEstadoBusqueda("loading");
+    setBusquedaRealizada(true);
+    setMostrarSugerencias(true); // Mostrar sugerencias mientras busca
+    setMostrarHistorial(false);
+    terminoBusquedaAnterior.current = textoLimpio;
 
         if (guardarEnHistorialFlag) guardarEnHistorial(textoLimpio);
         actualizarURL(textoLimpio);
@@ -434,20 +433,24 @@ export default function BusquedaAutocompletado({
           type="text"
           placeholder={placeholder}
           value={query}
-          onChange={(e) => {
-            const nuevoValor = e.target.value;
-            setQuery(nuevoValor);
-            if (nuevoValor === "") {
-              setBusquedaRealizada(false);
-              setEstadoBusqueda("idle");
-              onSearch("", datos || []);
-              if (historial.length > 0) setMostrarHistorial(true);
-            }
-            if (busquedaRealizada && nuevoValor !== terminoBusquedaAnterior.current) {
-              setBusquedaRealizada(false);
-              setEstadoBusqueda("idle");
-            }
-          }}
+                    onChange={(e) => {
+                        let nuevoValor = e.target.value;
+                        // Forzar primera letra mayúscula
+                        if (nuevoValor.length > 0) {
+                            nuevoValor = nuevoValor.charAt(0).toUpperCase() + nuevoValor.slice(1);
+                        }
+                        setQuery(nuevoValor);
+                        if (nuevoValor === "") {
+                            setBusquedaRealizada(false);
+                            setEstadoBusqueda("idle");
+                            onSearch("", datos || []);
+                            if (historial.length > 0) setMostrarHistorial(true);
+                        }
+                        if (busquedaRealizada && nuevoValor !== terminoBusquedaAnterior.current) {
+                            setBusquedaRealizada(false);
+                            setEstadoBusqueda("idle");
+                        }
+                    }}
           onKeyDown={manejarKeyDown}
           onFocus={() => {
             if (!busquedaRealizada) {
@@ -488,56 +491,68 @@ export default function BusquedaAutocompletado({
         </div>
       )}
 
-      {/* HISTORIAL Y SUGERENCIAS */}
-      {!busquedaRealizada && (
-        <>
-          {/* Historial */}
-          {mostrarHistorial && historial.length > 0 && (
-            <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-md list-none m-0 p-0 z-50 max-h-64 overflow-y-auto animate-fadeIn top-full -translate-y-1">
-              <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200 flex justify-between items-center">
-                Búsquedas recientes
-                {cargandoHistorial && <span className="text-blue-500 text-xs">Cargando...</span>}
-              </li>
-              {historial.map((item, i) => (
-                <li
-                  key={i}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={() => seleccionarSugerencia(item)}
-                >
-                  <Clock className="text-gray-500 flex-shrink-0" size={16} />
-                  {item}
-                </li>
-              ))}
-              <li
-                className="flex items-center gap-2 px-4 py-2 text-xs text-red-500 cursor-pointer hover:bg-red-50 transition-colors border-t border-gray-200"
-                onClick={limpiarHistorialBackend}
-              >
-                <Trash2 size={14} />
-                Limpiar historial
-              </li>
-            </ul>
-          )}
+            {/* HISTORIAL Y SUGERENCIAS */}
+            {!busquedaRealizada && (
+                <>
+                    {/* Historial */}
+                    {mostrarHistorial && historial.length > 0 && (
+                        <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-md list-none m-0 p-0 z-50 max-h-64 overflow-y-auto animate-fadeIn top-full -translate-y-1">
+                            <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200 flex justify-between items-center">
+                                Búsquedas recientes
+                            </li>
+                            {historial.map((item, i) => (
+                                <li
+                                    key={i}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
+                                    onClick={() => seleccionarSugerencia(item)}
+                                >
+                                    <Clock className="text-gray-500 flex-shrink-0" size={16} />
+                                    {item}
+                                </li>
+                            ))}
+                            <li
+                                className="flex items-center gap-2 px-4 py-2 text-xs text-red-500 cursor-pointer hover:bg-red-50 transition-colors border-t border-gray-200"
+                                onClick={limpiarHistorialBackend}
+                            >
+                                <Trash2 size={14} />
+                                Limpiar historial
+                            </li>
+                        </ul>
+                    )}
 
-          {/* Sugerencias */}
-          {mostrarSugerencias && query.length >= 2 && estadoSugerencias !== "loading" && (
-            <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-md list-none m-0 p-0 z-50 max-h-64 overflow-y-auto animate-fadeIn top-full -translate-y-1">
-              <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
-                Sugerencias
-              </li>
-              {sugerencias.map((s, i) => (
-                <li
-                  key={i}
-                  onClick={() => seleccionarSugerencia(s)}
-                  className="flex items-center px-4 py-2 text-sm text-gray-800 cursor-pointer hover:bg-gray-100 transition-colors"
-                >
-                  <Search className="text-gray-500 mr-2 flex-shrink-0" size={16} />
-                  {s}
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
-      )}
+                    {/* Sugerencias */}
+                    {mostrarSugerencias && query.length >= 2 && estadoSugerencias !== "loading" && (
+                        <ul className="absolute left-0 right-0 bg-white border border-gray-300 rounded-b-lg shadow-md list-none m-0 p-0 z-50 max-h-64 overflow-y-auto animate-fadeIn top-full -translate-y-1">
+                            <li className="px-4 py-2 text-xs font-semibold text-gray-700 border-b border-gray-200">
+                                Sugerencias
+                            </li>
+                            {sugerencias.length === 0 ? (
+                                <li className="px-4 py-2 text-sm text-yellow-700 bg-yellow-100 rounded-md">
+                                    No se han encontrado resultados para "{query}"
+                                </li>
+                            ) : (
+                                sugerencias.map((s, i) => (
+                                    <li
+                                        key={i}
+                                        onClick={() => seleccionarSugerencia(s)}
+                                        className="flex items-center px-4 py-2 text-sm text-gray-800 cursor-pointer hover:bg-gray-100 transition-colors"
+                                    >
+                                        <Search className="text-gray-500 mr-2 flex-shrink-0" size={16} />
+                                        {s}
+                                    </li>
+                                ))
+                            )}
+                        </ul>
+                    )}
+                </>
+            )}
+
+            {/* RESULTADOS DE LA BÚSQUEDA */}
+            {busquedaRealizada && resultados.length === 0 && query.trim() !== "" && (
+                <div className="mt-4 p-3 bg-yellow-100 text-yellow-700 text-sm rounded-md">
+                    No se han encontrado resultados para "{query}"
+                </div>
+            )}
     </div>
   </div>
 );
