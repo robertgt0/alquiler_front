@@ -7,6 +7,7 @@ import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
 import { useRouter } from "next/navigation";
 import { checkEmailExists } from '../../teamsys/services/checkEmailExists';
+import { EmailExistsMessage } from '../components/emailExistsMessage';
 
 export const RegistrationForm: React.FC = () => {
   const router = useRouter();
@@ -29,6 +30,9 @@ export const RegistrationForm: React.FC = () => {
   const formularioValido =
     Object.keys(errores).length === 0 &&
     Object.values(datosFormulario).every((v) => v.trim() !== "");
+
+  // Mostrar el mensaje de error email
+  const [showEmailMessage, setShowEmailMessage] = useState(false);
 
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
@@ -251,7 +255,8 @@ export const RegistrationForm: React.FC = () => {
                   const { checkEmailExists } = await import('../../teamsys/services/checkEmailExists');
                   const correoExiste = await checkEmailExists(datosFormulario.email);
                   if (correoExiste) {
-                    alert('Este correo ya está registrado. Por favor inicia sesión.');
+                    //alert('Este correo ya está registrado. Por favor inicia sesión.');
+                    setShowEmailMessage(true);
                     return;
                   }
                   sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormulario));
@@ -274,6 +279,12 @@ export const RegistrationForm: React.FC = () => {
           </div>
         </form>
       </div>
+    
+      {/*Mostrar el mensaje si el true*/}
+      {showEmailMessage && (
+        <EmailExistsMessage onClose={()  => setShowEmailMessage(false)}/>
+      )}
+
     </div>
   );
 };
