@@ -2,9 +2,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search } from "lucide-react";
 
+// Función para llamar al backend
 const ordenarBorbotones = async (criterio: string) => {
   try {
-    const response = await fetch(`http://localhost:5000/api/borbotones/orden?orden=${criterio}`);
+    const response = await fetch(
+      `http://localhost:5000/api/borbotones/orden?orden=${criterio}`
+    );
     if (!response.ok) throw new Error("Error al ordenar borbotones");
     return await response.json();
   } catch (error) {
@@ -30,7 +33,9 @@ const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
       sorted.sort((a, b) => (b.nombre || "").localeCompare(a.nombre || ""));
       break;
     case "Fecha (Reciente)":
-      sorted.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+      sorted.sort(
+        (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+      );
       break;
     case "Mayor Calificación (⭐⭐)":
       sorted.sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
@@ -45,7 +50,7 @@ interface OrdenamientoProps {
   searchValue?: string;
   onSortChange?: (value: string) => void;
   onSearchChange?: (value: string) => void;
-  paginatedItems?: Item[]; // 🔹 opcional si se usa paginación externa
+  paginatedItems?: Item[]; // opcional si se usa paginación externa
 }
 
 export default function Ordenamiento({
@@ -61,8 +66,15 @@ export default function Ordenamiento({
   const [itemsFromBackend, setItemsFromBackend] = useState<Item[]>([]);
   const [cargando, setCargando] = useState(false);
   const [mostrarOrden, setMostrarOrden] = useState(false);
+  const [noResults, setNoResults] = useState(false); // Estado para mostrar el mensaje
 
-  const opciones = ["Nombre A-Z", "Nombre Z-A", "Fecha (Reciente)", "Mayor Calificación (⭐)"];
+  const opciones = [
+    "Nombre A-Z",
+    "Nombre Z-A",
+    "Fecha (Reciente)",
+    "Mayor Calificación (⭐)",
+  ];
+
   const criterioMap: { [key: string]: string } = {
     "Nombre A-Z": "nombre_A-Z",
     "Nombre Z-A": "nombre_Z-A",
@@ -70,7 +82,7 @@ export default function Ordenamiento({
     "Mayor Calificación (⭐)": "calificacion",
   };
 
-  // 🔹 Ordenamiento en backend
+  // Ordenamiento en backend
   const handleOrdenarBackend = async (criterioLocal: string) => {
     const criterioBackend = criterioMap[criterioLocal];
     if (!criterioBackend) return;
@@ -80,46 +92,56 @@ export default function Ordenamiento({
       const datos = await ordenarBorbotones(criterioBackend);
       setItemsFromBackend(datos);
     } catch {
-      setItemsFromBackend([]);
+      setItemsFromBackend([]); // Si hay error, muestra solo los datos locales
     } finally {
       setCargando(false);
     }
   };
 
-  // 🔹 Llama al ordenamiento cada vez que cambia el criterio
+  // Llamar al ordenamiento cada vez que cambia el criterio
   useEffect(() => {
     onSortChange?.(sort);
     handleOrdenarBackend(sort);
   }, [sort]);
 
-  // 🔹 Llama al cambio de búsqueda
+  // Llamar al cambio de búsqueda
   useEffect(() => {
     onSearchChange?.(search);
   }, [search]);
 
-  // 🔹 Reset del ordenamiento al limpiar búsqueda
+  // Reset del ordenamiento al limpiar búsqueda
   useEffect(() => {
     if (search.trim() === "") {
       setSort("Nombre A-Z");
     }
   }, [search]);
 
-  // 🔹 Filtrado
+  // Filtrado de elementos
   const filteredItems = useMemo(() => {
     let list = itemsFromBackend.length > 0 ? itemsFromBackend : items;
     if (search) {
-      list = list.filter((item) => item.nombre.toLowerCase().includes(search.toLowerCase()));
+      list = list.filter((item) =>
+        item.nombre.toLowerCase().includes(search.toLowerCase())
+      );
     }
+
+    // Si no hay elementos filtrados, activamos el estado noResults
+    if (list.length === 0) {
+      setNoResults(true);
+    } else {
+      setNoResults(false);
+    }
+
     return list;
   }, [search, items, itemsFromBackend]);
 
-  // 🔹 Aplicar orden local si no hay backend o paginación externa
+  // Aplicar orden local si no hay backend o paginación externa
   const orderedItems = useMemo(() => {
     const baseList = paginatedItems || filteredItems;
     return itemsFromBackend.length > 0 ? baseList : ordenarItems(sort, baseList);
   }, [sort, filteredItems, itemsFromBackend, paginatedItems]);
 
-  // 🔹 Mensaje si no hay resultados
+  // Mostrar mensaje si no hay resultados
   const showNoOrderMessage = search !== "" && filteredItems.length === 0;
 
   return (
@@ -133,7 +155,7 @@ export default function Ordenamiento({
           Ordenar
         </p>
 
-        {/* 🔹 Campo de búsqueda (opcional) */}
+        {/* Campo de búsqueda (opcional) */}
         <div className="relative w-full sm:w-64">
           <input
             type="text"
@@ -146,7 +168,7 @@ export default function Ordenamiento({
         </div>
       </div>
 
-      {/* 🔹 Selector de ordenamiento */}
+      {/* Selector de ordenamiento */}
       {mostrarOrden && (
         <div className="mt-3">
           <select
@@ -165,7 +187,7 @@ export default function Ordenamiento({
         </div>
       )}
 
-      {/* 🔹 Mostrar resultados */}
+      {/* Mostrar resultados */}
       <div className="mt-4">
         {orderedItems.length > 0 && (
           <div className="text-sm text-gray-500 mb-2">
@@ -186,6 +208,9 @@ export default function Ordenamiento({
           ))}
         </div>
 
+        {noResults && (
+          <p className="text-red-500 mt-4">No se puede aplicar el ordenamiento.</p>
+        )}
       </div>
     </div>
   );
