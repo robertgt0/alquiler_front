@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function  CarruselOfertas() {
   const servicios = [
@@ -64,7 +64,7 @@ export default function  CarruselOfertas() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentIndex, isAutoPlaying, maxIndex]);
+  }, [currentIndex, isAutoPlaying, maxIndex, nextSlide]);
 
   return (
     <div className="py-12 bg-gray-50">
@@ -171,12 +171,15 @@ export default function  CarruselOfertas() {
           </div>
         </div>
 
-        {/* CTA Section */}
-        <div className="text-center mt-12">
-          <button className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-transform duration-300">
-            Descubrir todos los servicios
-          </button>
-        </div>
+       {/* CTA Section */}
+<div className="text-center mt-12">
+  <button
+    className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-blue-700 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
+  >
+    Descubrir todos los servicios
+  </button>
+</div>
+
       </div>
     </div>
   );

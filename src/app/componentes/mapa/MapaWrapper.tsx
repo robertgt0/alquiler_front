@@ -675,7 +675,7 @@ export default function MapaWrapper() {
     };
 
     obtenerUbicacion();
-  }, []);
+  }, [ubicacionManager]);
 
   // 🌐 Cargar ubicaciones y fixers
   useEffect(() => {
@@ -742,7 +742,7 @@ export default function MapaWrapper() {
     };
 
     cargarDatos();
-  }, [userLocation, permisoDecidido]);
+  }, [userLocation, permisoDecidido, ubicacionManager]);
 
   if (cargando)
     return (

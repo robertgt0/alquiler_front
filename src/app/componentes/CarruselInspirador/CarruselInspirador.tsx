@@ -23,7 +23,9 @@ const slides = [
   },
 ];
 
-const CarruselInspirador: React.FC = () => {
+import Image from 'next/image';
+
+export default function CarruselInspirador() {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -51,9 +53,11 @@ const CarruselInspirador: React.FC = () => {
           >
             {/* Imagen */}
             <div className="w-full md:w-1/2 flex justify-center items-center bg-blue-100 rounded-2xl md:rounded-none md:rounded-l-2xl">
-              <img
+              <Image
                 src={slide.image}
                 alt={slide.title}
+                width={800}
+                height={600}
                 className="w-3/4 sm:w-2/3 md:w-full h-auto max-h-64 sm:max-h-80 md:max-h-[420px] object-contain rounded-2xl md:rounded-none md:rounded-l-2xl shadow-md bg-white"
               />
             </div>
@@ -112,5 +116,4 @@ const CarruselInspirador: React.FC = () => {
   );
 };
 
-export default CarruselInspirador;
 

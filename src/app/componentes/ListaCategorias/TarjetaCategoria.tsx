@@ -21,7 +21,7 @@ export default function TarjetaCategoria({ categoria, onClick }: Props) {
   };
 
   // --- Soporte icono como URL/ruta o como emoji/texto ---
-  const icon = (categoria as any).iconoUrl ?? (categoria as any).icono ?? "";
+  const icon = (categoria as { iconoUrl?: string; icono?: string }).iconoUrl ?? (categoria as { iconoUrl?: string; icono?: string }).icono ?? "";
   const isImage =
     typeof icon === "string" &&
     (
