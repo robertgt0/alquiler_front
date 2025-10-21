@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { LocationData, defaultLocationData } from '@/types/location';
+import { LocationData, defaultLocationData } from '../types/location';
 import { MapPin, Wind, Calendar, ParkingCircle, Waves, Utensils, Search } from 'lucide-react';
 import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/maplibre';
 
@@ -33,13 +33,13 @@ export default function LocationForm() {
     zoom: 12,
   });
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
-  
+
   // Estados para búsqueda de direcciones
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
-  
+
   // Estado para mostrar/ocultar el mapa
   const [showMap, setShowMap] = useState(false);
 
@@ -97,11 +97,11 @@ export default function LocationForm() {
   // Seleccionar una dirección de los resultados
   const selectAddress = (result: SearchResult) => {
     const [lng, lat] = result.center;
-    
+
     setValue('address', result.place_name);
     setValue('latitude', lat);
     setValue('longitude', lng);
-    
+
     setSearchQuery(result.place_name);
     setShowResults(false);
     setMarkerPosition({ lat, lng });
@@ -115,7 +115,7 @@ export default function LocationForm() {
   // Manejar clic en el mapa
   const handleMapClick = async (event: any) => {
     const { lng, lat } = event.lngLat;
-    
+
     setValue('latitude', lat);
     setValue('longitude', lng);
     setMarkerPosition({ lat, lng });
@@ -142,7 +142,7 @@ export default function LocationForm() {
     const newDirections = currentDirections.includes(direction)
       ? currentDirections.filter(d => d !== direction)
       : [...currentDirections, direction];
-    
+
     setValue('bestWindDirections', newDirections);
   };
 
@@ -253,7 +253,7 @@ export default function LocationForm() {
             >
               <NavigationControl position="top-right" />
               <GeolocateControl position="top-right" />
-              
+
               {markerPosition && (
                 <Marker
                   latitude={markerPosition.lat}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import JobCard from "./components/jobCard";
 import Pagination from "./components/Pagination";
@@ -11,7 +11,18 @@ import BusquedaAutocompletado from "../Busqueda/busquedaAutocompletado";
 import FiltrosForm from "../Feature/Componentes/FiltroForm";
 import { UsuarioResumen } from "../Feature/Types/filtroType";
 
-export default function BusquedaPage() {
+// Componente de carga
+function LoadingFallback() {
+  return (
+    <div className="flex justify-center items-center p-8 min-h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span className="ml-2 text-gray-600">Cargando búsqueda...</span>
+    </div>
+  );
+}
+
+// Componente principal que usa useSearchParams - envuelto en Suspense
+function BusquedaContent() {
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") || "";
 
@@ -261,3 +272,11 @@ export default function BusquedaPage() {
   );
 }
 
+// Componente principal exportado
+export default function BusquedaPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BusquedaContent />
+    </Suspense>
+  );
+}
