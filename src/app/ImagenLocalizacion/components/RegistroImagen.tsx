@@ -9,7 +9,7 @@ import Modal from "react-modal";
 import { UsuarioDocument } from "@/app/registro/interfaces/types";
 import { crearUsuario } from "@/app/teamsys/services/UserService";
 
-// 🧭 Fix de íconos Leaflet
+//  Fix de íconos Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -77,22 +77,22 @@ export default function RegistroImagen() {
 const maxSize = 1 * 1024 * 1024;
 const allowedTypes = ["image/png", "image/jpeg"]; 
 
-  // 🧠 Recuperar datos del sessionStorage (Google o formulario manual)
+  //  Recuperar datos del sessionStorage (Google o formulario manual)
   // Función auxiliar para verificar si es una URL HTTP válida
 useEffect(() => {
   const datosGuardados = sessionStorage.getItem("datosUsuarioParcial");
   if (!datosGuardados) {
-    console.warn("⚠️ No hay datos en sessionStorage.");
+    console.warn(" No hay datos en sessionStorage.");
     return;
   }
 
   try {
     const datos = JSON.parse(datosGuardados);
-    console.log("🔍 Datos en sessionStorage:", datos);
+    console.log(" Datos en sessionStorage:", datos);
 
     let datosAdaptados: any = {};
 
-    // ✅ Caso 1: formulario tradicional
+    //  Caso 1: formulario tradicional
     if (datos.contraseña && datos.email) {
       datosAdaptados = {
         nombre: datos.nombre,
@@ -104,7 +104,7 @@ useEffect(() => {
       };
     }
 
-    // ✅ Caso 2: viene de Google
+    //  Caso 2: viene de Google
     else if (datos.correoElectronico) {
       datosAdaptados = {
         nombre: datos.nombre,
@@ -115,15 +115,15 @@ useEffect(() => {
     }
 
     setDatosFormulario(datosAdaptados);
-    console.log("✅ Datos adaptados para envío:", datosAdaptados);
+    console.log(" Datos adaptados para envío:", datosAdaptados);
 
-    // 🖼️ Si hay una foto de Google, mostrarla
+   
     if (isHttpUrl(datos.fotoPerfil)) {
       setPreviewImage(datos.fotoPerfil);
     }
 
   } catch (err) {
-    console.error("❌ Error al parsear sessionStorage:", err);
+    console.error(" Error al parsear sessionStorage:", err);
   }
 }, []);
 
@@ -160,12 +160,12 @@ useEffect(() => {
 }, [filePreview]);
 
 
-  // 🚀 Continuar registro
+  //  Continuar registro
 const handleContinuar = async () => {
   if (!accepted) return setError("Debes aceptar los términos y condiciones.");
   if (!ubicacion) return setError("Selecciona tu ubicación en el mapa.");
 
-  // ✅ Foto obligatoria: debe venir del input de archivo
+  // Foto obligatoria: debe venir del input de archivo
   if (!file) return setError("Debes subir una foto de perfil en PNG o JPG (máx 1 MB).");
 
   try {
@@ -199,11 +199,11 @@ const handleContinuar = async () => {
 
     await crearUsuario(usuario);
 
-    alert("Usuario registrado exitosamente 🎉");
+    alert("Usuario registrado exitosamente ");
     sessionStorage.removeItem("datosUsuarioParcial");
     router.push("/");
   } catch (err) {
-    console.error("❌ Error al crear usuario:", err);
+    console.error(" Error al crear usuario:", err);
     setError("Hubo un error al registrar el usuario.");
   }
 };
@@ -258,7 +258,7 @@ return (
               width="100%"
             />
             <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center text-white font-bold">
-              📍
+              
             </div>
           </div>
 
