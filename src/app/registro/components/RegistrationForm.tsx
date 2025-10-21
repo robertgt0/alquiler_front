@@ -61,7 +61,7 @@ export const RegistrationForm: React.FC = () => {
                   }
                 }}
                 onBlur={() => manejarBlur('nombre')}
-                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 ${
                   errores.nombre && tocados.nombre 
                     ? 'border-red-300 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
@@ -89,7 +89,7 @@ export const RegistrationForm: React.FC = () => {
                   }
                 }}
                 onBlur={() => manejarBlur('apellido')}
-                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 ${
                   errores.apellido && tocados.apellido
                     ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
@@ -123,7 +123,7 @@ export const RegistrationForm: React.FC = () => {
                   }
                 }}
                 onBlur={() => manejarBlur('telefono')}
-                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 ${
                   errores.telefono && tocados.telefono 
                     ? 'border-red-300 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
@@ -147,7 +147,7 @@ export const RegistrationForm: React.FC = () => {
                 value={datosFormulario.email}
                 onChange={(e) => manejarCambio('email', e.target.value)}
                 onBlur={() => manejarBlur('email')}
-                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 ${
                   errores.email && tocados.email 
                     ? 'border-red-300 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
@@ -170,7 +170,7 @@ export const RegistrationForm: React.FC = () => {
                 value={datosFormulario.contraseña}
                 onChange={(e) => manejarCambio('contraseña', e.target.value)}
                 onBlur={() => manejarBlur('contraseña')}
-                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 ${
                   errores.contraseña && tocados.contraseña
                     ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
@@ -193,7 +193,7 @@ export const RegistrationForm: React.FC = () => {
                 value={datosFormulario.confirmarContraseña}
                 onChange={(e) => manejarCambio('confirmarContraseña', e.target.value)}
                 onBlur={() => manejarBlur('confirmarContraseña')}
-                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 ${
+                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 ${
                   errores.confirmarContraseña && tocados.confirmarContraseña 
                     ? 'border-red-300 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
