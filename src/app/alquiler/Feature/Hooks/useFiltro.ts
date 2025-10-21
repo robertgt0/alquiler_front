@@ -4,10 +4,8 @@ import {
   getProvinciasPorCiudad,
   getUsuariosPorDisponibilidad,
   getEspecialidades,
-  getDepartamentos,
-  getCiudadesPorDepartamento,
   getUsuariosPorEspecialidadId,
-  getUsuariosPorServicioNombre, // ✅ solo usamos servicio en la barra
+  getUsuariosPorServicioNombre,
 } from "app/alquiler/Feature/Services/filtro.api";
 import type { UsuarioResumen } from "app/alquiler/Feature/Types/filtroType";
 
@@ -17,18 +15,16 @@ export function useFiltros() {
   const [filtro, setFiltro] = useState({
     ciudad: "",
     provincia: "",
-    disponibilidad: "",   // "true" | "false" | ""
-    tipoEspecialidad: "", // id_especialidad (string)
-    busqueda: "",         // texto de la barra (servicio)
+    disponibilidad: "",
+    tipoEspecialidad: "",
+    busqueda: "",
   });
 
   const [ciudades, setCiudades] = useState<Option[]>([]);
-  const [departamentos, setDepartamentos] = useState<Option[]>([]);
   const [provincias, setProvincias] = useState<Option[]>([]);
-  const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState<string>("");
   const [especialidades, setEspecialidades] = useState<Option[]>([]);
-
   const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([]);
+
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null);
 
@@ -47,10 +43,62 @@ export function useFiltros() {
   const handleChange = (campo: string, valor: string) =>
     setFiltro((prev) => ({ ...prev, [campo]: valor }));
 
-  /* 🔎 Buscar por nombre de servicio (barra) */
+  const limpiarFiltros = () => {
+    abortUsersRef.current?.abort();
+    abortProvRef.current?.abort();
+    setFiltro({
+      ciudad: "",
+      provincia: "",
+      disponibilidad: "",
+      tipoEspecialidad: "",
+      busqueda: "",
+    });
+    setProvincias([]);
+    setUsuarios([]);
+    setErrorUsuarios(null);
+  };
+
+  const normalizarUsuarios = (data: any[]) =>
+    data.map((u) => {
+      const ciudad =
+        (u.ciudad && typeof u.ciudad === "object" && u.ciudad.nombre) ||
+        (typeof u.ciudad === "string" && u.ciudad) ||
+        "Sin ciudad";
+
+      const ciudadLink =
+        u.ciudad && u.ciudad.id
+          ? `/ciudad/${u.ciudad.id}`
+          : `/ciudad/${encodeURIComponent(ciudad.toLowerCase())}`;
+
+      const especialidad =
+        (u.especialidad &&
+          typeof u.especialidad === "object" &&
+          u.especialidad.nombre) ||
+        (typeof u.especialidad === "string" && u.especialidad) ||
+        "Sin especialidad";
+
+      return {
+        ...u,
+        ciudadNombre: ciudad,
+        ciudadLink,
+        especialidadNombre: especialidad,
+      };
+    });
+
   const buscarPorServicio = async (page = 1, limit = 50) => {
-    const servicio = filtro.busqueda.trim();
-    if (!servicio) return;
+    const { ciudad, provincia, disponibilidad, tipoEspecialidad, busqueda } = filtro;
+
+    if (!ciudad || !provincia || !disponibilidad || !tipoEspecialidad || !busqueda.trim()) {
+      setErrorUsuarios("Por favor, completa todos los filtros antes de buscar.");
+      setUsuarios([]);
+      return;
+    }
+
+    if (disponibilidad !== "true") {
+      setErrorUsuarios("Solo se muestran resultados cuando el usuario está disponible.");
+      setUsuarios([]);
+      return;
+    }
 
     abortUsersRef.current?.abort();
     const ac = new AbortController();
@@ -60,22 +108,27 @@ export function useFiltros() {
     setErrorUsuarios(null);
 
     try {
-      const disponible =
-        filtro.disponibilidad === "true"
-          ? true
-          : filtro.disponibilidad === "false"
-          ? false
-          : undefined;
-
-      const data = await getUsuariosPorServicioNombre(servicio, {
-        disponible,
-        ciudad: filtro.ciudad || undefined,
+      const data = await getUsuariosPorServicioNombre(busqueda.trim(), {
+        ciudad,
+        disponible: true,
         page,
         limit,
         signal: ac.signal,
       });
 
-      setUsuarios(data);
+      const usuariosNormalizados = normalizarUsuarios(data);
+      const ciudadSeleccionada = ciudades.find((c) => c.value === ciudad)?.label?.toLowerCase().trim();
+      const usuariosFiltrados = usuariosNormalizados.filter(
+        (u) => u.ciudadNombre?.toLowerCase().trim() === ciudadSeleccionada
+      );
+
+      if (usuariosFiltrados.length === 0) {
+        setErrorUsuarios(`No se encontraron usuarios en ${ciudadSeleccionada}.`);
+        setUsuarios([]);
+        return;
+      }
+
+      setUsuarios(usuariosFiltrados);
     } catch (e: unknown) {
       setErrorUsuarios(e instanceof Error ? e.message : "Error al buscar usuarios");
       setUsuarios([]);
@@ -84,19 +137,20 @@ export function useFiltros() {
     }
   };
 
-  // Ciudades + Especialidades al montar
+  // 🚀 Cargar ciudades y especialidades al montar
   useEffect(() => {
     setLoadingCiudades(true);
-    // Ahora cargamos departamentos y especialidades; las ciudades se cargan al seleccionar departamento
-    getDepartamentos()
-      .then((d: Option[]) => setDepartamentos(d))
+    getCiudades()
+      .then(setCiudades)
       .finally(() => setLoadingCiudades(false));
 
     setLoadingEspecialidades(true);
-    getEspecialidades().then(setEspecialidades).finally(() => setLoadingEspecialidades(false));
+    getEspecialidades()
+      .then(setEspecialidades)
+      .finally(() => setLoadingEspecialidades(false));
   }, []);
 
-  // Provincias al cambiar ciudad
+  // 🔁 Cargar provincias y usuarios cuando cambia la ciudad
   useEffect(() => {
     setProvincias([]);
     setFiltro((prev) => ({ ...prev, provincia: "" }));
@@ -111,49 +165,37 @@ export function useFiltros() {
       .then(setProvincias)
       .finally(() => setLoadingProvincias(false));
 
-    return () => ac.abort();
-  }, [filtro.ciudad]);
+    // 🔄 Cargar usuarios disponibles automáticamente al cambiar ciudad
+    if (filtro.disponibilidad === "true") {
+      setLoadingUsuarios(true);
+      setErrorUsuarios(null);
 
-  // cargar ciudades por departamento (helper expuesto)
-  const loadCiudadesByDepartamento = async (departamento: string) => {
-    if (!departamento) {
-      setCiudades([]);
-      return;
+      getUsuariosPorDisponibilidad(true, ac.signal)
+        .then((data) => {
+          const usuariosNormalizados = normalizarUsuarios(data);
+          const ciudadSeleccionada = ciudades.find((c) => c.value === filtro.ciudad)?.label?.toLowerCase().trim();
+
+          const filtrados = usuariosNormalizados.filter(
+            (u) => u.ciudadNombre?.toLowerCase().trim() === ciudadSeleccionada
+          );
+
+          setUsuarios(filtrados);
+        })
+        .catch((e: unknown) =>
+          setErrorUsuarios(
+            e instanceof Error ? e.message : "Error al cargar usuarios por ciudad"
+          )
+        )
+        .finally(() => setLoadingUsuarios(false));
     }
-    setLoadingCiudades(true);
-    try {
-      const data = await getCiudadesPorDepartamento(departamento);
-      setCiudades(data);
-    } finally {
-      setLoadingCiudades(false);
-    }
-  };
-
-  // Usuarios por disponibilidad (automático desde el select)
-  useEffect(() => {
-    if (filtro.disponibilidad !== "true" && filtro.disponibilidad !== "false") return;
-
-    abortUsersRef.current?.abort();
-    const ac = new AbortController();
-    abortUsersRef.current = ac;
-
-    setLoadingUsuarios(true);
-    setErrorUsuarios(null);
-
-    const disponible = filtro.disponibilidad === "true";
-    getUsuariosPorDisponibilidad(disponible, ac.signal)
-      .then(setUsuarios)
-      .catch((e: unknown) =>
-        setErrorUsuarios(e instanceof Error ? e.message : "Error al cargar usuarios")
-      )
-      .finally(() => setLoadingUsuarios(false));
 
     return () => ac.abort();
-  }, [filtro.disponibilidad]);
+  }, [filtro.ciudad, filtro.disponibilidad, ciudades]);
 
-  // Usuarios por especialidad (automático por ID desde el select)
+  // 👨‍⚕️ Buscar usuarios por especialidad (solo si está “Disponible”)
   useEffect(() => {
-    if (!filtro.tipoEspecialidad) return;
+    if (!filtro.tipoEspecialidad || filtro.disponibilidad !== "true") return;
+
     const id = Number(filtro.tipoEspecialidad);
     if (Number.isNaN(id)) return;
 
@@ -165,42 +207,34 @@ export function useFiltros() {
     setErrorUsuarios(null);
 
     getUsuariosPorEspecialidadId(id, ac.signal)
-      .then(setUsuarios)
+      .then((data) => {
+        const usuariosNormalizados = normalizarUsuarios(data);
+        setUsuarios(usuariosNormalizados);
+      })
       .catch((e: unknown) =>
-        setErrorUsuarios(e instanceof Error ? e.message : "Error al cargar usuarios por especialidad")
+        setErrorUsuarios(
+          e instanceof Error ? e.message : "Error al cargar usuarios por especialidad"
+        )
       )
       .finally(() => setLoadingUsuarios(false));
 
     return () => ac.abort();
-  }, [filtro.tipoEspecialidad]);
+  }, [filtro.tipoEspecialidad, filtro.disponibilidad]);
 
   return {
-  // selects
-  departamentos,
-  ciudades,
-    departamentoSeleccionado,
-    setDepartamentoSeleccionado,
+    ciudades,
     provincias,
     disponibilidad,
     especialidades,
-
-    // filtros
     filtro,
     handleChange,
-
-    // acción del buscador
+    limpiarFiltros,
     buscarPorServicio,
-
-    // resultados
     usuarios,
     loadingUsuarios,
     errorUsuarios,
-
-    // loaders opcionales
     loadingCiudades,
     loadingProvincias,
     loadingEspecialidades,
-    loadCiudadesByDepartamento,
   };
 }
-

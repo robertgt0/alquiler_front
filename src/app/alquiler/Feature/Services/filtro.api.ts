@@ -52,14 +52,12 @@ const isAbortError = (e: unknown): e is DOMException =>
 export async function getCiudades(
   q?: string,
   page = 1,
-  limit = 100,
-  soloBolivia?: boolean
+  limit = 100
 ): Promise<Option[]> {
-  const url = new URL(`${BASE_URL}/api/filtros/ciudades`);
+  const url = new URL(`${BASE_URL}/api/borbotones/filstros/ciudades`);
   if (q && q.trim()) url.searchParams.set("q", q.trim());
   url.searchParams.set("page", String(page));
   url.searchParams.set("limit", String(limit));
-  if (soloBolivia) url.searchParams.set("soloBolivia", "true");
 
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`Error ${res.status} al obtener ciudades`);
@@ -73,46 +71,8 @@ export async function getCiudades(
     ((json as CiudadesResponse).data as unknown[]).every(isCiudad);
   if (!ok) throw new Error("Respuesta inválida (ciudades)");
 
-  return (json as CiudadesResponse).data.map((c) => ({
-    value: c.nombre,
-    label: c.nombre,
-  }));
-}
-
-/* --------- departamentos (Bolivia) --------- */
-export async function getDepartamentos(): Promise<Option[]> {
-  const url = `${BASE_URL}/api/filtros/departamentos`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Error ${res.status} al obtener departamentos`);
-  const json: unknown = await res.json();
-
-  const ok =
-    typeof json === "object" &&
-    json !== null &&
-    (json as any).success === true &&
-    Array.isArray((json as any).data) &&
-    (json as any).data.every((d: unknown) => typeof d === "string");
-  if (!ok) throw new Error("Respuesta inválida (departamentos)");
-
-  return (json as any).data.map((d: string) => ({ value: d, label: d }));
-}
-
-/* --------- ciudades por departamento (frontend helper) --------- */
-export async function getCiudadesPorDepartamento(departamento: string): Promise<Option[]> {
-  const url = `${BASE_URL}/api/filtros/ciudades/por-departamento?departamento=${encodeURIComponent(
-    departamento
-  )}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Error ${res.status} al obtener ciudades por departamento`);
-  const json: unknown = await res.json();
-  const ok =
-    typeof json === "object" &&
-    json !== null &&
-    (json as any).success === true &&
-    Array.isArray((json as any).data) &&
-    (json as any).data.every((c: unknown) => typeof c === "object" && typeof (c as any).nombre === "string");
-  if (!ok) throw new Error("Respuesta inválida (ciudades por departamento)");
-  return (json as any).data.map((c: any) => ({ value: c.nombre, label: c.nombre }));
+  const data = (json as CiudadesResponse).data;
+  return data.map((c) => ({ value: c.nombre, label: c.nombre }));
 }
 
 /* --------- provincias por ciudad --------- */
@@ -121,7 +81,7 @@ export async function getProvinciasPorCiudad(
   signal?: AbortSignal
 ): Promise<Option[]> {
   if (!ciudad) return [];
-  const url = `${BASE_URL}/api/filtros/ciudad/provincias?ciudad=${encodeURIComponent(
+  const url = `${BASE_URL}/api/borbotones/filstros/ciudad/provincias?ciudad=${encodeURIComponent(
     ciudad
   )}`;
 
@@ -150,10 +110,9 @@ export async function getProvinciasPorCiudad(
 
 /* --------- especialidades --------- */
 export async function getEspecialidades(): Promise<Option[]> {
-  const url = `${BASE_URL}/api/filtros/especialidades`;
+  const url = `${BASE_URL}/api/borbotones/filstros/especialidades`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Error ${res.status} al obtener especialidades`);
-
   const json: unknown = await res.json();
 
   const ok =
@@ -162,7 +121,6 @@ export async function getEspecialidades(): Promise<Option[]> {
     (json as EspecialidadesResponse).success === true &&
     Array.isArray((json as EspecialidadesResponse).data) &&
     ((json as EspecialidadesResponse).data as unknown[]).every(isEspecialidad);
-
   if (!ok) throw new Error("Respuesta inválida (especialidades)");
 
   return (json as EspecialidadesResponse).data.map((e) => ({
@@ -176,9 +134,8 @@ export async function getUsuariosPorDisponibilidad(
   disponible: boolean,
   signal?: AbortSignal
 ): Promise<UsuarioResumen[]> {
-  const url = new URL(`${BASE_URL}/api/filtros/usuarios/disponible`);
+  const url = new URL(`${BASE_URL}/api/borbotones/filstros/usuarios/disponible`);
   url.searchParams.set("disponible", String(disponible));
-
   try {
     const res = await fetch(url.toString(), { signal });
     if (!res.ok) throw new Error(`Error ${res.status} al obtener usuarios`);
@@ -204,9 +161,8 @@ export async function getUsuariosPorEspecialidadId(
   especialidadId: number,
   signal?: AbortSignal
 ): Promise<UsuarioResumen[]> {
-  const url = new URL(`${BASE_URL}/api/filtros/usuarios/especialidad`);
+  const url = new URL(`${BASE_URL}/api/borbotones/filstros/usuarios/especialidad`);
   url.searchParams.set("especialidad_id", String(especialidadId));
-
   try {
     const res = await fetch(url.toString(), { signal });
     if (!res.ok) throw new Error(`Error ${res.status} al obtener usuarios por especialidad`);
@@ -227,7 +183,7 @@ export async function getUsuariosPorEspecialidadId(
   }
 }
 
-/* --------- usuarios por nombre de servicio --------- */
+/* --------- 🔎 usuarios por NOMBRE de servicio --------- */
 export async function getUsuariosPorServicioNombre(
   servicio: string,
   opts?: {
@@ -239,7 +195,7 @@ export async function getUsuariosPorServicioNombre(
     signal?: AbortSignal;
   }
 ): Promise<UsuarioResumen[]> {
-  const url = new URL(`${BASE_URL}/api/filtros/usuarios/servicio`);
+  const url = new URL(`${BASE_URL}/api/borbotones/filstros/usuarios/servicio`);
   url.searchParams.set("servicio", servicio);
   if (opts?.disponible !== undefined) url.searchParams.set("disponible", String(opts.disponible));
   if (opts?.ciudad) url.searchParams.set("ciudad", opts.ciudad);
@@ -265,6 +221,4 @@ export async function getUsuariosPorServicioNombre(
     if (isAbortError(e)) return [];
     throw e;
   }
-}
-
-
+};
