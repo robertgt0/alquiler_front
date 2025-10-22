@@ -1,15 +1,23 @@
 // components/UbicacionIcon.tsx
+import React from "react";
 
 export default function UbicacionIcon({ onClick }: { onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
       aria-label="Ubicación"
-      className="bg-[#1366fd] border-[3px] border-white rounded-full w-[30px] h-[30px] flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+      className="relative w-[40px] h-[40px] rounded-full bg-gradient-to-b from-[#1d6dfd] to-[#0e4cb8] border-[3px] border-white flex items-center justify-center shadow-[0_4px_8px_rgba(0,0,0,0.3)] hover:scale-110 transition-transform"
     >
-      <svg width="16" height="16" fill="white" viewBox="0 0 24 24">
-        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.11 3.89 23 5 23H19C20.11 23 21 22.11 21 21V9M12 7C14.21 7 16 8.79 16 11C16 14 12 19 12 19S8 14 8 11C8 8.79 9.79 7 12 7Z" />
-      </svg>
+      <div className="absolute inset-0 rounded-full bg-white scale-[0.8] flex items-center justify-center shadow-inner">
+        <svg
+          width="20"
+          height="20"
+          fill="#1d6dfd"
+          viewBox="0 0 24 24"
+        >
+          <path d="M22.7 19.3l-5.4-5.4c.9-1.4 1.4-3 1.4-4.9 0-5-4-9-9-9S.7 4 0 9c0 5 4 9 9 9 1.8 0 3.5-.5 4.9-1.4l5.4 5.4c.4.4 1 .4 1.4 0l1-1c.5-.4.5-1 .1-1.4zM9 15c-3.3 0-6-2.7-6-6S5.7 3 9 3s6 2.7 6 6-2.7 6-6 6z"/>
+        </svg>
+      </div>
     </button>
   );
 }
