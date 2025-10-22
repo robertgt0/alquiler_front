@@ -11,6 +11,7 @@ import UbicacionIcon from "./UbicacionIcon";
 import MarkerClusterGroup from "./MarkerClusterGroup";
 import { Fixer } from "./FixerPopup";
 import { Ubicacion } from "../../types";
+import React from "react";
 
 interface IconDefaultWithPrivate extends L.Icon.Default {
   _getIconUrl?: () => void;
@@ -44,6 +45,7 @@ interface MapaProps {
   onUbicacionClick?: (ubicacion: Ubicacion) => void;
 }
 
+// ✅ Componente para actualizar la vista según ubicación seleccionada
 function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
   const map = useMap();
   useEffect(() => {
@@ -52,6 +54,63 @@ function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
   return null;
 }
 
+// ✅ NUEVO componente para manejar presión prolongada en el mapa
+function LongPressMarker() {
+  const map = useMap();
+  const [marker, setMarker] = React.useState<L.Marker | null>(null);
+  const [timeoutId, setTimeoutId] = React.useState<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const handleMouseDown = (e: L.LeafletMouseEvent) => {
+      const id = setTimeout(() => {
+        const { lat, lng } = e.latlng;
+
+        // Si ya existe un marcador, se mueve
+        if (marker) {
+          marker.setLatLng([lat, lng]);
+        } else {
+          // Si no existe, se crea uno nuevo
+          const newMarker = L.marker([lat, lng], {
+            icon: new L.Icon({
+              iconUrl:
+                "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+              shadowUrl:
+                "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34],
+              shadowSize: [41, 41],
+            }),
+          }).addTo(map);
+          newMarker.bindPopup("📍 Marcador agregado aquí").openPopup();
+          setMarker(newMarker);
+        }
+
+        // Centrar la vista en el punto presionado
+        map.flyTo([lat, lng], 17, { duration: 1 });
+      }, 1000); // ← tiempo (1 segundo de presión)
+      setTimeoutId(id);
+    };
+
+    const handleMouseUp = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+
+    map.on("mousedown", handleMouseDown);
+    map.on("mouseup", handleMouseUp);
+    map.on("mouseout", handleMouseUp);
+
+    return () => {
+      map.off("mousedown", handleMouseDown);
+      map.off("mouseup", handleMouseUp);
+      map.off("mouseout", handleMouseUp);
+    };
+  }, [map, marker, timeoutId]);
+
+  return null;
+}
+
+// ✅ Componente principal del mapa
 export default function Mapa({
   ubicaciones,
   fixers = [],
@@ -82,7 +141,7 @@ export default function Mapa({
       f.especialidad
         ?.split(",")
         .map(
-          (esp) => `
+          (esp) => ` 
           <span style="
             background:#eff6ff;
             color:#2563eb;
@@ -184,6 +243,9 @@ export default function Mapa({
 
           <MarkerClusterGroup markers={fixerMarkers} color="#1366fd" />
           <ActualizarVista ubicacion={ubicacionSeleccionada} />
+
+          {/* 🔥 NUEVO marcador por presión prolongada */}
+          <LongPressMarker />
         </MapContainer>
 
         {/* ✅ Contador ENCIMA del mapa - Solo en PC/Tablet */}
