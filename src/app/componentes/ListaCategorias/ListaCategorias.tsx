@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import TarjetaCategoria from "./TarjetaCategoria";
 import BotonVerMas from "./BotonVerMas";
 import type { Categoria } from "./tipos";
@@ -62,44 +62,38 @@ export default function ListaCategorias({
   const [visible, setVisible] = useState(0);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
-  // visibles según filasIniciales x porFila, con mínimo 4 en móvil
+  // visibles según filasIniciales x porFila, con mínimo 4 en móvil y 20 en desktop
   useEffect(() => {
-  // filas iniciales que ya usas (p.ej. 2) multiplicado por columnas detectadas
-  const base = filasIniciales * porFila;
+    const base = filasIniciales * porFila;
+    const minimoMovil = porFila === 1 ? 4 : 0;         // 4 items min en móvil
+    const minimoDesktop = porFila >= 4 ? 5 * 4 : 0;    // 20 items min en desktop (5x4)
+    const objetivo = Math.max(base, minimoMovil, minimoDesktop);
 
-  // reglas por breakpoint
-  const minimoMovil = porFila === 1 ? 4 : 0;         // 4 items min en móvil
-  const minimoDesktop = porFila >= 4 ? 5 * 4 : 0;    // 20 items min en desktop (5x4)
-
-  const objetivo = Math.max(base, minimoMovil, minimoDesktop);
-
-  setVisible(Math.min(categorias.length, objetivo));
-}, [categorias.length, porFila, filasIniciales]);
-
+    setVisible(Math.min(categoriasOrdenadas.length, objetivo));
+  }, [categoriasOrdenadas.length, porFila, filasIniciales]);
 
   const hayMas = visible < categoriasOrdenadas.length;
 
   const handleVerMas = () => {
-  const previo = visible;
+    const previo = visible;
 
-  // en desktop (>=4 columnas) agregamos 3 filas por clic; en otros tamaños, lo que ya tengas
-  const filasExtra = porFila >= 4 ? 3 : filasPorClic;  // 3 filas en desktop
-  const incremento = filasExtra * porFila;
+    // en desktop (>=4 columnas) agregamos 3 filas por clic; en otros tamaños, lo que ya tengas
+    const filasExtra = porFila >= 4 ? 3 : filasPorClic;  // 3 filas en desktop
+    const incremento = filasExtra * porFila;
 
-  const nuevo = Math.min(categorias.length, visible + incremento);
-  setVisible(nuevo);
+    const nuevo = Math.min(categoriasOrdenadas.length, visible + incremento);
+    setVisible(nuevo);
 
-  // scroll suave al primer item recién revelado
-  requestAnimationFrame(() => {
-    const cards = gridRef.current?.querySelectorAll<HTMLElement>("[data-card]");
-    if (cards && cards.length > previo) {
-      cards[previo]?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  });
-};
+    // scroll suave al primer item recién revelado
+    requestAnimationFrame(() => {
+      const cards = gridRef.current?.querySelectorAll<HTMLElement>("[data-card]");
+      if (cards && cards.length > previo) {
+        cards[previo]?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  };
 
-
-  // ✅ AQUÍ definimos 'items' antes de usarlo
+  // items visibles
   const items = useMemo(
     () => categoriasOrdenadas.slice(0, visible),
     [categoriasOrdenadas, visible]
@@ -111,26 +105,23 @@ export default function ListaCategorias({
         <h2 className="text-2xl sm:text-3xl font-extrabold text-blue-900 flex items-center justify-center gap-2">
           <span>Servicios Disponibles</span>
         </h2>
-        <p className="mt-1 sm:mt-2 text-blue-700/90 text-sm sm:text-base">
+      <p className="mt-1 sm:mt-2 text-blue-700/90 text-sm sm:text-base">
           Descubre todos nuestros servicios
         </p>
       </div>
 
       {/* 2 cols en sm, 4 en lg. gap-4 = 16px mínimo */}
       <div
-        ref={gridRef}
-        className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6"
-      >
-        {items.map((c) => (
-          // data-card debe estar en un nodo DOM real para el scroll
-          <div key={c.id} data-card>
-            <TarjetaCategoria
-              categoria={c}
-              onClick={() => onCategoriaClick?.(c)}
-            />
-          </div>
-        ))}
-      </div>
+  ref={gridRef}
+  className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6 items-stretch"
+>
+  {items.map((c) => (
+    <div key={c.id} data-card className="h-full">
+      <TarjetaCategoria categoria={c} onClick={() => onCategoriaClick?.(c)} />
+    </div>
+  ))}
+</div>
+
 
       {hayMas && (
         <div className="flex justify-center">
