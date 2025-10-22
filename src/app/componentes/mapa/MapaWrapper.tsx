@@ -633,6 +633,9 @@ export default function MapaWrapper() {
   const [permisoDecidido, setPermisoDecidido] = useState(false);
   const [usandoRespaldo, setUsandoRespaldo] = useState(false);
 
+  // ✅ NUEVO: Estado para controlar si el usuario ha iniciado sesión
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   const ubicacionManager = UbicacionManager.getInstancia();
 
   // ✅ 2. FUNCIÓN DE UBICACIÓN (envuelta en useCallback)
@@ -693,7 +696,13 @@ export default function MapaWrapper() {
       obtenerUbicacion();
     };
 
+    // ✅ NUEVO: También escuchar evento de login exitoso
+    const handleLoginExitoso = () => {
+      setIsLoggedIn(true);
+    };
+
     window.addEventListener("solicitar-geolocalizacion", handleSolicitarGeo);
+    window.addEventListener("login-exitoso", handleLoginExitoso);
 
     // Limpia el listener al desmontar el componente
     return () => {
@@ -701,6 +710,7 @@ export default function MapaWrapper() {
         "solicitar-geolocalizacion",
         handleSolicitarGeo
       );
+      window.removeEventListener("login-exitoso", handleLoginExitoso);
     };
   }, [obtenerUbicacion]); // Dependencia del useEffect
 
@@ -830,8 +840,9 @@ export default function MapaWrapper() {
       />
       <FixersHeader />
 
-      {/* ✅ AGREGAR la nueva prop onMarcadorAgregado */}
+      {/* ✅ AGREGAR la nueva prop onMarcadorAgregado Y isLoggedIn */}
       <Mapa
+        isLoggedIn={isLoggedIn} // ✅ NUEVA PROP
         ubicaciones={ubicaciones}
         fixers={fixersFiltrados}
         ubicacionSeleccionada={ubicacionSeleccionada}

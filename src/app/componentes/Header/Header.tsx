@@ -35,16 +35,18 @@ export default function Header() {
     }
   };
 
-  // 🔹 Simulación de iniciar sesión
-  // 🔹 Simulación de iniciar sesión + pedir ubicación
-const handleLogin = () => {
-  setIsLoggedIn(true);
+  // 🔹 Simulación de iniciar sesión + pedir ubicación + notificar login
+  const handleLogin = () => {
+    setIsLoggedIn(true);
 
-  // Emitir un evento global para que el mapa pida geolocalización
-  const event = new CustomEvent("solicitar-geolocalizacion");
-  window.dispatchEvent(event);
-};
-
+    // ✅ Emitir evento para geolocalización
+    const eventGeo = new CustomEvent("solicitar-geolocalizacion");
+    window.dispatchEvent(eventGeo);
+    
+    // ✅ NUEVO: Emitir evento para notificar login exitoso al MapaWrapper
+    const eventLogin = new CustomEvent("login-exitoso");
+    window.dispatchEvent(eventLogin);
+  };
 
   if (!isClient) return null;
 

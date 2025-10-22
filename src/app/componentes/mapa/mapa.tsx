@@ -48,6 +48,7 @@ L.Icon.Default.mergeOptions({
 });
 
 interface MapaProps {
+  isLoggedIn: boolean; // ✅ AGREGADO
   ubicaciones: Ubicacion[];
   fixers: Fixer[];
   ubicacionSeleccionada: Ubicacion | null;
@@ -114,6 +115,7 @@ function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: num
 
 // ✅ Componente principal del mapa
 export default function Mapa({
+  isLoggedIn, // ✅ AGREGADO
   ubicaciones,
   fixers = [],
   ubicacionSeleccionada,
@@ -193,7 +195,7 @@ export default function Mapa({
         <div style="margin-bottom:8px;">${especialidades}</div>
 
         ${
-          f.whatsapp
+          f.whatsapp && isLoggedIn // ✅ CON SESIÓN: WhatsApp real
             ? `<a href="https://wa.me/${f.whatsapp.replace(
                 /\D/g,
                 ""
@@ -207,6 +209,13 @@ export default function Mapa({
                 text-decoration:none;padding:8px 0;font-size:13px;margin-top:8px;">
                 Contactar por WhatsApp
               </a>`
+            : f.whatsapp // ✅ SIN SESIÓN: Botón que va a 404
+            ? `<button onclick="window.location.href='/404'" 
+                style="display:flex;align-items:center;justify-content:center;gap:6px;
+                background:#25D366;color:white;font-weight:500;border-radius:6px;
+                text-decoration:none;padding:8px 0;font-size:13px;margin-top:8px;border:none;cursor:pointer;width:100%">
+                Contactar por WhatsApp
+              </button>`
             : ""
         }
       </div>
@@ -237,7 +246,6 @@ export default function Mapa({
           center={centroInicial}
           zoom={13}
           className="w-full h-full rounded-lg shadow-lg z-0"
-          // Removí tap={false} ya que no existe en tu versión
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
