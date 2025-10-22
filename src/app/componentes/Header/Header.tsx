@@ -36,9 +36,15 @@ export default function Header() {
   };
 
   // 🔹 Simulación de iniciar sesión
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
+  // 🔹 Simulación de iniciar sesión + pedir ubicación
+const handleLogin = () => {
+  setIsLoggedIn(true);
+
+  // Emitir un evento global para que el mapa pida geolocalización
+  const event = new CustomEvent("solicitar-geolocalizacion");
+  window.dispatchEvent(event);
+};
+
 
   if (!isClient) return null;
 

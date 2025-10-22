@@ -58,7 +58,7 @@ export default function Mapa({
   ubicacionSeleccionada,
   onUbicacionClick,
 }: MapaProps) {
-  const centroInicial: [number, number] = [-17.3895, -66.1568];
+  const centroInicial: [number, number] = [-17.394211, -66.156376];
 
   const crearIconoFixer = (onClick?: () => void) =>
     L.divIcon({
