@@ -786,6 +786,7 @@ export default function MapaWrapper() {
           const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
           setFixersFiltrados(cercanos);
         }}
+        ubicacionActual={ubicacionSeleccionada} // ✅ Agregar esta prop
       />
       <FixersHeader />
 
