@@ -96,7 +96,7 @@
 /* CAJA DE SUGERENCIAS - POSICIONAMIENTO CORREGIDO */
 .caja-sugerencias {
     position: absolute;
-    top: 70%;
+    top: 100%;
     margin-top: -1px;
     /* 👈 Pequeño espacio después del contador */
     left: 0;

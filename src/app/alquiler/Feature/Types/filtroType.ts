@@ -47,3 +47,13 @@ export type UsuariosResponse = {
   total: number;
   data: UsuarioResumen[];
 };
+
+export type Filters = {
+  ciudadId?: number;
+  provinciaId?: number;
+  especialidadId?: number;
+  nombre?: string;
+  disponible?: boolean;
+  ratingMin?: number;
+  ratingMax?: number;
+};
