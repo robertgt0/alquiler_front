@@ -14,7 +14,9 @@ interface UserFromAPI {
 
 export const getJobs = async (): Promise<Job[]> => {
   try {
-    const response = await fetch("http://localhost:5000/api/borbotones/usuarios?limit=1000");
+    //"http://localhost:5000/api/borbotones/usuarios?limit=1000"
+    //https://alquiler-back.vercel.app/api/borbotones/usuarios?limit=1000
+    const response = await fetch("https://alquiler-back.vercel.app/api/borbotones/usuarios?limit=1000");
     if (!response.ok) throw new Error("Error al obtener los trabajos");
 
     // json.data 

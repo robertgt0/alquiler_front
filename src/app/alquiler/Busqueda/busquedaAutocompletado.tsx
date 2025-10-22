@@ -28,8 +28,10 @@ interface ApiResponse {
     searchTerm?: string;
 }
 
+//http://localhost:5000
+//https://alquiler-back.vercel.app
 class BusquedaService {
-    private static API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    private static API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://alquiler-back.vercel.app';
 
     static async searchJobsInBackend(query: string): Promise<Job[]> {
         try {

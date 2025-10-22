@@ -8,8 +8,8 @@ import type {
   Especialidad,
   UsuarioResumen,
 } from "../Types/filtroType";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+//http://localhost:5000
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://alquiler-back.vercel.app";
 type Option = { value: string; label: string };
 
 /* --------- type guards --------- */
