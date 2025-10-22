@@ -1,6 +1,13 @@
 import { useState } from "react";
-import { ISolicitud, IFranjaDisponible } from "../interfaces/Solicitud.interface";
-import { toMinutes } from "../utils/helpers";
+import {
+  ISolicitud,
+  IFranjaDisponible,
+} from "../interfaces/Solicitud.interface";
+import {
+  toMinutes,
+  isInsideAnyFranja,
+  isTimeInsideAnyFranja,
+} from "../utils/helpers";
 import { enviarSolicitudMock } from "../services/solicitudService";
 
 export function useSolicitudTrabajo(
@@ -15,9 +22,10 @@ export function useSolicitudTrabajo(
   const enviar = async (data: ISolicitud) => {
     setMensaje("");
 
+    // 1) Validaciones básicas
     if (!data.horaInicio || !data.horaFin) {
       setEnviado(false);
-      setMensaje("Selecciona hora inicio y fin.");
+      setMensaje("Selecciona hora inicio y hora fin para solicitar el trabajo.");
       return;
     }
     if (toMinutes(data.horaFin) <= toMinutes(data.horaInicio)) {
@@ -26,6 +34,34 @@ export function useSolicitudTrabajo(
       return;
     }
 
+    // 2) Validación puntual: cada hora debe existir en alguna franja disponible
+    const inicioOk = isTimeInsideAnyFranja(data.horaInicio, franjas);
+    const finOk = isTimeInsideAnyFranja(data.horaFin, franjas);
+
+    if (!inicioOk && !finOk) {
+      setEnviado(false);
+      setMensaje("Horario no disponible");
+      return;
+    }
+    if (!inicioOk) {
+      setEnviado(false);
+      setMensaje("Hora inicio no disponible");
+      return;
+    }
+    if (!finOk) {
+      setEnviado(false);
+      setMensaje("Hora fin no disponible");
+      return;
+    }
+
+    // 3) Validación del rango completo: debe caer dentro de UNA franja
+    if (!isInsideAnyFranja(data.horaInicio, data.horaFin, franjas)) {
+      setEnviado(false);
+      setMensaje("Horario no disponible");
+      return;
+    }
+
+    // 4) Simulación de envío (seguirá validando conflictos/reservas)
     setLoading(true);
     try {
       const resp = await enviarSolicitudMock(date, providerId, data, franjas);
@@ -38,6 +74,5 @@ export function useSolicitudTrabajo(
     }
   };
 
-  // devolvemos mensaje
   return { loading, enviado, mensaje, setMensaje, enviar };
 }
