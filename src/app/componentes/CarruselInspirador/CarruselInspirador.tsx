@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const slides = [
@@ -25,27 +25,25 @@ const slides = [
 
 const CarruselInspirador: React.FC = () => {
   const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return; // ✅ se pausa cuando el cursor está encima
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [current, isPaused]);
 
   const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length);
   const prevSlide = () =>
     setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
 
-  useEffect(() => {
-    if (!paused) {
-      intervalRef.current = setInterval(nextSlide, 4000);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [paused, current]);
-
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl shadow-2xl bg-gradient-to-r from-blue-50 to-white border border-blue-100 mx-auto max-w-[95%] md:max-w-[90%] scroll-smooth"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      className="relative w-full overflow-hidden rounded-2xl shadow-2xl bg-gradient-to-r from-blue-50 to-white border border-blue-100 mx-auto scroll-smooth"
+      onMouseEnter={() => setIsPaused(true)} // 🟢 pausa autoplay
+      onMouseLeave={() => setIsPaused(false)} // 🟢 reanuda autoplay
     >
       {/* Contenedor deslizante */}
       <div
@@ -55,14 +53,14 @@ const CarruselInspirador: React.FC = () => {
         {slides.map((slide, index) => (
           <div
             key={index}
-            className="flex flex-col md:flex-row items-center justify-center w-full flex-shrink-0 p-4 md:p-0"
+            className="flex flex-col md:flex-row items-center justify-center w-full flex-shrink-0 p-4"
           >
             {/* Imagen a la izquierda */}
             <div className="w-full md:w-1/2 flex justify-center items-center bg-blue-100 rounded-2xl md:rounded-none md:rounded-l-2xl">
               <img
                 src={slide.image}
                 alt={slide.title}
-                className="w-3/4 sm:w-2/3 md:w-full h-auto max-h-64 sm:max-h-80 md:max-h-[380px] object-contain rounded-2xl md:rounded-none md:rounded-l-2xl shadow-md bg-white"
+                className="w-full h-auto max-h-64 sm:max-h-80 md:max-h-[380px] object-contain rounded-2xl md:rounded-none md:rounded-l-2xl shadow-md bg-white"
               />
             </div>
 
@@ -75,7 +73,7 @@ const CarruselInspirador: React.FC = () => {
                 {slide.description}
               </p>
 
-              {/* ✅ Botón que baja suavemente al CarruselOfertas */}
+              {/* Botón hacia CarruselOfertas */}
               <a
                 href="#ofertas"
                 className="inline-block px-5 py-2 sm:px-6 sm:py-3 bg-[#2a87ff] text-white rounded-lg text-sm sm:text-base hover:bg-blue-600 transition"
@@ -87,18 +85,19 @@ const CarruselInspirador: React.FC = () => {
         ))}
       </div>
 
-      {/* Botones de navegación */}
+      {/* Flecha izquierda */}
       <button
         onClick={prevSlide}
-        className="absolute top-1/2 left-3 -translate-y-1/2 bg-white/80 hover:bg-white text-[#2a87ff] rounded-full p-2 shadow-md transition"
+        className="absolute top-1/2 left-3 -translate-y-1/2 bg-white/80 text-[#2a87ff] rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110 hover:bg-[#2a87ff] hover:text-white hover:shadow-lg focus:ring-2 focus:ring-[#2a87ff] focus:outline-none"
         aria-label="Anterior"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
 
+      {/* Flecha derecha */}
       <button
         onClick={nextSlide}
-        className="absolute top-1/2 right-3 -translate-y-1/2 bg-white/80 hover:bg-white text-[#2a87ff] rounded-full p-2 shadow-md transition"
+        className="absolute top-1/2 right-3 -translate-y-1/2 bg-white/80 text-[#2a87ff] rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110 hover:bg-[#2a87ff] hover:text-white hover:shadow-lg focus:ring-2 focus:ring-[#2a87ff] focus:outline-none"
         aria-label="Siguiente"
       >
         <ChevronRight className="w-6 h-6" />
