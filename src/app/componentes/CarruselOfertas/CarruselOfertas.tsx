@@ -58,7 +58,7 @@ export default function CarruselOfertas() {
     };
   }, []);
 
-  const maxIndex = Math.ceil(servicios.length / visibleCards) - 1;
+  const maxIndex = 7;
 
   // Lógica para avanzar al siguiente slide
   const nextSlide = () => {
