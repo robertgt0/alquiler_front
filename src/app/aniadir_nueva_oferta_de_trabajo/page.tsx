@@ -1,108 +1,120 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import {
-  createOffer,
-  updateOffer,
-  getOfferById,
-  type Offer,
-} from "@/app/offers/services/offersService";
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { getOfferById, createOffer, updateOffer, type Offer } from '@/app/offers/services/offersService';
 
-export default function NuevaOferta() {
+function fileToDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+export default function NuevaOFertaOEditar() {
   const router = useRouter();
   const search = useSearchParams();
-  const editId = search.get("edit"); // si existe, estamos editando
+  const editId = search.get('edit'); // <-- si viene, estamos en modo edición
 
-  const [descripcion, setDescripcion] = React.useState("");
-  const [categoria, setCategoria] = React.useState("Seleccionar categoría");
-  const [imagen, setImagen] = React.useState<File | null>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [mensaje, setMensaje] = React.useState("");
+  // estado del formulario
+  const [descripcion, setDescripcion] = useState('');
+  const [categoria, setCategoria] = useState('Seleccionar categoría');
+  const [imagen, setImagen] = useState<File | null>(null);
+  const [imagenesExistentes, setImagenesExistentes] = useState<string[]>([]); // cuando editas
+  const [cargando, setCargando] = useState(false);
+  const [mensaje, setMensaje] = useState('');
+  const [cargandoInicial, setCargandoInicial] = useState(!!editId);
 
-  // Si estamos en modo edición, precargar datos
-  React.useEffect(() => {
-    let alive = true;
+  const esEdicion = useMemo(() => Boolean(editId), [editId]);
+
+  // Si es edición, precargar datos
+  useEffect(() => {
+    let ok = true;
     (async () => {
-      if (!editId) return;
+      if (!esEdicion) return;
       try {
-        const o = await getOfferById(editId);
-        if (!alive || !o) return;
+        setCargandoInicial(true);
+        const offer = await getOfferById(String(editId));
+        if (!ok) return;
+        if (!offer) {
+          setMensaje('No se encontró la oferta a editar.');
+          setCargandoInicial(false);
+          return;
+        }
         // precargar
-        setDescripcion(o.description || o.title || "");
-        setCategoria(o.category || "Seleccionar categoría");
-      } catch {
-        // si falla, volvemos al detalle o listado
-        router.push("/offers");
+        setDescripcion(offer.description || offer.title || '');
+        setCategoria(offer.category || 'Seleccionar categoría');
+        setImagenesExistentes(Array.isArray(offer.images) ? offer.images : []);
+      } catch (e) {
+        if (!ok) return;
+        setMensaje('No se pudo cargar la oferta para editar.');
+      } finally {
+        if (ok) setCargandoInicial(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
-  }, [editId, router]);
+    return () => { ok = false; };
+  }, [esEdicion, editId]);
 
-  async function fileToDataURL(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  const handleSubmit = async () => {
-    if (!descripcion || categoria === "Seleccionar categoría") {
-      setMensaje("Por favor completa descripción y categoría");
+  async function onSubmit() {
+    if (!descripcion || categoria === 'Seleccionar categoría') {
+      setMensaje('Por favor completa descripción y categoría');
       return;
     }
 
-    setLoading(true);
-    setMensaje("");
+    setCargando(true);
+    setMensaje('');
 
     try {
-      let images: string[] | undefined = undefined;
-      if (imagen) {
-        // 1 imagen (puedes ampliar a 5 si quieres)
-        images = [await fileToDataURL(imagen)];
-      }
+      // si hay nueva imagen, la subimos como base64; si no, mantenemos las existentes
+      let images: string[] = imagen ? [await fileToDataURL(imagen)] : imagenesExistentes;
 
-      if (editId) {
-        // 🔧 EDITAR
-        await updateOffer(editId, {
-          title: descripcion.slice(0, 40) || "Oferta",
+      if (esEdicion) {
+        // EDITAR
+        await updateOffer(String(editId), {
+          // Nota: mantenemos title sencillo = primeros 40 chars de descripción
+          title: descripcion.slice(0, 40) || 'Oferta',
           description: descripcion,
           category: categoria,
           images,
         });
-        setMensaje("Cambios guardados ✅");
-        // Vuelve al detalle de la oferta
+
+        setMensaje('Oferta editada correctamente ✅');
+        // opcional: volver al detalle
         router.push(`/offers/${editId}`);
       } else {
-        // ✨ CREAR
-        const created = await createOffer({
-          title: descripcion.slice(0, 40) || "Oferta",
+        // CREAR
+        await createOffer({
+          title: descripcion.slice(0, 40) || 'Oferta',
           description: descripcion,
           category: categoria,
           images,
-          contact: { whatsapp: "555-000-0000" },
+          contact: { whatsapp: '555-000-0000' }, // opcional
         });
-        setMensaje("Oferta creada exitosamente ✅");
-        // limpia
-        setDescripcion("");
-        setCategoria("Seleccionar categoría");
+
+        setMensaje('Oferta creada exitosamente ✅');
+        // limpiar
+        setDescripcion('');
+        setCategoria('Seleccionar categoría');
         setImagen(null);
-        const fileInput = document.getElementById("input-imagen") as HTMLInputElement | null;
-        if (fileInput) fileInput.value = "";
-        // navega al detalle recién creado
-        router.push(`/offers/${created.id}`);
+        setImagenesExistentes([]);
+        const fileInput = document.getElementById('input-imagen') as HTMLInputElement | null;
+        if (fileInput) fileInput.value = '';
+        // opcional: volver al listado
+        router.push('/offers');
       }
-    } catch (err) {
-      console.error(err);
-      setMensaje(editId ? "Error al guardar cambios ❌" : "Error al crear la oferta ❌");
+    } catch (e) {
+      console.error(e);
+      setMensaje(esEdicion ? 'Error al editar la oferta ❌' : 'Error al crear la oferta ❌');
     } finally {
-      setLoading(false);
+      setCargando(false);
     }
-  };
+  }
+
+  if (cargandoInicial) {
+    return <main className="p-6">Cargando…</main>;
+  }
 
   return (
     <main className="flex flex-col bg-white w-full min-h-screen">
@@ -115,20 +127,16 @@ export default function NuevaOferta() {
 
       <section className="flex justify-center p-5">
         <form onSubmit={(e) => e.preventDefault()} className="flex flex-col w-[960px] space-y-6">
-          <h2 className="text-xl font-bold text-gray-900">
-            {editId ? "Editar oferta de servicio" : "Crear nueva oferta de servicio"}
-          </h2>
-
           {/* DESCRIPCIÓN */}
           <div className="p-4 max-w-[480px]">
             <label className="block mb-2 text-gray-900 font-medium">Descripción</label>
             <input
               type="text"
-              maxLength={100}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Describe tu servicio en 100 caracteres o menos."
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              maxLength={100}
               required
             />
             <div className="text-right text-xs text-gray-500 mt-1">{descripcion.length}/100</div>
@@ -146,15 +154,22 @@ export default function NuevaOferta() {
               <option>Seleccionar categoría</option>
               <option>Plomería</option>
               <option>Electricidad</option>
-              <option>Pintura</option>
               <option>Carpintería</option>
-              <option>General</option>
+              <option>Pintura</option>
             </select>
           </div>
 
           {/* IMAGEN */}
           <div className="p-4 max-w-[480px]">
-            <label className="block mb-2 text-gray-900 font-medium">Imagen (opcional)</label>
+            <label className="block mb-2 text-gray-900 font-medium">
+              {esEdicion ? 'Imagen (opcional — si subes, reemplaza)' : 'Imagen (opcional)'}
+            </label>
+            {/* Si ya hay imagenes (edición), muéstralas */}
+            {esEdicion && imagenesExistentes?.length > 0 && (
+              <div className="mb-2 text-sm text-gray-600">
+                Actualmente: {imagenesExistentes.length} imagen(es) cargada(s).
+              </div>
+            )}
             <input
               id="input-imagen"
               type="file"
@@ -165,24 +180,24 @@ export default function NuevaOferta() {
           </div>
 
           {/* MENSAJE */}
-          {mensaje && <p className="text-sm text-blue-600">{mensaje}</p>}
+          {mensaje && <p className="text-sm text-red-500">{mensaje}</p>}
 
           {/* BOTONES */}
           <div className="flex justify-between p-4">
             <button
               type="button"
-              onClick={() => router.push(editId ? `/offers/${editId}` : "/offers")}
+              onClick={() => router.back()}
               className="bg-gray-100 text-gray-900 font-bold rounded-lg px-6 py-2 hover:bg-gray-200"
             >
               Cancelar
             </button>
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={loading}
+              onClick={onSubmit}
+              disabled={cargando}
               className="bg-blue-600 text-white font-bold rounded-lg px-6 py-2 hover:bg-blue-700"
             >
-              {loading ? (editId ? "Guardando..." : "Creando...") : (editId ? "Guardar cambios" : "Crear oferta")}
+              {cargando ? (esEdicion ? 'Guardando...' : 'Creando...') : (esEdicion ? 'Guardar cambios' : 'Crear oferta de servicio')}
             </button>
           </div>
         </form>
