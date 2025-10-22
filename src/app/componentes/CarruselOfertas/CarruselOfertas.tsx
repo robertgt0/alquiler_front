@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function  CarruselOfertas() {
+export default function CarruselOfertas() {
   const servicios = [
     { id: 1, nombre: 'Consultoría Digital', descripcion: 'Soluciones tecnológicas personalizadas para tu negocio', img: '/servicios/servicio1.jpg' },
     { id: 2, nombre: 'Desarrollo Web', descripcion: 'Aplicaciones web modernas y escalables', img: '/servicios/servicio2.jpg' },
@@ -43,28 +43,35 @@ export default function  CarruselOfertas() {
 
   const maxIndex = Math.ceil(servicios.length / visibleCards) - 1;
 
+  // Lógica para avanzar al siguiente slide
   const nextSlide = () => {
-    setCurrentIndex(current => current >= maxIndex ? 0 : current + 1);
+    if (currentIndex >= maxIndex) {
+      setCurrentIndex(0); // Regresar a la primera imagen con transición fluida
+    } else {
+      setCurrentIndex(current => current + 1);
+    }
   };
 
+  // Lógica para retroceder al slide anterior
   const prevSlide = () => {
     setCurrentIndex(current => current <= 0 ? maxIndex : current - 1);
   };
 
+  // Lógica para ir a un slide específico
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
   };
 
-  // Auto-play functionality
+  // Funcionalidad de autoplay
   useEffect(() => {
     if (!isAutoPlaying) return;
 
     const interval = setInterval(() => {
       nextSlide();
-    }, 5000);
+    }, 5000); // 5 segundos de intervalo
 
-    return () => clearInterval(interval);
-  }, [currentIndex, isAutoPlaying, maxIndex]);
+    return () => clearInterval(interval); // Limpiar el intervalo cuando el componente se desmonte
+  }, [isAutoPlaying]); // Solo depende de isAutoPlaying
 
   return (
     <div className="py-12 bg-gray-50">
@@ -82,8 +89,8 @@ export default function  CarruselOfertas() {
         {/* Carousel Container */}
         <div 
           className="relative"
-          onMouseEnter={() => setIsAutoPlaying(false)}
-          onMouseLeave={() => setIsAutoPlaying(true)}
+          onMouseEnter={() => setIsAutoPlaying(false)} // Pausar autoplay al pasar el mouse
+          onMouseLeave={() => setIsAutoPlaying(true)} // Reanudar autoplay al salir el mouse
         >
           {/* Navigation Arrows */}
           <button
@@ -110,7 +117,7 @@ export default function  CarruselOfertas() {
           <div className="overflow-hidden">
             <div 
               className="flex transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateX(-${currentIndex * (100 / visibleCards)}%)` }}
+              style={{transform:`translateX(-${currentIndex * (100 / visibleCards)}%)`}} // Transición fluida al regreso a la primera imagen
             >
               {servicios.map((servicio) => (
                 <div
@@ -169,13 +176,6 @@ export default function  CarruselOfertas() {
               />
             ))}
           </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="text-center mt-12">
-          <button className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-transform duration-300">
-            Descubrir todos los servicios
-          </button>
         </div>
       </div>
     </div>
