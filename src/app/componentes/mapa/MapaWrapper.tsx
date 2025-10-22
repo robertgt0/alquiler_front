@@ -1,7 +1,7 @@
 // components/MapaWrapper.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import BuscadorUbicaciones from "./BuscadorUbicaciones";
 import FixersHeader from "./FixersHeader";
@@ -616,102 +616,142 @@ export const fixersDefinidos: Fixer[] = [
     verified: false
   }
 ];
-
 export default function MapaWrapper() {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [fixers, setFixers] = useState<Fixer[]>([]);
   const [fixersFiltrados, setFixersFiltrados] = useState<Fixer[]>([]);
-  const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState<Ubicacion | null>(null);
+
+  // ✅ 1. ESTADO INICIAL: Por defecto en la Plaza 14 de Septiembre
+  const [ubicacionSeleccionada, setUbicacionSeleccionada] =
+    useState<Ubicacion | null>(ubicacionesRespaldo[0]);
+
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [cargando, setCargando] = useState(true);
   const [mostrarSenalizacion, setMostrarSenalizacion] = useState(false);
+
+  // Sigue rastreando si el permiso fue solicitado (inicia en falso)
   const [permisoDecidido, setPermisoDecidido] = useState(false);
   const [usandoRespaldo, setUsandoRespaldo] = useState(false);
 
   const ubicacionManager = UbicacionManager.getInstancia();
 
-  // 📍 Obtener ubicación del usuario
-  useEffect(() => {
-    const obtenerUbicacion = () => {
-      if (!navigator.geolocation) {
-        console.log("Geolocalización no soportada");
+  // ✅ 2. FUNCIÓN DE UBICACIÓN (envuelta en useCallback)
+  // Esta función ahora SÓLO se llamará cuando el evento lo dispare
+  const obtenerUbicacion = useCallback(() => {
+    if (!navigator.geolocation) {
+      console.log("Geolocalización no soportada");
+      setPermisoDecidido(true);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        const nuevaUbicacion: UserLocation = {
+          lat: latitude,
+          lng: longitude,
+          accuracy,
+          timestamp: position.timestamp,
+        };
+        setUserLocation(nuevaUbicacion);
+
+        const ubicacionTemporal: Ubicacion = {
+          id: 999,
+          nombre: "📍 Mi ubicación actual",
+          posicion: [latitude, longitude] as [number, number],
+        };
+
+        ubicacionManager.setUbicacion(ubicacionTemporal);
+        setUbicacionSeleccionada(ubicacionTemporal);
+        setMostrarSenalizacion(true);
         setPermisoDecidido(true);
-        return;
+        setTimeout(() => setMostrarSenalizacion(false), 3000);
+      },
+      () => {
+        // ✅ FALLBACK: Si se rechaza, volver a la Plaza
+        console.log("Ubicación rechazada - Enfocando en Plaza Principal");
+        ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
+        setUbicacionSeleccionada(ubicacionesRespaldo[0]); // Establece la plaza
+        setUserLocation(null); // Asegura que no haya ubicación de usuario
+        setPermisoDecidido(true);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
       }
+    );
+  }, [ubicacionManager]); // Dependencia de useCallback
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude, accuracy } = position.coords;
-          const nuevaUbicacion: UserLocation = {
-            lat: latitude,
-            lng: longitude,
-            accuracy,
-            timestamp: position.timestamp,
-          };
-          setUserLocation(nuevaUbicacion);
-
-          const ubicacionTemporal: Ubicacion = {
-            id: 999,
-            nombre: "📍 Mi ubicación actual",
-            posicion: [latitude, longitude] as [number, number],
-          };
-
-          ubicacionManager.setUbicacion(ubicacionTemporal);
-          setUbicacionSeleccionada(ubicacionTemporal);
-          setMostrarSenalizacion(true);
-          setPermisoDecidido(true);
-          setTimeout(() => setMostrarSenalizacion(false), 3000);
-        },
-        () => {
-          console.log("Ubicación rechazada - Enfocando en Plaza Principal");
-          setPermisoDecidido(true);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000,
-        }
+  // ✅ 3. EFECTO PARA ESCUCHAR EL EVENTO DEL HEADER
+  // Se configura una vez y espera el evento "solicitar-geolocalizacion"
+  useEffect(() => {
+    const handleSolicitarGeo = () => {
+      console.log(
+        "Evento 'solicitar-geolocalizacion' recibido. Pidiendo ubicación..."
       );
+      obtenerUbicacion();
     };
 
-    obtenerUbicacion();
-  }, [ubicacionManager]);
+    window.addEventListener("solicitar-geolocalizacion", handleSolicitarGeo);
+
+    // Limpia el listener al desmontar el componente
+    return () => {
+      window.removeEventListener(
+        "solicitar-geolocalizacion",
+        handleSolicitarGeo
+      );
+    };
+  }, [obtenerUbicacion]); // Dependencia del useEffect
 
   // 🌐 Cargar ubicaciones y fixers
   useEffect(() => {
+    // ✅ 4. ESTABLECER UBICACIÓN INICIAL EN EL MANAGER
+    // Asegura que el filtro inicial use la Plaza 14 de Septiembre
+    if (!permisoDecidido) {
+      ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
+    }
+
     const cargarDatos = async () => {
       try {
         console.log("🔄 Intentando conectar con el backend...");
-        
+
         const [resUbicaciones, resFixers] = await Promise.all([
           fetch("http://localhost:5000/api/ubicaciones", {
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(5000),
           }),
           fetch("http://localhost:5000/api/fixers", {
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(5000),
           }),
         ]);
 
         if (resUbicaciones.ok && resFixers.ok) {
           const dataUbicaciones = await resUbicaciones.json();
           const dataFixers = await resFixers.json();
-          
+
           console.log("✅ Backend conectado - Usando datos reales");
 
           if (dataUbicaciones.success) {
-            const ubicacionesTransformadas: Ubicacion[] = dataUbicaciones.data.map(
-              (item: UbicacionFromAPI, index: number) => ({
-                id: index + 1,
-                nombre: item.nombre,
-                posicion: [item.posicion.lat, item.posicion.lng] as [number, number],
-              })
-            );
+            const ubicacionesTransformadas: Ubicacion[] =
+              dataUbicaciones.data.map(
+                (item: UbicacionFromAPI, index: number) => ({
+                  id: index + 1,
+                  nombre: item.nombre,
+                  posicion: [item.posicion.lat, item.posicion.lng] as [
+                    number,
+                    number
+                  ],
+                })
+              );
             setUbicaciones(ubicacionesTransformadas);
           }
 
           if (dataFixers.success) {
             setFixers(dataFixers.data);
-            const cercanos = ubicacionManager.filtrarFixersCercanos(dataFixers.data);
+            // El filtro usará la ubicación del manager (Plaza por defecto)
+            const cercanos = ubicacionManager.filtrarFixersCercanos(
+              dataFixers.data
+            );
             setFixersFiltrados(cercanos);
           }
 
@@ -719,30 +759,30 @@ export default function MapaWrapper() {
         } else {
           throw new Error("Error en respuesta del servidor");
         }
-
       } catch (error) {
         console.log("❌ Backend no disponible - Usando datos de respaldo", error);
-        
+
         // 🛡️ USAR DATOS DE RESPUESTA
-        const todosLosFixers: Fixer[] = [...fixersRespaldo, ...fixersDefinidos];
+        const todosLosFixers: Fixer[] = [
+          ...fixersRespaldo,
+          ...fixersDefinidos,
+        ];
         setUbicaciones(ubicacionesRespaldo);
         setFixers(todosLosFixers);
         setUsandoRespaldo(true);
 
+        // El filtro usará la ubicación del manager (Plaza por defecto)
         const cercanos = ubicacionManager.filtrarFixersCercanos(todosLosFixers);
         setFixersFiltrados(cercanos);
 
-        if (permisoDecidido && !userLocation) {
-          ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
-          setUbicacionSeleccionada(ubicacionesRespaldo[0]);
-        }
+      
       } finally {
         setCargando(false);
       }
     };
 
     cargarDatos();
-  }, [userLocation, permisoDecidido, ubicacionManager]);
+  }, [userLocation, permisoDecidido, ubicacionManager]); // Mantenemos las dependencias
 
   // ✅ NUEVA FUNCIÓN: Manejar marcador agregado por presión prolongada
   const handleMarcadorAgregado = (lat: number, lng: number) => {

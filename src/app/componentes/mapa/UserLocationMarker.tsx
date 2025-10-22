@@ -3,7 +3,6 @@
 
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { useEffect } from 'react';
 import ReactDOMServer from 'react-dom/server';
 
 interface UserLocationMarkerProps {
