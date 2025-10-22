@@ -1,5 +1,4 @@
 // src/app/page.tsx
-
 import Mapa from "./componentes/mapa/MapaWrapper";
 import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
 import HomeFixer from "./componentes/ListaCategorias/HomeFixer";

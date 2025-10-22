@@ -46,14 +46,14 @@ export class UbicacionManager {
     return 2 * R * Math.asin(Math.sqrt(hav));
   }
 
-  // 🔍 Devuelve los fixers a 10 km de la ubicación actual
+  // 🔍 Devuelve los fixers a 5 km de la ubicación actual
   public filtrarFixersCercanos(fixers: Fixer[]): Fixer[] {
     const ubicacion = this.getUbicacion();
     if (!ubicacion) return [];
     return fixers.filter((fixer) => {
       const fixerPos: [number, number] = [fixer.posicion.lat, fixer.posicion.lng];
       const distancia = this.distanciaEnKm(ubicacion.posicion, fixerPos);
-      return distancia <= 10;
+      return distancia <= 5;
     });
   }
 
