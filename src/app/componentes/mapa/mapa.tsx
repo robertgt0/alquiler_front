@@ -48,7 +48,7 @@ L.Icon.Default.mergeOptions({
 });
 
 interface MapaProps {
-  isLoggedIn: boolean; // ✅ AGREGADO
+  isLoggedIn: boolean;
   ubicaciones: Ubicacion[];
   fixers: Fixer[];
   ubicacionSeleccionada: Ubicacion | null;
@@ -66,20 +66,17 @@ function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
 }
 
 // ✅ NUEVO componente para manejar presión prolongada en el mapa (PC y móvil) - VERSIÓN COMPATIBLE
-
 function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: number) => void }) {
   const map = useMap();
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleContextMenu = (e: L.LeafletEvent) => {
-      // Este evento se dispara con clic largo en Android
       const leafletEvent = e as L.LeafletMouseEvent;
       onLongPress(leafletEvent.latlng.lat, leafletEvent.latlng.lng);
       map.flyTo([leafletEvent.latlng.lat, leafletEvent.latlng.lng], 16, { duration: 1 });
     };
 
-    // Para PC: timeout normal
     const handleMouseDown = (e: L.LeafletEvent) => {
       const leafletEvent = e as L.LeafletMouseEvent;
       timeoutRef.current = setTimeout(() => {
@@ -95,9 +92,8 @@ function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: num
       }
     };
 
-    // Registrar ambos eventos
-    map.on('contextmenu', handleContextMenu); // Para móvil (clic largo nativo)
-    map.on('mousedown', handleMouseDown);     // Para PC
+    map.on('contextmenu', handleContextMenu);
+    map.on('mousedown', handleMouseDown);
     map.on('mouseup', handleMouseUp);
     map.on('mouseout', handleMouseUp);
 
@@ -115,7 +111,7 @@ function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: num
 
 // ✅ Componente principal del mapa
 export default function Mapa({
-  isLoggedIn, // ✅ AGREGADO
+  isLoggedIn,
   ubicaciones,
   fixers = [],
   ubicacionSeleccionada,
@@ -195,7 +191,7 @@ export default function Mapa({
         <div style="margin-bottom:8px;">${especialidades}</div>
 
         ${
-          f.whatsapp && isLoggedIn // ✅ CON SESIÓN: WhatsApp real
+          f.whatsapp && isLoggedIn
             ? `<a href="https://wa.me/${f.whatsapp.replace(
                 /\D/g,
                 ""
@@ -209,7 +205,7 @@ export default function Mapa({
                 text-decoration:none;padding:8px 0;font-size:13px;margin-top:8px;">
                 Contactar por WhatsApp
               </a>`
-            : f.whatsapp // ✅ SIN SESIÓN: Botón que va a 404
+            : f.whatsapp
             ? `<button onclick="window.location.href='/404'" 
                 style="display:flex;align-items:center;justify-content:center;gap:6px;
                 background:#25D366;color:white;font-weight:500;border-radius:6px;
@@ -232,8 +228,6 @@ export default function Mapa({
   // ✅ Maneja la presión prolongada
   const handleLongPress = (lat: number, lng: number) => {
     setMarcadorPersonalizado([lat, lng]);
-
-    // ✅ Notificar al componente padre para actualizar fixers
     if (onMarcadorAgregado) {
       onMarcadorAgregado(lat, lng);
     }
@@ -264,7 +258,6 @@ export default function Mapa({
             </Marker>
           )}
 
-          {/* ✅ NUEVO: Marcador por presión prolongada */}
           {marcadorPersonalizado && (
             <Marker position={marcadorPersonalizado} icon={redMarkerIcon}>
               <Popup>📍 Ubicación seleccionada</Popup>
@@ -273,13 +266,11 @@ export default function Mapa({
 
           <MarkerClusterGroup markers={fixerMarkers} color="#1366fd" />
           <ActualizarVista ubicacion={ubicacionSeleccionada} />
-
-          {/* 🔥 NUEVO: Manejador de presión prolongada */}
           <LongPressHandler onLongPress={handleLongPress} />
         </MapContainer>
 
-        {/* ✅ Contador ENCIMA del mapa - Solo en PC/Tablet */}
-        <div className="absolute top-2 right-2 hidden sm:block z-[1000]">
+        {/* ✅ Contador SOBRE el mapa - Solo en PC/Tablet - Z-INDEX CORREGIDO */}
+        <div className="absolute top-3 right-3 hidden sm:block z-[5]"> {/* z-[5] más bajo que header */}
           {fixers.length > 0 ? (
             <div
               style={{
@@ -290,6 +281,7 @@ export default function Mapa({
                 boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                 fontSize: "14px",
                 whiteSpace: "nowrap",
+                border: "1px solid #bae6fd",
               }}
             >
               <strong style={{ fontWeight: "bold" }}>{fixers.length}</strong>{" "}
@@ -305,6 +297,7 @@ export default function Mapa({
                 boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                 fontSize: "14px",
                 whiteSpace: "nowrap",
+                border: "1px solid #fed7aa",
               }}
             >
               ¡No hay fixers cerca!
