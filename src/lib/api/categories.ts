@@ -1,20 +1,30 @@
-import type { Category } from "@/types/fixer";
-const API = process.env.NEXT_PUBLIC_API_URL!;
+"use client";
 
-export async function fetchCategories(): Promise<Category[]> {
+export type CategoryDTO = {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+};
+
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+export async function getCategories(): Promise<CategoryDTO[]> {
   const r = await fetch(`${API}/api/categories`, { cache: "no-store" });
-  const j = await r.json();
-  if (!r.ok || !j.success) throw new Error(j.message || "No se pudo cargar categorías");
-  return j.data;
+  if (!r.ok) throw new Error("No se pudo cargar categorías");
+  const json = await r.json();
+  return json.data || [];
 }
 
-export async function createCategory(name: string) {
+export async function createCategory(name: string): Promise<CategoryDTO> {
   const r = await fetch(`${API}/api/categories`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
   });
-  const j = await r.json();
-  if (!r.ok || !j.success) throw new Error(j.message || "No se pudo crear categoría");
-  return j as { success: true; data: Category; message: string };
+  const json = await r.json();
+  if (!r.ok || json.success === false) {
+    throw new Error(json.message || "No se pudo registrar la categoría");
+  }
+  return json.data;
 }
