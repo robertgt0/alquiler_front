@@ -1,67 +1,85 @@
 "use client";
-import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import type { LocationDTO } from "@/types/fixer";
 
-// Carga del mapa sin SSR
-const MapCanvas = dynamic(() => import("./MapCanvas"), { ssr: false });
+import { useEffect, useMemo, useState } from "react";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import type { LatLngExpression } from "leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-export function LocationPicker({
-  initial, onConfirm, onCancel
-}: { initial?: LocationDTO; onConfirm: (l: LocationDTO)=>void; onCancel: ()=>void }) {
+// Fix de iconos Leaflet
+import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
+import iconUrl from "leaflet/dist/images/marker-icon.png";
+import shadowUrl from "leaflet/dist/images/marker-shadow.png";
+L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl });
 
-  const [loc, setLoc] = useState<LocationDTO>(initial ?? { lat: 37.7749, lng: -122.4194 });
-  const [address, setAddress] = useState<string>("");
+type Coords = { lat: number; lng: number };
+type Props = {
+  value?: Coords | null;
+  onChange: (coords: Coords) => void;
+  height?: number;
+  defaultCenter?: Coords;
+};
 
-  // Detecta ubicación inicial del navegador
+function ClickHandler({ onPick }: { onPick: (c: Coords) => void }) {
+  useMapEvents({
+    click(e) {
+      onPick({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
+  return null;
+}
+
+export default function LocationPicker({
+  value,
+  onChange,
+  height = 360,
+  defaultCenter = { lat: -16.5, lng: -68.15 },
+}: Props) {
+  const [pos, setPos] = useState<Coords | null>(value || null);
+
   useEffect(() => {
-    if (!initial && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(p =>
-        setLoc({ lat: p.coords.latitude, lng: p.coords.longitude })
-      );
+    if (value && (value.lat !== pos?.lat || value.lng !== pos?.lng)) {
+      setPos(value);
     }
-  }, [initial]);
+  }, [value]); // eslint-disable-line
 
-  // 🔄 Cada vez que cambia el punto, busca dirección
-  useEffect(() => {
-    async function fetchAddress() {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.lat}&lon=${loc.lng}`
-        );
-        const data = await res.json();
-        if (data?.display_name) setAddress(data.display_name);
-      } catch (err) {
-        setAddress("");
-      }
-    }
-    fetchAddress();
-  }, [loc.lat, loc.lng]);
+  const center: LatLngExpression = useMemo<LatLngExpression>(() => {
+    if (pos) return [pos.lat, pos.lng];
+    return [defaultCenter.lat, defaultCenter.lng];
+  }, [pos, defaultCenter]);
+
+  const handlePick = (c: Coords) => {
+    setPos(c);
+    onChange(c);
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/40 grid place-items-center z-50">
-      <div className="bg-white rounded-2xl shadow-xl w-[min(900px,95vw)] p-5 space-y-4">
-        <h3 className="text-xl font-semibold">Selecciona tu ubicación</h3>
-
-        {/* Mapa */}
-        <MapCanvas center={[loc.lat, loc.lng]} onChange={(lat,lng)=> setLoc({ ...loc, lat, lng })}/>
-
-        {/* Dirección actual */}
-        <div className="text-sm text-gray-700 mt-2">
-          {address ? (
-            <>📍 <b>Dirección aproximada:</b> {address}</>
-          ) : (
-            "Buscando dirección..."
-          )}
-        </div>
-
-        <div className="flex justify-end gap-2 mt-4">
-          <button className="px-4 py-2 rounded" onClick={onCancel}>Cancelar</button>
-          <button className="px-4 py-2 rounded bg-blue-600 text-white" onClick={()=> onConfirm({ ...loc, address })}>
-            Confirmar
-          </button>
-        </div>
-      </div>
+    <div className="rounded overflow-hidden border">
+      <MapContainer
+        center={center}
+        zoom={13}
+        style={{ height, width: "100%" }}
+        scrollWheelZoom
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://osm.org">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <ClickHandler onPick={handlePick} />
+        {pos && (
+          <Marker
+            position={[pos.lat, pos.lng]}
+            draggable
+            eventHandlers={{
+              dragend: (e) => {
+                const m = e.target as L.Marker;
+                const ll = m.getLatLng();
+                handlePick({ lat: ll.lat, lng: ll.lng }); // ← tiempo real al soltar
+              },
+            }}
+          />
+        )}
+      </MapContainer>
     </div>
   );
 }

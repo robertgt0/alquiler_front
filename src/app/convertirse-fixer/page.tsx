@@ -1,74 +1,71 @@
 "use client";
 
-import { useState } from "react";
-import RegisterForm from "./components/RegisterForm";
-import RegisterFormPrefPago from "./components/registerformTermyCond";
-import Header from "./Header";
+import { useEffect, useMemo, useState } from "react";
+import StepIdentity from "./steps/StepIdentity";
+import StepLocation from "./steps/StepLocation";
+import StepCategories from "./steps/StepCategories";
+import StepPayment from "./steps/StepPayment";
+import StepTermsView from "./steps/StepTermsView";
 
-type Step = 0 | 1;
+type StepKey = "identity" | "location" | "categories" | "payment" | "terms";
 
-export default function RegisterPage() {
-  const [step, setStep] = useState<Step>(0);
-  const [shared, setShared] = useState<{ ci: string; email: string } | null>(null);
+const STEPS: { key: StepKey; label: string }[] = [
+  { key: "identity",    label: "Datos del Fixer" },                // HU01
+  { key: "location",    label: "Establece tu ubicación" },         // HU02
+  { key: "categories",  label: "¿Qué trabajos sabes hacer?" },     // HU03
+  { key: "payment",     label: "Método de pago" },                 // HU04 (placeholder)
+  { key: "terms",       label: "Términos y condiciones" },         // HU05 (placeholder)
+];
 
-  const steps = ["Datos", "Pref. & Pago"];
-  const progress = ((step + 1) / steps.length) * 100;
+const LS_STEP = "FIXER_WIZARD_STEP";
+
+export default function ConvertirseFixer() {
+  // Arranca en HU01 (index 0)
+  const [stepIndex, setStepIndex] = useState(0);
+
+  // Restaurar paso guardado
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = localStorage.getItem(LS_STEP);
+    if (saved) setStepIndex(Number(saved) || 0);
+  }, []);
+
+  // Guardar paso
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(LS_STEP, String(stepIndex));
+  }, [stepIndex]);
+
+  const step = STEPS[stepIndex].key;
+
+  const next = () => setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
+  const prev = () => setStepIndex((i) => Math.max(i - 1, 0));
 
   return (
-    <>
-      <Header />
-
-      <div style={{ maxWidth: 860, margin: "2rem auto", padding: "1rem" }}>
-        
-        <div style={{ marginBottom: "1rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-            {steps.map((label, i) => (
-              <span
-                key={label}
-                style={{ fontWeight: i === step ? 700 : 500, opacity: i <= step ? 1 : 0.6 }}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-          <div style={{ height: 10, background: "#e6e9ef", borderRadius: 999 }}>
-            <div
-              style={{
-                width: `${progress}%`,
-                height: "100%",
-                borderRadius: 999,
-                background: "#0e418d",
-                transition: "width 250ms ease",
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Paso 1 */}
-        {step === 0 && (
-          <RegisterForm
-            onSuccess={(data: { ci: string; email: string }) => {
-              setShared(data);
-              setStep(1);
-            }}
-          />
-        )}
-
-        
-        {step === 1 && (
-          <RegisterFormPrefPago
-            onBack={() => setStep(0)}
-            onFinish={async (prefPago: Record<string, unknown>) => {
-              
-              const payload = { ...(shared ?? {}), ...prefPago };
-              console.log("DATA FINAL >>>", payload);
-
-
-              alert("✅ ¡Registro completado!");
-            }}
-          />
-        )}
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Barra de progreso simple */}
+      <div className="text-sm text-gray-600">{stepIndex + 1}/{STEPS.length}</div>
+      <div className="w-full h-2 bg-gray-200 rounded">
+        <div
+          className="h-2 bg-blue-600 rounded"
+          style={{ width: `${((stepIndex + 1) / STEPS.length) * 100}%` }}
+        />
       </div>
-    </>
+
+      <h1 className="text-3xl font-bold">{
+        step === "identity"   ? "¿Cuál es tu número de C.I.?"
+      : step === "location"   ? "Establece tu ubicación"
+      : step === "categories" ? "¿Qué tipos de trabajo sabes hacer?"
+      : step === "payment"    ? "Método de pago"
+      : "Términos y condiciones"
+      }</h1>
+
+      {/* Render de pasos */}
+      {step === "identity"   && <StepIdentity onNext={next} onBack={prev} />}
+      {step === "location"   && <StepLocation onNext={next} onBack={prev} />}
+      {step === "categories" && <StepCategories onNext={next} onBack={prev} />}
+      {step === "payment"    && <StepPayment onNext={next} onBack={prev} />}
+      {step === "terms"      && <StepTermsView onNext={next} onBack={prev} />}
+    </div>
   );
 }
