@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -75,8 +76,8 @@ export default function CarruselInspirador() {
                 {slide.description}
               </p>
 
-              <a
-                href="#ofertas"
+             <a
+                href="#trabajos-recientes" // Cambiado de "#ofertas"
                 className="inline-block px-5 py-2 sm:px-6 sm:py-3 bg-[#2a87ff] text-white rounded-lg text-sm sm:text-base hover:bg-blue-600 transition"
               >
                 Ver más
