@@ -744,6 +744,25 @@ export default function MapaWrapper() {
     cargarDatos();
   }, [userLocation, permisoDecidido, ubicacionManager]);
 
+  // ✅ NUEVA FUNCIÓN: Manejar marcador agregado por presión prolongada
+  const handleMarcadorAgregado = (lat: number, lng: number) => {
+    const nuevaUbicacion: Ubicacion = {
+      id: Date.now(), // ID temporal
+      nombre: "📍 Ubicación seleccionada",
+      posicion: [lat, lng] as [number, number],
+    };
+
+    // Actualizar ubicación en el manager
+    ubicacionManager.setUbicacion(nuevaUbicacion);
+    
+    // Filtrar fixers cercanos a la nueva ubicación
+    const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
+    setFixersFiltrados(cercanos);
+    
+    // Opcional: también actualizar la ubicación seleccionada
+    setUbicacionSeleccionada(nuevaUbicacion);
+  };
+
   if (cargando)
     return (
       <div className="flex items-center justify-center min-h-screen text-lg">
@@ -755,7 +774,7 @@ export default function MapaWrapper() {
     <div className="flex flex-col items-center">
       {usandoRespaldo && (
         <div className="w-full max-w-6xl px-4 mb-4">
-        
+          {/* Mensaje de respaldo si es necesario */}
         </div>
       )}
 
@@ -770,6 +789,7 @@ export default function MapaWrapper() {
       />
       <FixersHeader />
 
+      {/* ✅ AGREGAR la nueva prop onMarcadorAgregado */}
       <Mapa
         ubicaciones={ubicaciones}
         fixers={fixersFiltrados}
@@ -780,6 +800,7 @@ export default function MapaWrapper() {
           const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
           setFixersFiltrados(cercanos);
         }}
+        onMarcadorAgregado={handleMarcadorAgregado} // ✅ NUEVA PROP
       />
     </div>
   );

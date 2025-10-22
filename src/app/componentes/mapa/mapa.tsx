@@ -1,5 +1,3 @@
-// components/mapa/mapa.tsx
-
 "use client";
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -30,6 +28,17 @@ const blueMarkerIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
+const redMarkerIcon = new L.Icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
+  shadowUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -43,6 +52,7 @@ interface MapaProps {
   fixers: Fixer[];
   ubicacionSeleccionada: Ubicacion | null;
   onUbicacionClick?: (ubicacion: Ubicacion) => void;
+  onMarcadorAgregado?: (lat: number, lng: number) => void;
 }
 
 // ✅ Componente para actualizar la vista según ubicación seleccionada
@@ -54,58 +64,50 @@ function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
   return null;
 }
 
-// ✅ NUEVO componente para manejar presión prolongada en el mapa
-function LongPressMarker() {
+// ✅ NUEVO componente para manejar presión prolongada en el mapa (PC y móvil) - VERSIÓN COMPATIBLE
+
+function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: number) => void }) {
   const map = useMap();
-  const [marker, setMarker] = React.useState<L.Marker | null>(null);
-  const [timeoutId, setTimeoutId] = React.useState<NodeJS.Timeout | null>(null);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const handleMouseDown = (e: L.LeafletMouseEvent) => {
-      const id = setTimeout(() => {
-        const { lat, lng } = e.latlng;
+    const handleContextMenu = (e: L.LeafletEvent) => {
+      // Este evento se dispara con clic largo en Android
+      const leafletEvent = e as L.LeafletMouseEvent;
+      onLongPress(leafletEvent.latlng.lat, leafletEvent.latlng.lng);
+      map.flyTo([leafletEvent.latlng.lat, leafletEvent.latlng.lng], 16, { duration: 1 });
+    };
 
-        // Si ya existe un marcador, se mueve
-        if (marker) {
-          marker.setLatLng([lat, lng]);
-        } else {
-          // Si no existe, se crea uno nuevo
-          const newMarker = L.marker([lat, lng], {
-            icon: new L.Icon({
-              iconUrl:
-                "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
-              shadowUrl:
-                "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-              iconSize: [25, 41],
-              iconAnchor: [12, 41],
-              popupAnchor: [1, -34],
-              shadowSize: [41, 41],
-            }),
-          }).addTo(map);
-          newMarker.bindPopup("📍 Marcador agregado aquí").openPopup();
-          setMarker(newMarker);
-        }
-
-        // Centrar la vista en el punto presionado
-        map.flyTo([lat, lng], 17, { duration: 1 });
-      }, 1000); // ← tiempo (1 segundo de presión)
-      setTimeoutId(id);
+    // Para PC: timeout normal
+    const handleMouseDown = (e: L.LeafletEvent) => {
+      const leafletEvent = e as L.LeafletMouseEvent;
+      timeoutRef.current = setTimeout(() => {
+        onLongPress(leafletEvent.latlng.lat, leafletEvent.latlng.lng);
+        map.flyTo([leafletEvent.latlng.lat, leafletEvent.latlng.lng], 16, { duration: 1 });
+      }, 800);
     };
 
     const handleMouseUp = () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
 
-    map.on("mousedown", handleMouseDown);
-    map.on("mouseup", handleMouseUp);
-    map.on("mouseout", handleMouseUp);
+    // Registrar ambos eventos
+    map.on('contextmenu', handleContextMenu); // Para móvil (clic largo nativo)
+    map.on('mousedown', handleMouseDown);     // Para PC
+    map.on('mouseup', handleMouseUp);
+    map.on('mouseout', handleMouseUp);
 
     return () => {
-      map.off("mousedown", handleMouseDown);
-      map.off("mouseup", handleMouseUp);
-      map.off("mouseout", handleMouseUp);
+      map.off('contextmenu', handleContextMenu);
+      map.off('mousedown', handleMouseDown);
+      map.off('mouseup', handleMouseUp);
+      map.off('mouseout', handleMouseUp);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [map, marker, timeoutId]);
+  }, [map, onLongPress]);
 
   return null;
 }
@@ -116,8 +118,10 @@ export default function Mapa({
   fixers = [],
   ubicacionSeleccionada,
   onUbicacionClick,
+  onMarcadorAgregado,
 }: MapaProps) {
   const centroInicial: [number, number] = [-17.3895, -66.1568];
+  const [marcadorPersonalizado, setMarcadorPersonalizado] = React.useState<[number, number] | null>(null);
 
   const crearIconoFixer = (onClick?: () => void) =>
     L.divIcon({
@@ -141,7 +145,7 @@ export default function Mapa({
       f.especialidad
         ?.split(",")
         .map(
-          (esp) => ` 
+          (esp) => `
           <span style="
             background:#eff6ff;
             color:#2563eb;
@@ -216,6 +220,16 @@ export default function Mapa({
     };
   });
 
+  // ✅ Maneja la presión prolongada
+  const handleLongPress = (lat: number, lng: number) => {
+    setMarcadorPersonalizado([lat, lng]);
+
+    // ✅ Notificar al componente padre para actualizar fixers
+    if (onMarcadorAgregado) {
+      onMarcadorAgregado(lat, lng);
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
       <div className="h-[300px] sm:h-[350px] md:h-[500px] lg:h-[400px] relative">
@@ -223,6 +237,7 @@ export default function Mapa({
           center={centroInicial}
           zoom={13}
           className="w-full h-full rounded-lg shadow-lg z-0"
+          // Removí tap={false} ya que no existe en tu versión
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
@@ -241,11 +256,18 @@ export default function Mapa({
             </Marker>
           )}
 
+          {/* ✅ NUEVO: Marcador por presión prolongada */}
+          {marcadorPersonalizado && (
+            <Marker position={marcadorPersonalizado} icon={redMarkerIcon}>
+              <Popup>📍 Ubicación seleccionada</Popup>
+            </Marker>
+          )}
+
           <MarkerClusterGroup markers={fixerMarkers} color="#1366fd" />
           <ActualizarVista ubicacion={ubicacionSeleccionada} />
 
-          {/* 🔥 NUEVO marcador por presión prolongada */}
-          <LongPressMarker />
+          {/* 🔥 NUEVO: Manejador de presión prolongada */}
+          <LongPressHandler onLongPress={handleLongPress} />
         </MapContainer>
 
         {/* ✅ Contador ENCIMA del mapa - Solo en PC/Tablet */}
