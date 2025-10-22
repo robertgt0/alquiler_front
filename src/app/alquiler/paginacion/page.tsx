@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import JobCard from "./components/jobCard";
 import Pagination from "./components/Pagination";
 import { getJobs } from "./services/jobService";
@@ -23,6 +23,8 @@ function LoadingFallback() {
 
 // Componente principal que usa useSearchParams - envuelto en Suspense
 function BusquedaContent() {
+  const router = useRouter();
+
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") || "";
 
@@ -31,6 +33,10 @@ function BusquedaContent() {
   const [searchResults, setSearchResults] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState(urlQuery);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [buscando, setBuscando] = useState(false);
+  const [estadoBusqueda, setEstadoBusqueda] = useState<"idle" | "success" | "error">("idle");
+
 
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
@@ -157,6 +163,22 @@ function BusquedaContent() {
     }
   }, [urlQuery, allJobs]);
 
+  const actualizarURL = (searchTerm: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (searchTerm.trim()) {
+      params.set('q', searchTerm.trim());
+    } else {
+      params.delete('q');
+    }
+
+    // Actualizar la URL sin recargar la página
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    router.push(newUrl, { scroll: false });
+
+    console.log('🔗 [URL] Actualizando URL:', newUrl);
+  };
+
   // ---------------- Limpiar búsqueda ----------------
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -165,10 +187,34 @@ function BusquedaContent() {
   }, [searchTerm, allJobs]);
 
   // ---------------- Handlers ----------------
-  const handleSearchResults = (termino: string, resultados: Job[]) => {
-    setSearchTerm(termino);
-    setSearchResults(resultados);
+  const handleSearchResults = async (
+    termino: string,
+    resultados: Job[],
+    actualizarUrl: boolean = true
+  ) => {
+    setBuscando(true);
+    setEstadoBusqueda("idle");
+
+    try {
+      setSearchTerm(termino);
+      setSearchResults(resultados);
+      if (actualizarUrl) actualizarURL(termino);
+
+      setEstadoBusqueda("success");
+    } catch (error) {
+      console.error("Error en búsqueda:", error);
+      setEstadoBusqueda("error");
+    } finally {
+      setBuscando(false);
+    }
   };
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setSearchResults(allJobs);
+    actualizarURL(""); // limpia el parámetro ?q=
+  };
+
+
 
   const handleViewDetails = (job: Job) => {
     console.log("Ver detalles de:", job);
@@ -233,39 +279,71 @@ function BusquedaContent() {
           </section>
         ) : (
           /* Vista Jobs */
-          <section className="mt-10">
-            {isLoading ? (
-              <p className="text-center text-gray-500 text-lg">Cargando ofertas...</p>
-            ) : (
-              <>
-                <div className="text-xl text-blue-700 font-semibold mb-6">
-                  Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
-                </div>
-
-                <div className="space-y-6">
-                  {currentItems.map((job, index) => (
-                    <JobCard
-                      key={`${job.title}-${index}`}
-                      {...job}
-                      onViewDetails={() => handleViewDetails(job)}
-                    />
-                  ))}
-                </div>
-
-                {totalPages > 1 && (
-                  <div className="mt-10">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      handlePageChange={handlePageChange}
-                      handleNextPage={handleNextPage}
-                      handlePrevPage={handlePrevPage}
-                    />
+            /* Vista Jobs */
+            <section className="mt-10">
+              {isLoading ? (
+                <p className="text-center text-gray-500 text-lg">Cargando ofertas...</p>
+              ) : (
+                <>
+                  <div className="text-xl text-blue-700 font-semibold mb-6">
+                    Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
                   </div>
-                )}
-              </>
-            )}
-          </section>
+
+                  <div className="results-area mt-6">
+                    {/* Mostrar loading mientras busca */}
+                    {buscando ? (
+                      <div className="text-center py-8">
+                        <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                        <p className="mt-2 text-lg text-gray-600">
+                            Buscando resultados para  &quot;{searchTerm}&quot;...
+                        </p>
+                      </div>
+                    ) : currentItems.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-xl text-gray-600 mb-4">
+                          {searchTerm && estadoBusqueda === "success"
+                            ? `No se encontraron resultados para "${searchTerm}"`
+                            : "No hay ofertas de trabajo disponibles en este momento."}
+                        </p>
+                        {searchTerm && (
+                          <button
+                            onClick={handleClearSearch}
+                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            Ver todas las ofertas
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-6">
+                          {currentItems.map((job, index) => (
+                            <JobCard
+                              key={`${job.title}-${index}`}
+                              {...job}
+                              onViewDetails={() => handleViewDetails(job)}
+                            />
+                          ))}
+                        </div>
+
+                        {totalPages > 1 && (
+                          <div className="mt-10">
+                            <Pagination
+                              currentPage={currentPage}
+                              totalPages={totalPages}
+                              handlePageChange={handlePageChange}
+                              handleNextPage={handleNextPage}
+                              handlePrevPage={handlePrevPage}
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </section>
+
         )}
       </main>
     </div>
