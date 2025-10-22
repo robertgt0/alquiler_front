@@ -5,10 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --no-lint",
+    "build": "npx lightningcss rebuild && next build --no-lint",
     "start": "next start",
-    "lint": "eslint",
-    "postinstall": "npx lightningcss rebuild"
+    "lint": "eslint"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
