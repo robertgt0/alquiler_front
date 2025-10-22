@@ -26,6 +26,7 @@ function Inner() {
         if (error) throw new Error(`Error de Google: ${error}`);
         if (!code) throw new Error('No se recibió el código de autorización');
 
+        
         const backend = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
         const response = await fetch(`${backend}/api/teamsys/google/callback`, {
           method: 'POST',
@@ -34,6 +35,7 @@ function Inner() {
         });
 
         const data = await response.json();
+        console.log(code)
         console.log('🔹 Respuesta del backend:', data);
 
         if (!response.ok) {

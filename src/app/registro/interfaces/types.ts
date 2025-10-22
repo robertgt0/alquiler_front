@@ -22,7 +22,7 @@ export interface UsuarioDocument {
   telefono: string;
   correo: string;
   password: string;
-  fotoPerfil?: string; // Binario (imagen)
+  fotoPerfil?: string; 
   ubicacion?: {
     type: 'Point';
     coordinates: [number, number]; // [longitud, latitud]
