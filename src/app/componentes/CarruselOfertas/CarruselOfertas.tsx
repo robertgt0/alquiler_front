@@ -117,7 +117,7 @@ export default function CarruselOfertas() {
           <div className="overflow-hidden">
             <div 
               className="flex transition-transform duration-500 ease-in-out"
-              style={{transform:`translateX(-${currentIndex * (100 / visibleCards)}%)`}} // Transición fluida al regreso a la primera imagen
+              style={{transform:`translateX(-${currentIndex * (100 / visibleCards)}%)`}} // Transición fluida
             >
               {servicios.map((servicio) => (
                 <div
