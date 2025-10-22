@@ -5,6 +5,8 @@ import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
 import HomeFixer from "./componentes/ListaCategorias/HomeFixer";
 import type { Categoria } from "./componentes/ListaCategorias/tipos";
 import Footer from "./componentes/Footer/Footer";
+import CarruselInspirador from "./componentes/CarruselInspirador/CarruselInspirador";
+
 
 // Usaremos un tipo sin el campo que ya no se usa
 type CategoriaBase = Omit<Categoria, "totalServicios">;
@@ -51,24 +53,32 @@ const categoriasDemo: CategoriaBase[] = [
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <h1 className="text-4xl font-bold text-center">¡Bienvenido a Servineo!</h1>
-      <p className="mt-4 text-lg text-center">Tu plataforma de servicios.</p>
+    <main>
+      {/* Puedes colocar aquí el contenido de tu página principal */}
+      <h1 className="text-4xl font-bold text-center"></h1>
+      <p className="mt-1 text-lg text-center"></p>
+      <section className="my-5">
+        <CarruselInspirador />
+      </section>
 
-      <section className="my-5 w-full">
+      {/* Mapa: target for footer "#mapa" link */}
+      <section id="mapa" className="my-10">
         <Mapa />
       </section>
 
-      <section className="my-5 w-full">
+      {/* Lista de servicios: target for footer "#servicios" link */}
+      <section id="servicios" className="my-5 w-full">
         {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
         <HomeFixer categorias={categoriasDemo} />
       </section>
 
-      <section className="my-5 w-full">
+      {/* Trabajos recientes / Ofertas: target for footer "#trabajos-recientes" link */}
+      <section id="trabajos-recientes" className="my-5 w-full">
         <CarruselOfertas />
       </section>
-
       <Footer />
     </main>
+    
+
   );
 }
