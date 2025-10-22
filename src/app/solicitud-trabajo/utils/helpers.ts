@@ -21,14 +21,24 @@ export function validarRango(horaInicio: string, horaFin: string): string | null
   return null;
 }
 
+/**
+ * Convierte una fecha ISO (YYYY-MM-DD) a título legible en español
+ * (p. ej., "Martes 22 de Octubre") PARSEÁNDOLA EN HORA LOCAL.
+ * Evita el desfase de 1 día que ocurre cuando "YYYY-MM-DD" se interpreta como UTC.
+ */
 export function formatEsDateTitle(iso: string): string {
-  const d = new Date(iso);
+  const [y, m, d] = iso.split("-").map(Number);
+  // Constructor local: año, mesIndex (0-based), día
+  const date = new Date(y, (m ?? 1) - 1, d ?? 1);
+
   const fmt = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
     day: "2-digit",
     month: "long",
   });
-  const text = fmt.format(d);
+
+  const text = fmt.format(date); // p.ej. "martes, 22 de octubre"
+  // Capitalizamos como venías haciendo:
   return text.replace(",", "").replace(/(^\w|[\s]\w)/g, (m) => m.toUpperCase());
 }
 

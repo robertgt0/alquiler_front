@@ -45,29 +45,36 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
     await enviar({ horaInicio, horaFin });
   };
 
-  // Estilos dinámicos del mensaje inferior según su contenido
+  // 🎨 Estilos dinámicos del mensaje inferior según su contenido
   const getMessageStyles = () => {
     if (!mensaje) return "";
     const msg = mensaje.toLowerCase();
 
-    // Éxito
+    // ✅ Éxito
     if (msg.includes("enviada") || msg.includes("confirmada") || msg.includes("éxito")) {
       return "border-green-300 bg-green-100 text-green-800";
     }
-    // Error
-    if (msg.includes("no disponible") || msg.includes("reservado") || msg.includes("error")) {
+
+    // ❌ Error (incluye “no disponible”, “reservado”, “error” y también “hora fin debe ser mayor”)
+    if (
+      msg.includes("no disponible") ||
+      msg.includes("reservado") ||
+      msg.includes("error") ||
+      msg.includes("hora fin debe ser mayor")
+    ) {
       return "border-red-300 bg-red-100 text-red-700";
     }
-    // Advertencia
+
+    // ⚠️ Advertencia
     if (msg.includes("debe seleccionar") || msg.includes("selecciona")) {
       return "border-yellow-300 bg-yellow-100 text-yellow-800";
     }
-    // Neutro
+
+    // Neutro (fallback)
     return "border-gray-300 bg-gray-50 text-gray-600";
   };
 
   return (
-    // noValidate desactiva la validación nativa del navegador
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
       {/* Hora Inicio */}
       <div className="flex flex-col">
@@ -108,6 +115,7 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
         )}
       </div>
 
+      {/* Botón principal */}
       <button
         type="submit"
         disabled={loading}
@@ -116,6 +124,7 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
         {loading ? "Enviando…" : "Enviar solicitud"}
       </button>
 
+      {/* Botón Atrás */}
       <button
         type="button"
         onClick={() => window.history.back()}
@@ -125,6 +134,7 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
         Atrás
       </button>
 
+      {/* Mensaje inferior dinámico */}
       {!!mensaje && (
         <div
           className={`w-full text-center rounded-lg border text-sm px-4 py-3 mt-2 Poppins font-medium ${getMessageStyles()}`}
