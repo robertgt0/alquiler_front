@@ -3,7 +3,8 @@
  *  - formatearHora: normaliza una cadena HH:mm
  *  - validarRango: valida que fin > inicio (para copy genérico)
  *  - formatEsDateTitle: “Jueves 10 de Mayo” desde YYYY-MM-DD
- *  - toMinutes / isRangeInside / isInsideAnyFranja / overlaps: validaciones HU2→HU3
+ *  - toMinutes / isRangeInside / isInsideAnyFranja / overlaps:
+ *    validaciones HU2→HU3
  */
 
 import { IFranjaDisponible } from "../interfaces/Solicitud.interface";
@@ -56,6 +57,19 @@ export const isInsideAnyFranja = (
   fin: string,
   franjas: IFranjaDisponible[]
 ) => franjas.some((f) => isRangeInside(inicio, fin, f));
+
+/** NUEVA: valida si una hora puntual (HH:mm) cae en alguna franja */
+export const isTimeInsideAnyFranja = (
+  time: string,
+  franjas: IFranjaDisponible[]
+): boolean => {
+  const t = toMinutes(time);
+  return franjas.some((f) => {
+    const s = toMinutes(f.inicio);
+    const e = toMinutes(f.fin);
+    return t >= s && t <= e;
+  });
+};
 
 export const overlaps = (
   aInicio: string,
