@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npx lightningcss rebuild && next build --no-lint",
+    "prebuild": "npx lightningcss rebuild",
+    "build": "next build --no-lint",
     "start": "next start",
     "lint": "eslint"
   },
