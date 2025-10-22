@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Clock, X } from "lucide-react";
 import { Job } from "../paginacion/types/job";
-import styles from './busqueda.module.css';
+import "./busqueda.css";
 import { Trash2 } from "lucide-react";
 
 type EstadoSugerencias = "idle" | "loading" | "error" | "success";
