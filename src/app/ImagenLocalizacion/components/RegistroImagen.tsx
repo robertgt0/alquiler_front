@@ -62,6 +62,7 @@ export default function RegistroImagen() {
   const [ubicacion, setUbicacion] = useState<Location | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
   const [error, setError] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(null); // URL (Google o blob)
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -73,7 +74,7 @@ export default function RegistroImagen() {
   const isHttpUrl = (v: any) => typeof v === "string" && /^https?:\/\//i.test(v);
 
   // Límites y tipos (de la variante funcional)
-  const maxSize = 2 * 1024 * 1024; // 2 MB
+  const maxSize = 1 * 1024 * 1024; // 1 MB
   const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
 
   // Setup Modal + Leaflet icons sólo en cliente
@@ -154,7 +155,7 @@ export default function RegistroImagen() {
       return;
     }
     if (selected.size > maxSize) {
-      setError("Archivo demasiado grande. Máx 2MB.");
+      setError("Archivo demasiado grande. Máx 1MB.");
       setFile(null);
       if (filePreview) URL.revokeObjectURL(filePreview);
       setFilePreview(null);
@@ -212,7 +213,7 @@ export default function RegistroImagen() {
       }
 
       // Resolver fotoPerfil a URL (no binario)
-      let fotoUrl: string | undefined;
+      let fotoUrl: string |  undefined;
       if (file instanceof File) {
         // validaciones extra por si acaso
         if (!allowedTypes.includes(file.type)) throw new Error('Formato no permitido');
@@ -266,9 +267,16 @@ export default function RegistroImagen() {
         throw new Error(detalle);
       }
 
-      alert("Usuario registrado exitosamente 🎉");
-      sessionStorage.removeItem("datosUsuarioParcial");
-      router.push("/");
+    // ÉXITO: mostrar modal bonito y luego redirigir
+setSuccessOpen(true);
+sessionStorage.removeItem("datosUsuarioParcial");
+
+setTimeout(() => {
+  setSuccessOpen(false);
+  router.push("/home");
+}, 3000);
+
+
     } catch (err: any) {
       console.error(" Error al crear usuario:", err);
       setError(err?.message || "Hubo un error al registrar el usuario.");
@@ -276,6 +284,11 @@ export default function RegistroImagen() {
       setLoading(false);
     }
   };
+  const isFormValid =
+  (file || previewImage) &&
+  ubicacion &&
+  accepted &&
+  datosFormulario?.correo; 
 
   // Evitar render del mapa/modal hasta que Leaflet esté listo
   if (!ready) return null;
@@ -285,7 +298,6 @@ export default function RegistroImagen() {
     <div className="min-h-screen flex items-center justify-center bg-blue-600">
       <form className="flex flex-col gap-4 items-center border p-6 rounded-xl shadow-md w-11/12 sm:w-full max-w-md bg-white">
         <h2 className="text-lg sm:text-xl font-bold text-center">
-          Subir Imagen y añadir una Ubicación
         </h2>
 
         {/* Imagen + Mapa responsivo */}
@@ -301,12 +313,13 @@ export default function RegistroImagen() {
             </div>
 
             {/* Botón debajo de la imagen */}
-            <label
-              htmlFor="fileInput"
-              className="mt-3 inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 cursor-pointer w-full sm:w-auto"
-            >
-              Insertar Foto de perfil
-            </label>
+          <label
+             htmlFor="fileInput"
+             className="mt-3 inline-flex items-center justify-center px-4 py-1.5 rounded-full border-2 border-black text-black text-[13px] font-semibold bg-white hover:bg-black hover:text-white transition-colors cursor-pointer w-full sm:w-auto"
+   >
+             Insertar tu foto de perfil
+              </label>
+
 
             {/* input de archivo (único) */}
             <input
@@ -318,31 +331,26 @@ export default function RegistroImagen() {
             />
           </div>
 
-          {/* Bloque: Mapa */}
-          <div className="flex flex-col items-center">
-            <div
-              onClick={() => setModalOpen(true)}
-              className="cursor-pointer border rounded overflow-hidden relative w-28 h-28 sm:w-32 sm:h-32"
-            >
-              <SelectableMap
-                ubicacion={ubicacion}
-                setUbicacion={setUbicacion}
-                height="100%"
-                width="100%"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center text-white font-bold">
-                📍
-              </div>
-            </div>
+         {/* Bloque: Mapa */}
+<div className="flex flex-col items-center">
+  {/* Imagen estática del mapita */}
+  <div className="w-28 h-28 sm:w-32 sm:h-32 border rounded overflow-hidden">
+    <img
+      src="https://cdn-icons-png.flaticon.com/512/854/854878.png" // 🗺️ icono de mapa (puedes usar otro link)
+      alt="mapa decorativo"
+      className="w-full h-full object-cover"
+    />
+  </div>
 
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="mt-3 inline-flex items-center justify-center px-4 py-1.5 rounded-full border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium hover:bg-gray-200 w-full sm:w-auto"
-            >
-              Insertar tu ubicación
-            </button>
-          </div>
+  <button
+    type="button"
+    onClick={() => setModalOpen(true)}
+    className="mt-3 inline-flex items-center justify-center px-4 py-1.5 rounded-full border-2 border-black text-black text-[13px] font-semibold bg-white hover:bg-black hover:text-white transition-colors w-full sm:w-auto"
+  >
+    Insertar tu ubicación
+  </button>
+</div>
+
         </div>
 
         {/* Modal mapa grande */}
@@ -367,6 +375,30 @@ export default function RegistroImagen() {
             Confirmar
           </button>
         </Modal>
+        {/* Modal de ÉXITO */}
+<Modal
+  isOpen={successOpen}
+  onRequestClose={() => setSuccessOpen(false)}
+  className="outline-none"
+  overlayClassName="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm flex items-center justify-center"
+
+>
+  <div className="relative rounded-[28px] border border-gray-300/70 bg-white shadow-lg px-10 py-8">
+    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-500/15">
+      {/* check */}
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+           fill="currentColor" className="h-7 w-7 text-green-600">
+        <path fillRule="evenodd"
+              d="M2.25 12a9.75 9.75 0 1119.5 0 9.75 9.75 0 01-19.5 0zm14.03-2.28a.75.75 0 10-1.06-1.06L10.5 13.38l-1.72-1.72a.75.75 0 10-1.06 1.06l2.25 2.25a.75.75 0 001.06 0l5.25-5.25z"
+              clipRule="evenodd" />
+      </svg>
+    </div>
+    <p className="mt-4 text-center text-[15px] font-medium text-gray-800">
+      Cuenta registrada
+    </p>
+  </div>
+</Modal>
+
 
         {/* Checkbox */}
         <div className="flex items-start space-x-2 w-full">
@@ -392,13 +424,17 @@ export default function RegistroImagen() {
         {error && <p className="text-red-500 text-sm">{error}</p>}
 
         <button
-          type="button"
-          onClick={handleContinuar}
-          disabled={loading}
-          className={`bg-blue-600 text-white py-2 px-6 rounded-xl w-full ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-red-600'}`}
-        >
-          {loading ? 'Registrando…' : 'Terminar Registro'}
-        </button>
+           type="button"
+            onClick={handleContinuar}
+            disabled={!isFormValid || loading || successOpen}
+               className={`py-2 px-6 rounded-xl w-full text-white transition 
+               ${!isFormValid || loading || successOpen
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'}`}
+>
+              {loading ? 'Registrando…' : 'Continuar'}
+          </button>
+
       </form>
     </div>
   );
