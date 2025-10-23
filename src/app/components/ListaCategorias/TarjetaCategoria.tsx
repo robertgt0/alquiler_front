@@ -12,7 +12,7 @@ export default function TarjetaCategoria({ categoria, onClick }: Props) {
   const router = useRouter();
 
   const goMain = () => {
-    onClick?.(); // dispara el callback opcional si lo pasas desde arriba
+    onClick?.();
     router.push(`/servicios/${categoria.slug ?? ""}`);
   };
 
@@ -21,74 +21,78 @@ export default function TarjetaCategoria({ categoria, onClick }: Props) {
   };
 
   // --- Soporte icono como URL/ruta o como emoji/texto ---
-  const icon = (categoria as { iconoUrl?: string; icono?: string }).iconoUrl ?? (categoria as { iconoUrl?: string; icono?: string }).icono ?? "";
+  const icon =
+    (categoria as { iconoUrl?: string; icono?: string }).iconoUrl ??
+    (categoria as { iconoUrl?: string; icono?: string }).icono ??
+    "";
   const isImage =
     typeof icon === "string" &&
-    (
-      /^(https?:\/\/|\/|\.{1,2}\/)/i.test(icon) ||          // http(s), /, ./, ../
-      /\.(svg|png|jpg|jpeg|webp|gif)$/i.test(icon)          // extensiones típicas
-    );
+    ( /^(https?:\/\/|\/|\.{1,2}\/)/i.test(icon) || /\.(svg|png|jpg|jpeg|webp|gif)$/i.test(icon) );
 
   return (
     <article
-          role="button"
-          tabIndex={0}
-          onClick={goMain}
-          onKeyDown={goKey}
-          aria-label={`Abrir categoría ${categoria.titulo}`}
-          className="w-full rounded-2xl border-2 border-blue-400 bg-white p-4 md:p-5
-                    shadow-sm hover:shadow-xl hover:border-blue-500
-                    transition-all duration-300 ease-in-out
-                    hover:-translate-y-1
-                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-                    hover:shadow-blue-300/50 focus-visible:shadow-blue-400/60"
+      role="button"
+      tabIndex={0}
+      onClick={goMain}
+      onKeyDown={goKey}
+      aria-label={`Abrir categoría ${categoria.titulo}`}
+      className="
+        flex flex-col
+        w-full h-full
+        rounded-2xl border-2 border-blue-400 bg-white
+        p-5 md:p-6
+        shadow-sm hover:shadow-xl hover:border-blue-500
+        transition-all duration-300 ease-in-out
+        hover:-translate-y-1
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+        hover:shadow-blue-300/50 focus-visible:shadow-blue-400/60
+        min-h-[160px] sm:min-h-[170px] md:min-h-[180px] lg:min-h-[190px]
+      "
     >
+      {/* BLOQUE CENTRAL: ícono + textos -> centrado vertical real con my-auto */}
+      <div className="my-auto flex flex-col items-center text-center gap-3 md:gap-4">
+        {/* Ícono */}
+        <div className="flex items-center justify-center">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-blue-400 bg-blue-50/20">
+            {isImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={icon}
+                alt={categoria.titulo}
+                className="h-5 w-5 object-contain"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            ) : (
+              <span className="text-[18px]" aria-hidden>
+                {icon || "🔧"}
+              </span>
+            )}
+          </div>
+        </div>
 
-
-      {/* Ícono */}
-      <div className="flex justify-center mb-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400 bg-blue-50/20">
-          {isImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={icon}
-              alt={categoria.titulo}
-              className="h-6 w-6 object-contain"
-              onError={(e) => {
-                // Si la URL existe pero no carga, escondemos la imagen y dejamos el contorno
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
-            />
-          ) : (
-            <span className="text-base" aria-hidden>
-              {icon || "🔧"}
-            </span>
+        {/* Título / descripción */}
+        <div>
+          <h3 className="font-semibold text-sm sm:text-base text-blue-900 leading-snug">
+            {categoria.titulo}
+          </h3>
+          {categoria.descripcion && (
+            <p className="mt-1 text-xs md:text-sm text-blue-700/90 leading-snug line-clamp-2">
+              {categoria.descripcion}
+            </p>
           )}
         </div>
       </div>
 
-      {/* Título / descripción */}
-      <div className="text-center">
-        <h3 className="font-semibold text-sm sm:text-base text-blue-900">
-          {categoria.titulo}
-        </h3>
-        {categoria.descripcion && (
-          <p className="mt-1 text-xs md:text-sm text-blue-700/90 line-clamp-2">
-            {categoria.descripcion}
-          </p>
-        )}
-      </div>
-
-      {/* Chip contador */}
+      {/* Chip contador (permanece abajo si existe) */}
       {typeof categoria.totalServicios === "number" && (
-        <div className="mt-3 md:mt-4 flex justify-center">
+        <div className="mt-2.5 md:mt-3 flex justify-center">
           <button
             type="button"
             className="rounded-full border border-blue-600/50 bg-blue-50 px-3 py-1 text-[11px] sm:text-xs text-blue-700
                        hover:bg-blue-100 focus-visible:ring-2 focus-visible:ring-blue-500"
             aria-label={`${categoria.totalServicios} servicios en ${categoria.titulo}`}
             onClick={(e) => {
-              e.stopPropagation(); // evita que dispare el click del <article>
+              e.stopPropagation();
               router.push(`/servicios/${categoria.slug ?? ""}?tab=resultados`);
             }}
           >
