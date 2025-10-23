@@ -1,6 +1,9 @@
+//src/app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+import Header from "./components/Header/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,20 +22,23 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en">
-      <head>
-        {/* Carga las fuentes por <link> en runtime (no en build) */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      {/* La clase antialiased se mantiene, y el font-family sale de globals.css */}
-      <body className="antialiased">{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true}
+      >
+        <Header />
+
+        {/* SOLUCIÓN: Cambiar el padding para que funcione en todos los dispositivos */}
+        <div className="pt-16 sm:pt-20">
+          {/* Aumenté el padding-top */}
+          {children}
+        </div>
+      </body>
     </html>
   );
 }
