@@ -38,7 +38,7 @@ export default function HomePage() {
 
     // Validar campos que solo deben ser alfabéticos (nombre y apellido)
     if (name === "nombre_cliente" || name === "apellido_cliente") {
-      const regex = /^[p{L} ]*$/u;
+      const regex = /^[\p{L} ]*$/u;
 
       if (regex.test(value) || value === "") {
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -102,7 +102,7 @@ export default function HomePage() {
 
     //validar descripcion (solo letras Unicode y espacios)
     if (name === "descripcion") {
-      const regex = /^[p{L} ]*$/u;
+      const regex = /^[\p{L} ]*$/u;
 
       if (regex.test(value) || value === "") {
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -118,7 +118,7 @@ export default function HomePage() {
 
     //validar descripcion_envio (solo letras Unicode y espacios)
     if (name === "descripcion_envio") {
-      const regex = /^[p{L} ]*$/u;
+      const regex = /^[\p{L} ]*$/u;
 
       if (regex.test(value) || value === "") {
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -134,7 +134,7 @@ export default function HomePage() {
 
     //validar concepto (solo letras Unicode y espacios)
     if (name === "concepto") {
-      const regex = /^[p{L} ]*$/u;
+      const regex = /^[\p{L} ]*$/u;
 
       if (regex.test(value) || value === "") {
         setFormData((prev) => ({ ...prev, [name]: value }));
@@ -302,7 +302,7 @@ export default function HomePage() {
           />
           {/* Mensaje de error específico para email */}
           <p style={errorStyle}>{errors.email_cliente || " "}</p>
-          
+
           <input
             name="nombre_cliente"
             placeholder="Nombre del cliente"
