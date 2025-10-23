@@ -241,9 +241,7 @@ function BusquedaContent() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 to-white">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl font-extrabold text-blue-600 mb-10 border-l-4 border-blue-600 pl-4 tracking-wide">
-          {modoVista === "jobs"
-            ? "Ofertas de Trabajo Disponibles"
-            : "Profesionales Filtrados"}
+          Ofertas de Trabajo
         </h1>
 
         {/* Búsqueda */}
