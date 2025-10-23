@@ -20,6 +20,7 @@ interface FormErrors {
   ci?: string;
   identificador_deuda?: string;
   nit?: string;
+  descripcion?: string;
   //se pueden añadir más errores de otros campos aquí
 }
 
@@ -91,6 +92,22 @@ export default function HomePage() {
         setErrors((prev) => ({
           ...prev,
           [name]: "Solo se aceptan dígitos y hasta un máximo de 10.",
+        }));
+      }
+      return;
+    }
+
+    //validar descripcion (solo letras Unicode y espacios)
+    if (name === "descripcion") {
+      const regex = /^[p{L} ]*$/u;
+
+      if (regex.test(value) || value === "") {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "No se pueden ingresar caracteres numéricos o especiales",
         }));
       }
       return;
@@ -283,6 +300,9 @@ export default function HomePage() {
             required
             style={inputStyle}
           />
+          {/* Mensaje de error específico para descripción */}
+          <p style={errorStyle}>{errors.descripcion || " "}</p>
+          
           <input
             name="descripcion_envio"
             placeholder="Descripción del envío"
