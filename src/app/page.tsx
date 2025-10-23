@@ -24,6 +24,7 @@ interface FormErrors {
   descripcion_envio?: string;
   concepto?: string;
   Costo_Unitario?: string;
+  email_cliente?: string;
 }
 
 export default function HomePage() {
@@ -147,6 +148,12 @@ export default function HomePage() {
       return;
     }
 
+    if (name === "email_cliente") {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+      return;
+    }
+    
     //manejo estándar para otros campos
     if (type === "number") {
       const numValue = Number(value);
@@ -185,6 +192,16 @@ export default function HomePage() {
       setErrors((prev) => ({
         ...prev,
         nit: "El campo de NIT solo debe tener 10 digitos",
+      }));
+      setMessage("Por favor, corrija los errores en el formulario.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email_cliente)) {
+      setErrors((prev) => ({
+        ...prev,
+        email_cliente: "Correo invalido",
       }));
       setMessage("Por favor, corrija los errores en el formulario.");
       return;
@@ -283,6 +300,9 @@ export default function HomePage() {
             required
             style={inputStyle}
           />
+          {/* Mensaje de error específico para email */}
+          <p style={errorStyle}>{errors.email_cliente || " "}</p>
+          
           <input
             name="nombre_cliente"
             placeholder="Nombre del cliente"
