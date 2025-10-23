@@ -19,6 +19,7 @@ interface FormErrors {
   apellido_cliente?: string;
   ci?: string;
   identificador_deuda?: string;
+  nit?: string;
   //se pueden añadir más errores de otros campos aquí
 }
 
@@ -79,6 +80,22 @@ export default function HomePage() {
       return;
     }
 
+    //validar NIT (solo dígitos, máximo 10)
+    if (name === "nit") {
+      const regex = /^[0-9]*$/;
+
+      if ((regex.test(value) && value.length <= 10) || value === "") {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "Solo se aceptan dígitos y hasta un máximo de 10.",
+        }));
+      }
+      return;
+    }
+
     //manejo estándar para otros campos
     setFormData((prev) => ({
       ...prev,
@@ -93,6 +110,15 @@ export default function HomePage() {
       setErrors((prev) => ({
         ...prev,
         ci: "El CI debe tener exactamente 8 dígitos.",
+      }));
+      setMessage("Por favor, corrija los errores en el formulario.");
+      return;
+    }
+
+    if (formData.nit.length !== 10) {
+      setErrors((prev) => ({
+        ...prev,
+        nit: "El campo de NIT solo tiene que tener 10 digitos",
       }));
       setMessage("Por favor, corrija los errores en el formulario.");
       return;
@@ -237,7 +263,7 @@ export default function HomePage() {
           />
           {/* Mensaje de error específico para identificador_deuda */}
           <p style={errorStyle}>{errors.identificador_deuda || " "}</p>
-          
+
           <input
             name="nit"
             placeholder="NIT"
@@ -246,6 +272,9 @@ export default function HomePage() {
             required
             style={inputStyle}
           />
+          {/* Mensaje de error específico para NIT */}
+          <p style={errorStyle}>{errors.nit || " "}</p>
+          
           <input
             name="descripcion"
             placeholder="Descripción"
