@@ -17,6 +17,7 @@ const initialFormData = {
 interface FormErrors {
   nombre_cliente?: string;
   apellido_cliente?: string;
+  ci?: string;
   //se pueden añadir más errores de otros campos aquí
 }
 
@@ -45,6 +46,22 @@ export default function HomePage() {
       return;
     }
 
+    //validar campo ci (solo digitos, max 8 caracteres)
+    if (name === "ci") {
+      const regex = /^[0-9]*$/;
+
+      if ((regex.test(value) && value.length <= 8) || value === "") {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "Solo se aceptan dígitos y hasta un máximo de 8.",
+        }));
+      }
+      return;
+    }
+
     //manejo estándar para otros campos
     setFormData((prev) => ({
       ...prev,
@@ -54,6 +71,15 @@ export default function HomePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.ci.length !== 8){
+      setErrors((prev) => ({
+        ...prev,
+        ci: "El CI debe tener exactamente 8 dígitos.",
+      }));
+      setMessage("Por favor, corrija los errores en el formulario.");
+      return;
+    }
 
     if (Object.values(errors).some((error) => error)) {
       setMessage("Por favor, corrija los errores en el formulario.");
@@ -178,6 +204,8 @@ export default function HomePage() {
             required
             style={inputStyle}
           />
+          {/* Mensaje de error específico para CI */}
+          <p style={errorStyle}>{errors.ci || " "}</p>
 
           <h4 style={{ color: "#000", margin: "1rem 0 0 0" }}>
             Datos de la deuda
