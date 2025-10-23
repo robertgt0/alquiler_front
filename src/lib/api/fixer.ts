@@ -1,14 +1,18 @@
 // src/lib/api/fixer.ts
-// URL del backend (p.ej. http://localhost:5000)
-const API = process.env.NEXT_PUBLIC_API_URL || "";
 
-// Tipos de respuesta
+// Tomamos la variable cruda (para preservar tu lógica de MOCK si está vacía)
+const RAW_API = process.env.NEXT_PUBLIC_API_URL || "";
+
+// ✅ Sanea la base (quita / final) y usa localhost si no hay env
+const API_BASE = RAW_API ? RAW_API.replace(/\/+$/, "") : "http://localhost:5000";
+
+// Tipos de respuesta (como tenías)
 type ApiOk<T> = { success: true; data: T } & Record<string, any>;
 type ApiFail = { success: false; message: string };
 type ApiResp<T> = ApiOk<T> | ApiFail;
 
 // ---------------------------------------------------------------------
-// Utilidad: fetch con tolerancia a error (para no reventar el flujo)
+// Utilidad: fetch con tolerancia a error (igual a tu enfoque)
 async function safeFetch(url: string, init?: RequestInit) {
   const res = await fetch(url, init);
   let json: any = null;
@@ -27,7 +31,7 @@ async function safeFetch(url: string, init?: RequestInit) {
 // ---------------------------------------------------------------------
 // 1) Verificar CI único
 export async function checkCI(ci: string, excludeId?: string) {
-  const url = new URL(`${API}/api/fixer/check-ci`);
+  const url = new URL(`${API_BASE}/api/fixer/check-ci`);
   url.searchParams.set("ci", ci);
   if (excludeId) url.searchParams.set("excludeId", excludeId);
 
@@ -37,11 +41,12 @@ export async function checkCI(ci: string, excludeId?: string) {
 
 // 2) Crear Fixer (mínimo)
 export async function createFixer(data: { userId: string; ci?: string; location?: any }) {
-  const json = (await safeFetch(`${API}/api/fixer`, {
+  const json = (await safeFetch(`${API_BASE}/api/fixer`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   })) as ApiResp<any>;
+
   if ((json as ApiFail).success === false) {
     throw new Error((json as ApiFail).message || "No se pudo crear el Fixer");
   }
@@ -50,11 +55,12 @@ export async function createFixer(data: { userId: string; ci?: string; location?
 
 // 3) Actualizar solo CI
 export async function updateIdentity(id: string, ci: string) {
-  const json = (await safeFetch(`${API}/api/fixer/${id}/identity`, {
+  const json = (await safeFetch(`${API_BASE}/api/fixer/${id}/identity`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ci }),
   })) as ApiResp<any>;
+
   if ((json as ApiFail).success === false) {
     throw new Error((json as ApiFail).message || "No se pudo actualizar el C.I.");
   }
@@ -63,11 +69,12 @@ export async function updateIdentity(id: string, ci: string) {
 
 // 4) Guardar categorías del fixer
 export async function setFixerCategories(id: string, categories: string[]) {
-  const json = (await safeFetch(`${API}/api/fixer/${id}`, {
+  const json = (await safeFetch(`${API_BASE}/api/fixer/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ categories }),
   })) as ApiResp<any>;
+
   if ((json as ApiFail).success === false) {
     throw new Error((json as ApiFail).message || "No se pudieron guardar las categorías");
   }
@@ -91,30 +98,33 @@ export type FinalFixerPayload = {
 };
 
 export async function upsertFixerFinal(payload: FinalFixerPayload) {
-  // Si no hay API configurada, haz un mock para no romper el flujo:
-  if (!API) {
+  // 🔒 Preservamos tu comportamiento original:
+  // si NO hay NEXT_PUBLIC_API_URL definido (RAW_API vacío), hacemos MOCK
+  if (!RAW_API) {
     console.warn("[upsertFixerFinal] NEXT_PUBLIC_API_URL vacío. Mock OK.");
-    return { success: true, data: payload };
+    return { success: true, data: payload } as ApiOk<any>;
   }
 
   // Si tiene 'id', actualiza; si no, crea.
   if (payload.id) {
-    const json = (await safeFetch(`${API}/api/fixer/${payload.id}`, {
+    const json = (await safeFetch(`${API_BASE}/api/fixer/${payload.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     })) as ApiResp<any>;
+
     if ((json as ApiFail).success === false) {
       throw new Error((json as ApiFail).message || "No se pudo actualizar el Fixer");
     }
     return json as ApiOk<any>;
   }
 
-  const json = (await safeFetch(`${API}/api/fixer`, {
+  const json = (await safeFetch(`${API_BASE}/api/fixer`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   })) as ApiResp<any>;
+
   if ((json as ApiFail).success === false) {
     throw new Error((json as ApiFail).message || "No se pudo crear el Fixer");
   }
