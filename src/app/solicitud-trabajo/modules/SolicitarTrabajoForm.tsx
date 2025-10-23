@@ -137,7 +137,7 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
         disabled={loading}
         className="w-full bg-[#0C4FE9] hover:bg-blue-700 text-white Poppins rounded-lg mt-1 sm:mt-2 h-12 sm:h-11 disabled:opacity-70"
       >
-        {loading ? "Enviando…" : "Enviar solicitud"}
+        {loading ? "Enviando…" : "Enviar Solicitud"}
       </button>
 
       {/* Botón Atrás */}
