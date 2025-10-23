@@ -46,7 +46,7 @@ export default function HomePage() {
       return;
     }
 
-    //validar campo ci (solo digitos, max 8 caracteres)
+    //validar campo ci (solo digitos, max 8 caracteres y caracteres alfabéticos)
     if (name === "ci") {
       const regex = /^[0-9]*$/;
 
