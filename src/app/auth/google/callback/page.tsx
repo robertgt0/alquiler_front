@@ -66,9 +66,6 @@ function Inner() {
         // (Si luego usas finalizeFromGoogleProfile, aquí lo puedes llamar)
         // await finalizeFromGoogleProfile?.(user);
 
-        setStatus('success');
-        setMessage('¡Registro con Google exitoso!');
-
         // Redirigir a /ImagenLocalizacion
         setTimeout(() => {
           router.push('/ImagenLocalizacion');
