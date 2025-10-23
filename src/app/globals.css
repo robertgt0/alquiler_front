@@ -37,22 +37,27 @@ body {
 
 .page-container {
   font-family: sans-serif;
-  background-color: #f4f4f4;
-  padding: 2rem;
-  display: flex;
-  justify-content: center;
-  color: #000;
+
+  background: linear-gradient(90deg, var(--brand-dark) 0%, var(--brand-gradient-mid) 50%, var(--brand-gradient-end) 100%);
+  padding: 4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 2rem;
+  color: var(--brand-white);
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .form-container {
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+  background-color: var(--brand-white);
+  padding: 2.5rem; /* Un poco más de padding */
+  border-radius: 16px; /* Más redondeado como en Figma */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-width: 800px; /* Más ancho para las 2 columnas */
   width: 100%;
-  color: #000;
+  color: var(--brand-text-dark); /* Color de texto oscuro del form */
+  box-sizing: border-box;
 }
 
 .form-title {
@@ -62,10 +67,10 @@ body {
 }
 
 .form-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  color: #000;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Dos columnas */
+  gap: 1rem 1.5rem; /* 1rem de espacio vertical, 1.5rem horizontal */
+  color: var(--brand-text-dark); /* Asegura que el texto sea oscuro */
 }
 
 .form-section-title {
@@ -77,25 +82,32 @@ body {
   margin-top: 1rem;
 }
 
-.form-label {
-  margin: 0;
-  font-size: 0.9rem;
+.form-label-styled {
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
+  color: var(--brand-text-dark);
 }
 
 .form-input {
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  color: #000;
+  padding: 0.75rem 1rem; /* 12px 16px */
+  border-radius: 8px; /* Más redondeado */
+  border: 1px solid var(--brand-gray); /* Borde gris claro */
+  background-color: var(--brand-white); /* Fondo blanco */
+  color: var(--brand-text-dark);
   width: 100%;
   box-sizing: border-box;
+  font-size: 0.875rem;
+}
+.form-input::placeholder {
+  color: #9CA3AF; /* Color de placeholder de Figma */
 }
 
 .form-error {
   color: var(--brand-error);
   font-size: 0.8rem;
-  margin: 0 0 0.5rem 0;
-  height: 1rem;
+  margin: 0; /* Sin margen */
+  height: auto; /* Altura automática */
+  min-height: 1rem; /* Mantiene un espacio mínimo */
 }
 
 .input-group {
@@ -105,32 +117,142 @@ body {
 
 .input-group-addon {
   font-size: 1rem;
-  padding: 0.5rem;
-  background-color: #e9ecef;
-  border: 1px solid #ccc;
-  border-radius: 4px 0 0 4px;
-  color: #495057;
+  padding: 0.75rem 1rem;
+  background-color: var(--brand-white);
+  border: 1px solid var(--brand-gray);
+  border-radius: 8px 0 0 8px;
+  color: #6B7280; /* Gris */
   border-right: none;
 }
 
 .input-group-field {
-  border-radius: 0 4px 4px 0;
-  flex: 1;
+  border-radius: 0 8px 8px 0;
+  border-left: none; /* Evitar doble borde */
 }
 
 .submit-button {
-  background-color: #007bff;
-  color: #fff;
-  padding: 0.75rem;
+  background-color: var(--brand-dark); /* Color de Figma */
+  color: var(--brand-white);
+  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px; /* Más redondeado */
   cursor: pointer;
   margin-top: 1rem;
   font-weight: bold;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+}
+
+.submit-button:hover {
+  background-color: var(--brand-gradient-mid); /* Un hover bonito */
+}
+
+.button-container {
+  grid-column: span 2; /* Ocupa las 2 columnas */
+  display: flex;
+  justify-content: flex-end; /* Alineado a la derecha */
 }
 
 .form-message {
   margin-top: 1rem;
   text-align: center;
   color: #000;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--brand-white);
+}
+
+@media (max-width: 900px) {
+  .page-container {
+    grid-template-columns: 1fr; 
+    padding: 2rem;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+    text-align: center; 
+    margin-bottom: 2rem;
+  }
+
+  .form-layout {
+    grid-template-columns: 1fr; /* 1 columna en móvil */
+  }
+  
+  /* Forzar que todos los 'span-2' sean 1 columna en móvil */
+  .form-group.span-2 {
+    grid-column: span 1;
+  }
+
+  .button-container {
+    grid-column: span 1;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem; /* Espacio pequeño entre label e input */
+}
+
+.form-group.span-2 {
+  grid-column: span 2;
+}
+
+.form-wrapper {
+  position: relative; 
+  width: 100%;
+  max-width: 800px; 
+  display: flex;
+  justify-content: center;
+}
+
+
+.form-blur-background {
+  position: absolute;
+  top: -20px;
+  left: -20px; 
+  right: -20px;
+  bottom: -20px;
+  background-color: var(--brand-dark); 
+  border-radius: 20px; 
+  filter: blur(25px); 
+  opacity: 0.5; 
+  z-index: -1; 
+}
+
+.form-bottom-border {
+  position: absolute;
+  bottom: -50px; 
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%; 
+  height: 5px;
+  background-color: var(--brand-gradient-end); 
+  border-radius: 5px;
+  z-index: -1;
+}
+
+.form-container {
+  position: relative; 
+  z-index: 1; 
+}
+
+
+@media (max-width: 900px) {
+  .form-blur-background {
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    filter: blur(15px);
+  }
+
+  .form-bottom-border {
+    bottom: -30px;
+    width: 60%;
+  }
 }

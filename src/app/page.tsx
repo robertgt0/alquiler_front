@@ -153,7 +153,7 @@ export default function HomePage() {
       setErrors((prev) => ({ ...prev, [name]: "" }));
       return;
     }
-    
+
     //manejo estándar para otros campos
     if (type === "number") {
       const numValue = Number(value);
@@ -169,7 +169,7 @@ export default function HomePage() {
           setErrors((prev) => ({ ...prev, [name]: "" }));
         }
       } else {
-         setFormData((prev) => ({ ...prev, [name]: numValue }));
+        setFormData((prev) => ({ ...prev, [name]: numValue }));
       }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -179,7 +179,7 @@ export default function HomePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.ci.length !== 8){
+    if (formData.ci.length !== 8) {
       setErrors((prev) => ({
         ...prev,
         ci: "El CI debe tener exactamente 8 dígitos.",
@@ -239,11 +239,51 @@ export default function HomePage() {
       setMessage("Error: " + err.message);
     }
   };
-  
+
   return (
     <div className="page-container">
+      {/* Columna 1: El Título */}
+      <div>
+        <h1 className="hero-title">REGISTRO DE DEUDA</h1>
+      </div>
+
+      {/* Columna 2: La tarjeta del formulario */}
       <div className="form-container">
-        <h2 className="form-title">Registro de Deuda</h2>
+        {/* El h2 que estaba aquí fue ELIMINADO */}
+
+        
+      <div className="page-container">
+        {/* Columna 1: El Título */}
+        <div>
+          <h1 className="hero-title">REGISTRO DE DEUDA</h1>
+        </div>
+
+        {/* --- INICIO DE CAMBIOS: Añadir el form-wrapper y los decorativos --- */}
+        {/* Columna 2: La tarjeta del formulario, ahora envuelta en form-wrapper */}
+        <div className="form-wrapper">
+          <div className="form-blur-background"></div> {/* El blur de fondo */}
+          <div className="form-bottom-border"></div> {/* La línea de abajo */}
+          
+          <div className="form-container"> {/* TU TARJETA BLANCA YA EXISTENTE */}
+            <form onSubmit={handleSubmit} className="form-layout" noValidate>
+              {/* El contenido del formulario se queda EXACTAMENTE IGUAL */}
+              {/* ... (todos los form-group, labels, inputs, errores, etc.) ... */}
+
+              {/* Botón Aceptar */}
+              <div className="button-container">
+                <button type="submit" className="submit-button">
+                  ACEPTAR
+                </button>
+              </div>
+            </form>
+
+            {message && <p className="form-message">{message}</p>}
+          </div> {/* Cierre de form-container */}
+        </div> {/* Cierre de form-wrapper */}
+        {/* --- FIN DE CAMBIOS --- */}
+      </div>
+
+
 
         <form onSubmit={handleSubmit} className="form-layout" noValidate>
           <h4 className="form-section-title">Datos personales</h4>
