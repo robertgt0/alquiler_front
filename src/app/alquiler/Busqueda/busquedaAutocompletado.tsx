@@ -39,8 +39,15 @@ interface ApiResponse {
 //http://localhost:5000
 //https://alquiler-back.vercel.app
 //https://alquiler-back.vercel.app/api/busqueda/history
+// Helper: normaliza NEXT_PUBLIC_API_URL evitando duplicar '/api'
+function getApiRoot(): string {
+    const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const trimmed = raw.replace(/\/+$/, '');
+    return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+}
+
 class BusquedaService {
-    private static API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://alquiler-back.vercel.app';
+    private static API_BASE = getApiRoot();
 
     static async searchJobsInBackend(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
         try {
@@ -53,7 +60,7 @@ class BusquedaService {
 
             // 1. Buscar especialidades en el backend para sugerencias
             ///borbotones/search/autocomplete
-            const apiEndpoint = endpoint || `${this.API_BASE}/api/busqueda/autocomplete`;
+            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/autocomplete`;
             const response = await fetch(`${apiEndpoint}?q=${encodeURIComponent(query)}&limit=50`);
 
             if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -128,7 +135,7 @@ class BusquedaService {
 
     static async getHistorial(endpoint?: string): Promise<string[]> {
         try {
-            const apiEndpoint = endpoint || `${this.API_BASE}/api/busqueda/history`;
+            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
             const response = await fetch(apiEndpoint);
 
             if (response.ok) {
@@ -146,7 +153,7 @@ class BusquedaService {
 
     static async clearHistorial(endpoint?: string): Promise<boolean> {
         try {
-            const apiEndpoint = endpoint || `${this.API_BASE}/api/busqueda/history`;
+            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
             const response = await fetch(apiEndpoint, {
                 method: 'DELETE',
             });
@@ -179,7 +186,7 @@ class BusquedaService {
                 return [];
             }
 
-            const apiEndpoint = endpoint || `${this.API_BASE}/api/busqueda/autocomplete`;
+            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/autocomplete`;
             const response = await fetch(
                 `${apiEndpoint}?q=${encodeURIComponent(query)}&limit=6`
             );
