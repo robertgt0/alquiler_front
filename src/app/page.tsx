@@ -22,6 +22,7 @@ interface FormErrors {
   nit?: string;
   descripcion?: string;
   descripcion_envio?: string;
+  concepto?: string;
   //se pueden añadir más errores de otros campos aquí
 }
 
@@ -116,6 +117,22 @@ export default function HomePage() {
 
     //validar descripcion_envio (solo letras Unicode y espacios)
     if (name === "descripcion_envio") {
+      const regex = /^[p{L} ]*$/u;
+
+      if (regex.test(value) || value === "") {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "No se pueden ingresar caracteres numéricos o especiales",
+        }));
+      }
+      return;
+    }
+
+    //validar concepto (solo letras Unicode y espacios)
+    if (name === "concepto") {
       const regex = /^[p{L} ]*$/u;
 
       if (regex.test(value) || value === "") {
@@ -330,7 +347,7 @@ export default function HomePage() {
           />
           {/* Mensaje de error específico para descripción envío */}
           <p style={errorStyle}>{errors.descripcion_envio || " "}</p>
-          
+
           <input
             name="concepto"
             placeholder="Concepto"
@@ -339,6 +356,9 @@ export default function HomePage() {
             required
             style={inputStyle}
           />
+          {/* Mensaje de error específico para concepto */}
+          <p style={errorStyle}>{errors.concepto || " "}</p>
+          
           <input
             name="Costo_Unitario"
             type="number"
