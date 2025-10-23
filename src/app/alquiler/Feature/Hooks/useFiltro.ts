@@ -109,6 +109,9 @@ export function useFiltros() {
     setLoadingProvincias(true);
     getProvinciasPorCiudad(filtro.ciudad, ac.signal)
       .then(setProvincias)
+      .catch(() => {
+        setProvincias([]);
+      })
       .finally(() => setLoadingProvincias(false));
 
     return () => ac.abort();
@@ -174,7 +177,7 @@ export function useFiltros() {
     return () => ac.abort();
   }, [filtro.tipoEspecialidad]);
 
-  return {
+    return {
   // selects
   departamentos,
   ciudades,
@@ -186,9 +189,7 @@ export function useFiltros() {
 
     // filtros
     filtro,
-    handleChange,
-
-    // acción del buscador
+    handleChange,    // acción del buscador
     buscarPorServicio,
 
     // resultados

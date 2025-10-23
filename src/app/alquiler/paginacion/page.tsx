@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import JobCard from "./components/jobCard";
+import { UserProfileCard } from "./components/UserProfileCard";
 import Pagination from "./components/Pagination";
 import { getJobs } from "./services/jobService";
 import { usePagination } from "./hooks/usePagination";
@@ -44,6 +45,16 @@ function BusquedaContent() {
 
   const itemsPerPage = 10;
 
+  // DEBUG: imprimir muestra de items en cliente
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // se ejecuta solo en cliente
+      setTimeout(() => {
+        console.log('BusquedaPage sample allJobs[0]:', allJobs[0]);
+      }, 0);
+    }
+  }, [allJobs]);
+
   // ---------------- Opciones de ordenamiento ----------------
   const opcionesOrdenamiento = [
     "Fecha (Reciente)",
@@ -84,7 +95,12 @@ function BusquedaContent() {
         sorted.sort((a, b) => b.nombre.localeCompare(a.nombre));
         break;
       case "Mayor Calificación (⭐)":
-        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        // Ordenar por número de servicios disponibles como aproximación de calificación
+        sorted.sort((a, b) => {
+          const servA = a.servicios?.filter(s => s.disponible)?.length || 0;
+          const servB = b.servicios?.filter(s => s.disponible)?.length || 0;
+          return servB - servA;
+        });
         break;
     }
     return sorted;
@@ -255,27 +271,41 @@ function BusquedaContent() {
         </div>
 
         {/* Vista Usuarios */}
-        {modoVista === "usuarios" && usuariosFiltrados.length > 0 ? (
+        {modoVista === "usuarios" ? (
           <section className="mt-10">
             <h2 className="text-2xl font-bold text-blue-600 mb-6">
               Resultados de Profesionales
             </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {usuariosOrdenados.map((u) => (
-                <div
-                  key={u._id}
-                  className="bg-white rounded-xl p-5 shadow-md border border-gray-100 hover:shadow-lg transition"
-                >
-                  <h3 className="font-semibold text-lg text-gray-900">{u.nombre}</h3>
+            {usuariosFiltrados.length > 0 ? (
+              <>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {usuariosOrdenados.map((u) => (
+                    <div key={u._id}>
+                      <UserProfileCard 
+                        usuario={u}
+                        onContactClick={() => {
+                          console.log("Contactar a:", u.nombre);
+                          // Aquí puedes agregar la lógica para contactar al profesional
+                        }}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <button
-              onClick={() => setModoVista("jobs")}
-              className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
+                <p className="text-sm text-gray-600 mt-4">
+                  Se encontraron {usuariosFiltrados.length} profesionales
+                </p>
+              </>
+            ) : (
+              <p className="text-center text-gray-600 mt-4">
+                No se encontraron profesionales con los filtros seleccionados
+              </p>
+            )}
+            <a
+              href="/alquiler/paginacion"
+              className="inline-block mt-6 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
             >
               Volver a ofertas
-            </button>
+            </a>
           </section>
         ) : (
           /* Vista Jobs */

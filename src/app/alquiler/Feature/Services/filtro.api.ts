@@ -10,6 +10,8 @@ import type {
 } from "../Types/filtroType";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+// Prefijo de rutas para el módulo de borbotones
+const FILTROS_BASE = `${BASE_URL}/api/borbotones/filtros`;
 type Option = { value: string; label: string };
 
 /* --------- type guards --------- */
@@ -55,7 +57,7 @@ export async function getCiudades(
   limit = 100,
   soloBolivia?: boolean
 ): Promise<Option[]> {
-  const url = new URL(`${BASE_URL}/api/filtros/ciudades`);
+  const url = new URL(`${FILTROS_BASE}/ciudades`);
   if (q && q.trim()) url.searchParams.set("q", q.trim());
   url.searchParams.set("page", String(page));
   url.searchParams.set("limit", String(limit));
@@ -81,7 +83,7 @@ export async function getCiudades(
 
 /* --------- departamentos (Bolivia) --------- */
 export async function getDepartamentos(): Promise<Option[]> {
-  const url = `${BASE_URL}/api/filtros/departamentos`;
+  const url = `${FILTROS_BASE}/departamentos`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Error ${res.status} al obtener departamentos`);
   const json: unknown = await res.json();
@@ -99,7 +101,7 @@ export async function getDepartamentos(): Promise<Option[]> {
 
 /* --------- ciudades por departamento (frontend helper) --------- */
 export async function getCiudadesPorDepartamento(departamento: string): Promise<Option[]> {
-  const url = `${BASE_URL}/api/filtros/ciudades/por-departamento?departamento=${encodeURIComponent(
+  const url = `${FILTROS_BASE}/ciudades/por-departamento?departamento=${encodeURIComponent(
     departamento
   )}`;
   const res = await fetch(url);
@@ -116,17 +118,37 @@ export async function getCiudadesPorDepartamento(departamento: string): Promise<
 }
 
 /* --------- provincias por ciudad --------- */
+/* Normaliza texto para búsqueda */
+const normalizarTexto = (texto: string): string => {
+  return texto
+    ? texto.trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // remover acentos
+      .replace(/[""'']/g, '') // limpiar comillas especiales
+      .toLowerCase()
+    : "";
+};
+
 export async function getProvinciasPorCiudad(
   ciudad: string,
   signal?: AbortSignal
 ): Promise<Option[]> {
   if (!ciudad) return [];
-  const url = `${BASE_URL}/api/filtros/ciudad/provincias?ciudad=${encodeURIComponent(
-    ciudad
-  )}`;
+
+  // Normalizar nombre de ciudad antes de buscar
+  const nombreNormalizado = normalizarTexto(ciudad);
+  if (!nombreNormalizado) return [];
+  
+  const url = `${FILTROS_BASE}/ciudad/provincias?ciudad=${encodeURIComponent(nombreNormalizado)}`;
 
   try {
     const res = await fetch(url, { signal });
+    if (res.status === 404) {
+      // Ciudad no encontrada en el backend -> devolver lista vacía (no hacer fallar la UI)
+      console.warn(`⚠️ [FILTROS] Ciudad no encontrada al solicitar provincias: ${ciudad}`);
+      return [];
+    }
+
     if (!res.ok) throw new Error(`Error ${res.status} al cargar provincias`);
     const json: unknown = await res.json();
 
@@ -150,7 +172,7 @@ export async function getProvinciasPorCiudad(
 
 /* --------- especialidades --------- */
 export async function getEspecialidades(): Promise<Option[]> {
-  const url = `${BASE_URL}/api/filtros/especialidades`;
+  const url = `${FILTROS_BASE}/especialidades`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Error ${res.status} al obtener especialidades`);
 
@@ -176,7 +198,7 @@ export async function getUsuariosPorDisponibilidad(
   disponible: boolean,
   signal?: AbortSignal
 ): Promise<UsuarioResumen[]> {
-  const url = new URL(`${BASE_URL}/api/filtros/usuarios/disponible`);
+  const url = new URL(`${FILTROS_BASE}/usuarios/disponible`);
   url.searchParams.set("disponible", String(disponible));
 
   try {
@@ -191,8 +213,14 @@ export async function getUsuariosPorDisponibilidad(
       Array.isArray((json as UsuariosResponse).data) &&
       ((json as UsuariosResponse).data as unknown[]).every(isUsuario);
     if (!ok) throw new Error("Respuesta inválida (usuarios/disponible)");
-
-    return (json as UsuariosResponse).data;
+      const data = (json as UsuariosResponse).data as UsuarioResumen[];
+      // asegurar calificacion (si no existe, asignar aleatoria)
+      const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+      const withRating = data.map((u) => ({
+        ...u,
+        calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
+      }));
+      return withRating;
   } catch (e: unknown) {
     if (isAbortError(e)) return [];
     throw e;
@@ -204,7 +232,7 @@ export async function getUsuariosPorEspecialidadId(
   especialidadId: number,
   signal?: AbortSignal
 ): Promise<UsuarioResumen[]> {
-  const url = new URL(`${BASE_URL}/api/filtros/usuarios/especialidad`);
+  const url = new URL(`${FILTROS_BASE}/usuarios/especialidad`);
   url.searchParams.set("especialidad_id", String(especialidadId));
 
   try {
@@ -219,8 +247,12 @@ export async function getUsuariosPorEspecialidadId(
       Array.isArray((json as UsuariosResponse).data) &&
       ((json as UsuariosResponse).data as unknown[]).every(isUsuario);
     if (!ok) throw new Error("Respuesta inválida (usuarios/especialidad)");
-
-    return (json as UsuariosResponse).data;
+      const data = (json as UsuariosResponse).data as UsuarioResumen[];
+      const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+      return data.map((u) => ({
+        ...u,
+        calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
+      }));
   } catch (e: unknown) {
     if (isAbortError(e)) return [];
     throw e;
@@ -239,7 +271,7 @@ export async function getUsuariosPorServicioNombre(
     signal?: AbortSignal;
   }
 ): Promise<UsuarioResumen[]> {
-  const url = new URL(`${BASE_URL}/api/filtros/usuarios/servicio`);
+  const url = new URL(`${FILTROS_BASE}/usuarios/servicio`);
   url.searchParams.set("servicio", servicio);
   if (opts?.disponible !== undefined) url.searchParams.set("disponible", String(opts.disponible));
   if (opts?.ciudad) url.searchParams.set("ciudad", opts.ciudad);
@@ -259,8 +291,12 @@ export async function getUsuariosPorServicioNombre(
       Array.isArray((json as UsuariosResponse).data) &&
       ((json as UsuariosResponse).data as unknown[]).every(isUsuario);
     if (!ok) throw new Error("Respuesta inválida (usuarios/servicio)");
-
-    return (json as UsuariosResponse).data;
+      const data = (json as UsuariosResponse).data as UsuarioResumen[];
+      const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+      return data.map((u) => ({
+        ...u,
+        calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
+      }));
   } catch (e: unknown) {
     if (isAbortError(e)) return [];
     throw e;

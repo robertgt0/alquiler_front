@@ -162,14 +162,22 @@ class BusquedaService {
         try {
             console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', query);
 
-            if (!this.validarCaracteres(query)) {
+            const qTrim = String(query || '').trim();
+            // No llamar si menos de 2 caracteres (backend exige al menos 2)
+            if (qTrim.length < 2) {
+                console.log('⚠️ [SUGERENCIAS] Query demasiado corta, evitando llamada al backend:', qTrim);
+                return [];
+            }
+
+            // Validar caracteres permitidos
+            if (!this.validarCaracteres(qTrim)) {
+                console.log('⚠️ [SUGERENCIAS] Query contiene caracteres no permitidos, evitando llamada:', qTrim);
                 return [];
             }
 
             const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/autocomplete`;
-            const response = await fetch(
-                `${apiEndpoint}?q=${encodeURIComponent(query)}&limit=6`
-            );
+            const encoded = encodeURIComponent(qTrim);
+            const response = await fetch(`${apiEndpoint}?q=${encoded}&limit=6`);
 
             if (!response.ok) {
                 throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -218,6 +226,13 @@ export default function BusquedaAutocompletado({
     const [historial, setHistorial] = useState<string[]>([]);
     const [cargandoHistorial, setCargandoHistorial] = useState(false);
     const [inputFocused, setInputFocused] = useState(false);
+
+    // Normaliza texto: primera letra en mayúscula, mantiene el resto
+    const capitalizarPrimera = (texto: string) => {
+        const t = texto ? String(texto).trim() : "";
+        if (!t) return "";
+        return t.charAt(0).toUpperCase() + t.slice(1);
+    };
 
     // 🔥 NUEVO: Estado para controlar loading en área de resultados
     const [loadingResultados, setLoadingResultados] = useState(false);
@@ -283,8 +298,9 @@ export default function BusquedaAutocompletado({
     // Sincronizar con valorInicial
     useEffect(() => {
         console.log('🔄 [AUTOCOMPLETADO] valorInicial actualizado:', valorInicial);
-        if (valorInicial !== query) {
-            setQuery(valorInicial);
+        const valorCapitalizado = capitalizarPrimera(valorInicial);
+        if (valorCapitalizado !== query) {
+            setQuery(valorCapitalizado);
         }
     }, [valorInicial]);
 
@@ -423,13 +439,20 @@ export default function BusquedaAutocompletado({
 
     const buscarSugerenciasBackend = useCallback(async (texto: string): Promise<string[]> => {
         try {
-            if (!caracteresValidos.test(texto)) {
+            const tTrim = String(texto || '').trim();
+            if (tTrim.length < 2) {
+                console.log('⚠️ [SUGERENCIAS] Texto demasiado corto para sugerencias:', tTrim);
+                return [];
+            }
+
+            if (!caracteresValidos.test(tTrim)) {
+                console.log('⚠️ [SUGERENCIAS] Texto contiene caracteres inválidos:', texto);
                 return [];
             }
 
             console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', texto);
 
-            const sugerenciasBackend = await BusquedaService.getAutocompleteSuggestions(texto, apiConfig?.endpoint);
+            const sugerenciasBackend = await BusquedaService.getAutocompleteSuggestions(tTrim, apiConfig?.endpoint);
             console.log('🔍 [SUGERENCIAS] Sugerencias del backend:', sugerenciasBackend);
 
             if (sugerenciasBackend.length > 0) {
@@ -577,7 +600,8 @@ export default function BusquedaAutocompletado({
     }, [datos, onSearch, buscarTrabajosLocal, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint]);
 
     const seleccionarSugerencia = useCallback(async (texto: string) => {
-        setQuery(texto);
+        const t = capitalizarPrimera(texto);
+        setQuery(t);
         setSugerencias([]);
         setMensaje("");
         setMostrarSugerencias(false);
@@ -762,7 +786,8 @@ export default function BusquedaAutocompletado({
                         placeholder={placeholder}
                         value={query}
                         onChange={(e) => {
-                            const nuevoValor = e.target.value;
+                            const nuevoValorRaw = e.target.value;
+                            const nuevoValor = capitalizarPrimera(nuevoValorRaw);
                             setQuery(nuevoValor);
 
                             if (nuevoValor === "") {
