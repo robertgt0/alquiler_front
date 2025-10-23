@@ -3,6 +3,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  --brand-dark: #000031;
+  --brand-gradient-start: #060955;
+  --brand-gradient-mid: #0C127A;
+  --brand-gradient-end: #1723C3;
+  --brand-white: #FFFFFF;
+  --brand-gray: #E5E7EB;
+  --brand-text-dark: #1F2937;
+  --brand-text-light: #F9FAFB;
+  --brand-error: #EF4444;
 }
 
 @theme inline {
@@ -23,4 +33,104 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.page-container {
+  font-family: sans-serif;
+  background-color: #f4f4f4;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  color: #000;
+  min-height: 100vh;
+}
+
+.form-container {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  color: #000;
+}
+
+.form-title {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #000;
+}
+
+.form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: #000;
+}
+
+.form-section-title {
+  color: #000;
+  margin-bottom: 0;
+}
+
+.form-section-title:nth-of-type(2) {
+  margin-top: 1rem;
+}
+
+.form-label {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.form-input {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  color: #000;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-error {
+  color: var(--brand-error);
+  font-size: 0.8rem;
+  margin: 0 0 0.5rem 0;
+  height: 1rem;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+}
+
+.input-group-addon {
+  font-size: 1rem;
+  padding: 0.5rem;
+  background-color: #e9ecef;
+  border: 1px solid #ccc;
+  border-radius: 4px 0 0 4px;
+  color: #495057;
+  border-right: none;
+}
+
+.input-group-field {
+  border-radius: 0 4px 4px 0;
+  flex: 1;
+}
+
+.submit-button {
+  background-color: #007bff;
+  color: #fff;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+  font-weight: bold;
+}
+
+.form-message {
+  margin-top: 1rem;
+  text-align: center;
+  color: #000;
 }

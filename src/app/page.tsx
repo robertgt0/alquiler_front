@@ -239,69 +239,24 @@ export default function HomePage() {
       setMessage("Error: " + err.message);
     }
   };
-
-  const inputStyle = {
-    padding: "0.5rem",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-    color: "#000",
-  };
   
-  const errorStyle = {
-    color: "red",
-    fontSize: "0.8rem",
-    margin: "0 0 0.5rem 0",
-    height: "1rem",
-  };
-
   return (
-    <div
-      style={{
-        fontFamily: "sans-serif",
-        backgroundColor: "#f4f4f4",
-        padding: "2rem",
-        display: "flex",
-        justifyContent: "center",
-        color: "#000",
-        minHeight: "100vh",
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "#fff",
-          padding: "2rem",
-          borderRadius: "8px",
-          boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-          maxWidth: "500px",
-          width: "100%",
-          color: "#000",
-        }}
-      >
-        <h2 style={{ textAlign: "center", marginBottom: "1rem", color: "#000" }}>
-          Registro de Deuda
-        </h2>
+    <div className="page-container">
+      <div className="form-container">
+        <h2 className="form-title">Registro de Deuda</h2>
 
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-            color: "#000",
-          }}
-          noValidate
-        >
-          <h4 style={{ color: "#000", marginBottom: 0 }}>Datos personales</h4>
+        <form onSubmit={handleSubmit} className="form-layout" noValidate>
+          <h4 className="form-section-title">Datos personales</h4>
           <input
             name="email_cliente"
             placeholder="Correo electrónico"
             value={formData.email_cliente}
             onChange={handleChange}
             required
-            style={inputStyle}
+            className="form-input"
           />
           {/* Mensaje de error específico para email */}
-          <p style={errorStyle}>{errors.email_cliente || " "}</p>
+          <p className="form-error">{errors.email_cliente || " "}</p>
 
           <input
             name="nombre_cliente"
@@ -309,10 +264,10 @@ export default function HomePage() {
             value={formData.nombre_cliente}
             onChange={handleChange}
             required
-            style={inputStyle}
+            className="form-input"
           />
           {/* Mensaje de error específico para el nombre */}
-          <p style={errorStyle}>{errors.nombre_cliente || " "}</p>
+          <p className="form-error">{errors.nombre_cliente || " "}</p>
 
           <input
             name="apellido_cliente"
@@ -320,35 +275,33 @@ export default function HomePage() {
             value={formData.apellido_cliente}
             onChange={handleChange}
             required
-            style={inputStyle}
+            className="form-input"
           />
           {/* Mensaje de error específico para el apellido */}
-          <p style={errorStyle}>{errors.apellido_cliente || " "}</p>
-          
+          <p className="form-error">{errors.apellido_cliente || " "}</p>
+
           <input
             name="ci"
             placeholder="CI"
             value={formData.ci}
             onChange={handleChange}
             required
-            style={inputStyle}
+            className="form-input"
           />
           {/* Mensaje de error específico para CI */}
-          <p style={errorStyle}>{errors.ci || " "}</p>
+          <p className="form-error">{errors.ci || " "}</p>
 
-          <h4 style={{ color: "#000", margin: "1rem 0 0 0" }}>
-            Datos de la deuda
-          </h4>
+          <h4 className="form-section-title">Datos de la deuda</h4>
           <input
             name="identificador_deuda"
             placeholder="Identificador de deuda"
             value={formData.identificador_deuda}
             onChange={handleChange}
             required
-            style={inputStyle}
+            className="form-input"
           />
           {/* Mensaje de error específico para identificador_deuda */}
-          <p style={errorStyle}>{errors.identificador_deuda || " "}</p>
+          <p className="form-error">{errors.identificador_deuda || " "}</p>
 
           <input
             name="nit"
@@ -356,10 +309,10 @@ export default function HomePage() {
             value={formData.nit}
             onChange={handleChange}
             required
-            style={inputStyle}
+            className="form-input"
           />
           {/* Mensaje de error específico para NIT */}
-          <p style={errorStyle}>{errors.nit || " "}</p>
+          <p className="form-error">{errors.nit || " "}</p>
 
           <input
             name="descripcion"
@@ -367,10 +320,10 @@ export default function HomePage() {
             value={formData.descripcion}
             onChange={handleChange}
             required
-            style={inputStyle}
+            className="form-input"
           />
           {/* Mensaje de error específico para descripción */}
-          <p style={errorStyle}>{errors.descripcion || " "}</p>
+          <p className="form-error">{errors.descripcion || " "}</p>
 
           <input
             name="descripcion_envio"
@@ -378,10 +331,10 @@ export default function HomePage() {
             value={formData.descripcion_envio}
             onChange={handleChange}
             required
-            style={inputStyle}
+            className="form-input"
           />
           {/* Mensaje de error específico para descripción envío */}
-          <p style={errorStyle}>{errors.descripcion_envio || " "}</p>
+          <p className="form-error">{errors.descripcion_envio || " "}</p>
 
           <input
             name="concepto"
@@ -389,24 +342,14 @@ export default function HomePage() {
             value={formData.concepto}
             onChange={handleChange}
             required
-            style={inputStyle}
+            className="form-input"
           />
           {/* Mensaje de error específico para concepto */}
-          <p style={errorStyle}>{errors.concepto || " "}</p>
-          
-          <label style={{ margin: '0', fontSize: '0.9rem' }}>Monto (en USD)</label>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <span style={{
-              fontSize: "1rem",
-              padding: "0.5rem",
-              backgroundColor: "#e9ecef",
-              border: "1px solid #ccc",
-              borderRadius: "4px 0 0 4px",
-              color: "#495057",
-              borderRight: "none",
-            }}>
-              $
-            </span>
+          <p className="form-error">{errors.concepto || " "}</p>
+
+          <label className="form-label">Monto (en USD)</label>
+          <div className="input-group">
+            <span className="input-group-addon">$</span>
             <input
               name="Costo_Unitario"
               type="number"
@@ -414,34 +357,19 @@ export default function HomePage() {
               value={formData.Costo_Unitario}
               onChange={handleChange}
               required
-              style={{...inputStyle, borderRadius: "0 4px 4px 0", flex: 1}} 
+              className="form-input input-group-field" // Tiene 2 clases
               min="0"
             />
           </div>
           {/* Mensaje de error específico para Costo Unitario */}
-          <p style={errorStyle}>{errors.Costo_Unitario || " "}</p>
+          <p className="form-error">{errors.Costo_Unitario || " "}</p>
 
-          <button
-            type="submit"
-            style={{
-              backgroundColor: "#007bff",
-              color: "#fff",
-              padding: "0.75rem",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              marginTop: "1rem",
-            }}
-          >
+          <button type="submit" className="submit-button">
             Aceptar
           </button>
         </form>
 
-        {message && (
-          <p style={{ marginTop: "1rem", textAlign: "center", color: "#000" }}>
-            {message}
-          </p>
-        )}
+        {message && <p className="form-message">{message}</p>}
       </div>
     </div>
   );
