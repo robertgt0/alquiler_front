@@ -118,7 +118,7 @@ export default function HomePage() {
     if (formData.nit.length !== 10) {
       setErrors((prev) => ({
         ...prev,
-        nit: "El campo de NIT solo tiene que tener 10 digitos",
+        nit: "El campo de NIT solo debe tener 10 digitos",
       }));
       setMessage("Por favor, corrija los errores en el formulario.");
       return;
@@ -274,7 +274,7 @@ export default function HomePage() {
           />
           {/* Mensaje de error específico para NIT */}
           <p style={errorStyle}>{errors.nit || " "}</p>
-          
+
           <input
             name="descripcion"
             placeholder="Descripción"
