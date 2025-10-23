@@ -82,6 +82,13 @@ const Calendario: React.FC = () => {
     setFechaSeleccionada(null);
   };
 
+  const handleSiguiente = () => {
+    if (fechaSeleccionada) {
+      // Este trigger hará que se muestre el componente Horario
+      // debido al condicional if (fechaSeleccionada) más abajo
+    }
+  };
+
   const generarDias = (): React.ReactElement[] => {
     const daysInMonth = getDaysInMonth(currentMonth, currentYear);
     const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
@@ -162,23 +169,27 @@ const Calendario: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-xl">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-center gap-8 mb-8">
             <button
               onClick={mesAnterior}
-              className="text-3xl text-blue-600 hover:text-blue-700 transition-all p-3 hover:bg-blue-50 rounded-lg"
+              className="text-blue-600 hover:text-blue-700 transition-all hover:bg-blue-50 rounded-lg p-2"
               aria-label="Mes anterior"
             >
-              ◀
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
             </button>
-            <h2 className="text-xl font-bold text-gray-800">
+            <h2 className="text-xl font-bold text-gray-800 min-w-[200px] text-center">
               {mesesNombres[currentMonth]} {currentYear}
             </h2>
             <button
               onClick={mesSiguiente}
-              className="text-3xl text-blue-600 hover:text-blue-700 transition-all p-3 hover:bg-blue-50 rounded-lg"
+              className="text-blue-600 hover:text-blue-700 transition-all hover:bg-blue-50 rounded-lg p-2"
               aria-label="Mes siguiente"
             >
-              ▶
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </button>
           </div>
 
@@ -199,6 +210,7 @@ const Calendario: React.FC = () => {
 
           <div className="flex justify-end">
             <button
+              onClick={handleSiguiente}
               disabled={!fechaSeleccionada}
               className={`px-20 py-3 rounded-lg text-base font-bold transition-all shadow-lg ${
                 fechaSeleccionada
