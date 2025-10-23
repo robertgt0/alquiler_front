@@ -18,6 +18,7 @@ interface FormErrors {
   nombre_cliente?: string;
   apellido_cliente?: string;
   ci?: string;
+  identificador_deuda?: string;
   //se pueden añadir más errores de otros campos aquí
 }
 
@@ -57,6 +58,22 @@ export default function HomePage() {
         setErrors((prev) => ({
           ...prev,
           [name]: "Solo se aceptan dígitos y hasta un máximo de 8.",
+        }));
+      }
+      return;
+    }
+
+    //validar identificador_deuda (solo dígitos)
+    if (name === "identificador_deuda") {
+      const regex = /^[0-9]*$/;
+
+      if (regex.test(value) || value === "") {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        setErrors((prev) => ({ ...prev, [name]: "" }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          [name]: "El identificador de deuda solo se permite ingresar digitos numericos",
         }));
       }
       return;
@@ -218,6 +235,9 @@ export default function HomePage() {
             required
             style={inputStyle}
           />
+          {/* Mensaje de error específico para identificador_deuda */}
+          <p style={errorStyle}>{errors.identificador_deuda || " "}</p>
+          
           <input
             name="nit"
             placeholder="NIT"
