@@ -77,7 +77,7 @@ const JobCard: React.FC<JobCardProps> = ({
         {/* Estado y Calificación */}
         <div className="flex items-center justify-between mb-4">
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-            employmentType === "Activo" 
+            employmentType === "Disponible" 
               ? "bg-green-50 text-green-600" 
               : "bg-red-50 text-red-600"
           }`}>

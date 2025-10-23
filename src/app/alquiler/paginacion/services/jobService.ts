@@ -51,7 +51,7 @@ export const getJobs = async (): Promise<Job[]> => {
         salaryRange: firstService && (firstService.precio_personalizado ?? firstService.precio)
           ? `Bs ${Number(firstService.precio_personalizado ?? firstService.precio).toLocaleString('es-BO')}`
           : undefined,
-        employmentType: user.activo ? "Activo" : "Inactivo",
+        employmentType: user.activo ? "Disponible" : "No disponible",
         employmentTypeColor: user.activo
           ? "bg-green-50 text-green-600"
           : "bg-red-50 text-red-600",

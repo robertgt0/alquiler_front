@@ -55,11 +55,11 @@ export const UserProfileCard = ({ usuario, onContactClick }: UserProfileCardProp
         {/* Estado de disponibilidad */}
         <div className="flex items-center justify-between mb-4">
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-            servicios?.some(s => s.disponible) 
+            usuario.activo
               ? "bg-green-50 text-green-600"
               : "bg-red-50 text-red-600"
           }`}>
-            {servicios?.some(s => s.disponible) ? "Disponible" : "No Disponible"}
+            {usuario.activo ? "Disponible" : "No Disponible"}
           </span>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
