@@ -120,6 +120,7 @@ export default function Mapa({
 }: MapaProps) {
   const centroInicial: [number, number] = [-17.3895, -66.1568];
   const [marcadorPersonalizado, setMarcadorPersonalizado] = React.useState<[number, number] | null>(null);
+  const [mostrarUbicacionesPredefinidas, setMostrarUbicacionesPredefinidas] = React.useState(true);
 
   const crearIconoFixer = (onClick?: () => void) =>
     L.divIcon({
@@ -228,10 +229,20 @@ export default function Mapa({
   // ✅ Maneja la presión prolongada
   const handleLongPress = (lat: number, lng: number) => {
     setMarcadorPersonalizado([lat, lng]);
+    setMostrarUbicacionesPredefinidas(false); // ✅ Ocultar ubicaciones predefinidas al presionar
+    
     if (onMarcadorAgregado) {
       onMarcadorAgregado(lat, lng);
     }
   };
+
+  // ✅ Efecto para mostrar ubicaciones predefinidas cuando se selecciona una ubicación
+  useEffect(() => {
+    if (ubicacionSeleccionada) {
+      setMostrarUbicacionesPredefinidas(true);
+      setMarcadorPersonalizado(null); // ✅ Ocultar marcador personalizado al buscar
+    }
+  }, [ubicacionSeleccionada]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
@@ -246,7 +257,8 @@ export default function Mapa({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {ubicacionSeleccionada && (
+          {/* ✅ SOLO mostrar ubicación seleccionada si se deben mostrar predefinidas */}
+          {ubicacionSeleccionada && mostrarUbicacionesPredefinidas && (
             <Marker
               position={ubicacionSeleccionada.posicion}
               icon={blueMarkerIcon}
@@ -258,6 +270,7 @@ export default function Mapa({
             </Marker>
           )}
 
+          {/* ✅ Marcador por presión prolongada (siempre visible cuando existe) */}
           {marcadorPersonalizado && (
             <Marker position={marcadorPersonalizado} icon={redMarkerIcon}>
               <Popup>📍 Ubicación seleccionada</Popup>
