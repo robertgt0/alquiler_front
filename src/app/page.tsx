@@ -23,7 +23,7 @@ interface FormErrors {
   descripcion?: string;
   descripcion_envio?: string;
   concepto?: string;
-  //se pueden añadir más errores de otros campos aquí
+  Costo_Unitario?: string;
 }
 
 export default function HomePage() {
@@ -148,10 +148,25 @@ export default function HomePage() {
     }
 
     //manejo estándar para otros campos
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "number" ? Number(value) : value,
-    }));
+    if (type === "number") {
+      const numValue = Number(value);
+
+      if (name === "Costo_Unitario") {
+        if (numValue < 0) {
+          setErrors((prev) => ({
+            ...prev,
+            [name]: "El monto no puede ser negativo",
+          }));
+        } else {
+          setFormData((prev) => ({ ...prev, [name]: numValue }));
+          setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
+      } else {
+         setFormData((prev) => ({ ...prev, [name]: numValue }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -359,16 +374,32 @@ export default function HomePage() {
           {/* Mensaje de error específico para concepto */}
           <p style={errorStyle}>{errors.concepto || " "}</p>
           
-          <input
-            name="Costo_Unitario"
-            type="number"
-            placeholder="Costo unitario"
-            value={formData.Costo_Unitario}
-            onChange={handleChange}
-            required
-            style={inputStyle}
-            min="0"
-          />
+          <label style={{ margin: '0', fontSize: '0.9rem' }}>Monto (en USD)</label>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <span style={{
+              fontSize: "1rem",
+              padding: "0.5rem",
+              backgroundColor: "#e9ecef",
+              border: "1px solid #ccc",
+              borderRadius: "4px 0 0 4px",
+              color: "#495057",
+              borderRight: "none",
+            }}>
+              $
+            </span>
+            <input
+              name="Costo_Unitario"
+              type="number"
+              placeholder="Costo unitario"
+              value={formData.Costo_Unitario}
+              onChange={handleChange}
+              required
+              style={{...inputStyle, borderRadius: "0 4px 4px 0", flex: 1}} 
+              min="0"
+            />
+          </div>
+          {/* Mensaje de error específico para Costo Unitario */}
+          <p style={errorStyle}>{errors.Costo_Unitario || " "}</p>
 
           <button
             type="submit"
