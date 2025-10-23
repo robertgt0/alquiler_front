@@ -7,7 +7,7 @@ import BuscadorUbicaciones from "./BuscadorUbicaciones";
 import FixersHeader from "./FixersHeader";
 import { Ubicacion, Fixer, UserLocation, UbicacionFromAPI } from "../../types";
 import { UbicacionManager } from "./UbicacionManager";
-import { ubicacionesRespaldo, fixersRespaldo, fixersDefinidos } from "..//data/fixersData";
+import { ubicacionesRespaldo, fixersRespaldo, fixersDefinidos } from "../data/fixersData";
 
 const Mapa = dynamic(() => import("./mapa"), { ssr: false });
 

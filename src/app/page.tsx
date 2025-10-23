@@ -1,10 +1,10 @@
 // src/app/page.tsx
-import Mapa from "./componentes/mapa/MapaWrapper";
-import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
-import HomeFixer from "./componentes/ListaCategorias/HomeFixer";
-import type { Categoria } from "./componentes/ListaCategorias/tipos";
-import Footer from "./componentes/Footer/Footer";
-import CarruselInspirador from "./componentes/CarruselInspirador/CarruselInspirador";
+import Mapa from "./components/mapa/MapaWrapper";
+import CarruselOfertas from "./components/CarruselOfertas/CarruselOfertas";
+import HomeFixer from "./components/ListaCategorias/HomeFixer";
+import type { Categoria } from "./components/ListaCategorias/tipos";
+import Footer from "./components/Footer/Footer";
+import CarruselInspirador from "./components/CarruselInspirador/CarruselInspirador";
 
 
 // Usaremos un tipo sin el campo que ya no se usa

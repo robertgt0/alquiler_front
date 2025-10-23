@@ -7,9 +7,9 @@ import React, { useState } from 'react';
 // ELIMINADO: Ya no se usa Image
 // import Image from 'next/image';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
-import Modal from './../reutilizables/Modal';
+import Modal from '../reutilizables/Modal';
 // AÑADIDO: Importamos tu componente de icono
-import Icono from './../Header/Icono';
+import Icono from '../Header/Icono';
 
 // Contenido para cada modal (sin cambios)
 const modalContents = {
