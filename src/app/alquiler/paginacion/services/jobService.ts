@@ -14,8 +14,23 @@ interface UserFromAPI {
 
 export const getJobs = async (): Promise<Job[]> => {
   try {
-    const response = await fetch("http://localhost:5000/api/borbotones/usuarios?limit=1000");
-    if (!response.ok) throw new Error("Error al obtener los trabajos");
+    // Usar variable de entorno para la URL base (permite cambiar entre local y remoto)
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
+    const endpoint = `${API_BASE.replace(/\/+$/, '')}/borbotones/usuarios?limit=1000`;
+
+    const response = await fetch(endpoint);
+
+    if (!response.ok) {
+      // intentar leer cuerpo para depuración (no lanzar si no es JSON)
+      let bodyText = '';
+      try {
+        bodyText = await response.text();
+      } catch (e) {
+        bodyText = '<no body>';
+      }
+      console.error(`getJobs: respuesta no OK (${response.status}) desde ${endpoint}:`, bodyText);
+      throw new Error(`Error al obtener los trabajos: ${response.status}`);
+    }
 
     // json.data 
     const json = await response.json();

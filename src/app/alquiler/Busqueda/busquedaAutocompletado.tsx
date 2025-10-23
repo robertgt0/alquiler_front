@@ -36,8 +36,11 @@ interface ApiResponse {
     searchTerm?: string;
 }
 
+//http://localhost:5000
+//https://alquiler-back.vercel.app
+//https://alquiler-back.vercel.app/api/busqueda/history
 class BusquedaService {
-    private static API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    private static API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://alquiler-back.vercel.app';
 
     static async searchJobsInBackend(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
         try {
@@ -49,7 +52,8 @@ class BusquedaService {
             }
 
             // 1. Buscar especialidades en el backend para sugerencias
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/autocomplete`;
+            ///borbotones/search/autocomplete
+            const apiEndpoint = endpoint || `${this.API_BASE}/api/busqueda/autocomplete`;
             const response = await fetch(`${apiEndpoint}?q=${encodeURIComponent(query)}&limit=50`);
 
             if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -124,7 +128,7 @@ class BusquedaService {
 
     static async getHistorial(endpoint?: string): Promise<string[]> {
         try {
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
+            const apiEndpoint = endpoint || `${this.API_BASE}/api/busqueda/history`;
             const response = await fetch(apiEndpoint);
 
             if (response.ok) {
@@ -142,7 +146,7 @@ class BusquedaService {
 
     static async clearHistorial(endpoint?: string): Promise<boolean> {
         try {
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
+            const apiEndpoint = endpoint || `${this.API_BASE}/api/busqueda/history`;
             const response = await fetch(apiEndpoint, {
                 method: 'DELETE',
             });
@@ -175,9 +179,10 @@ class BusquedaService {
                 return [];
             }
 
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/autocomplete`;
-            const encoded = encodeURIComponent(qTrim);
-            const response = await fetch(`${apiEndpoint}?q=${encoded}&limit=6`);
+            const apiEndpoint = endpoint || `${this.API_BASE}/api/busqueda/autocomplete`;
+            const response = await fetch(
+                `${apiEndpoint}?q=${encodeURIComponent(query)}&limit=6`
+            );
 
             if (!response.ok) {
                 throw new Error(`Error ${response.status}: ${response.statusText}`);

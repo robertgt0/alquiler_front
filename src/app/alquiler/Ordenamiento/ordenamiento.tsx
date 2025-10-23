@@ -6,7 +6,9 @@ import { Search } from "lucide-react";
 // Función para llamar al backend
 const ordenarBorbotones = async (criterio: string) => {
   try {
-    const response = await fetch(`http://localhost:5000/api/borbotones/orden?orden=${criterio}`);
+    //http://localhost:5000/api/borbotones/orden?orden=${criterio}
+    //https://alquiler-back.vercel.app/api/borbotones/orden?orden=${criterio}
+    const response = await fetch(`https://alquiler-back.vercel.app/api/borbotones/orden?orden=${criterio}`);
     if (!response.ok) throw new Error("Error al ordenar borbotones");
 
     return await response.json();

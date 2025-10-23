@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { Filters } from '../alquiler/Feature/Types/filtroType';
+
 //import FiltroForm from '../../app/alquiler/Feature/Componentes/FiltroForm';
 
 export default function FiltrosPage() {
@@ -12,9 +14,9 @@ export default function FiltrosPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Función manejadora simple
-  const handleFiltersChange = (newFilters: any) => {
-    setFilters(newFilters);
-  };
+const handleFiltersChange = (newFilters: Filters) => {
+  setFilters(newFilters);
+};
 
   return (
     <div className="container mx-auto p-4">

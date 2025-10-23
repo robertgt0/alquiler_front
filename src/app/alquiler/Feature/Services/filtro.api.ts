@@ -9,9 +9,12 @@ import type {
   UsuarioResumen,
 } from "../Types/filtroType";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+// Normalizar NEXT_PUBLIC_API_URL para evitar duplicar '/api' si el valor ya lo incluye
+const rawBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
+const normalized = rawBase.replace(/\/+$/, ""); // quitar slashes finales
+const apiRoot = normalized.endsWith("/api") ? normalized : `${normalized}/api`;
 // Prefijo de rutas para el módulo de borbotones
-const FILTROS_BASE = `${BASE_URL}/api/borbotones/filtros`;
+const FILTROS_BASE = `${apiRoot}/borbotones/filtros`;
 type Option = { value: string; label: string };
 
 /* --------- type guards --------- */
@@ -85,7 +88,12 @@ export async function getCiudades(
 export async function getDepartamentos(): Promise<Option[]> {
   const url = `${FILTROS_BASE}/departamentos`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Error ${res.status} al obtener departamentos`);
+  if (!res.ok) {
+    let body = '';
+    try { body = await res.text(); } catch (e) { body = '<no body>'; }
+    console.error(`[filtro.api] getDepartamentos fallo ${res.status} -> ${url}\n${body}`);
+    throw new Error(`Error ${res.status} al obtener departamentos`);
+  }
   const json: unknown = await res.json();
 
   const ok =
@@ -101,10 +109,10 @@ export async function getDepartamentos(): Promise<Option[]> {
 
 /* --------- ciudades por departamento (frontend helper) --------- */
 export async function getCiudadesPorDepartamento(departamento: string): Promise<Option[]> {
-  const url = `${FILTROS_BASE}/ciudades/por-departamento?departamento=${encodeURIComponent(
-    departamento
-  )}`;
-  const res = await fetch(url);
+  const url = new URL(`${FILTROS_BASE}/ciudades/por-departamento`);
+  url.searchParams.set("departamento", departamento);
+  
+  const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`Error ${res.status} al obtener ciudades por departamento`);
   const json: unknown = await res.json();
   const ok =
@@ -118,28 +126,14 @@ export async function getCiudadesPorDepartamento(departamento: string): Promise<
 }
 
 /* --------- provincias por ciudad --------- */
-/* Normaliza texto para búsqueda */
-const normalizarTexto = (texto: string): string => {
-  return texto
-    ? texto.trim()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // remover acentos
-      .replace(/[""'']/g, '') // limpiar comillas especiales
-      .toLowerCase()
-    : "";
-};
-
 export async function getProvinciasPorCiudad(
   ciudad: string,
   signal?: AbortSignal
 ): Promise<Option[]> {
   if (!ciudad) return [];
-
-  // Normalizar nombre de ciudad antes de buscar
-  const nombreNormalizado = normalizarTexto(ciudad);
-  if (!nombreNormalizado) return [];
-  
-  const url = `${FILTROS_BASE}/ciudad/provincias?ciudad=${encodeURIComponent(nombreNormalizado)}`;
+  const url = `${FILTROS_BASE}/ciudad/provincias?ciudad=${encodeURIComponent(
+    ciudad
+  )}`;
 
   try {
     const res = await fetch(url, { signal });
@@ -174,7 +168,12 @@ export async function getProvinciasPorCiudad(
 export async function getEspecialidades(): Promise<Option[]> {
   const url = `${FILTROS_BASE}/especialidades`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error(`Error ${res.status} al obtener especialidades`);
+  if (!res.ok) {
+    let body = '';
+    try { body = await res.text(); } catch (e) { body = '<no body>'; }
+    console.error(`[filtro.api] getEspecialidades fallo ${res.status} -> ${url}\n${body}`);
+    throw new Error(`Error ${res.status} al obtener especialidades`);
+  }
 
   const json: unknown = await res.json();
 

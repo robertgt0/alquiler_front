@@ -70,6 +70,7 @@ export interface ProvinciasResponse extends Omit<ApiResponse<Provincia[]>, 'data
 
 export interface UsuariosResponse extends ApiResponse<UsuarioResumen[]> {
   total: number;
+  data: UsuarioResumen[];
 }
 
 // Tipos de filtro
@@ -86,3 +87,13 @@ export type OpcionOrdenamiento =
   | "Nombre Z-A"
   | "Mayor Calificación (⭐)"
   | "Fecha (Reciente)";
+
+export type Filters = {
+  ciudadId?: number;
+  provinciaId?: number;
+  especialidadId?: number;
+  nombre?: string;
+  disponible?: boolean;
+  ratingMin?: number;
+  ratingMax?: number;
+};
