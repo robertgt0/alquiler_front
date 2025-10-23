@@ -11,37 +11,30 @@ interface Option {
 
 interface FiltrosFormProps {
   onResults?: (usuarios: UsuarioResumen[]) => void;
-  
-  // Props pasadas desde paginación para Ordenamiento y Búsqueda
   sort: string;
   setSort: (value: string) => void;
-  search: string;
-  setSearch: (value: string) => void;
   opcionesOrdenamiento: string[];
-  totalItems: number; // Conteo de resultados de trabajos
+  totalItems: number;
 }
 
-export default function FiltrosForm({ 
+export default function FiltrosForm({
   onResults,
-  sort, 
-  setSort, 
-  search, 
-  setSearch, 
+  sort,
+  setSort,
   opcionesOrdenamiento = [],
   totalItems
 }: FiltrosFormProps) {
   const {
     departamentos,
     ciudades,
-    provincias,
     disponibilidad,
     especialidades,
     filtro,
     handleChange,
-    buscarPorServicio,
     usuarios,
     loadingUsuarios,
     errorUsuarios,
+    sinResultados,
     departamentoSeleccionado,
     setDepartamentoSeleccionado,
     loadCiudadesByDepartamento,
@@ -49,20 +42,19 @@ export default function FiltrosForm({
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
+  // 🔥 ACTUALIZAR LOS RESULTADOS AUTOMÁTICAMENTE
   useEffect(() => {
     if (onResults) {
-      onResults(usuarios); // usuarios ya es UsuarioResumen[]
+      onResults(usuarios);
     }
   }, [usuarios, onResults]);
 
-  const handleBuscarProfesional = () => {
-    buscarPorServicio();
-  };
-
   return (
     <div className="w-full bg-white rounded-xl p-6 md:p-8 shadow-2xl shadow-gray-200/50 border border-gray-100">
+      {/* ❌ SE ELIMINÓ COMPLETAMENTE LA BARRA DE BÚSQUEDA PRINCIPAL */}
+
       {/* FILTROS SECUNDARIOS DESPLEGABLES */}
-      <div className={`pt-5 ${mostrarFiltros ? 'border-t' : ''}`}>
+      <div className="pt-5">
         <h3
           className="font-semibold text-base text-blue-600 hover:text-blue-700 transition cursor-pointer flex items-center mb-1"
           onClick={() => setMostrarFiltros(!mostrarFiltros)}
@@ -70,7 +62,6 @@ export default function FiltrosForm({
           Filtrar por <span className="ml-1 text-blue-600">{mostrarFiltros ? '▼' : '▶'}</span>
         </h3>
 
-        {/* solo se muestran cuando mostrarFiltros */}
         {mostrarFiltros && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             {/* Departamento */}
@@ -80,7 +71,9 @@ export default function FiltrosForm({
                 const val = e.target.value;
                 setDepartamentoSeleccionado(val);
                 handleChange("ciudad", "");
-                if (val) await loadCiudadesByDepartamento(val);
+                if (val) {
+                  await loadCiudadesByDepartamento(val);
+                }
               }}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
@@ -135,8 +128,8 @@ export default function FiltrosForm({
         <div className="flex items-center gap-2 mb-3 sm:mb-0">
           <p className="font-semibold text-base text-blue-600">Ordenar por</p>
           <select
-            value={sort} 
-            onChange={(e) => setSort(e.target.value)} 
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
             className="border border-gray-400 rounded-lg px-3 py-2 text-sm text-black focus:ring-blue-500 focus:border-blue-500"
           >
             {opcionesOrdenamiento.map((opcion) => (
@@ -153,11 +146,18 @@ export default function FiltrosForm({
         </div>
       </div>
 
-      {/* Feedback de carga y error */}
-      {loadingUsuarios && <p className="text-black/70 mt-4">Buscando profesionales...</p>}
-      {errorUsuarios && (
-        <p className="text-red-600 text-sm font-medium mt-4">⚠ {errorUsuarios}</p>
-      )}
+      {/* FEEDBACK MEJORADO */}
+      <div className="mt-4">
+        {loadingUsuarios && <p className="text-black/70">Buscando profesionales...</p>}
+        {errorUsuarios && (
+          <p className="text-red-600 text-sm font-medium">⚠ {errorUsuarios}</p>
+        )}
+        {sinResultados && !loadingUsuarios && (
+          <p className="text-orange-600 text-sm font-medium">
+            📭 No se encontraron profesionales con los filtros seleccionados
+          </p>
+        )}
+      </div>
     </div>
   );
 }

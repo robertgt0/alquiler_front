@@ -261,8 +261,8 @@ function BusquedaContent() {
             }}
             sort={sortBy}
             setSort={setSortBy}
-            search={searchTerm}
-            setSearch={setSearchTerm}
+            //search={searchTerm}
+            //setSearch={setSearchTerm}
             opcionesOrdenamiento={opcionesOrdenamiento}
             totalItems={totalItems}
           />

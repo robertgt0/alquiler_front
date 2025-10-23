@@ -1,16 +1,25 @@
 import { Job } from "../types/job";
 
-
-
 interface UserFromAPI {
   _id: string;
   nombre: string;
   fecha_registro: string;
   activo: boolean;
-  ciudad: { nombre: string };
-  servicios: { nombre: string; precio_personalizado: number }[];
+  ciudad: string | {
+    nombre?: string;
+    ciudad?: string;
+    departamento?: string;
+    provincia?: string;
+    zona?: string;
+  };
+  servicios?: Array<{
+    nombre: string;
+    precio_personalizado?: number;
+    precio?: number;
+  }>;
+  calificacion_promedio?: number;
+  calificacion?: number;
 }
-
 
 export const getJobs = async (): Promise<Job[]> => {
   try {
@@ -33,10 +42,10 @@ export const getJobs = async (): Promise<Job[]> => {
     }
 
     // json.data 
-    const json = await response.json();
+    const json: { data?: UserFromAPI[] } = await response.json();
 
     // Mapear datos de la API al formato Job
-    const mappedJobs: Job[] = (json.data || []).map((user: any) => {
+    const mappedJobs: Job[] = (json.data || []).map((user: UserFromAPI) => {
       // Construir location de forma robusta: puede venir como string o como objeto
       let location = "Sin ciudad";
       if (typeof user.ciudad === 'string') location = user.ciudad;
@@ -60,7 +69,7 @@ export const getJobs = async (): Promise<Job[]> => {
       return {
         title: firstService?.nombre || "Sin servicio",
         company: user.nombre,
-        service: (user.servicios || []).map((s: any) => s.nombre).join(", "),
+        service: (user.servicios || []).map((s) => s.nombre).join(", "),
         location,
         postedDate: user.fecha_registro ? new Date(user.fecha_registro).toLocaleDateString() : '—',
         salaryRange: firstService && (firstService.precio_personalizado ?? firstService.precio)
@@ -75,7 +84,6 @@ export const getJobs = async (): Promise<Job[]> => {
     });
 
     return mappedJobs;
-
 
   } catch (error) {
     console.error(error);

@@ -53,6 +53,21 @@ const isUsuario = (v: unknown): v is UsuarioResumen => {
 const isAbortError = (e: unknown): e is DOMException =>
   typeof e === "object" && e !== null && (e as DOMException).name === "AbortError";
 
+// Interface para respuestas de departamentos
+interface DepartamentosResponse {
+  success: boolean;
+  data: string[];
+}
+
+// Interface para respuestas de ciudades por departamento
+interface CiudadesPorDepartamentoResponse {
+  success: boolean;
+  data: Array<{
+    nombre: string;
+    id_ciudad?: number;
+  }>;
+}
+
 /* --------- ciudades --------- */
 export async function getCiudades(
   q?: string,
@@ -99,12 +114,12 @@ export async function getDepartamentos(): Promise<Option[]> {
   const ok =
     typeof json === "object" &&
     json !== null &&
-    (json as any).success === true &&
-    Array.isArray((json as any).data) &&
-    (json as any).data.every((d: unknown) => typeof d === "string");
+    (json as DepartamentosResponse).success === true &&
+    Array.isArray((json as DepartamentosResponse).data) &&
+    (json as DepartamentosResponse).data.every((d: unknown) => typeof d === "string");
   if (!ok) throw new Error("Respuesta inválida (departamentos)");
 
-  return (json as any).data.map((d: string) => ({ value: d, label: d }));
+  return (json as DepartamentosResponse).data.map((d: string) => ({ value: d, label: d }));
 }
 
 /* --------- ciudades por departamento (frontend helper) --------- */
@@ -115,14 +130,22 @@ export async function getCiudadesPorDepartamento(departamento: string): Promise<
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`Error ${res.status} al obtener ciudades por departamento`);
   const json: unknown = await res.json();
+  
   const ok =
     typeof json === "object" &&
     json !== null &&
-    (json as any).success === true &&
-    Array.isArray((json as any).data) &&
-    (json as any).data.every((c: unknown) => typeof c === "object" && typeof (c as any).nombre === "string");
+    (json as CiudadesPorDepartamentoResponse).success === true &&
+    Array.isArray((json as CiudadesPorDepartamentoResponse).data) &&
+    (json as CiudadesPorDepartamentoResponse).data.every((c: unknown) => 
+      typeof c === "object" && c !== null && typeof (c as { nombre: string }).nombre === "string"
+    );
+  
   if (!ok) throw new Error("Respuesta inválida (ciudades por departamento)");
-  return (json as any).data.map((c: any) => ({ value: c.nombre, label: c.nombre }));
+  
+  return (json as CiudadesPorDepartamentoResponse).data.map((c) => ({ 
+    value: c.nombre, 
+    label: c.nombre 
+  }));
 }
 
 /* --------- provincias por ciudad --------- */
@@ -131,9 +154,7 @@ export async function getProvinciasPorCiudad(
   signal?: AbortSignal
 ): Promise<Option[]> {
   if (!ciudad) return [];
-  const url = `${FILTROS_BASE}/ciudad/provincias?ciudad=${encodeURIComponent(
-    ciudad
-  )}`;
+  const url = `${FILTROS_BASE}/ciudad/provincias?ciudad=${encodeURIComponent(ciudad)}`;
 
   try {
     const res = await fetch(url, { signal });
@@ -212,14 +233,15 @@ export async function getUsuariosPorDisponibilidad(
       Array.isArray((json as UsuariosResponse).data) &&
       ((json as UsuariosResponse).data as unknown[]).every(isUsuario);
     if (!ok) throw new Error("Respuesta inválida (usuarios/disponible)");
-      const data = (json as UsuariosResponse).data as UsuarioResumen[];
-      // asegurar calificacion (si no existe, asignar aleatoria)
-      const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
-      const withRating = data.map((u) => ({
-        ...u,
-        calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
-      }));
-      return withRating;
+    
+    const data = (json as UsuariosResponse).data as UsuarioResumen[];
+    // asegurar calificacion (si no existe, asignar aleatoria)
+    const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+    const withRating = data.map((u) => ({
+      ...u,
+      calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
+    }));
+    return withRating;
   } catch (e: unknown) {
     if (isAbortError(e)) return [];
     throw e;
@@ -246,12 +268,13 @@ export async function getUsuariosPorEspecialidadId(
       Array.isArray((json as UsuariosResponse).data) &&
       ((json as UsuariosResponse).data as unknown[]).every(isUsuario);
     if (!ok) throw new Error("Respuesta inválida (usuarios/especialidad)");
-      const data = (json as UsuariosResponse).data as UsuarioResumen[];
-      const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
-      return data.map((u) => ({
-        ...u,
-        calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
-      }));
+    
+    const data = (json as UsuariosResponse).data as UsuarioResumen[];
+    const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+    return data.map((u) => ({
+      ...u,
+      calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
+    }));
   } catch (e: unknown) {
     if (isAbortError(e)) return [];
     throw e;
@@ -290,16 +313,48 @@ export async function getUsuariosPorServicioNombre(
       Array.isArray((json as UsuariosResponse).data) &&
       ((json as UsuariosResponse).data as unknown[]).every(isUsuario);
     if (!ok) throw new Error("Respuesta inválida (usuarios/servicio)");
-      const data = (json as UsuariosResponse).data as UsuarioResumen[];
-      const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
-      return data.map((u) => ({
-        ...u,
-        calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
-      }));
+    
+    const data = (json as UsuariosResponse).data as UsuarioResumen[];
+    const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+    return data.map((u) => ({
+      ...u,
+      calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
+    }));
   } catch (e: unknown) {
     if (isAbortError(e)) return [];
     throw e;
   }
 }
 
+/* --------- usuarios por ciudad --------- */
+export async function getUsuariosPorCiudad(
+  ciudad: string,
+  signal?: AbortSignal
+): Promise<UsuarioResumen[]> {
+  const url = new URL(`${FILTROS_BASE}/usuarios/ciudad`);
+  url.searchParams.set("ciudad", ciudad);
 
+  try {
+    const res = await fetch(url.toString(), { signal });
+    if (!res.ok) throw new Error(`Error ${res.status} al obtener usuarios por ciudad`);
+    const json: unknown = await res.json();
+
+    const ok =
+      typeof json === "object" &&
+      json !== null &&
+      (json as UsuariosResponse).success === true &&
+      Array.isArray((json as UsuariosResponse).data) &&
+      ((json as UsuariosResponse).data as unknown[]).every(isUsuario);
+    if (!ok) throw new Error("Respuesta inválida (usuarios/ciudad)");
+    
+    const data = (json as UsuariosResponse).data as UsuarioResumen[];
+    const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+    return data.map((u) => ({
+      ...u,
+      calificacion: u.calificacion ?? steps[Math.floor(Math.random() * steps.length)],
+    }));
+  } catch (e: unknown) {
+    if (isAbortError(e)) return [];
+    throw e;
+  }
+}
