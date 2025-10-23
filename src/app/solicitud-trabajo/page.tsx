@@ -1,11 +1,19 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import SolicitarTrabajoForm from "./modules/SolicitarTrabajoForm";
 import { formatEsDateTitle } from "./utils/helpers";
 import { IFranjaDisponible } from "./interfaces/Solicitud.interface";
 
-export default function SolicitarTrabajoPage() {
+/**
+ * Evita el prerender estático: fuerza render dinámico en runtime.
+ * (Alternativa a Suspense, pero aquí usamos ambos por robustez.)
+ */
+export const dynamic = "force-dynamic"; // o: export const revalidate = 0;
+
+/** Contenido real de la página (aquí usamos useSearchParams). */
+function PageContent() {
   const searchParams = useSearchParams();
 
   // Fecha (para el título y la clave de storage)
@@ -41,8 +49,27 @@ export default function SolicitarTrabajoPage() {
           <span className="block mt-1">{titulo}</span>
         </h1>
 
-        <SolicitarTrabajoForm franjas={franjas} date={date} providerId={providerId} />
+        <SolicitarTrabajoForm
+          franjas={franjas}
+          date={date}
+          providerId={providerId}
+        />
       </div>
     </div>
+  );
+}
+
+/** Export por defecto: Page envuelta en Suspense (requisito de useSearchParams). */
+export default function SolicitarTrabajoPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen w-full flex items-center justify-center">
+          Cargando…
+        </div>
+      }
+    >
+      <PageContent />
+    </Suspense>
   );
 }
