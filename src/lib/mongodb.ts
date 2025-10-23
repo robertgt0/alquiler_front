@@ -1,25 +1,20 @@
-// /src/lib/mongodb.ts
+// src/lib/mongodb.ts
 import { MongoClient } from "mongodb";
 
+// Leemos la variable de entorno
 const uri = process.env.MONGODB_URI;
-if (!uri) {
-  throw new Error("❌ Falta la variable de entorno MONGODB_URI");
-}
 
-let client: MongoClient;
+// Creamos una promesa de conexión segura
 let clientPromise: Promise<MongoClient>;
 
-// En desarrollo, usa el cache global para evitar crear múltiples clientes en HMR
-const g = global as unknown as { _mongoClientPromise?: Promise<MongoClient> };
+// ✅ Si la variable no existe (como en build de Vercel), no rompemos el proceso
+if (!uri) {
+  console.warn("⚠️ MONGODB_URI no configurada. Saltando conexión a MongoDB.");
 
-if (process.env.NODE_ENV !== "production") {
-  if (!g._mongoClientPromise) {
-    client = new MongoClient(uri);
-    g._mongoClientPromise = client.connect();
-  }
-  clientPromise = g._mongoClientPromise;
+  // Creamos una promesa rechazada solo para evitar errores de compilación
+  clientPromise = Promise.reject("MONGODB_URI no definida") as unknown as Promise<MongoClient>;
 } else {
-  client = new MongoClient(uri);
+  const client = new MongoClient(uri);
   clientPromise = client.connect();
 }
 

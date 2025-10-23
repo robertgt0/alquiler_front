@@ -2,19 +2,25 @@
 import { useState } from "react";
 import { createCategory } from "@/lib/api/categories";
 
-export default function AddCategoryForm({ onCreated }:{ onCreated: () => void }) {
+export default function AddCategoryForm({ onCreated }: { onCreated: () => void }) {
   const [name, setName] = useState("");
-  const [msg, setMsg] = useState<string|null>(null);
-  const [error, setError] = useState<string|null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setMsg(null); setError(null);
+    setMsg(null);
+    setError(null);
+
     try {
       setLoading(true);
+
       const res = await createCategory(name);
-      setMsg(res.message || "Su tipo de trabajo fue registrado con éxito");
+      // 👇 No cambiamos el tipo del retorno. Solo leemos 'message' si existe.
+      const msgFromApi = (res as any)?.message as string | undefined;
+
+      setMsg(msgFromApi ?? "Su tipo de trabajo fue registrado con éxito");
       setName("");
       onCreated(); // recargar listado
     } catch (err: any) {
@@ -31,9 +37,12 @@ export default function AddCategoryForm({ onCreated }:{ onCreated: () => void })
           className="border rounded px-3 py-2 w-full"
           placeholder="Ingresa tu tipo de trabajo"
           value={name}
-          onChange={(e)=> setName(e.target.value)}
+          onChange={(e) => setName(e.target.value)}
         />
-        <button className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50" disabled={loading}>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+          disabled={loading}
+        >
           {loading ? "Registrando..." : "Registrar"}
         </button>
       </div>
