@@ -18,6 +18,7 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
   // Errores por campo (mensajes personalizados)
   const [errorInicio, setErrorInicio] = useState("");
   const [errorFin, setErrorFin] = useState("");
+  const [errorGeneral, setErrorGeneral] = useState(""); // nuevo mensaje general
 
   const { loading, mensaje, setMensaje, enviar } = useSolicitudTrabajo(
     franjas,
@@ -31,12 +32,20 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
     // limpiar errores previos
     setErrorInicio("");
     setErrorFin("");
+    setErrorGeneral("");
+
+    // 🟡 Nueva validación: ambos campos vacíos
+    if (!horaInicio && !horaFin) {
+      setErrorGeneral("Debe seleccionar todos los campos para solicitar el trabajo");
+      return;
+    }
 
     // Validaciones personalizadas
     if (!horaInicio) {
       setErrorInicio("Debe seleccionar una hora inicio para solicitar el trabajo");
       return;
     }
+
     if (!horaFin) {
       setErrorFin("Debe seleccionar una hora fin para solicitar el trabajo");
       return;
@@ -55,7 +64,7 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
       return "border-green-300 bg-green-100 text-green-800";
     }
 
-    // ❌ Error (incluye “no disponible”, “reservado”, “error” y también “hora fin debe ser mayor”)
+    // ❌ Error
     if (
       msg.includes("no disponible") ||
       msg.includes("reservado") ||
@@ -70,7 +79,7 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
       return "border-yellow-300 bg-yellow-100 text-yellow-800";
     }
 
-    // Neutro (fallback)
+    // Neutro
     return "border-gray-300 bg-gray-50 text-gray-600";
   };
 
@@ -86,6 +95,7 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
             setHoraFin("");
             setErrorInicio("");
             setErrorFin("");
+            setErrorGeneral("");
             if (mensaje) setMensaje("");
           }}
           step={1800}
@@ -105,6 +115,7 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
             setHoraFin(e.target.value);
             setErrorFin("");
             setErrorInicio("");
+            setErrorGeneral("");
             if (mensaje) setMensaje("");
           }}
           step={1800}
@@ -114,6 +125,11 @@ export default function SolicitarTrabajoForm({ franjas, date, providerId }: Prop
           <p className="text-red-500 text-sm mt-1 text-center">{errorFin}</p>
         )}
       </div>
+
+      {/* 🔹 Nuevo mensaje general si ambos campos están vacíos */}
+      {errorGeneral && (
+        <p className="text-red-500 text-sm mt-1 text-center">{errorGeneral}</p>
+      )}
 
       {/* Botón principal */}
       <button
