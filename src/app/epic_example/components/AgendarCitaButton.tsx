@@ -18,7 +18,7 @@ export default function AgendarCitaButton() {
         Agendar Cita
       </button>
 
-      {/* 🪟 Modal */}
+      {/* Modal */}
        <AppointmentModal
         open={open}
         onOpenChange={setOpen}
