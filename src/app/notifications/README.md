@@ -41,12 +41,3 @@ Instalar dependendecias
      Estar en la direccion de la carpeta del proyecto
      ejecutar
         npm run dev
-
-**modo produccion**
-Compila el proyecto con:
-
-    npm run build
-
-Inicia el servidor optimizado con:
-
-    npm start
