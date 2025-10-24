@@ -64,7 +64,21 @@ useEffect(() => {
               <span className="text-purple-600 font-bold text-lg">${prov.precio}/hora</span>
             </div>
             <div className="mt-4 flex items-center justify-between">
-              <span className="text-purple-600 font-bold text-lg">${prov.rating} estrella</span>
+              <div className="flex items-center">
+                {/* Estrellas */}
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`text-yellow-400 ${i < prov.rating ? "opacity-100" : "opacity-30"}`}
+                  >
+                    ★
+                  </span>
+                ))}
+                {/* Número de rating */}
+                <span className="ml-2 text-gray-700 font-semibold text-sm">
+                  {prov.rating} {prov.rating === 1 ? "estrella" : "estrellas"}
+                </span>
+              </div>
             </div>
 
             <div className="mt-4 flex justify-end">
