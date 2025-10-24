@@ -22,6 +22,9 @@ export default function LocationForm({ onSubmit }: LocationFormProps) {
 
   const apiKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY
 
+  // condición para bloquear el submit si falta la ubicación
+  const faltaUbicacion = !marker || !direccion
+
   const handleMapClick = useCallback(
     async (event: any) => {
       const { lng, lat } = event.lngLat
@@ -47,6 +50,8 @@ export default function LocationForm({ onSubmit }: LocationFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    // doble seguridad en el submit
+    if (faltaUbicacion) return
     onSubmit({
       direccion,
       notas,
@@ -83,6 +88,12 @@ export default function LocationForm({ onSubmit }: LocationFormProps) {
         <p className="text-xs text-gray-500 mt-1">
           Haz clic en el mapa para seleccionar la ubicación.
         </p>
+        {/*aviso cuando falta ubicación */}
+        {faltaUbicacion && (
+          <p className="text-sm text-red-600 mt-2">
+            Debes marcar una ubicación en el mapa para continuar.
+          </p>
+        )}
       </div>
 
       {/*Dirección*/}
@@ -116,7 +127,15 @@ export default function LocationForm({ onSubmit }: LocationFormProps) {
       <div className="flex justify-end">
         <Button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+          
+          //  deshabilitar si falta ubicación
+          disabled={faltaUbicacion}
+          aria-disabled={faltaUbicacion}
+          className={`px-4 py-2 rounded-lg text-white ${
+            faltaUbicacion
+              ? "bg-gray-300 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
           Continuar
         </Button>
