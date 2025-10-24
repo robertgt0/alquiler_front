@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Pagos</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="Script.js"></script>
+</head>
+<body>
+  <!-- IZQUIERDA -->
+  <div class="left">
+    <div class="icon-center">
+      <img src="img/logo.png" alt="Pago Icono" />
+    </div>
+    <div class="left-footer">
+      © Todos los derechos reservados — Creados por servicios
+    </div>
+  </div>
+
+  <!-- DERECHA -->
+  <div class="right">
+    <div class="form-container">
+      <h2>Información de Pago</h2>
+
+      <form>
+        <!-- DATOS PERSONALES -->
+        <div class="section-title">Datos personales</div>
+
+        <div class="row">
+          <div class="col">
+            <label>Nombre completo</label>
+            <input type="text" placeholder="Ej. Juan Pérez" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>Línea de dirección</label>
+            <input type="text" placeholder="Av. Blanco Galindo #123" required />
+          </div>
+          <div class="col">
+            <label>Ciudad</label>
+            <input type="text" placeholder="Cochabamba" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>Estado</label>
+            <input type="text" placeholder="Cochabamba" required />
+          </div>
+          <div class="col">
+            <label>Código postal</label>
+            <input type="text" placeholder="0000" required />
+          </div>
+        </div>
+
+        <!-- MÉTODOS DE PAGO -->
+        <div class="section-title">Métodos de pago</div>
+        <div class="payment-methods">
+          <img src="https://cdn-icons-png.flaticon.com/128/16183/16183667.png" alt="Visa" />
+          <img src="https://cdn-icons-png.flaticon.com/128/196/196566.png" alt="PayPal" />
+          <img src="https://cdn-icons-png.flaticon.com/128/14082/14082959.png" alt="Mastercard" />
+          <img src="https://cdn-icons-png.flaticon.com/128/6124/6124998.png" alt="Google Pay" />
+          <img src="https://cdn-icons-png.flaticon.com/128/5968/5968382.png" alt="Stripe" />
+        </div>
+
+        <!-- DETALLES TARJETA -->
+        <div class="section-title">Detalles de la tarjeta</div>
+        <div class="row">
+          <div class="col">
+            <label>Nombre en la tarjeta</label>
+            <input type="text" placeholder="Ej. Juan Pérez" required />
+          </div>
+          <div class="col">
+            <label>Número de tarjeta</label>
+            <input type="text" placeholder="XXXX XXXX XXXX XXXX" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label>Caducidad</label>
+            <input type="month" required />
+          </div>
+          <div class="col">
+            <label>CVC</label>
+            <input type="text" placeholder="123" required />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-accept">Aceptar</button>
+      </form>
+    </div>
+
+    <!-- PIE DE PÁGINA DERECHO -->
+    <div class="footer">
+      <div class="footer-links">
+        <a href="#">Instrucciones</a>
+        <a href="#">Licencia</a>
+        <a href="#">Condiciones de uso</a>
+        <a href="#">Privacidad</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
