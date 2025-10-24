@@ -14,9 +14,9 @@ interface ModalHorarioProps {
 // --- Componente ---
 const ModalHorario: React.FC<ModalHorarioProps> = ({ onClose, onSave, horarioInicial }) => {
   // Estado para manejar los datos del formulario
-  const [horaInicio, setHoraInicio] = useState("08:00");
-  const [horaFin, setHoraFin] = useState("12:00");
-  const [costo, setCosto] = useState("25");
+  const [horaInicio, setHoraInicio] = useState("00:00");
+  const [horaFin, setHoraFin] = useState("00:00");
+  const [costo, setCosto] = useState("");
 
   // useEffect se ejecuta cuando el componente se monta o cuando `horarioInicial` cambia.
   // Sirve para llenar el formulario con los datos del horario que se quiere editar.
@@ -27,6 +27,14 @@ const ModalHorario: React.FC<ModalHorarioProps> = ({ onClose, onSave, horarioIni
       setCosto(String(horarioInicial.costo));
     }
   }, [horarioInicial]);
+  
+  const handleCostoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valor = e.target.value;
+    // Usamos una expresión regular para permitir solo números (enteros).
+    // Si necesitas decimales, usa /[^0-9.]/g y lógica adicional.
+    const soloNumeros = valor.replace(/[^0-9]/g, '');
+    setCosto(soloNumeros);
+  };
   
   const handleGuardar = () => {
     // Validamos que el costo no esté vacío
@@ -67,11 +75,11 @@ const ModalHorario: React.FC<ModalHorarioProps> = ({ onClose, onSave, horarioIni
             </label>
             <input
               id="costo"
-              type="number"
+              type="text"
               value={costo}
-              onChange={(e) => setCosto(e.target.value)}
+              onChange={handleCostoChange}
               className="w-full p-3 border border-gray-300 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ej: 30"
+              placeholder=""
             />
           </div>
         </div>
