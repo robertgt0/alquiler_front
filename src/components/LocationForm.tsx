@@ -113,7 +113,7 @@ export default function LocationForm() {
   };
 
   // Manejar clic en el mapa
-  const handleMapClick = async (event: any) => {
+  const handleMapClick = async (event: { lngLat: { lng: number; lat: number } }) => {
     const { lng, lat } = event.lngLat;
 
     setValue('latitude', lat);
@@ -246,7 +246,7 @@ export default function LocationForm() {
           <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300">
             <Map
               {...viewport}
-              onMove={(evt: any) => setViewport(evt.viewState)}
+              onMove={(evt: { viewState: typeof viewport }) => setViewport(evt.viewState)}
               onClick={handleMapClick}
               mapStyle={`https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`}
               style={{ width: '100%', height: '100%' }}

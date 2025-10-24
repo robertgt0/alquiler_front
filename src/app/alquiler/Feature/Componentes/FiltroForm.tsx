@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useFiltros } from "app/alquiler/Feature/Hooks/useFiltro";
-import { getCiudadesPorDepartamento } from "app/alquiler/Feature/Services/filtro.api";
+import type { UsuarioResumen } from "app/alquiler/Feature/Types/filtroType";
 
 interface FiltrosFormProps {
   onResults?: (usuarios: any[]) => void; // Props pasadas desde paginacion para Ordenamiento y Búsqueda
@@ -14,6 +14,13 @@ interface FiltrosFormProps {
   totalItems: number; // Conteo de resultados de trabajos
 }
 
+
+interface Option {
+  value: string;
+  label: string;
+}
+
+
 export default function FiltrosForm({
   onResults,
   sort,
@@ -22,19 +29,22 @@ export default function FiltrosForm({
   setSearch,
   opcionesOrdenamiento = [],
   totalItems,
+
 }: FiltrosFormProps) {
   const {
     departamentos,
     ciudades,
     provincias,
+
     disponibilidad,
     especialidades,
     filtro,
     handleChange,
-    buscarPorServicio,
     usuarios,
     loadingUsuarios,
     errorUsuarios,
+    sinResultados,
+
     departamentoSeleccionado,
     setDepartamentoSeleccionado,
     loadCiudadesByDepartamento,
@@ -48,9 +58,7 @@ export default function FiltrosForm({
     }
   }, [usuarios, onResults]);
 
-  const handleBuscarProfesional = () => {
-    buscarPorServicio();
-  };
+  
 
   return (
     <div className="w-full bg-white rounded-xl p-6 md:p-8 shadow-2xl shadow-gray-200/50 border border-gray-100">
@@ -67,6 +75,7 @@ export default function FiltrosForm({
         </h3>
 
         {/* Solo se muestran cuando mostrarFiltros */}
+
         {mostrarFiltros && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             {/* Departamento */}
@@ -77,6 +86,7 @@ export default function FiltrosForm({
                 setDepartamentoSeleccionado(val);
                 handleChange("ciudad", "");
                 if (val) await loadCiudadesByDepartamento(val);
+
               }}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
@@ -85,6 +95,7 @@ export default function FiltrosForm({
                 <option key={d.value} value={d.value}>
                   {d.label}
                 </option>
+
               ))}
             </select>
 
@@ -99,6 +110,7 @@ export default function FiltrosForm({
                 <option key={c.value} value={c.value}>
                   {c.label}
                 </option>
+
               ))}
             </select>
 
@@ -113,6 +125,7 @@ export default function FiltrosForm({
                 <option key={d.value} value={d.value}>
                   {d.label}
                 </option>
+
               ))}
             </select>
 
@@ -144,6 +157,7 @@ export default function FiltrosForm({
             className="border border-gray-400 rounded-lg px-3 py-2 text-sm text-black focus:ring-blue-500 focus:border-blue-500"
           >
             {opcionesOrdenamiento?.map((opcion) => (
+
               <option key={opcion} value={opcion}>
                 {opcion}
               </option>
@@ -156,7 +170,6 @@ export default function FiltrosForm({
           Total de Ofertas: {totalItems}
         </div>
       </div>
-
       {/* Feedback de carga y error */}
       {loadingUsuarios && (
         <p className="text-black/70 mt-4">Buscando profesionales...</p>
@@ -169,3 +182,4 @@ export default function FiltrosForm({
     </div>
   );
 }
+

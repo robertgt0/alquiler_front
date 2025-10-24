@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build --no-lint",
     "start": "next start",
     "lint": "eslint"
@@ -43,6 +43,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "lightningcss": "^1.30.2",
     "lucide-react": "^0.545.0",
     "mapbox-gl": "^3.15.0",
     "maplibre-gl": "^5.9.0",
@@ -50,6 +51,7 @@
     "react": "19.1.0",
     "react-day-picker": "^9.11.1",
     "react-dom": "19.1.0",
+    "react-icons": "^5.5.0",
     "react-map-gl": "^8.1.0",
     "tailwind-merge": "^3.3.1"
   },
