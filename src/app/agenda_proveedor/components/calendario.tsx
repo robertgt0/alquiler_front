@@ -1,13 +1,46 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { mesesNombres, diasSemanaCortos } from "./constantes";
 import Horario from "./horarios";
+import { DisponibilidadAPIService, InfoProveedor } from "../services/disponibilidad-api.service";
 
 const Calendario: React.FC = () => {
+  const [mostrarHorarios, setMostrarHorarios] = useState(false);
+
   const hoy = new Date();
   const [currentMonth, setCurrentMonth] = useState(hoy.getMonth());
   const [currentYear, setCurrentYear] = useState(hoy.getFullYear());
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null);
+  
+  // Estado para la info del proveedor
+  const [infoProveedor, setInfoProveedor] = useState<InfoProveedor>({
+    nombre: "Cargando...",
+    profesion: "Cargando...",
+    descripcion: ""
+  });
+  const [cargandoInfo, setCargandoInfo] = useState(true);
+
+  // Cargar info del proveedor al montar el componente
+  useEffect(() => {
+    const cargarInfoProveedor = async () => {
+      try {
+        setCargandoInfo(true);
+        const info = await DisponibilidadAPIService.obtenerInfoProveedor("proveedor_123");
+        setInfoProveedor(info);
+      } catch (error) {
+        console.error("Error al cargar info del proveedor:", error);
+        setInfoProveedor({
+          nombre: "Juan Pérez",
+          profesion: "Electricista",
+          descripcion: "Especialista en electricidad"
+        });
+      } finally {
+        setCargandoInfo(false);
+      }
+    };
+
+    cargarInfoProveedor();
+  }, []);
 
   const getDaysInMonth = (month: number, year: number): number =>
     new Date(year, month + 1, 0).getDate();
@@ -51,9 +84,9 @@ const Calendario: React.FC = () => {
     setFechaSeleccionada(null);
   };
 
-  const continuarConFecha = () => {
+  const handleSiguiente = () => {
     if (fechaSeleccionada) {
-      // El componente ya renderiza Horario automáticamente
+      setMostrarHorarios(true);
     }
   };
 
@@ -100,11 +133,16 @@ const Calendario: React.FC = () => {
     return celdas;
   };
 
-  if (fechaSeleccionada) {
+  if (mostrarHorarios && fechaSeleccionada) {
     return (
       <Horario
         fechaSeleccionada={fechaSeleccionada}
-        onVolver={() => setFechaSeleccionada(null)}
+        proveedorId="proveedor_123"
+        infoProveedor={infoProveedor}
+        onVolver={() => {
+          setFechaSeleccionada(null);
+          setMostrarHorarios(false);
+        }}
       />
     );
   }
@@ -121,33 +159,41 @@ const Calendario: React.FC = () => {
           
           <div className="flex items-center gap-5 mt-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xl font-bold shadow-lg">
-              JP
+              {cargandoInfo ? "..." : infoProveedor.nombre.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800">Electricista</h2>
-              <p className="text-gray-600 text-base">Juan Pérez</p>
+              <h2 className="text-lg font-bold text-gray-800">
+                {cargandoInfo ? "Cargando..." : infoProveedor.profesion}
+              </h2>
+              <p className="text-gray-600 text-base">
+                {cargandoInfo ? "Cargando..." : infoProveedor.nombre}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="bg-white rounded-xl">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-center gap-8 mb-8">
             <button
               onClick={mesAnterior}
-              className="text-3xl text-blue-600 hover:text-blue-700 transition-all p-3 hover:bg-blue-50 rounded-lg"
+              className="text-blue-600 hover:text-blue-700 transition-all hover:bg-blue-50 rounded-lg p-2"
               aria-label="Mes anterior"
             >
-              ◀
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
             </button>
-            <h2 className="text-xl font-bold text-gray-800">
+            <h2 className="text-xl font-bold text-gray-800 min-w-[200px] text-center">
               {mesesNombres[currentMonth]} {currentYear}
             </h2>
             <button
               onClick={mesSiguiente}
-              className="text-3xl text-blue-600 hover:text-blue-700 transition-all p-3 hover:bg-blue-50 rounded-lg"
+              className="text-blue-600 hover:text-blue-700 transition-all hover:bg-blue-50 rounded-lg p-2"
               aria-label="Mes siguiente"
             >
-              ▶
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </button>
           </div>
 
@@ -168,13 +214,9 @@ const Calendario: React.FC = () => {
 
           <div className="flex justify-end">
             <button
-              onClick={continuarConFecha}
+              onClick={handleSiguiente}
               disabled={!fechaSeleccionada}
-              className={`px-20 py-3 rounded-lg text-base font-bold transition-all shadow-lg ${
-                fechaSeleccionada
-                  ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-xl cursor-pointer"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
+              className="px-20 py-3 rounded-lg text-base font-bold transition-all shadow-lg bg-blue-600 text-white hover:bg-blue-700 hover:shadow-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Siguiente
             </button>

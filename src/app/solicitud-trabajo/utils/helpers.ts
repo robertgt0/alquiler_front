@@ -3,7 +3,8 @@
  *  - formatearHora: normaliza una cadena HH:mm
  *  - validarRango: valida que fin > inicio (para copy genérico)
  *  - formatEsDateTitle: “Jueves 10 de Mayo” desde YYYY-MM-DD
- *  - toMinutes / isRangeInside / isInsideAnyFranja / overlaps: validaciones HU2→HU3
+ *  - toMinutes / isRangeInside / isInsideAnyFranja / overlaps:
+ *    validaciones HU2→HU3
  */
 
 import { IFranjaDisponible } from "../interfaces/Solicitud.interface";
@@ -20,14 +21,24 @@ export function validarRango(horaInicio: string, horaFin: string): string | null
   return null;
 }
 
+/**
+ * Convierte una fecha ISO (YYYY-MM-DD) a título legible en español
+ * (p. ej., "Martes 22 de Octubre") PARSEÁNDOLA EN HORA LOCAL.
+ * Evita el desfase de 1 día que ocurre cuando "YYYY-MM-DD" se interpreta como UTC.
+ */
 export function formatEsDateTitle(iso: string): string {
-  const d = new Date(iso);
+  const [y, m, d] = iso.split("-").map(Number);
+  // Constructor local: año, mesIndex (0-based), día
+  const date = new Date(y, (m ?? 1) - 1, d ?? 1);
+
   const fmt = new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
     day: "2-digit",
     month: "long",
   });
-  const text = fmt.format(d);
+
+  const text = fmt.format(date); // p.ej. "martes, 22 de octubre"
+  // Capitalizamos como venías haciendo:
   return text.replace(",", "").replace(/(^\w|[\s]\w)/g, (m) => m.toUpperCase());
 }
 
@@ -56,6 +67,19 @@ export const isInsideAnyFranja = (
   fin: string,
   franjas: IFranjaDisponible[]
 ) => franjas.some((f) => isRangeInside(inicio, fin, f));
+
+/** NUEVA: valida si una hora puntual (HH:mm) cae en alguna franja */
+export const isTimeInsideAnyFranja = (
+  time: string,
+  franjas: IFranjaDisponible[]
+): boolean => {
+  const t = toMinutes(time);
+  return franjas.some((f) => {
+    const s = toMinutes(f.inicio);
+    const e = toMinutes(f.fin);
+    return t >= s && t <= e;
+  });
+};
 
 export const overlaps = (
   aInicio: string,

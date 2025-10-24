@@ -45,5 +45,5 @@ export async function enviarSolicitudMock(
   // 3) Guardar “reserva” nueva
   localStorage.setItem(key, JSON.stringify([...prev, data]));
 
-  return { ok: true, status: "ok", message: "Solicitud enviada" };
+  return { ok: true, status: "ok", message: "Solicitud enviada con éxito" };
 }
