@@ -8,7 +8,7 @@ import Sidebar from "./components/Sidebar";
 export default function Home() {
   // Datos de ejemplo para los proveedores de servicios
   const proveedores = [
-    { id: 1, nombreServicio: "Consultoría en Marketing Digital", especialista: "María Rodríguez", descripcion: "Sesión de consultoría personalizada para optimizar tu estrategia digital. Incluye análisis de redes sociales, SEO y campañas publicitarias.", precio: 75, rating: 4.9 },
+    { id: 1, nombreServicio: "Consult1oría en Marketing Digital", especialista: "María Rodríguez", descripcion: "Sesión de consultoría personalizada para optimizar tu estrategia digital. Incluye análisis de redes sociales, SEO y campañas publicitarias.", precio: 75, rating: 4.9 },
     { id: 2, nombreServicio: "Asesoría Financiera", especialista: "Juan Pérez", descripcion: "Planificación financiera y análisis de inversiones para pequeñas empresas.", precio: 60, rating: 4.7 },
     { id: 3, nombreServicio: "Clases de Yoga", especialista: "Ana Gómez", descripcion: "Sesiones de yoga personalizadas para mejorar flexibilidad y bienestar mental.", precio: 40, rating: 2.8 },
     { id: 4, nombreServicio: "Diseño Web", especialista: "Carlos Mendoza", descripcion: "Creación de sitios web modernos y responsivos adaptados a tu negocio.", precio: 80, rating: 4.6 },
