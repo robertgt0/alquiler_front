@@ -1,7 +1,6 @@
 
 @import "tailwindcss";
 
-/* --- 2. Variables (Light & Dark) --- */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -24,7 +23,6 @@
   }
 }
 
-/* --- 3. Tailwind Theme Config --- */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -32,13 +30,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* --- 4. Global / Base Styles --- */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
-  overflow-x: hidden; /* Evita el scroll horizontal por si acaso */
+  overflow-x: hidden; 
 }
 
 .global-bottom-border {
@@ -46,12 +43,11 @@ body {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 20px; /* Grosor de la línea */
+  height: 20px; 
   background-color: #000000;
   z-index: 100;
 }
 
-/* --- 5. Page Layout --- */
 .page-container {
   font-family: sans-serif;
   background: linear-gradient(
@@ -60,9 +56,9 @@ body {
     var(--brand-gradient-mid) 50%,
     var(--brand-gradient-end) 100%
   );
-  padding: 4rem 6rem; /* Ajuste de padding para pantallas más grandes */
+  padding: 4rem 6rem;
   display: grid;
-  grid-template-columns: 1fr minmax(auto, 900px); /* Título + Formulario con ancho máximo */
+  grid-template-columns: 1fr minmax(auto, 900px);
   align-items: center;
   gap: 2rem;
   color: var(--brand-white);
@@ -75,44 +71,43 @@ body {
   font-weight: 700;
   line-height: 1.2;
   color: var(--brand-white);
-  text-align: left; /* Alineado a la izquierda por defecto */
+  text-align: left; 
 }
 
-/* --- 6. Form Component (Wrapper & Container) --- */
 .form-wrapper {
   position: relative;
   width: 100%;
-  max-width: 900px; /* Ancho máximo para el wrapper del formulario */
-  height: 500px; /* Altura específica para el wrapper (rectángulo acostado) */
+  max-width: 900px; 
+  height: 500px; 
   display: flex;
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
-  margin-left: auto; /* Empuja el formulario a la derecha */
+  margin-left: auto; 
 }
 
 .form-container {
   background-color: var(--brand-white);
   padding: 2.5rem;
-  border-radius: 20px; /* Bordes redondeados de la tarjeta blanca */
-  box-shadow: 30px 30px 110px 8px rgba(0, 0, 0, 0.4);/* Nueva sombra para que coincida con Figma */
+  border-radius: 20px; 
+  box-shadow: 30px 30px 110px 8px rgba(0, 0, 0, 0.4);
   width: 100%;
-  height: 100%; /* Ocupa la altura del form-wrapper */
+  height: 100%;
   color: var(--brand-text-dark);
   box-sizing: border-box;
   position: relative;
   z-index: 1;
-  display: flex; /* Usamos flex para organizar las columnas internas */
-  flex-direction: row; /* Columnas una al lado de la otra */
-  gap: 2rem; /* Espacio entre las dos columnas principales del formulario */
+  display: flex; 
+  flex-direction: row; 
+  gap: 2rem; 
 }
 
-/* --- 7. Form Internals (Columns, Groups, Fields) --- */
+
 .form-column {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem; /* Espacio entre los grupos de campos */
-  flex: 1; /* Para que cada columna ocupe el mismo espacio */
+  gap: 0.1rem; 
+  flex: 1; 
 }
 
 .form-group {
@@ -122,7 +117,7 @@ body {
 }
 
 .form-label-styled {
-  font-size: 0.7rem; /* 14px */
+  font-size: 0.7rem;
   font-weight: 500;
   color: var(--brand-text-dark);
   margin-bottom: 0.1rem;
@@ -153,11 +148,10 @@ body {
   min-height: 1rem;
 }
 
-/* --- 8. Input Group (w/ Addon) --- */
 .input-group {
   display: flex;
   align-items: center;
-  width: 100%; /* Asegura que el grupo ocupe el ancho completo */
+  width: 100%; 
 }
 
 .input-group-addon {
@@ -168,7 +162,7 @@ body {
   border-radius: 8px 0 0 8px;
   color: #6b7280;
   border-right: none;
-  height: 100%; /* Ajusta la altura al input */
+  height: 100%; 
   display: flex;
   align-items: center;
 }
@@ -176,10 +170,9 @@ body {
 .input-group-field {
   border-radius: 0 8px 8px 0;
   border-left: none;
-  flex-grow: 1; /* El input crece para llenar el espacio */
+  flex-grow: 1; 
 }
 
-/* --- 9. Form Button & Messages --- */
 .submit-button {
   background-color: var(--brand-dark);
   color: var(--brand-white);
@@ -200,9 +193,9 @@ body {
 .button-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: auto; /* Empuja el botón al final de la columna */
+  margin-top: auto; 
   width: 100%;
-  align-self: flex-end; /* Asegura que el botón se alinee al final de su columna */
+  align-self: flex-end; 
 }
 
 .form-message {
@@ -211,10 +204,9 @@ body {
   color: #000;
 }
 
-/* --- 10. Media Query (Responsive) --- */
 @media (max-width: 900px) {
   .page-container {
-    grid-template-columns: 1fr; /* Una columna para móvil */
+    grid-template-columns: 1fr; 
     padding: 2rem;
   }
 
@@ -225,18 +217,18 @@ body {
   }
 
   .form-wrapper {
-    height: auto; /* Altura automática en móvil */
+    height: auto; 
     max-width: 100%;
-    margin-left: 0; /* Elimina el margen en móvil */
+    margin-left: 0; 
   }
 
   .form-blur-background {
-    transform: none; /* Sin desplazamiento en móvil */
+    transform: none; 
     filter: blur(15px);
   }
 
   .form-container {
-    flex-direction: column; /* Columnas apiladas en móvil */
+    flex-direction: column; 
     gap: 1.5rem;
     padding: 1.5rem;
     height: auto;
@@ -247,23 +239,21 @@ body {
   }
 
   .button-container {
-    justify-content: center; /* Centra el botón en móvil */
+    justify-content: center; 
   }
 }
 
-/* Contenedor DIRECTO de las dos columnas */
 .form-layout-internal {
-  display: flex; /* FLEX aquí para las columnas */
+  display: flex; 
   flex-direction: row;
-  gap: 2rem; /* Espacio ENTRE las columnas */
+  gap: 2rem; 
 }
 
-/* Cada una de las dos columnas */
 .form-column {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem; /* Espacio ENTRE campos DENTRO de la columna */
-  flex: 1; /* Ocupa mitad del espacio */
+  gap: 0.1rem; 
+  flex: 1; 
 }
 
 .form-blur-background {
