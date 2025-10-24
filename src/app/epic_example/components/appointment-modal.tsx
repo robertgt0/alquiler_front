@@ -352,12 +352,28 @@ export function AppointmentModal({
                 <p>
                   <strong>Hora:</strong> {selectedTime}
                 </p>
+                <p>
+                  <strong>Ubicación:</strong>{" "}
+                  {((locationData?.direccion ?? "") as string).trim() || "No especificada"}
+                </p>
+                <p>
+                  <strong>Nota adicional:</strong>{" "}
+                  {((locationData?.notas ?? "") as string).trim() || "No especificada"}
+                </p>
               </div>
               <div className="mt-4 flex gap-3">
                 <Button className="flex-1 text-white bg-blue-600 hover:bg-blue-700" onClick={handleConfirm} disabled={saving}>
                   {saving ? "Guardando..." : "Confirmar Cita"}
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={() => setSelectedTime(null)}>
+                {/* Cancelar */}
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedTime(null);
+                    setFormSubmitted(false);
+                  }}
+                >
                   Cancelar
                 </Button>
               </div>
