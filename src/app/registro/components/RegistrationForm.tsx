@@ -1,13 +1,13 @@
 'use client';
 import React, { useState } from 'react';
 import { useRegistrationForm } from '../hooks/useRegistrationForm';
-import { useGoogleAuth }  from '../../google/hooks/useGoogleAuth';
+import { useGoogleAuth } from '../../google/hooks/useGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
-import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
 import { useRouter } from "next/navigation";
 import { checkEmailExists } from '../../teamsys/services/checkEmailExists';
-import { EmailExistsMessage } from '../components/emailExistsMessage';
+import { EmailExistsMessage } from './emailExistsMessage';
+import { Link } from 'lucide-react';
 
 export const RegistrationForm: React.FC = () => {
   const router = useRouter();
@@ -26,12 +26,10 @@ export const RegistrationForm: React.FC = () => {
     await handleGoogleAuth();
   };
 
-    // Nueva lógica para habilitar/deshabilitar el botón
-    const formularioValido =
+  const formularioValido =
     Object.keys(errores).length === 0 &&
     Object.values(datosFormulario).every((v) => v.trim() !== "");
 
-      // Mostrar el mensaje de error email
   const [showEmailMessage, setShowEmailMessage] = useState(false);
 
   return (
@@ -213,9 +211,9 @@ export const RegistrationForm: React.FC = () => {
           {/* ¿Ya tienes una cuenta? */}
           <div className="flex justify-center items-center gap-2 mt-3 sm:mt-4">
             <p className="text-xs sm:text-sm text-gray-600">¿Ya tienes una cuenta?</p>
-            <a href="/login" className="text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/login" className="text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-500">
               Iniciar sesión
-            </a>
+            </Link>
           </div>
 
           {/* Botón de Google */}
@@ -229,7 +227,7 @@ export const RegistrationForm: React.FC = () => {
             </div>
           </div>
 
-          {/*Botón de registrarse con Apple*/ }
+          {/* Botón de registrarse con Apple */}
           <div className="flex justify-center">
             <button
               type="button"
@@ -245,21 +243,20 @@ export const RegistrationForm: React.FC = () => {
           </div>
 
           {/* Botón de continuar */}
-          
           <div className="flex justify-center">
             <button
               type="submit"
               onClick={async (e) => {
                 e.preventDefault();
                 if (formularioValido) {
-                  const { checkEmailExists } = await import('../../teamsys/services/checkEmailExists');
                   const correoExiste = await checkEmailExists(datosFormulario.email);
                   if (correoExiste) {
                     setShowEmailMessage(true);
                     return;
                   }
                   sessionStorage.setItem("datosUsuarioParcial", JSON.stringify(datosFormulario));
-                  router.push("/ImagenLocalizacion");}
+                  router.push("/ImagenLocalizacion");
+                }
               }}
               disabled={!formularioValido}
               className={`w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 rounded-2xl border border-gray-300 flex items-center justify-center gap-3 transition-colors duration-200 text-sm sm:text-base ${
@@ -278,11 +275,11 @@ export const RegistrationForm: React.FC = () => {
           </div>
         </form>
       </div>
-            {/*Mostrar el mensaje si el true*/}
-                  {showEmailMessage && (
-                    <EmailExistsMessage onClose={()  => setShowEmailMessage(false)}/>
-                    
-                  )}
+      
+      {/* Mostrar el mensaje si el true */}
+      {showEmailMessage && (
+        <EmailExistsMessage onClose={() => setShowEmailMessage(false)} />
+      )}
     </div>
   );
 };
