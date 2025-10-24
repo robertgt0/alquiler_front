@@ -12,6 +12,14 @@ interface HorarioProps {
   onVolver: () => void; // Función para regresar al calendario
 }
 
+interface HorarioFromAPI {
+  _id: string;
+  horaInicio: string;
+  horaFin: string;
+  costo: number;
+  // Agrega aquí otras propiedades si tu API las devuelve
+}
+
 // --- Funciones de Utilidad --- formato de fecha ej Lunes 20 de Octubre
 function formatearFecha(fecha: Date): string {
   const dia = fecha.getDate();
@@ -63,7 +71,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
         const data = await res.json();
 
         // 🔹 Asegura que cada horario tenga un id único
-        const horariosConId = (data.data || []).map((h: any) => ({
+        const horariosConId = (data.data || []).map((h: HorarioFromAPI) => ({
           ...h,
           id: h._id?.toString() || crypto.randomUUID(), // todos los ids como string
         }));
