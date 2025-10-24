@@ -9,6 +9,7 @@ interface Servicio {
   descripcion: string;
   duracion: number;
   precio: number;
+  rating: number;
   proveedorId: {
     _id: string;
     nombre: string;
@@ -61,6 +62,9 @@ useEffect(() => {
 
             <div className="mt-4 flex items-center justify-between">
               <span className="text-purple-600 font-bold text-lg">${prov.precio}/hora</span>
+            </div>
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-purple-600 font-bold text-lg">${prov.rating} estrella</span>
             </div>
 
             <div className="mt-4 flex justify-end">

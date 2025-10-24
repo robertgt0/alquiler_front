@@ -155,6 +155,7 @@ export function AppointmentModal({
       const payload = {
         proveedorId: providerId,
         servicioId,
+        clienteId,
         fecha: toYYYYMMDD(selectedDate),
         horario: {
           inicio: formatHour(selectedSlot.startISO),
