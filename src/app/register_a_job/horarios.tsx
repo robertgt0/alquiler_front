@@ -12,14 +12,14 @@ interface HorarioProps {
   onVolver: () => void; // Función para regresar al calendario
 }
 
-// --- Funciones de Utilidad ---
+// --- Funciones de Utilidad --- formato de fecha ej Lunes 20 de Octubre
 function formatearFecha(fecha: Date): string {
   const dia = fecha.getDate();
   const mes = mesesNombres[fecha.getMonth()];
   const diaSemana = diasSemanaCompletos[fecha.getDay()];
   return `${diaSemana} ${dia} de ${mes}`;
 }
-
+//
 function getFechaKey(fecha: Date): string {
   const year = fecha.getFullYear();
   const month = String(fecha.getMonth() + 1).padStart(2, "0");
@@ -38,11 +38,24 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
   const [horarios, setHorarios] = useState<HorarioType[]>([]);
   const [cargando, setCargando] = useState(true);
 
+  
+  //lista de eliminados temporales
+  const [horariosEliminados, setHorariosEliminados] = useState<string[]>([]);
+
+  // Estado para controlar la visibilidad del modal (ventana emergente)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Estado para guardar el horario que se está editando
+  const [horarioAEditar, setHorarioAEditar] = useState<HorarioType | null>(null);
+  
+  // Estado para controlar si el botón 'Guardar' general está habilitado
+  const [cambiosSinGuardar, setCambiosSinGuardar] = useState(false);
+
   useEffect(() => {
     const fetchHorarios = async () => {
       setCargando(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/los_vengadores/horarios/${fechaKey}`);
+        const res = await fetch(`https://back-1kgu.onrender.com/api/los_vengadores/horarios/${fechaKey}`);
         if (!res.ok) throw new Error("Error al cargar horarios");
         //const data = await res.json();
         //setHorarios(data.data || []);
@@ -65,17 +78,6 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
     };
     fetchHorarios();
   }, [fechaKey]);
-  //lista de eliminados temporales
-  const [horariosEliminados, setHorariosEliminados] = useState<string[]>([]);
-
-  // Estado para controlar la visibilidad del modal (ventana emergente)
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // Estado para guardar el horario que se está editando
-  const [horarioAEditar, setHorarioAEditar] = useState<HorarioType | null>(null);
-  
-  // Estado para controlar si el botón 'Guardar' general está habilitado
-  const [cambiosSinGuardar, setCambiosSinGuardar] = useState(false);
 
   // --- Lógica de Validación ---
   const validarDisponibilidad = (nuevoHorario: HorarioType): boolean => {
@@ -134,6 +136,15 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
   };
   
   const handleEliminarHorario = (id: string) => {
+    // Muestra una ventana de confirmación
+    const confirmacion = window.confirm(
+      "¿Estás seguro de que deseas eliminar este horario?"
+    );
+
+    // Si el usuario no confirma, no hace nada
+    if (!confirmacion) {
+      return; 
+    }
     setHorarios(prev => prev.filter(h => h.id !== id));
   
     // Solo agregar a eliminados si es un ID real de la BD
@@ -158,7 +169,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
     try {
       // Primero eliminamos los horarios marcados
       for (const id of horariosEliminados) {
-        await fetch(`http://localhost:5000/api/los_vengadores/horarios/${id}`, {
+        await fetch(`https://back-1kgu.onrender.com/api/los_vengadores/horarios/${id}`, {
           method: "DELETE",
         });
       }
@@ -167,7 +178,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
       for (const horario of horarios) {
         if (horario.id.startsWith("temp-")) {
           // Crear nuevo horario
-          const res = await fetch(`http://localhost:5000/api/los_vengadores/horarios`, {
+          const res = await fetch(`https://back-1kgu.onrender.com/api/los_vengadores/horarios`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -184,7 +195,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
           );
         } else {
           // Actualizar horario existente
-          const res = await fetch(`http://localhost:5000/api/los_vengadores/horarios/${horario.id}`, {
+          const res = await fetch(`https://back-1kgu.onrender.com/api/los_vengadores/horarios/${horario.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -205,6 +216,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
       setHorariosEliminados([]);
       setCambiosSinGuardar(false);
       alert("¡Cambios guardados correctamente!");
+      onVolver();
     } catch (err) {
       console.error(err);
       alert("Error al guardar los cambios");
