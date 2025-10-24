@@ -51,7 +51,7 @@ export default function Sidebar() {
         {/* Opciones del menú */}
         <nav className="p-6 flex flex-col space-y-4">
           <button
-            onClick={() => handleNavigate("/epic_example/citas-agendadas")} 
+            onClick={() => handleNavigate("/agenda/citas-agendadas")} 
             className="text-left text-gray-700 hover:text-purple-600 font-medium"
           >
             Mis Citas

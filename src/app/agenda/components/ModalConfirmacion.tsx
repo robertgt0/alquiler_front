@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -18,12 +18,15 @@ export default function ModalConfirmacion({
 
   const handleAgendarNueva = () => {
     onClose();
-    router.push("http://localhost:3000/epic_example");
+    router.push("/agenda"); // mejor ruta relativa
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md text-center p-8 rounded-xl shadow-lg">
+        {/* Título accesible para Radix */}
+        <DialogTitle className="sr-only">Confirmación de cita</DialogTitle>
+
         <div className="flex justify-center mb-4">
           <div className="bg-green-100 rounded-full p-4">
             <CheckCircle className="text-green-600 w-10 h-10" />

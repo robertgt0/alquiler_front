@@ -143,11 +143,42 @@ export default function UbicacionForm() {
     }
   };
 
-  // Manejar envío del formulario
-  const onSubmit = (data: LocationFormData) => {
-    console.log('Datos del formulario:', data);
-    alert('Formulario enviado! Revisa la consola para ver los datos.');
+  const onSubmit = async (data: LocationFormData) => {
+    try {
+      const citaPayload = {
+        proveedorId: "671a8c97a59ab8b9c12f0012", // <-- Hardcode temporal para pruebas
+        servicioId: "671a8ca9a59ab8b9c12f0013",  // <-- Igual
+        fecha: "2025-10-25", // <-- Puedes hacerlo dinámico si ya tienes fecha seleccionada
+        horario: {
+          inicio: "10:00",
+          fin: "10:30",
+        },
+        ubicacion: {
+          lat: data.latitude,
+          lng: data.longitude,
+        },
+        estado: "pendiente",
+      };
+
+      const response = await fetch("http://localhost:5000/api/devcode/citas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(citaPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al crear la cita");
+      }
+
+      const result = await response.json();
+      console.log("✅ Cita creada:", result);
+      alert("Cita creada correctamente");
+    } catch (error) {
+      console.error("❌ Error:", error);
+      alert("Error al crear la cita");
+    }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 via-gray-50 to-blue-50">

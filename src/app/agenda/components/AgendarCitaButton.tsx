@@ -1,14 +1,16 @@
-//Componente del botón agendar cita + estado de abrir/cerrar el modal
 "use client";
 import { useState } from "react";
 import { AppointmentModal } from "./appointment-modal";
 
-export default function AgendarCitaButton() {
+interface AgendarCitaButtonProps {
+  proveedorId: string;  // <-- definir props aquí
+  servicioId: string;
+}
+
+export default function AgendarCitaButton({ proveedorId, servicioId }: AgendarCitaButtonProps) {
   const [open, setOpen] = useState(false);
-
-  const providerId = "68e867119573cfe163a27fb3"; // id proveedor 
-  const clienteId  = "68e867119573cfe163a27fb1"; // id cliente
-
+  const clienteId = "68e867119573cfe163a27fb1"; 
+  
   return (
     <>
       <button
@@ -18,13 +20,13 @@ export default function AgendarCitaButton() {
         Agendar Cita
       </button>
 
-      {/* Modal */}
-       <AppointmentModal
+      <AppointmentModal
         open={open}
         onOpenChange={setOpen}
         patientName="Juan Pérez"
-        providerId={providerId}
-        clienteId={clienteId}        
+        providerId={proveedorId} 
+        servicioId={servicioId}  
+        clienteId={clienteId}
         slotMinutes={30}
         hours="08:00-12:00,14:00-18:00"
       />

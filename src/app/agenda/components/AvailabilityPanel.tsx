@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "../components/ui/button";
+import { Button } from "./ui/button";
 
 type UISlot = { label: string; startISO: string; endISO: string };
 
@@ -41,7 +41,7 @@ export default function AvailabilityPanel({
       setAvailable([]);
 
       const ymd = toYYYYMMDDLocal(selectedDate);
-      const url = `${API_URL}/api/providers/${providerId}/available-slots?date=${ymd}&slot=${slotMinutes}&hours=${encodeURIComponent(
+      const url = `${API_URL}/api/devcode/providers/${providerId}/available-slots?date=${ymd}&slot=${slotMinutes}&hours=${encodeURIComponent(
         hours
       )}`;
       setLastReq(url);
