@@ -3,14 +3,14 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { usoGoogleAuth } from '../../../google/hooks/usoGoogleAuth';
+import { useGoogleAuth } from '../../../google/hooks/useGoogleAuth';
 
 // Evita prerender estático: esta ruta depende de query params
 export const dynamic = 'force-dynamic';
 
 function Inner() {
   const router = useRouter();
-  const { finalizeFromGoogleProfile } = usoGoogleAuth();
+  const { finalizeFromGoogleProfile } = useGoogleAuth();
   const searchParams = useSearchParams();
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');

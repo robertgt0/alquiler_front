@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { DatosLogin, ErroresLogin } from '../interfaces/typeslogin';
-import { useRouter } from 'next/navigation';
+//import { useRouter } from 'next/navigation';
 
 // Validador integrado para login
 const validarCampo = (nombre: string, valor: string): string => {
@@ -56,7 +56,7 @@ const validarCampo = (nombre: string, valor: string): string => {
 };
 
 export const useLoginForm = () => {
-  const router = useRouter();
+  //const router = useRouter();
 
   const [datosFormulario, setDatosFormulario] = useState<DatosLogin>({
     email: '',

@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { useLoginForm } from '../hooks/useLoginForm';
-import googleIcon from '../assets/icons8-google-48.png';
+//import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { loginUsuario } from '@/app/teamsys/services/UserService';
-import { usoGoogleAuth } from '../../google/hooks/usoGoogleAuth';
+import { useGoogleAuth } from '../../google/hooks/useGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
 
 export const LoginForm: React.FC = () => {
@@ -23,7 +23,7 @@ export const LoginForm: React.FC = () => {
   const [errorBackend, setErrorBackend] = useState<string | null>(null); // ← ÚNICO estado para errores del backend
   const [isLoading, setIsLoading] = useState(false);
 
-  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = usoGoogleAuth();
+  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
     await handleGoogleAuth();
@@ -49,28 +49,38 @@ export const LoginForm: React.FC = () => {
 
       console.log('Login exitoso:', res);
       router.push('/home');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error completo al iniciar sesión:', error);
       
       let mensajeError = 'Error al iniciar sesión';
       
-      if (error.message?.includes('401') || 
-          error.message?.includes('Unauthorized') ||
-          error.message?.includes('contraseña') ||
-          error.message?.includes('password') ||
-          error.message?.includes('Credenciales')) {
-        mensajeError = 'Contraseña incorrecta.';
-      } 
-      else if (error.message?.includes('404') || 
-               error.message?.includes('No encontrado') ||
-               error.message?.includes('Usuario') ||
-               error.message?.includes('user')) {
-        mensajeError = 'Usuario no encontrado. Verifica tu correo electrónico.';
-      }
-      else {
-        mensajeError = error.message || 'Error al conectar con el servidor';
-      }
-      
+      if (
+    error instanceof Error &&
+    (
+      error.message.includes('401') ||
+      error.message.includes('Unauthorized') ||
+      error.message.includes('contraseña') ||
+      error.message.includes('password') ||
+      error.message.includes('Credenciales')
+    )
+  ) {
+    mensajeError = 'Contraseña incorrecta.';
+  } else if (
+    error instanceof Error &&
+    (
+      error.message.includes('404') ||
+      error.message.includes('No encontrado') ||
+      error.message.includes('Usuario') ||
+      error.message.includes('user')
+    )
+  ) {
+    mensajeError = 'Usuario no encontrado. Verifica tu correo electrónico.';
+  } else if (error instanceof Error) {
+    mensajeError = error.message || 'Error al conectar con el servidor';
+  } else {
+    mensajeError = 'Error al conectar con el servidor';
+  }
+
       setErrorBackend(mensajeError); // ← Todos los errores van aquí
     } finally {
       setIsLoading(false);
