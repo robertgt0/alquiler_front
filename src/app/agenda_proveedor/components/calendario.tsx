@@ -5,6 +5,8 @@ import Horario from "./horarios";
 import { DisponibilidadAPIService, InfoProveedor } from "../services/disponibilidad-api.service";
 
 const Calendario: React.FC = () => {
+  const [mostrarHorarios, setMostrarHorarios] = useState(false);
+
   const hoy = new Date();
   const [currentMonth, setCurrentMonth] = useState(hoy.getMonth());
   const [currentYear, setCurrentYear] = useState(hoy.getFullYear());
@@ -84,8 +86,7 @@ const Calendario: React.FC = () => {
 
   const handleSiguiente = () => {
     if (fechaSeleccionada) {
-      // Este trigger hará que se muestre el componente Horario
-      // debido al condicional if (fechaSeleccionada) más abajo
+      setMostrarHorarios(true);
     }
   };
 
@@ -132,13 +133,16 @@ const Calendario: React.FC = () => {
     return celdas;
   };
 
-  if (fechaSeleccionada) {
+  if (mostrarHorarios && fechaSeleccionada) {
     return (
       <Horario
         fechaSeleccionada={fechaSeleccionada}
         proveedorId="proveedor_123"
         infoProveedor={infoProveedor}
-        onVolver={() => setFechaSeleccionada(null)}
+        onVolver={() => {
+          setFechaSeleccionada(null);
+          setMostrarHorarios(false);
+        }}
       />
     );
   }
@@ -175,7 +179,7 @@ const Calendario: React.FC = () => {
               className="text-blue-600 hover:text-blue-700 transition-all hover:bg-blue-50 rounded-lg p-2"
               aria-label="Mes anterior"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
             </button>
@@ -187,7 +191,7 @@ const Calendario: React.FC = () => {
               className="text-blue-600 hover:text-blue-700 transition-all hover:bg-blue-50 rounded-lg p-2"
               aria-label="Mes siguiente"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6"></polyline>
               </svg>
             </button>
@@ -212,11 +216,7 @@ const Calendario: React.FC = () => {
             <button
               onClick={handleSiguiente}
               disabled={!fechaSeleccionada}
-              className={`px-20 py-3 rounded-lg text-base font-bold transition-all shadow-lg ${
-                fechaSeleccionada
-                  ? "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-xl cursor-pointer"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
+              className="px-20 py-3 rounded-lg text-base font-bold transition-all shadow-lg bg-blue-600 text-white hover:bg-blue-700 hover:shadow-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Siguiente
             </button>
