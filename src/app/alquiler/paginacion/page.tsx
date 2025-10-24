@@ -58,35 +58,37 @@ function BusquedaContent() {
     }
   }, [allJobs]);
 
-  // ---------------- Opciones de ordenamiento ----------------
-  const opcionesOrdenamiento = [
-    "Fecha (Reciente)",
-    "Nombre A-Z",
-    "Nombre Z-A",
-    "Mayor Calificación (⭐)",
-  ];
+ // ---------------- Opciones de ordenamiento ----------------
+const opcionesOrdenamiento = [
+  "Fecha (Reciente)",
+  "Nombre A-Z",
+  "Nombre Z-A",
+  "Mayor Calificación (⭐)",
+];
 
-  // ---------------- Funciones de ordenamiento ----------------
-  const ordenarItems = (opcion: string, lista: Job[]) => {
-    const sorted = [...lista];
-    switch (opcion) {
-      case "Nombre A-Z":
-        sorted.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      case "Nombre Z-A":
-        sorted.sort((a, b) => b.title.localeCompare(a.title));
-        break;
-      case "Fecha (Reciente)":
-        sorted.sort(
-          (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
-        );
-        break;
-      case "Mayor Calificación (⭐)":
-        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        break;
-    }
-    return sorted;
-  };
+// ---------------- Funciones de ordenamiento ----------------
+const ordenarItems = (opcion: string, lista: Job[]) => {
+  const sorted = [...lista];
+  switch (opcion) {
+    case "Nombre A-Z":
+      // Cambiar de title a company para ordenar por nombre de persona
+      sorted.sort((a, b) => (a.company || "").localeCompare(b.company || ""));
+      break;
+    case "Nombre Z-A":
+      // Cambiar de title a company para ordenar por nombre de persona
+      sorted.sort((a, b) => (b.company || "").localeCompare(a.company || ""));
+      break;
+    case "Fecha (Reciente)":
+      sorted.sort(
+        (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
+      );
+      break;
+    case "Mayor Calificación (⭐)":
+      sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      break;
+  }
+  return sorted;
+};
 
   const ordenarUsuarios = (opcion: string, lista: UsuarioResumen[]) => {
     const sorted = [...lista];
