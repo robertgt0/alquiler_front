@@ -8,6 +8,9 @@ export function validatePassword(password: string): string | null {
   if (password.length < 8) {
     return "La contraseña debe tener 8 caracteres";
   }
+    if (/\s/.test(password)) {
+    return "La contraseña no puede contener espacios en blanco";
+  }
     if (password.length > 16) {
     return 'La contraseña debe tener 8 caracteres';
   }

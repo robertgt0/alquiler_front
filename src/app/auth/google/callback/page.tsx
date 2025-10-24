@@ -3,15 +3,14 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { usoGoogleAuth } from '../../../google/hooks/usoGoogleAuth';
+import { useGoogleAuth } from '../../../google/hooks/useGoogleAuth';
 
 // Evita prerender estático: esta ruta depende de query params
 export const dynamic = 'force-dynamic';
 
-// 👇 Tu lógica actual va dentro de este componente "Inner"
 function Inner() {
   const router = useRouter();
-  const { finalizeFromGoogleProfile } = usoGoogleAuth();
+  const { finalizeFromGoogleProfile } = useGoogleAuth();
   const searchParams = useSearchParams();
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -36,7 +35,7 @@ function Inner() {
 
         const data = await response.json();
         console.log(code)
-        console.log('🔹 Respuesta del backend:', data);
+        console.log(' Respuesta del backend:', data);
 
         if (!response.ok) {
           if (data.message === 'usuario ya registrado') {
@@ -51,32 +50,29 @@ function Inner() {
           }
         }
 
-        // ✅ Extraer datos correctamente desde data.data
+        //Extraer datos correctamente desde data.data
         const user = data.data.user;
         const accessToken = data.data.accessToken;
         const refreshToken = data.data.refreshToken;
 
-        // ✅ Guardar token y usuario
+        //  Guardar token y usuario
         localStorage.setItem('userToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('userData', JSON.stringify(user));
 
-        // ✅ Guardar en sessionStorage para ImagenLocalizacion
+        //  Guardar en sessionStorage para ImagenLocalizacion
         sessionStorage.setItem('datosUsuarioParcial', JSON.stringify(user));
 
         // (Si luego usas finalizeFromGoogleProfile, aquí lo puedes llamar)
         // await finalizeFromGoogleProfile?.(user);
 
-        setStatus('success');
-        setMessage('¡Registro con Google exitoso!');
-
-        // ✅ Redirigir a /ImagenLocalizacion
+        // Redirigir a /ImagenLocalizacion
         setTimeout(() => {
           router.push('/ImagenLocalizacion');
         }, 1500);
 
       } catch (error) {
-        console.error('❌ Error en callback:', error);
+        console.error('Error en callback:', error);
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Error desconocido');
 
@@ -131,7 +127,7 @@ function Inner() {
   );
 }
 
-// 👇 La página (Server por defecto) solo envuelve en Suspense al componente cliente
+// La página (Server por defecto) solo envuelve en Suspense al componente cliente
 export default function GoogleCallbackPage() {
   return (
     <Suspense fallback={<p>Redirigiendo…</p>}>

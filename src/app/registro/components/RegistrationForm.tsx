@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useRegistrationForm } from '../hooks/useRegistrationForm';
-import { usoGoogleAuth }  from '../../google/hooks/usoGoogleAuth';
+import { useGoogleAuth }  from '../../google/hooks/useGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
 import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
@@ -20,7 +20,7 @@ export const RegistrationForm: React.FC = () => {
     validarFormulario
   } = useRegistrationForm();
 
-  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = usoGoogleAuth();
+  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
     await handleGoogleAuth();

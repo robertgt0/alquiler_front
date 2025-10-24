@@ -1,5 +1,4 @@
-// Esta función revisa si el correo está bien escrito.
-// Devuelve un mensaje si algo está mal o null si está bien.
+
 export function validateEmail(email: string): string | null {
     if (!email.trim()) {
       return "Por favor, escribe tu correo.";
@@ -19,12 +18,16 @@ export function validateEmail(email: string): string | null {
     if (!/^[a-zA-Z0-9._-]+$/.test(local)) {
       return "correo electronico no valido";
     }
+    if (local.length > 30 ) {
+      return "correo electronico no valido";
+    }
     if (local.startsWith(".") || local.endsWith(".")) {
       return "correo electronico no valido";
     }
     if (local.includes("..")) {
       return "correo electronico no valido";
     }
+
     // Parte del dominio (después del @)
       const allowedDomainsRegex = /@(gmail\.com|hotmail\.com|yahoo\.com|outlook\.com|umss\.edu\.bo|umss\.edu|est\.umss\.edu|ucb\.edu\.bo|univalle\.edu|harvard\.edu|mit\.edu|empresa\.com\.bo|miempresa\.net)$/i;   
           if (!allowedDomainsRegex.test(email)) {

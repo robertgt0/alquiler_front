@@ -12,7 +12,7 @@ type GoogleProfile = {
   picture?: string;
 };
 
-export const usoGoogleAuth = () => {
+export const useGoogleAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();

@@ -5,11 +5,13 @@ import { validateEmail, validacionTelf } from '../utils/validationEmailTelefono'
 import { validatePassword, validatePasswordConfirmation } from '../utils/validationPassword';
 import { validarNombre, validarApellido } from '../utils/validationNombreApellido';
 
+type CampoRequerido = 'nombre' | 'apellido' | 'telefono' | 'email' | 'contraseña';
 
 // Constantes
 const CAMPOS_REQUERIDOS = ['nombre', 'apellido', 'telefono', 'email', 'contraseña'] as const;
-const LONGITUD_MAXIMA = 50;
-const LONGITUD_MINIMA = 2;
+const REQUERIDOS: ReadonlySet<CampoValido> = new Set(CAMPOS_REQUERIDOS as readonly CampoValido[]);
+//const LONGITUD_MAXIMA = 50;
+//const LONGITUD_MINIMA = 2;
 const SOLO_LETRAS_REGEX = /^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/;
 
 // Tipo para las claves válidas
@@ -62,18 +64,21 @@ export const useRegistrationForm = () => {
 
   // Validador principal
   const validarCampo = useCallback((nombre: CampoValido, valor: string): string => {
-    // Validar campo requerido
-    if (CAMPOS_REQUERIDOS.includes(nombre as any) && !valor?.trim()) {
-      return "Este campo es obligatorio";
-    }
+  const v = valor?.trim() ?? '';
 
-    // Validaciones específicas usando tus funciones
-    if (valor && valor.trim()) {
-      return validadores()[nombre](valor);
-    }
+  // Requeridos
+  if (REQUERIDOS.has(nombre) && v.length === 0) {
+    return 'Este campo es obligatorio';
+  }
 
-    return '';
-  }, [validadores]);
+  // Validaciones específicas
+  if (v.length > 0) {
+    return validadores()[nombre](v);
+  }
+
+  return '';
+}, [validadores]);
+
 
   const actualizarError = useCallback((nombre: CampoValido, error: string) => {
     setErrores(prev => {

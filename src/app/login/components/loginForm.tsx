@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useLoginForm } from '../hooks/useLoginForm'
-import googleIcon from '../assets/icons8-google-48.png';
+import { useLoginForm } from '../hooks/useLoginForm';
+//import googleIcon from '../assets/icons8-google-48.png';
 import AppleIcon from '../assets/icons8-apple-50.png';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { loginUsuario } from '@/app/teamsys/services/UserService';
-import { usoGoogleAuth }  from '../../google/hooks/usoGoogleAuth';
+import { useGoogleAuth } from '../../google/hooks/useGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
-import { checkEmailExists } from '../../teamsys/services/checkEmailExists';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -21,9 +20,10 @@ export const LoginForm: React.FC = () => {
     manejarBlur,
     validarFormulario,
   } = useLoginForm();
-  const [errorLogin, setErrorLogin] = useState<string | null>(null);
+  const [errorBackend, setErrorBackend] = useState<string | null>(null); // ← ÚNICO estado para errores del backend
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = usoGoogleAuth();
+  const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
     await handleGoogleAuth();
@@ -31,9 +31,13 @@ export const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorLogin(null);
+    setErrorBackend(null); // ← Limpiar todos los errores del backend
+    setIsLoading(true);
 
-    if (!validarFormulario()) return;
+    if (!validarFormulario()) {
+      setIsLoading(false);
+      return;
+    }
 
     console.log('Formulario válido, listo para enviar:', datosFormulario);
 
@@ -45,9 +49,41 @@ export const LoginForm: React.FC = () => {
 
       console.log('Login exitoso:', res);
       router.push('/home');
-    } catch (error: any) {
-      console.error('Error al iniciar sesión:', error.message);
-      setErrorLogin('Datos incorrectos. Verifica tu correo o contraseña.');
+    } catch (error: unknown) {
+      console.error('Error completo al iniciar sesión:', error);
+      
+      let mensajeError = 'Error al iniciar sesión';
+      
+      if (
+    error instanceof Error &&
+    (
+      error.message.includes('401') ||
+      error.message.includes('Unauthorized') ||
+      error.message.includes('contraseña') ||
+      error.message.includes('password') ||
+      error.message.includes('Credenciales')
+    )
+  ) {
+    mensajeError = 'Contraseña incorrecta.';
+  } else if (
+    error instanceof Error &&
+    (
+      error.message.includes('404') ||
+      error.message.includes('No encontrado') ||
+      error.message.includes('Usuario') ||
+      error.message.includes('user')
+    )
+  ) {
+    mensajeError = 'Usuario no encontrado. Verifica tu correo electrónico.';
+  } else if (error instanceof Error) {
+    mensajeError = error.message || 'Error al conectar con el servidor';
+  } else {
+    mensajeError = 'Error al conectar con el servidor';
+  }
+
+      setErrorBackend(mensajeError); // ← Todos los errores van aquí
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -58,11 +94,9 @@ export const LoginForm: React.FC = () => {
           <h2 className="text-xl sm:text-2xl font-bold text-blue-500">Iniciar sesión</h2>
         </div>
 
-        {/* Mostrar errores de Google */}
+        {/* Mostrar errores de Google - debajo del botón */}
         {googleError && (
-          <div className="w-full max-w-xs sm:max-w-sm mx-auto mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{googleError}</p>
-          </div>
+          <p className="text-red-600 text-sm text-center mb-4">{googleError}</p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
@@ -74,7 +108,10 @@ export const LoginForm: React.FC = () => {
                 name="email"
                 type="text"
                 value={datosFormulario.email}
-                onChange={(e) => manejarCambio('email', e.target.value)}
+                onChange={(e) => {
+                  manejarCambio('email', e.target.value);
+                  setErrorBackend(null);
+                }}
                 onBlur={() => manejarBlur('email')}
                 className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 ${
                   errores.email && tocados.email
@@ -97,17 +134,25 @@ export const LoginForm: React.FC = () => {
                 name="password"
                 type="password"
                 value={datosFormulario.contraseña}
-                onChange={(e) => manejarCambio('contraseña', e.target.value)}
+                onChange={(e) => {
+                  manejarCambio('contraseña', e.target.value);
+                  setErrorBackend(null);
+                }}
                 onBlur={() => manejarBlur('contraseña')}
                 className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 ${
-                  errores.contraseña && tocados.contraseña
+                  (errores.contraseña && tocados.contraseña) || errorBackend
                     ? 'border-red-300 focus:ring-red-500'
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 placeholder="Contraseña"
               />
-              {errores.contraseña && tocados.contraseña && (
+              {/* Mostrar errores de validación frontend */}
+              {(errores.contraseña && tocados.contraseña) && (
                 <p className="mt-1 text-xs sm:text-sm text-red-600">{errores.contraseña}</p>
+              )}
+              {/* Mostrar TODOS los errores del backend aquí */}
+              {errorBackend && !errores.contraseña && (
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errorBackend}</p>
               )}
             </div>
           </div>
@@ -116,16 +161,16 @@ export const LoginForm: React.FC = () => {
           <div className="mt-6 sm:mt-8 flex justify-center">
             <button
               type="submit"
-              className="w-full max-w-xs sm:max-w-sm bg-blue-500 text-white py-2 sm:py-3 px-4 border border-gray-300 rounded-2xl hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-colors duration-200 flex items-center justify-center gap-3 text-sm sm:text-base"
+              disabled={isLoading}
+              className={`w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 transition-colors duration-200 flex items-center justify-center gap-3 text-sm sm:text-base ${
+                isLoading
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  : 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-300'
+              }`}
             >
-              Iniciar sesión
+              {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </button>
           </div>
-
-          {/* Mensaje de error global */}
-          {errorLogin && (
-            <p className="text-red-600 text-xs sm:text-sm text-center">{errorLogin}</p>
-          )}
 
           {/* Separador visual con "o" */}
           <div className="flex items-center justify-center my-4 sm:my-6">
@@ -139,8 +184,7 @@ export const LoginForm: React.FC = () => {
             type="login"
           />
 
-          { /*Botón de registrarse con Apple*/ }
-
+          {/* Botón de Apple */}
           <div className="flex justify-center">
             <button
               type="button"
@@ -155,8 +199,7 @@ export const LoginForm: React.FC = () => {
             </button>
           </div>
 
-          {/* Boton de continuar*/}
-          
+          {/* Enlace a registro */}
           <div className="flex justify-center items-center gap-2 mt-3 sm:mt-4">
             <p className="text-xs sm:text-sm text-gray-600">¿Aún no tienes una cuenta?</p>
             <Link href="/registro">
