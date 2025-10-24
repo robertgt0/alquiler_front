@@ -53,26 +53,26 @@ function BusquedaContent() {
   ];
 
   // ---------------- Funciones de ordenamiento ----------------
-  const ordenarItems = (opcion: string, lista: Job[]) => {
-    const sorted = [...lista];
-    switch (opcion) {
-      case "Nombre A-Z":
-        sorted.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      case "Nombre Z-A":
-        sorted.sort((a, b) => b.title.localeCompare(a.title));
-        break;
-      case "Fecha (Reciente)":
-        sorted.sort(
-          (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
-        );
-        break;
-      case "Mayor Calificación (⭐)":
-        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        break;
-    }
-    return sorted;
-  };
+ const ordenarItems = (opcion: string, lista: Job[]): Job[] => {
+  const sorted = [...lista];
+  switch (opcion) {
+    case "Nombre A-Z":
+      sorted.sort((a, b) => (a.company || "").localeCompare(b.company || ""));
+      break;
+    case "Nombre Z-A":
+      sorted.sort((a, b) => (b.company || "").localeCompare(a.company || ""));
+      break;
+    case "Fecha (Reciente)":
+      sorted.sort((a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime());
+      break;
+    case "Mayor Calificación (⭐)":
+      sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      break;
+    default:
+      break;
+  }
+  return sorted;
+};
 
   const ordenarUsuarios = (opcion: string, lista: UsuarioResumen[]) => {
     const sorted = [...lista];

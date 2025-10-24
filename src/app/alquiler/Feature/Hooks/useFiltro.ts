@@ -47,6 +47,22 @@ export function useFiltros() {
   const handleChange = (campo: string, valor: string) =>
     setFiltro((prev) => ({ ...prev, [campo]: valor }));
 
+
+  const limpiarFiltros = () => {
+    abortUsersRef.current?.abort();
+    abortProvRef.current?.abort();
+    setFiltro({
+      ciudad: "",
+      provincia: "",
+      disponibilidad: "",
+      tipoEspecialidad: "",
+      busqueda: "",
+    });
+    setProvincias([]);
+    setUsuarios([]);
+    setErrorUsuarios(null);
+  };
+  
   /* 🔎 Buscar por nombre de servicio (barra) */
   const buscarPorServicio = async (page = 1, limit = 50) => {
     const servicio = filtro.busqueda.trim();
@@ -83,6 +99,7 @@ export function useFiltros() {
       setLoadingUsuarios(false);
     }
   };
+
 
   // Ciudades + Especialidades al montar
   useEffect(() => {

@@ -47,3 +47,11 @@ export type UsuariosResponse = {
   total: number;
   data: UsuarioResumen[];
 };
+// En usuarioResumen.ts
+export type UsuarioDetalle = {
+  nombre: string;
+  rating?: number;
+  fecha?: string;
+};
+
+// En filtroType.ts sigue UsuarioResumen
