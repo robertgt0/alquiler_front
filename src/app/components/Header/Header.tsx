@@ -16,8 +16,8 @@ export default function Header() {
   useEffect(() => {
     setIsClient(true);
 
-    // 🔹 Mantener sesión activa desde localStorage
-    const storedLogin = localStorage.getItem('isLoggedIn');
+    // 🔹 Mantener sesión solo durante la pestaña abierta
+    const storedLogin = sessionStorage.getItem('isLoggedIn');
     if (storedLogin === 'true') {
       setIsLoggedIn(true);
     }
@@ -41,16 +41,16 @@ export default function Header() {
     }
   };
 
-  // 🔹 Iniciar sesión
+  // 🔹 Iniciar sesión (solo en sessionStorage)
   const handleLogin = () => {
     setIsLoggedIn(true);
-    localStorage.setItem('isLoggedIn', 'true');
+    sessionStorage.setItem('isLoggedIn', 'true');
   };
 
-  // 🔹 Cerrar sesión (opcional)
+  // 🔹 Cerrar sesión (solo en sessionStorage)
   const handleLogout = () => {
     setIsLoggedIn(false);
-    localStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('isLoggedIn');
   };
 
   if (!isClient) return null;
