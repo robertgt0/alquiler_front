@@ -37,7 +37,7 @@ const ModalHorario: React.FC<ModalHorarioProps> = ({ onClose, onSave, horarioIni
     
     // Creamos el objeto horario para enviarlo al componente padre
     const horarioAGuardar: Horario = {
-        id: horarioInicial ? horarioInicial.id : 0, // 0 si es nuevo, para que el padre le asigne ID
+        id: horarioInicial ? horarioInicial.id : "", // 0 si es nuevo, para que el padre le asigne ID
         horaInicio,
         horaFin,
         costo: parseFloat(costo),
