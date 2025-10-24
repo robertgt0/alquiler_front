@@ -38,11 +38,11 @@ function BusquedaContent() {
   const [buscando, setBuscando] = useState(false);
   const [estadoBusqueda, setEstadoBusqueda] = useState<"idle" | "success" | "error">("idle");
 
-
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
   const [modoVista, setModoVista] = useState<"jobs" | "usuarios">("jobs");
   const [filtersNoResults, setFiltersNoResults] = useState(false);
+  const [filtrosAplicados, setFiltrosAplicados] = useState(false);
 
   // Ref para identificar la última búsqueda válida y descartar respuestas antiguas
   const latestSearchIdRef = useRef(0);
@@ -52,7 +52,6 @@ function BusquedaContent() {
   // DEBUG: imprimir muestra de items en cliente
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // se ejecuta solo en cliente
       setTimeout(() => {
         console.log('BusquedaPage sample allJobs[0]:', allJobs[0]);
       }, 0);
@@ -99,7 +98,6 @@ function BusquedaContent() {
         sorted.sort((a, b) => b.nombre.localeCompare(a.nombre));
         break;
       case "Mayor Calificación (⭐)":
-        // Ordenar por número de servicios disponibles como aproximación de calificación
         sorted.sort((a, b) => {
           const servA = a.servicios?.filter(s => s.disponible)?.length || 0;
           const servB = b.servicios?.filter(s => s.disponible)?.length || 0;
@@ -113,7 +111,6 @@ function BusquedaContent() {
   // ---------------- Filtrado y ordenamiento ----------------
   const jobsToDisplay = useMemo(() => {
     let data = searchResults.length > 0 ? searchResults : allJobs;
-    // normalizar (quitar tildes) para que búsquedas con acentos funcionen
     const normalizar = (texto: string) =>
       texto
         .toLowerCase()
@@ -122,14 +119,11 @@ function BusquedaContent() {
 
     const termino = (searchTerm || "").trim();
     if (termino) {
-      // Dividir la búsqueda en palabras (normalizadas)
       const palabras = normalizar(termino).split(/\s+/).filter(Boolean);
 
       data = data.filter((job) => {
         const title = normalizar(job.title || "");
         const company = normalizar(job.company || "");
-
-        // Retorna true si alguna palabra coincide en title o company
         return palabras.some((palabra) => title.includes(palabra) || company.includes(palabra));
       });
     }
@@ -198,17 +192,15 @@ function BusquedaContent() {
       params.delete('q');
     }
 
-    // Actualizar la URL sin recargar la página
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     router.push(newUrl, { scroll: false });
-
-    console.log('🔗 [URL] Actualizando URL:', newUrl);
   };
 
   // ---------------- Limpiar búsqueda ----------------
   useEffect(() => {
     if (!searchTerm.trim()) {
       setSearchResults(allJobs);
+      setFiltrosAplicados(false);
     }
   }, [searchTerm, allJobs]);
 
@@ -222,7 +214,6 @@ function BusquedaContent() {
     setEstadoBusqueda("idle");
 
     try {
-      // determinar si tercer parámetro es searchId (number) o flag actualizarUrl (boolean)
       let searchId: number | undefined;
       let actualizarUrl = true;
 
@@ -232,16 +223,13 @@ function BusquedaContent() {
         actualizarUrl = maybeIdOrActualizar;
       }
 
-      // Si viene un searchId y es más antiguo que el último aceptado, ignorar
       if (typeof searchId === "number") {
         if (searchId < latestSearchIdRef.current) {
-          // respuesta obsoleta
           setBuscando(false);
           return;
         }
         latestSearchIdRef.current = searchId;
       } else {
-        // si no viene id, generar uno para marcar esta respuesta como la más reciente
         latestSearchIdRef.current += 1;
       }
 
@@ -257,25 +245,35 @@ function BusquedaContent() {
       setBuscando(false);
     }
   };
+  
   const handleClearSearch = () => {
     setSearchTerm("");
     setSearchResults(allJobs);
-    actualizarURL(""); // limpia el parámetro ?q=
+    setFiltrosAplicados(false);
+    actualizarURL("");
   };
 
-
+  // NUEVO HANDLER PARA LIMPIAR FILTROS
+  const handleClearFilters = () => {
+    setFiltrosAplicados(false);
+    setFiltersNoResults(false);
+    setUsuariosFiltrados([]);
+    setModoVista("jobs");
+    setSearchResults(allJobs); // Asegurar que se muestren todos los jobs
+  };
 
   const handleViewDetails = (job: Job) => {
     console.log("Ver detalles de:", job);
   };
 
-  // ---------------- Render ----------------
-  // debug: comprueba que el componente está definido en runtime
-  // esto ayuda a ver si hay problemas con HMR / exports mezclados
-  // (se puede eliminar después de depurar)
-  // eslint-disable-next-line no-console
-  console.log('DEBUG: UserProfileCard import ->', typeof UserProfileCard, UserProfileCard);
+  // ---------------- Lógica para determinar qué mostrar ----------------
+  // SOLUCIÓN: Cambiar la condición para que solo muestre "sin resultados" cuando realmente hay filtros activos
+  const mostrarSinResultadosFiltros = filtrosAplicados && 
+                                    modoVista === "jobs" && 
+                                    usuariosFiltrados.length === 0 &&
+                                    filtersNoResults; // Agregar esta condición
 
+  // ---------------- Render ----------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 to-white">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -298,15 +296,16 @@ function BusquedaContent() {
               console.log("🔄 Actualizando resultados filtrados:", usuarios.length);
               setUsuariosFiltrados(usuarios);
               setModoVista(usuarios.length > 0 ? "usuarios" : "jobs");
+              setFiltrosAplicados(true);
             }}
             onFilterNoResults={(noResults: boolean) => {
               console.log("🚫 Actualizando estado de sin resultados:", noResults);
               setFiltersNoResults(noResults);
+              setFiltrosAplicados(true);
             }}
+            onClearFilters={handleClearFilters} // NUEVA PROP
             sort={sortBy}
             setSort={setSortBy}
-            //search={searchTerm}
-            //setSearch={setSearchTerm}
             opcionesOrdenamiento={opcionesOrdenamiento}
             totalItems={totalItems}
           />
@@ -345,12 +344,12 @@ function BusquedaContent() {
                 No se encontraron profesionales con los filtros seleccionados
               </p>
             )}
-            <a
-              href="/alquiler/paginacion"
+            <button
+              onClick={handleClearFilters}
               className="inline-block mt-6 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
             >
               Volver a ofertas
-            </a>
+            </button>
           </section>
         ) : (
           // Vista Jobs
@@ -360,7 +359,9 @@ function BusquedaContent() {
             ) : (
               <>
                 <div className="text-xl text-blue-700 font-semibold mb-6">
-                  Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
+                  {mostrarSinResultadosFiltros 
+                    ? "No se encontraron ofertas" 
+                    : `Mostrando ${currentItems.length} de ${totalItems} Ofertas Disponibles`}
                 </div>
 
                 <div className="results-area mt-6">
@@ -369,22 +370,38 @@ function BusquedaContent() {
                       <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
                       <p className="mt-2 text-lg text-gray-600">Buscando resultados para &quot;{searchTerm}&quot;...</p>
                     </div>
-                  ) : currentItems.length === 0 ? (
+                  ) : mostrarSinResultadosFiltros ? (
+                    // CASO 1: Filtros aplicados sin resultados - NO MOSTRAR TARJETAS
                     <div className="text-center py-8">
                       <p className="text-xl text-gray-600 mb-4">
-                        {filtersNoResults
-                          ? "No se encontraron ofertas con los filtros seleccionados"
-                          : (searchTerm && estadoBusqueda === "success")
+                        No se encontraron ofertas con los filtros seleccionados
+                      </p>
+                      <button 
+                        onClick={handleClearFilters}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Ver todas las ofertas
+                      </button>
+                    </div>
+                  ) : currentItems.length === 0 ? (
+                    // CASO 2: Sin filtros aplicados pero no hay resultados
+                    <div className="text-center py-8">
+                      <p className="text-xl text-gray-600 mb-4">
+                        {(searchTerm && estadoBusqueda === "success")
                           ? `No se encontraron resultados para "${searchTerm}"`
                           : "No hay ofertas de trabajo disponibles en este momento."}
                       </p>
                       {searchTerm && (
-                        <button onClick={handleClearSearch} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <button 
+                          onClick={handleClearSearch} 
+                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
                           Ver todas las ofertas
                         </button>
                       )}
                     </div>
                   ) : (
+                    // CASO 3: Hay resultados para mostrar (por defecto o con búsqueda)
                     <>
                       <div className="space-y-6">
                         {currentItems.map((job, index) => (
@@ -413,7 +430,6 @@ function BusquedaContent() {
               </>
             )}
           </section>
-
         )}
       </main>
     </div>

@@ -15,14 +15,14 @@ interface FiltrosFormProps {
   totalItems: number; // Conteo de resultados de trabajos
   // Notifica a la página si los filtros dieron como resultado "sin resultados"
   onFilterNoResults?: (noResults: boolean) => void;
+  // NUEVA PROP: Notifica cuando se limpian los filtros
+  onClearFilters?: () => void;
 }
-
 
 interface Option {
   value: string;
   label: string;
 }
-
 
 export default function FiltrosForm({
   onResults,
@@ -33,24 +33,22 @@ export default function FiltrosForm({
   opcionesOrdenamiento = [],
   totalItems,
   onFilterNoResults,
-
+  onClearFilters, // NUEVA PROP
 }: FiltrosFormProps) {
   const router = useRouter();
   const {
     departamentos,
     ciudades,
     provincias,
-
     disponibilidad,
     especialidades,
-  filtro,
-  handleChange,
-  limpiarFiltros,
-  usuarios,
+    filtro,
+    handleChange,
+    limpiarFiltros,
+    usuarios,
     loadingUsuarios,
     errorUsuarios,
     sinResultados,
-
     departamentoSeleccionado,
     setDepartamentoSeleccionado,
     loadCiudadesByDepartamento,
@@ -69,8 +67,6 @@ export default function FiltrosForm({
     }
   }, [usuarios, onResults, sinResultados, onFilterNoResults]);
 
-  
-
   return (
     <div className="w-full bg-white rounded-xl p-6 md:p-8 shadow-2xl shadow-gray-200/50 border border-gray-100">
       {/* FILTROS SECUNDARIOS DESPLEGABLES */}
@@ -86,7 +82,6 @@ export default function FiltrosForm({
         </h3>
 
         {/* Solo se muestran cuando mostrarFiltros */}
-
         {mostrarFiltros && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             {/* Departamento */}
@@ -100,7 +95,6 @@ export default function FiltrosForm({
                 // siempre llamar a la carga de ciudades; la función internamente
                 // limpia `ciudades` si el departamento es vacío.
                 await loadCiudadesByDepartamento(val);
-
               }}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
@@ -150,7 +144,6 @@ export default function FiltrosForm({
                 <option key={d.value} value={d.value}>
                   {d.label}
                 </option>
-
               ))}
             </select>
 
@@ -182,7 +175,6 @@ export default function FiltrosForm({
             className="border border-gray-400 rounded-lg px-3 py-2 text-sm text-black focus:ring-blue-500 focus:border-blue-500"
           >
             {opcionesOrdenamiento?.map((opcion) => (
-
               <option key={opcion} value={opcion}>
                 {opcion}
               </option>
@@ -191,27 +183,32 @@ export default function FiltrosForm({
         </div>
 
         {/* CONTEO DE RESULTADOS */}
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-gray-600 font-medium">Total de Ofertas: {totalItems}</div>
-            <button
-              type="button"
-              onClick={() => {
-                // limpiar todos los filtros, restablecer orden y redirigir
-                try {
-                  limpiarFiltros();
-                  // restablecer orden al valor por defecto si se pasó setSort
-                  try { if (typeof setSort === 'function') setSort("Fecha (Reciente)"); } catch(e) { /* ignore */ }
-                } catch (e) {
-                  console.warn('Error limpiando filtros', e);
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-gray-600 font-medium">Total de Ofertas: {totalItems}</div>
+          <button
+            type="button"
+            onClick={() => {
+              // limpiar todos los filtros, restablecer orden y redirigir
+              try {
+                limpiarFiltros();
+                // restablecer orden al valor por defecto si se pasó setSort
+                try { if (typeof setSort === 'function') setSort("Fecha (Reciente)"); } catch(e) { /* ignore */ }
+                // LLAMAR AL HANDLER DE LIMPIEZA DEL COMPONENTE PADRE
+                if (typeof onClearFilters === 'function') {
+                  onClearFilters();
                 }
-                router.push('/alquiler/paginacion');
-              }}
-              className="ml-4 inline-block mt-0 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
-            >
-              Limpiar filtros
-            </button>
-          </div>
+              } catch (e) {
+                console.warn('Error limpiando filtros', e);
+              }
+              router.push('/alquiler/paginacion');
+            }}
+            className="ml-4 inline-block mt-0 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
+          >
+            Limpiar filtros
+          </button>
+        </div>
       </div>
+      
       {/* Feedback de carga y error */}
       {loadingUsuarios && (
         <p className="text-black/70 mt-4">Buscando profesionales...</p>
@@ -224,4 +221,3 @@ export default function FiltrosForm({
     </div>
   );
 }
-
