@@ -16,6 +16,12 @@ export default function Header() {
   useEffect(() => {
     setIsClient(true);
 
+    // 🔹 Mantener sesión activa desde localStorage
+    const storedLogin = localStorage.getItem('isLoggedIn');
+    if (storedLogin === 'true') {
+      setIsLoggedIn(true);
+    }
+
     const handleScroll = () => {
       if (window.innerWidth < 640) {
         setAreButtonsVisible(window.scrollY <= lastScrollY.current || window.scrollY === 0);
@@ -27,7 +33,7 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 🔹 Manejo de búsqueda: al presionar Enter → Error 404
+  // 🔹 Redirigir búsqueda a /404 al presionar Enter
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -35,17 +41,16 @@ export default function Header() {
     }
   };
 
-  // 🔹 Simulación de iniciar sesión + pedir ubicación + notificar login
+  // 🔹 Iniciar sesión
   const handleLogin = () => {
     setIsLoggedIn(true);
+    localStorage.setItem('isLoggedIn', 'true');
+  };
 
-    // ✅ Emitir evento para geolocalización
-    const eventGeo = new CustomEvent("solicitar-geolocalizacion");
-    window.dispatchEvent(eventGeo);
-    
-    // ✅ NUEVO: Emitir evento para notificar login exitoso al MapaWrapper
-    const eventLogin = new CustomEvent("login-exitoso");
-    window.dispatchEvent(eventLogin);
+  // 🔹 Cerrar sesión (opcional)
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('isLoggedIn');
   };
 
   if (!isClient) return null;
@@ -90,7 +95,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* 🔹 ELEMENTOS DEL HEADER (CAMBIAN SI SE INICIA SESIÓN) */}
+        {/* 🔹 ELEMENTOS DEL HEADER */}
         <div className="flex items-center space-x-4">
           {!isLoggedIn ? (
             <>
@@ -116,12 +121,21 @@ export default function Header() {
           ) : (
             <>
               <Link href="/ser-fixer">
-                <button className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
+                <button
+                  onClick={() => router.push('/404')}
+                  className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a]"
+                >
                   Ser Fixer
                 </button>
               </Link>
-              <div className="flex items-center space-x-2">
-                <span className="font-semibold text-[#11255A]">Nombre de Usuario</span>
+
+              {/* 🔹 ÁREA DEL PERFIL CLICKEABLE */}
+              <div
+                onClick={() => router.push('/404')}
+                className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition"
+                title="Ver perfil"
+              >
+                <span className="font-semibold text-[#11255A] select-none">Nombre de Usuario</span>
                 <svg
                   className="w-8 h-8 text-[#2a87ff]"
                   fill="currentColor"
@@ -196,19 +210,28 @@ export default function Header() {
             </div>
           ) : (
             <div className="flex items-center justify-center space-x-2">
-              <Link href="/ser-fixer">
-                <button className="px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
-                  Ser Fixer
-                </button>
-              </Link>
-              <span className="text-[#11255A] text-xs font-semibold">Nombre de Usuario</span>
-              <svg
-                className="w-5 h-5 text-[#2a87ff]"
-                fill="currentColor"
-                viewBox="0 0 24 24"
+              <button
+                onClick={() => router.push('/404')}
+                className="px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]"
               >
-                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-              </svg>
+                Ser Fixer
+              </button>
+
+              {/* 🔹 Perfil clickeable móvil */}
+              <div
+                onClick={() => router.push('/404')}
+                className="flex items-center space-x-1 cursor-pointer hover:opacity-80 transition"
+                title="Ver perfil"
+              >
+                <span className="text-[#11255A] text-xs font-semibold select-none">Nombre de Usuario</span>
+                <svg
+                  className="w-5 h-5 text-[#2a87ff]"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                </svg>
+              </div>
             </div>
           )}
         </div>
