@@ -1,30 +1,30 @@
-//(front Libelula)
 "use client";
 import { useState } from "react";
 
 const initialFormData = {
-  email_cliente: "",
   identificador_deuda: "",
+  nit: "",
   descripcion: "",
+  descripcion_envio: "",
+  concepto: "",
+  email_cliente: "",
   nombre_cliente: "",
   apellido_cliente: "",
   ci: "",
-  nit: "",
-  descripcion_envio: "",
-  concepto: "",
   Costo_Unitario: 0,
 };
+
 interface FormErrors {
-  nombre_cliente?: string;
-  apellido_cliente?: string;
-  ci?: string;
   identificador_deuda?: string;
   nit?: string;
   descripcion?: string;
   descripcion_envio?: string;
   concepto?: string;
-  Costo_Unitario?: string;
   email_cliente?: string;
+  nombre_cliente?: string;
+  apellido_cliente?: string;
+  ci?: string;
+  Costo_Unitario?: string;
 }
 
 export default function HomePage() {
@@ -32,385 +32,185 @@ export default function HomePage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [message, setMessage] = useState("");
 
-  //manejador para todos los inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
+      const { name, value, type } = e.target;
+      setMessage("");
 
-    // Validar campos que solo deben ser alfabéticos (nombre y apellido)
-    if (name === "nombre_cliente" || name === "apellido_cliente") {
-      const regex = /^[\p{L} ]*$/u;
+      let specificError: string | undefined = undefined;
 
-      if (regex.test(value) || value === "") {
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "Solo se pueden ingresar caracteres alfabéticos",
-        }));
+      if (name === "nombre_cliente" || name === "apellido_cliente") {
+          const regex = /^[\p{L} ]*$/u;
+          if (!regex.test(value) && value !== "") specificError = "Solo caracteres alfabéticos";
+      } else if (name === "ci") {
+          const regex = /^[0-9]*$/;
+          if (!regex.test(value) || value.length > 8) specificError = "Solo 8 dígitos numéricos";
+      } else if (name === "identificador_deuda") {
+          const regex = /^[0-9]*$/;
+          if (!regex.test(value) && value !== "") specificError = "Solo dígitos numéricos";
+      } else if (name === "nit") {
+          const regex = /^[0-9]*$/;
+          if (!regex.test(value) || value.length > 10) specificError = "Solo 10 dígitos numéricos";
+      } else if (name === "descripcion" || name === "descripcion_envio" || name === "concepto") {
+          const regex = /^[\p{L}\p{N} .,]*$/u;
+          if (!regex.test(value) && value !== "") specificError = "No caracteres especiales (excepto . ,)";
+      } else if (type === "number" && name === "Costo_Unitario") {
+          const numValue = value === "" ? 0 : Number(value);
+          if (numValue < 0) {
+              specificError = "El monto no puede ser negativo";
+          } else {
+              setFormData((prev) => ({ ...prev, [name]: numValue }));
+              setErrors((prev) => ({ ...prev, [name]: undefined }));
+              return;
+          }
       }
-      return;
-    }
 
-    //validar campo ci (solo digitos, max 8 caracteres y caracteres alfabéticos)
-    if (name === "ci") {
-      const regex = /^[0-9]*$/;
+      setErrors((prev) => ({ ...prev, [name]: specificError }));
 
-      if ((regex.test(value) && value.length <= 8) || value === "") {
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "Solo se aceptan dígitos y hasta un máximo de 8.",
-        }));
+      if (!specificError || name === "email_cliente" ) {
+           setFormData((prev) => ({
+               ...prev,
+               [name]: (type === "number" && name === "Costo_Unitario" && specificError) ? prev[name] : // Mantener valor anterior si hay error en Costo
+                       (type === "number" && name !== "Costo_Unitario") ? Number(value) : value,
+           }));
       }
-      return;
-    }
-
-    //validar identificador_deuda (solo dígitos)
-    if (name === "identificador_deuda") {
-      const regex = /^[0-9]*$/;
-
-      if (regex.test(value) || value === "") {
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "El identificador de deuda solo se permite ingresar digitos numericos",
-        }));
-      }
-      return;
-    }
-
-    //validar NIT (solo dígitos, máximo 10)
-    if (name === "nit") {
-      const regex = /^[0-9]*$/;
-
-      if ((regex.test(value) && value.length <= 10) || value === "") {
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "Solo se aceptan dígitos y hasta un máximo de 10.",
-        }));
-      }
-      return;
-    }
-
-    //validar descripcion (solo letras Unicode y espacios)
-    if (name === "descripcion") {
-      const regex = /^[\p{L} ]*$/u;
-
-      if (regex.test(value) || value === "") {
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "No se pueden ingresar caracteres numéricos o especiales",
-        }));
-      }
-      return;
-    }
-
-    //validar descripcion_envio (solo letras Unicode y espacios)
-    if (name === "descripcion_envio") {
-      const regex = /^[\p{L} ]*$/u;
-
-      if (regex.test(value) || value === "") {
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "No se pueden ingresar caracteres numéricos o especiales",
-        }));
-      }
-      return;
-    }
-
-    //validar concepto (solo letras Unicode y espacios)
-    if (name === "concepto") {
-      const regex = /^[\p{L} ]*$/u;
-
-      if (regex.test(value) || value === "") {
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          [name]: "No se pueden ingresar caracteres numéricos o especiales",
-        }));
-      }
-      return;
-    }
-
-    if (name === "email_cliente") {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-      return;
-    }
-
-    //manejo estándar para otros campos
-    if (type === "number") {
-      const numValue = Number(value);
-
-      if (name === "Costo_Unitario") {
-        if (numValue < 0) {
-          setErrors((prev) => ({
-            ...prev,
-            [name]: "El monto no puede ser negativo",
-          }));
-        } else {
-          setFormData((prev) => ({ ...prev, [name]: numValue }));
-          setErrors((prev) => ({ ...prev, [name]: "" }));
-        }
-      } else {
-        setFormData((prev) => ({ ...prev, [name]: numValue }));
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage("");
+    let currentErrors: FormErrors = {};
 
-    if (formData.ci.length !== 8) {
-      setErrors((prev) => ({
-        ...prev,
-        ci: "El CI debe tener exactamente 8 dígitos.",
-      }));
-      setMessage("Por favor, corrija los errores en el formulario.");
+    if (!formData.identificador_deuda) currentErrors.identificador_deuda = "Requerido";
+    if (!formData.nit) currentErrors.nit = "Requerido"; else if (formData.nit.length !== 10) currentErrors.nit = "10 dígitos";
+    if (!formData.descripcion) currentErrors.descripcion = "Requerido";
+    if (!formData.descripcion_envio) currentErrors.descripcion_envio = "Requerido";
+    if (!formData.concepto) currentErrors.concepto = "Requerido";
+    if (!formData.email_cliente) currentErrors.email_cliente = "Requerido"; else { const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; if (!emailRegex.test(formData.email_cliente)) currentErrors.email_cliente = "Inválido"; }
+    if (!formData.nombre_cliente) currentErrors.nombre_cliente = "Requerido";
+    if (!formData.apellido_cliente) currentErrors.apellido_cliente = "Requerido";
+    if (!formData.ci) currentErrors.ci = "Requerido"; else if (formData.ci.length !== 8) currentErrors.ci = "8 dígitos";
+    if (formData.Costo_Unitario <= 0) currentErrors.Costo_Unitario = "> 0";
+
+    setErrors(currentErrors);
+
+    if (Object.keys(currentErrors).length > 0) {
+      setMessage("Por favor, corrija los errores.");
       return;
     }
 
-    if (formData.nit.length !== 10) {
-      setErrors((prev) => ({
-        ...prev,
-        nit: "El campo de NIT solo debe tener 10 digitos",
-      }));
-      setMessage("Por favor, corrija los errores en el formulario.");
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email_cliente)) {
-      setErrors((prev) => ({
-        ...prev,
-        email_cliente: "Correo invalido",
-      }));
-      setMessage("Por favor, corrija los errores en el formulario.");
-      return;
-    }
-
-    if (Object.values(errors).some((error) => error)) {
-      setMessage("Por favor, corrija los errores en el formulario.");
-      return;
-    }
-
-    setMessage("Procesando");
-
-    try {
-      const response = await fetch(
-        "http://localhost:5000/api/payments/registrar-deuda",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok && !data.error && data.url_pasarela_pagos) {
-        setMessage("Redirigiendo a la pasarela de pago");
-        window.location.href = data.url_pasarela_pagos;
-      } else {
-        setMessage(
-          data.message ||
-            "No se pudo redirigir. Verificá los datos o intenta nuevamente."
-        );
-      }
-    } catch (err: any) {
-      setMessage("Error: " + err.message);
-    }
+    setMessage("Procesando...");
+     try {
+       const response = await fetch("http://localhost:5000/api/payments/registrar-deuda", {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify(formData),
+         });
+       const data = await response.json();
+       if (response.ok && !data.error && data.url_pasarela_pagos) {
+         setMessage("Redirigiendo...");
+         setTimeout(() => { window.location.href = data.url_pasarela_pagos; }, 1500);
+       } else {
+         setMessage(data.message || "Error al registrar. Verifique datos.");
+       }
+     } catch (err: any) {
+       console.error("Error en fetch:", err);
+       setMessage("Error de conexión.");
+     }
   };
+
+  const inputClass = (fieldName: keyof FormErrors) => `form-input ${errors[fieldName] ? 'input-error' : ''}`;
 
   return (
     <div className="page-container">
-      {/* Columna 1: El Título */}
+      {/* Columna 1: Título */}
       <div>
         <h1 className="hero-title">REGISTRO DE DEUDA</h1>
       </div>
 
-      {/* Columna 2: La tarjeta del formulario */}
-      <div className="form-container">
-        {/* El h2 que estaba aquí fue ELIMINADO */}
+      {/* Columna 2: Formulario */}
+      <div className="form-wrapper">
+        <div className="form-blur-background"></div>
 
-        
-      <div className="page-container">
-        {/* Columna 1: El Título */}
-        <div>
-          <h1 className="hero-title">REGISTRO DE DEUDA</h1>
-        </div>
+        {/* Tarjeta Blanca */}
+        <div className="form-container">
+          <form onSubmit={handleSubmit} noValidate style={{ width: '100%' }}>
+            <div className="form-layout-internal"> 
 
-        {/* --- INICIO DE CAMBIOS: Añadir el form-wrapper y los decorativos --- */}
-        {/* Columna 2: La tarjeta del formulario, ahora envuelta en form-wrapper */}
-        <div className="form-wrapper">
-          <div className="form-blur-background"></div> {/* El blur de fondo */}
-          <div className="form-bottom-border"></div> {/* La línea de abajo */}
-          
-          <div className="form-container"> {/* TU TARJETA BLANCA YA EXISTENTE */}
-            <form onSubmit={handleSubmit} className="form-layout" noValidate>
-              {/* El contenido del formulario se queda EXACTAMENTE IGUAL */}
-              {/* ... (todos los form-group, labels, inputs, errores, etc.) ... */}
+              {/* Columna Izquierda */}
+              <div className="form-column">
+                <div className="form-group">
+                  <label htmlFor="id_deuda" className="form-label-styled">Identificador de deuda</label>
+                  <input id="id_deuda" name="identificador_deuda" placeholder="0000000000" value={formData.identificador_deuda} onChange={handleChange} required className={inputClass('identificador_deuda')} />
+                  <p className="form-error">{errors.identificador_deuda || " "}</p>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="nit" className="form-label-styled">NIT</label>
+                  <input id="nit" name="nit" placeholder="0000000000" value={formData.nit} onChange={handleChange} required className={inputClass('nit')} />
+                  <p className="form-error">{errors.nit || " "}</p>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="descripcion" className="form-label-styled">Descripción</label>
+                  <input id="descripcion" name="descripcion" placeholder="Agregar una descripción." value={formData.descripcion} onChange={handleChange} required className={inputClass('descripcion')} />
+                  <p className="form-error">{errors.descripcion || " "}</p>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="descripcion_envio" className="form-label-styled">Descripción del envío</label>
+                  <input id="descripcion_envio" name="descripcion_envio" placeholder="Agregar una descripción." value={formData.descripcion_envio} onChange={handleChange} required className={inputClass('descripcion_envio')} />
+                  <p className="form-error">{errors.descripcion_envio || " "}</p>
+                </div>
+                 <div className="form-group">
+                  <label htmlFor="concepto" className="form-label-styled">Concepto</label>
+                  <input id="concepto" name="concepto" placeholder="Agregar una descripción." value={formData.concepto} onChange={handleChange} required className={inputClass('concepto')} />
+                  <p className="form-error">{errors.concepto || " "}</p>
+                </div>
+              </div> {/* Fin Columna Izquierda */}
 
-              {/* Botón Aceptar */}
-              <div className="button-container">
-                <button type="submit" className="submit-button">
-                  ACEPTAR
-                </button>
-              </div>
-            </form>
+              {/* Columna Derecha */}
+              <div className="form-column">
+                 <div className="form-group">
+                  <label htmlFor="email" className="form-label-styled">Correo electrónico</label>
+                  <input id="email" name="email_cliente" type="email" placeholder="user@example.com" value={formData.email_cliente} onChange={handleChange} required className={inputClass('email_cliente')} />
+                  <p className="form-error">{errors.email_cliente || " "}</p>
+                </div>
+                 <div className="form-group">
+                  <label htmlFor="nombre" className="form-label-styled">Nombres</label>
+                  <input id="nombre" name="nombre_cliente" placeholder="Nombres" value={formData.nombre_cliente} onChange={handleChange} required className={inputClass('nombre_cliente')} />
+                  <p className="form-error">{errors.nombre_cliente || " "}</p>
+                </div>
+                 <div className="form-group">
+                  <label htmlFor="apellido" className="form-label-styled">Apellidos</label>
+                  <input id="apellido" name="apellido_cliente" placeholder="Apellidos" value={formData.apellido_cliente} onChange={handleChange} required className={inputClass('apellido_cliente')} />
+                  <p className="form-error">{errors.apellido_cliente || " "}</p>
+                </div>
+                 <div className="form-group">
+                  <label htmlFor="ci" className="form-label-styled">Cédula de Identidad</label>
+                  <input id="ci" name="ci" placeholder="00000000" value={formData.ci} onChange={handleChange} required className={inputClass('ci')} />
+                  <p className="form-error">{errors.ci || " "}</p>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="monto" className="form-label-styled">Monto en (USD)</label>
+                  <div className="input-group">
+                    <span className="input-group-addon">$</span>
+                    <input id="monto" name="Costo_Unitario" type="number" placeholder="0" value={formData.Costo_Unitario === 0 ? "" : formData.Costo_Unitario} onChange={handleChange} required className={`form-input input-group-field ${inputClass('Costo_Unitario')}`} min="0.01" step="0.01" />
+                  </div>
+                  <p className="form-error">{errors.Costo_Unitario || " "}</p>
+                </div>
 
+                {/* Botón Aceptar */}
+                <div className="button-container">
+                  <button type="submit" className="submit-button">
+                    ACEPTAR
+                  </button>
+                </div>
+              </div> {/* Fin Columna Derecha */}
+              
+            </div> {/* **** FIN DE CORRECCIÓN ESTRUCTURAL **** */}
+
+            {/* Mensaje General (fuera del layout de columnas) */}
             {message && <p className="form-message">{message}</p>}
-          </div> {/* Cierre de form-container */}
-        </div> {/* Cierre de form-wrapper */}
-        {/* --- FIN DE CAMBIOS --- */}
-      </div>
-
-
-
-        <form onSubmit={handleSubmit} className="form-layout" noValidate>
-          <h4 className="form-section-title">Datos personales</h4>
-          <input
-            name="email_cliente"
-            placeholder="Correo electrónico"
-            value={formData.email_cliente}
-            onChange={handleChange}
-            required
-            className="form-input"
-          />
-          {/* Mensaje de error específico para email */}
-          <p className="form-error">{errors.email_cliente || " "}</p>
-
-          <input
-            name="nombre_cliente"
-            placeholder="Nombre del cliente"
-            value={formData.nombre_cliente}
-            onChange={handleChange}
-            required
-            className="form-input"
-          />
-          {/* Mensaje de error específico para el nombre */}
-          <p className="form-error">{errors.nombre_cliente || " "}</p>
-
-          <input
-            name="apellido_cliente"
-            placeholder="Apellido del cliente"
-            value={formData.apellido_cliente}
-            onChange={handleChange}
-            required
-            className="form-input"
-          />
-          {/* Mensaje de error específico para el apellido */}
-          <p className="form-error">{errors.apellido_cliente || " "}</p>
-
-          <input
-            name="ci"
-            placeholder="CI"
-            value={formData.ci}
-            onChange={handleChange}
-            required
-            className="form-input"
-          />
-          {/* Mensaje de error específico para CI */}
-          <p className="form-error">{errors.ci || " "}</p>
-
-          <h4 className="form-section-title">Datos de la deuda</h4>
-          <input
-            name="identificador_deuda"
-            placeholder="Identificador de deuda"
-            value={formData.identificador_deuda}
-            onChange={handleChange}
-            required
-            className="form-input"
-          />
-          {/* Mensaje de error específico para identificador_deuda */}
-          <p className="form-error">{errors.identificador_deuda || " "}</p>
-
-          <input
-            name="nit"
-            placeholder="NIT"
-            value={formData.nit}
-            onChange={handleChange}
-            required
-            className="form-input"
-          />
-          {/* Mensaje de error específico para NIT */}
-          <p className="form-error">{errors.nit || " "}</p>
-
-          <input
-            name="descripcion"
-            placeholder="Descripción"
-            value={formData.descripcion}
-            onChange={handleChange}
-            required
-            className="form-input"
-          />
-          {/* Mensaje de error específico para descripción */}
-          <p className="form-error">{errors.descripcion || " "}</p>
-
-          <input
-            name="descripcion_envio"
-            placeholder="Descripción del envío"
-            value={formData.descripcion_envio}
-            onChange={handleChange}
-            required
-            className="form-input"
-          />
-          {/* Mensaje de error específico para descripción envío */}
-          <p className="form-error">{errors.descripcion_envio || " "}</p>
-
-          <input
-            name="concepto"
-            placeholder="Concepto"
-            value={formData.concepto}
-            onChange={handleChange}
-            required
-            className="form-input"
-          />
-          {/* Mensaje de error específico para concepto */}
-          <p className="form-error">{errors.concepto || " "}</p>
-
-          <label className="form-label">Monto (en USD)</label>
-          <div className="input-group">
-            <span className="input-group-addon">$</span>
-            <input
-              name="Costo_Unitario"
-              type="number"
-              placeholder="Costo unitario"
-              value={formData.Costo_Unitario}
-              onChange={handleChange}
-              required
-              className="form-input input-group-field" // Tiene 2 clases
-              min="0"
-            />
-          </div>
-          {/* Mensaje de error específico para Costo Unitario */}
-          <p className="form-error">{errors.Costo_Unitario || " "}</p>
-
-          <button type="submit" className="submit-button">
-            Aceptar
-          </button>
-        </form>
-
-        {message && <p className="form-message">{message}</p>}
-      </div>
-    </div>
+          </form>
+        </div> {/* Fin form-container */}
+      </div> {/* Fin form-wrapper */}
+    </div> 
   );
 }

@@ -28,6 +28,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        {/* Esta es la línea que se agregó para el borde inferior */}
+        <div className="global-bottom-border"></div>
       </body>
     </html>
   );
