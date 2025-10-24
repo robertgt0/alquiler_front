@@ -153,6 +153,7 @@ export function useFiltros() {
         console.log("📭 No hay datos después de la obtención base");
         setUsuarios([]);
         setSinResultados(true);
+        setLoadingUsuarios(false);
         return;
       }
 
@@ -323,6 +324,7 @@ export function useFiltros() {
     setUsuarios([]);
     setSinResultados(false);
     setErrorUsuarios(null);
+    console.log("🧹 Limpiando todos los filtros");
   };
 
   return {

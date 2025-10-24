@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React from 'react';
 
@@ -64,22 +64,20 @@ const JobCard: React.FC<JobCardProps> = ({
   onViewDetails
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-      <div className="relative h-48 bg-gradient-to-r from-blue-400 to-blue-600">
-        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black/40 to-transparent" />
-        <div className="absolute bottom-4 left-4 text-white">
-          <h2 className="text-2xl font-bold">{company}</h2>
-          <p className="text-lg opacity-90">{title}</p>
-        </div>
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+      {/* Encabezado con gradiente */}
+      <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 p-6">
+        <h2 className="text-xl font-semibold text-white mb-2">{company}</h2>
+        <p className="text-white/90">{title}</p>
       </div>
 
-      <div className="p-6">
+      <div className="p-6 flex-grow">
         {/* Estado y Calificación */}
         <div className="flex items-center justify-between mb-4">
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+          <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${
             employmentType === "Disponible" 
-              ? "bg-green-50 text-green-600" 
-              : "bg-red-50 text-red-600"
+              ? "bg-green-100 text-green-700 border border-green-200" 
+              : "bg-red-100 text-red-700 border border-red-200"
           }`}>
             {employmentType}
           </span>
@@ -87,14 +85,14 @@ const JobCard: React.FC<JobCardProps> = ({
             {[1, 2, 3, 4, 5].map((star) => (
               <svg
                 key={star}
-                className={`h-5 w-5 ${star <= Math.round(rating) ? 'text-yellow-300' : 'text-gray-200'}`}
+                className={`h-5 w-5 ${star <= Math.round(rating) ? 'text-yellow-400' : 'text-gray-200'}`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
             ))}
-            <span className="ml-2 text-sm text-gray-500">
+            <span className="ml-2 text-sm text-gray-600">
               {rating ? `(${Number(rating).toFixed(1)})` : '(Sin calificaciones)'}
             </span>
           </div>
@@ -110,34 +108,38 @@ const JobCard: React.FC<JobCardProps> = ({
         </div>
 
         {/* Servicios y Precio */}
-        <div className="mb-4">
-          <h3 className="text-sm font-medium text-gray-900 mb-2">Servicios:</h3>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">{service}</span>
-            <span className="font-medium text-blue-600">
-                          <span className="font-medium text-blue-500">{formatSalary(salaryRange)}</span>
-            </span>
+        <div className="mb-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">Servicios:</h3>
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-700">{service}</span>
+              <span className="font-medium text-blue-600">
+                {formatSalary(salaryRange)}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Botón */}
-        <button
-          onClick={onViewDetails}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
-        >
-          Ver Detalles
-        </button>
-
         {/* Fecha de registro */}
-        <div className="mt-4 text-xs text-gray-500 flex items-center justify-end">
+        <div className="text-xs text-gray-500 flex items-center mb-6">
           <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Registrado: {postedDate}
         </div>
+        
+        <div className="mt-auto">
+          {/* Botón centrado al final */}
+          <button
+            onClick={onViewDetails}
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-sm hover:shadow"
+          >
+            Ver Detalles
+          </button>
+        </div>
       </div>
     </div>
-  );
-};
+    );
+  };
 
-export default JobCard;
+  export default JobCard;

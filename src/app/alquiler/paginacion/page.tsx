@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import JobCard from "./components/jobCard";
-import { UserProfileCard } from "./components/UserProfileCard";
+import UserProfileCard from "./components/UserProfileCard";
 import Pagination from "./components/Pagination";
 import { getJobs } from "./services/jobService";
 import { usePagination } from "./hooks/usePagination";
@@ -42,6 +42,10 @@ function BusquedaContent() {
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
   const [modoVista, setModoVista] = useState<"jobs" | "usuarios">("jobs");
+  const [filtersNoResults, setFiltersNoResults] = useState(false);
+
+  // Ref para identificar la última búsqueda válida y descartar respuestas antiguas
+  const latestSearchIdRef = useRef(0);
 
   const itemsPerPage = 10;
 
@@ -64,26 +68,26 @@ function BusquedaContent() {
   ];
 
   // ---------------- Funciones de ordenamiento ----------------
- const ordenarItems = (opcion: string, lista: Job[]): Job[] => {
-  const sorted = [...lista];
-  switch (opcion) {
-    case "Nombre A-Z":
-      sorted.sort((a, b) => (a.company || "").localeCompare(b.company || ""));
-      break;
-    case "Nombre Z-A":
-      sorted.sort((a, b) => (b.company || "").localeCompare(a.company || ""));
-      break;
-    case "Fecha (Reciente)":
-      sorted.sort((a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime());
-      break;
-    case "Mayor Calificación (⭐)":
-      sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      break;
-    default:
-      break;
-  }
-  return sorted;
-};
+  const ordenarItems = (opcion: string, lista: Job[]) => {
+    const sorted = [...lista];
+    switch (opcion) {
+      case "Nombre A-Z":
+        sorted.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "Nombre Z-A":
+        sorted.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+      case "Fecha (Reciente)":
+        sorted.sort(
+          (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
+        );
+        break;
+      case "Mayor Calificación (⭐)":
+        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+    }
+    return sorted;
+  };
 
   const ordenarUsuarios = (opcion: string, lista: UsuarioResumen[]) => {
     const sorted = [...lista];
@@ -109,15 +113,21 @@ function BusquedaContent() {
   // ---------------- Filtrado y ordenamiento ----------------
   const jobsToDisplay = useMemo(() => {
     let data = searchResults.length > 0 ? searchResults : allJobs;
+    // normalizar (quitar tildes) para que búsquedas con acentos funcionen
+    const normalizar = (texto: string) =>
+      texto
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 
-    const termino = searchTerm.trim().toLowerCase();
+    const termino = (searchTerm || "").trim();
     if (termino) {
-      // Dividir la búsqueda en palabras
-      const palabras = termino.split(/\s+/).filter(Boolean);
+      // Dividir la búsqueda en palabras (normalizadas)
+      const palabras = normalizar(termino).split(/\s+/).filter(Boolean);
 
       data = data.filter((job) => {
-        const title = job.title.toLowerCase();
-        const company = job.company.toLowerCase();
+        const title = normalizar(job.title || "");
+        const company = normalizar(job.company || "");
 
         // Retorna true si alguna palabra coincide en title o company
         return palabras.some((palabra) => title.includes(palabra) || company.includes(palabra));
@@ -203,15 +213,38 @@ function BusquedaContent() {
   }, [searchTerm, allJobs]);
 
   // ---------------- Handlers ----------------
-  const handleSearchResults = async (
+  const handleSearchResults = (
     termino: string,
     resultados: Job[],
-    actualizarUrl: boolean = true
+    maybeIdOrActualizar?: number | boolean
   ) => {
     setBuscando(true);
     setEstadoBusqueda("idle");
 
     try {
+      // determinar si tercer parámetro es searchId (number) o flag actualizarUrl (boolean)
+      let searchId: number | undefined;
+      let actualizarUrl = true;
+
+      if (typeof maybeIdOrActualizar === "number") {
+        searchId = maybeIdOrActualizar;
+      } else if (typeof maybeIdOrActualizar === "boolean") {
+        actualizarUrl = maybeIdOrActualizar;
+      }
+
+      // Si viene un searchId y es más antiguo que el último aceptado, ignorar
+      if (typeof searchId === "number") {
+        if (searchId < latestSearchIdRef.current) {
+          // respuesta obsoleta
+          setBuscando(false);
+          return;
+        }
+        latestSearchIdRef.current = searchId;
+      } else {
+        // si no viene id, generar uno para marcar esta respuesta como la más reciente
+        latestSearchIdRef.current += 1;
+      }
+
       setSearchTerm(termino);
       setSearchResults(resultados);
       if (actualizarUrl) actualizarURL(termino);
@@ -237,6 +270,12 @@ function BusquedaContent() {
   };
 
   // ---------------- Render ----------------
+  // debug: comprueba que el componente está definido en runtime
+  // esto ayuda a ver si hay problemas con HMR / exports mezclados
+  // (se puede eliminar después de depurar)
+  // eslint-disable-next-line no-console
+  console.log('DEBUG: UserProfileCard import ->', typeof UserProfileCard, UserProfileCard);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 to-white">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -256,17 +295,21 @@ function BusquedaContent() {
         <div className="mt-6">
           <FiltrosForm
             onResults={(usuarios: UsuarioResumen[]) => {
+              console.log("🔄 Actualizando resultados filtrados:", usuarios.length);
               setUsuariosFiltrados(usuarios);
               setModoVista(usuarios.length > 0 ? "usuarios" : "jobs");
             }}
+            onFilterNoResults={(noResults: boolean) => {
+              console.log("🚫 Actualizando estado de sin resultados:", noResults);
+              setFiltersNoResults(noResults);
+            }}
             sort={sortBy}
             setSort={setSortBy}
-            search={searchTerm}
-            setSearch={setSearchTerm}
+            //search={searchTerm}
+            //setSearch={setSearchTerm}
             opcionesOrdenamiento={opcionesOrdenamiento}
             totalItems={totalItems}
           />
-
         </div>
 
         {/* Vista Usuarios */}
@@ -277,16 +320,19 @@ function BusquedaContent() {
             </h2>
             {usuariosFiltrados.length > 0 ? (
               <>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="UserProfilesContainer space-y-6">
                   {usuariosOrdenados.map((u) => (
-                    <div key={u._id}>
-                      <UserProfileCard 
-                        usuario={u}
-                        onContactClick={() => {
-                          console.log("Contactar a:", u.nombre);
-                          // Aquí puedes agregar la lógica para contactar al profesional
-                        }}
-                      />
+                    <div key={u._id} className="UserProfileContainer">
+                      {UserProfileCard ? (
+                        <UserProfileCard
+                          usuario={u}
+                          onContactClick={() => {
+                            console.log("Contactar a:", u.nombre);
+                          }}
+                        />
+                      ) : (
+                        <div className="p-4 bg-gray-100 rounded">Componente no disponible: {u.nombre}</div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -307,71 +353,66 @@ function BusquedaContent() {
             </a>
           </section>
         ) : (
-          /* Vista Jobs */
-            /* Vista Jobs */
-            <section className="mt-10">
-              {isLoading ? (
-                <p className="text-center text-gray-500 text-lg">Cargando ofertas...</p>
-              ) : (
-                <>
-                  <div className="text-xl text-blue-700 font-semibold mb-6">
-                    Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
-                  </div>
+          // Vista Jobs
+          <section className="mt-10">
+            {isLoading ? (
+              <p className="text-center text-gray-500 text-lg">Cargando ofertas...</p>
+            ) : (
+              <>
+                <div className="text-xl text-blue-700 font-semibold mb-6">
+                  Mostrando {currentItems.length} de {totalItems} Ofertas Disponibles
+                </div>
 
-                  <div className="results-area mt-6">
-                    {/* Mostrar loading mientras busca */}
-                    {buscando ? (
-                      <div className="text-center py-8">
-                        <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-                        <p className="mt-2 text-lg text-gray-600">
-                            Buscando resultados para  &quot;{searchTerm}&quot;...
-                        </p>
+                <div className="results-area mt-6">
+                  {buscando ? (
+                    <div className="text-center py-8">
+                      <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                      <p className="mt-2 text-lg text-gray-600">Buscando resultados para &quot;{searchTerm}&quot;...</p>
+                    </div>
+                  ) : currentItems.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-xl text-gray-600 mb-4">
+                        {filtersNoResults
+                          ? "No se encontraron ofertas con los filtros seleccionados"
+                          : (searchTerm && estadoBusqueda === "success")
+                          ? `No se encontraron resultados para "${searchTerm}"`
+                          : "No hay ofertas de trabajo disponibles en este momento."}
+                      </p>
+                      {searchTerm && (
+                        <button onClick={handleClearSearch} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                          Ver todas las ofertas
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-6">
+                        {currentItems.map((job, index) => (
+                          <JobCard
+                            key={`${job.title}-${index}`}
+                            {...job}
+                            onViewDetails={() => handleViewDetails(job)}
+                          />
+                        ))}
                       </div>
-                    ) : currentItems.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-xl text-gray-600 mb-4">
-                          {searchTerm && estadoBusqueda === "success"
-                            ? `No se encontraron resultados para "${searchTerm}"`
-                            : "No hay ofertas de trabajo disponibles en este momento."}
-                        </p>
-                        {searchTerm && (
-                          <button
-                            onClick={handleClearSearch}
-                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            Ver todas las ofertas
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <>
-                        <div className="space-y-6">
-                          {currentItems.map((job, index) => (
-                            <JobCard
-                              key={`${job.title}-${index}`}
-                              {...job}
-                              onViewDetails={() => handleViewDetails(job)}
-                            />
-                          ))}
+
+                      {totalPages > 1 && (
+                        <div className="mt-10">
+                          <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            handlePageChange={handlePageChange}
+                            handleNextPage={handleNextPage}
+                            handlePrevPage={handlePrevPage}
+                          />
                         </div>
-
-                        {totalPages > 1 && (
-                          <div className="mt-10">
-                            <Pagination
-                              currentPage={currentPage}
-                              totalPages={totalPages}
-                              handlePageChange={handlePageChange}
-                              handleNextPage={handleNextPage}
-                              handlePrevPage={handlePrevPage}
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-            </section>
+                      )}
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </section>
 
         )}
       </main>

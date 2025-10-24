@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFiltros } from "app/alquiler/Feature/Hooks/useFiltro";
 import type { UsuarioResumen } from "app/alquiler/Feature/Types/filtroType";
 
@@ -8,10 +9,12 @@ interface FiltrosFormProps {
   onResults?: (usuarios: any[]) => void; // Props pasadas desde paginacion para Ordenamiento y Búsqueda
   sort: string;
   setSort: (value: string) => void;
-  search: string;
-  setSearch: (value: string) => void;
+  search?: string;
+  setSearch?: (value: string) => void;
   opcionesOrdenamiento: string[];
   totalItems: number; // Conteo de resultados de trabajos
+  // Notifica a la página si los filtros dieron como resultado "sin resultados"
+  onFilterNoResults?: (noResults: boolean) => void;
 }
 
 
@@ -29,8 +32,10 @@ export default function FiltrosForm({
   setSearch,
   opcionesOrdenamiento = [],
   totalItems,
+  onFilterNoResults,
 
 }: FiltrosFormProps) {
+  const router = useRouter();
   const {
     departamentos,
     ciudades,
@@ -38,9 +43,10 @@ export default function FiltrosForm({
 
     disponibilidad,
     especialidades,
-    filtro,
-    handleChange,
-    usuarios,
+  filtro,
+  handleChange,
+  limpiarFiltros,
+  usuarios,
     loadingUsuarios,
     errorUsuarios,
     sinResultados,
@@ -56,7 +62,12 @@ export default function FiltrosForm({
     if (onResults) {
       onResults(usuarios);
     }
-  }, [usuarios, onResults]);
+    // Notificar a la página si los filtros no arrojaron resultados
+    if (typeof onFilterNoResults === 'function') {
+      console.log("🔄 Notificando estado de sin resultados:", sinResultados);
+      onFilterNoResults(Boolean(sinResultados));
+    }
+  }, [usuarios, onResults, sinResultados, onFilterNoResults]);
 
   
 
@@ -84,18 +95,23 @@ export default function FiltrosForm({
               onChange={async (e) => {
                 const val = e.target.value;
                 setDepartamentoSeleccionado(val);
+                // limpiar ciudad seleccionada cuando cambia el departamento
                 handleChange("ciudad", "");
-                if (val) await loadCiudadesByDepartamento(val);
+                // siempre llamar a la carga de ciudades; la función internamente
+                // limpia `ciudades` si el departamento es vacío.
+                await loadCiudadesByDepartamento(val);
 
               }}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">Elige un departamento</option>
+              {/* placeholder no seleccionable - mejora UX: el usuario no puede elegir "vacío" a propósito */}
+              <option value="" disabled>
+                Elige un departamento
+              </option>
               {departamentos.map((d) => (
                 <option key={d.value} value={d.value}>
                   {d.label}
                 </option>
-
               ))}
             </select>
 
@@ -103,15 +119,24 @@ export default function FiltrosForm({
             <select
               value={filtro.ciudad || ""}
               onChange={(e) => handleChange("ciudad", e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={!departamentoSeleccionado || ciudades.length === 0}
+              className={`border rounded-lg px-3 py-2 text-sm text-black focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!departamentoSeleccionado || ciudades.length === 0 ? 'opacity-60 cursor-not-allowed' : 'border-gray-300'}`}
             >
-              <option value="">Elige una ciudad</option>
-              {ciudades.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
+              {/* Si no hay departamento seleccionado o no hay ciudades, mostrar mensaje clarificador */}
+              {(!departamentoSeleccionado || ciudades.length === 0) ? (
+                <option value="" disabled>
+                  Seleccione un departamento primero
                 </option>
-
-              ))}
+              ) : (
+                <>
+                  <option value="">Elige una ciudad</option>
+                  {ciudades.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </>
+              )}
             </select>
 
             {/* Disponibilidad */}
@@ -166,9 +191,26 @@ export default function FiltrosForm({
         </div>
 
         {/* CONTEO DE RESULTADOS */}
-        <div className="text-sm text-gray-600 font-medium">
-          Total de Ofertas: {totalItems}
-        </div>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-gray-600 font-medium">Total de Ofertas: {totalItems}</div>
+            <button
+              type="button"
+              onClick={() => {
+                // limpiar todos los filtros, restablecer orden y redirigir
+                try {
+                  limpiarFiltros();
+                  // restablecer orden al valor por defecto si se pasó setSort
+                  try { if (typeof setSort === 'function') setSort("Fecha (Reciente)"); } catch(e) { /* ignore */ }
+                } catch (e) {
+                  console.warn('Error limpiando filtros', e);
+                }
+                router.push('/alquiler/paginacion');
+              }}
+              className="ml-4 inline-block mt-0 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
+            >
+              Limpiar filtros
+            </button>
+          </div>
       </div>
       {/* Feedback de carga y error */}
       {loadingUsuarios && (

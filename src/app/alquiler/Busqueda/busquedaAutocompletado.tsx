@@ -9,7 +9,8 @@ type EstadoSugerencias = "idle" | "loading" | "error" | "success";
 type EstadoBusqueda = "idle" | "loading" | "success" | "error";
 
 interface BusquedaAutocompletadoProps {
-    onSearch: (searchTerm: string, resultados: Job[]) => void;
+    // onSearch es flexible: recibe término, resultados y opcionalmente otros argumentos
+    onSearch: (searchTerm: string, resultados: Job[], ...rest: any[]) => void;
     datos?: Job[];
     placeholder?: string;
     valorInicial?: string;
@@ -217,6 +218,11 @@ class BusquedaService {
     }
 }
 
+function capitalizarPrimera(texto: string): string {
+    texto = texto.trim();
+    return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : '';
+}
+
 export default function BusquedaAutocompletado({
     onSearch,
     datos = [],
@@ -260,6 +266,8 @@ export default function BusquedaAutocompletado({
     const historialCargado = useRef(false);
     // 🔥 NUEVO: Ref para controlar búsquedas en curso
     const busquedaEnCurso = useRef(false);
+    // 🔥 NUEVO: Id incremental para cada búsqueda, se pasa a onSearch
+    const searchIdRef = useRef(0);
 
     const caracteresValidos = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ´'" ,\s\-]*$/;
 
@@ -544,7 +552,9 @@ export default function BusquedaAutocompletado({
             setResultados([]);
             setLoadingResultados(false);
             setMensajeNoResultados(""); // 🔥 Limpiar mensaje de no resultados
-            onSearch("", []);
+            // invalidar búsquedas previas e informar vacío
+            searchIdRef.current += 1;
+            onSearch("", [], searchIdRef.current);
             return;
         }
 
@@ -562,8 +572,12 @@ export default function BusquedaAutocompletado({
         if (guardarEnHistorialFlag && mostrarHistorial) {
             guardarEnHistorial(textoLimpio);
         }
+        // id de esta búsqueda (se asigna dentro del try)
+        let mySearchId = 0;
 
         try {
+            // generar id único para esta búsqueda y pasarlo a onSearch
+            mySearchId = ++searchIdRef.current;
             console.log('🔍 [BÚSQUEDA] Buscando jobs reales...');
 
             const resultadosBackend = await BusquedaService.searchJobsInBackend(textoLimpio, datos, apiConfig?.endpoint);
@@ -574,7 +588,7 @@ export default function BusquedaAutocompletado({
                 setResultados(resultadosBackend);
                 setEstadoBusqueda("success");
                 setMensajeNoResultados(""); // 🔥 Limpiar mensaje si hay resultados
-                onSearch(textoLimpio, resultadosBackend);
+                onSearch(textoLimpio, resultadosBackend, mySearchId);
             } else {
                 const resultadosLocales = buscarTrabajosLocal(textoLimpio, datos);
                 console.log('🔍 [BÚSQUEDA] Resultados locales:', resultadosLocales);
@@ -583,12 +597,12 @@ export default function BusquedaAutocompletado({
                     setResultados(resultadosLocales);
                     setEstadoBusqueda("success");
                     setMensajeNoResultados(""); // 🔥 Limpiar mensaje si hay resultados
-                    onSearch(textoLimpio, resultadosLocales);
+                    onSearch(textoLimpio, resultadosLocales, mySearchId);
                 } else {
                     // 🔥 NUEVO: Pasar array vacío y dejar que la página maneje el mensaje
                     setResultados([]);
                     setEstadoBusqueda("success");
-                    onSearch(textoLimpio, []); // 🔥 Pasar array vacío
+                    onSearch(textoLimpio, [], mySearchId); // 🔥 Pasar array vacío
                     console.log('❌ [BÚSQUEDA] No se encontraron resultados');
                 }
             }
@@ -603,7 +617,8 @@ export default function BusquedaAutocompletado({
             }
 
             setEstadoBusqueda("error");
-            onSearch(textoLimpio, []); // 🔥 En caso de error, pasar array vacío
+            // asegurar que la página reciba el id de esta búsqueda fallida
+            onSearch(textoLimpio, [], mySearchId);
         } finally {
             // 🔥 CORRECCIÓN: Liberar el flag de búsqueda en curso
             busquedaEnCurso.current = false;
@@ -641,7 +656,9 @@ export default function BusquedaAutocompletado({
         // 🔥 CORRECCIÓN: Resetear el flag de búsqueda en curso
         busquedaEnCurso.current = false;
 
-        onSearch("", datos);
+        // invalidar búsquedas previas e informar con id
+        searchIdRef.current += 1;
+        onSearch("", datos, searchIdRef.current);
         inputRef.current?.focus();
     }, [datos, onSearch]);
 
@@ -806,7 +823,9 @@ export default function BusquedaAutocompletado({
                                 setEstadoBusqueda("idle");
                                 setLoadingResultados(false);
                                 setMensajeNoResultados(""); // 🔥 Limpiar mensaje
-                                onSearch("", datos);
+                                // invalidar búsquedas previas e informar vacío con id
+                                searchIdRef.current += 1;
+                                onSearch("", datos, searchIdRef.current);
                                 terminoBusquedaAnterior.current = "";
                                 // 🔥 CORRECCIÓN: Resetear flag de búsqueda en curso
                                 busquedaEnCurso.current = false;
