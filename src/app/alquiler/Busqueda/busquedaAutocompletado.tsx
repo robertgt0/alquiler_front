@@ -9,8 +9,7 @@ type EstadoSugerencias = "idle" | "loading" | "error" | "success";
 type EstadoBusqueda = "idle" | "loading" | "success" | "error";
 
 interface BusquedaAutocompletadoProps {
-    // onSearch es flexible: recibe término, resultados y opcionalmente otros argumentos
-    onSearch: (searchTerm: string, resultados: Job[], ...rest: any[]) => void;
+    onSearch: (searchTerm: string, resultados: Job[]) => void;
     datos?: Job[];
     placeholder?: string;
     valorInicial?: string;
@@ -37,9 +36,6 @@ interface ApiResponse {
     searchTerm?: string;
 }
 
-//http://localhost:5000
-//https://alquiler-back.vercel.app
-//https://alquiler-back.vercel.app/api/busqueda/history
 // Helper: normaliza NEXT_PUBLIC_API_URL evitando duplicar '/api'
 function getApiRoot(): string {
     const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -50,82 +46,133 @@ function getApiRoot(): string {
 class BusquedaService {
     private static API_BASE = getApiRoot();
 
-    static async searchJobsInBackend(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
+    // 🔥 NUEVO: Búsqueda local robusta como fallback principal
+    static busquedaLocalInteligente(query: string, jobs: Job[]): Job[] {
+        if (!query.trim()) return [];
+
+        const queryLower = query.toLowerCase().trim();
+        console.log('🔄 [LOCAL] Buscando localmente:', queryLower);
+
+        const resultados = jobs.filter(job => {
+            const enService = job.service?.toLowerCase().includes(queryLower);
+            const enTitle = job.title?.toLowerCase().includes(queryLower);
+            const enCompany = job.company?.toLowerCase().includes(queryLower);
+            const enEspecialidad = job.especialidad?.toLowerCase().includes(queryLower);
+
+            return enService || enTitle || enCompany || enEspecialidad;
+        });
+
+        console.log(`✅ [LOCAL] ${resultados.length} resultados encontrados`);
+        return resultados.slice(0, 50);
+    }
+
+    // 🔥 MODIFICADO: Búsqueda principal con fallback automático a local
+    static async searchJobsOptimized(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
         try {
-            console.log('🔍 [SERVICE] Buscando en backend:', query);
-            console.log('📊 [SERVICE] Jobs reales disponibles:', jobsReales.length);
+            console.log('🎯 [BÚSQUEDA] Buscando trabajos para:', query);
 
             if (!query.trim()) {
                 return [];
             }
 
-            // 1. Buscar especialidades en el backend para sugerencias
-            ///borbotones/search/autocomplete
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/autocomplete`;
-            const response = await fetch(`${apiEndpoint}?q=${encodeURIComponent(query)}&limit=50`);
+            // 🔥 INTENTAR BACKEND PRIMERO
+            try {
+                console.log('🚀 [BACKEND] Intentando conexión con backend...');
 
-            if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+                const payload = {
+                    queryOriginal: query,
+                    estrategias: [query.toLowerCase()],
+                    campos: ['title', 'especialidad', 'company', 'service', 'description'],
+                    config: {
+                        caseInsensitive: true,
+                        ignoreAccents: true,
+                        fuzzyMatch: true,
+                        partialMatch: true
+                    }
+                };
 
-            const data: ApiResponse = await response.json();
-            console.log('📦 [SERVICE] Respuesta del backend (sugerencias):', data);
+                const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-            // 2. ✅ BÚSQUEDA MEJORADA: Buscar en múltiples campos (SIN especialidad)
-            const queryLower = query.toLowerCase().trim();
-            console.log('🎯 Buscando en múltiples campos con:', queryLower);
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
 
-            const jobsFiltrados = jobsReales.filter(job => {
-                // Buscar en otros campos relevantes (SIN especialidad)
-                const enService = job.service &&
-                    job.service.toLowerCase().includes(queryLower);
+                clearTimeout(timeoutId);
 
-                const enTitle = job.title &&
-                    job.title.toLowerCase().includes(queryLower);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ [BACKEND] Respuesta recibida:', data);
 
-                const enCompany = job.company &&
-                    job.company.toLowerCase().includes(queryLower);
-
-                const enLocation = job.location &&
-                    job.location.toLowerCase().includes(queryLower);
-
-                const coincide = enService || enTitle || enCompany || enLocation;
-
-                if (coincide) {
-                    console.log(`✅ COINCIDENCIA:`, {
-                        title: job.title,
-                        service: job.service,
-                        company: job.company,
-                        location: job.location
-                    });
+                    if (data.success && data.data && Array.isArray(data.data)) {
+                        console.log(`✅ [BACKEND] ${data.data.length} resultados del backend`);
+                        return data.data.slice(0, 50);
+                    }
                 }
 
-                return coincide;
-            });
+                console.log('⚠️ [BACKEND] Respuesta no válida, usando búsqueda local');
+                throw new Error('Backend response not valid');
 
-            console.log('✅ Jobs encontrados:', jobsFiltrados.length);
-
-            // 3. DEBUG: Mostrar resultados
-            if (jobsFiltrados.length > 0) {
-                console.log('📋 Jobs que coinciden:');
-                jobsFiltrados.forEach(job => {
-                    console.log(`   - ${job.title} | ${job.company} | ${job.service}`);
-                });
-            } else {
-                console.log('❌ No se encontraron jobs');
-                // Mostrar debug info
-                const debugInfo = jobsReales.slice(0, 3).map(job => ({
-                    title: job.title,
-                    service: job.service,
-                    company: job.company,
-                    location: job.location
-                }));
-                console.log('🔍 Debug primeros 3 jobs:', debugInfo);
+            } catch (backendError) {
+                console.log('🔄 [BACKEND] Error o timeout, usando búsqueda local:', backendError);
+                // 🔥 FALLBACK AUTOMÁTICO A BÚSQUEDA LOCAL
+                return this.busquedaLocalInteligente(query, jobsReales);
             }
 
-            return jobsFiltrados;
-
         } catch (error) {
-            console.error('❌ [SERVICE] Error en búsqueda backend:', error);
-            throw error;
+            console.error('❌ [BÚSQUEDA] Error general, usando búsqueda local:', error);
+            // 🔥 FALLBACK FINAL A BÚSQUEDA LOCAL
+            return this.busquedaLocalInteligente(query, jobsReales);
+        }
+    }
+
+    // 🔥 MODIFICADO: Búsqueda por especialidad con fallback automático
+    static async searchByEspecialidad(especialidad: string, jobsReales: Job[]): Promise<Job[]> {
+        if (!especialidad.trim()) {
+            return [];
+        }
+
+        console.log('🎯 [ESPECIALIDAD] Buscando por especialidad:', especialidad);
+
+        try {
+            const apiEndpoint = `${this.API_BASE}/borbotones/search/especialidad`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+            const response = await fetch(apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    especialidad: especialidad,
+                    estrategias: [especialidad.toLowerCase()]
+                }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data && Array.isArray(data.data)) {
+                    console.log(`✅ [ESPECIALIDAD-BACKEND] ${data.data.length} resultados`);
+                    return data.data;
+                }
+            }
+
+            throw new Error('Backend response not valid');
+
+        } catch (backendError) {
+            console.log('🔄 [ESPECIALIDAD] Usando búsqueda local optimizada');
+            // 🔥 FALLBACK AUTOMÁTICO A BÚSQUEDA LOCAL
+            return this.busquedaLocalInteligente(especialidad, jobsReales);
         }
     }
 
@@ -170,57 +217,124 @@ class BusquedaService {
         }
     }
 
-    static async getAutocompleteSuggestions(query: string, endpoint?: string): Promise<string[]> {
+    // 🔥 MODIFICADO: Sugerencias con fallback automático robusto
+    static async getAutocompleteSuggestions(query: string, jobsReales: Job[], endpoint?: string): Promise<string[]> {
         try {
             console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', query);
 
             const qTrim = String(query || '').trim();
-            // No llamar si menos de 2 caracteres (backend exige al menos 2)
-            if (qTrim.length < 2) {
-                console.log('⚠️ [SUGERENCIAS] Query demasiado corta, evitando llamada al backend:', qTrim);
+            if (qTrim.length < 1) {
                 return [];
             }
 
-            // Validar caracteres permitidos
-            if (!this.validarCaracteres(qTrim)) {
-                console.log('⚠️ [SUGERENCIAS] Query contiene caracteres no permitidos, evitando llamada:', qTrim);
-                return [];
+            // 🔥 INTENTAR BACKEND PRIMERO
+            try {
+                const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/autocomplete`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+                const response = await fetch(
+                    `${apiEndpoint}?q=${encodeURIComponent(query)}&limit=6`,
+                    { signal: controller.signal }
+                );
+
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data: ApiResponse = await response.json();
+                    console.log('✅ [SUGERENCIAS-BACKEND] Respuesta recibida:', data);
+
+                    if (data.success && data.data && Array.isArray(data.data)) {
+                        const sugerencias = data.data
+                            .map((item: EspecialidadBackend) => item.nombre)
+                            .filter((nombre: string) => nombre && nombre.trim())
+                            .slice(0, 6);
+
+                        console.log('✅ [SUGERENCIAS-BACKEND] Sugerencias:', sugerencias);
+                        return sugerencias;
+                    }
+                }
+
+                console.log('⚠️ [SUGERENCIAS-BACKEND] Respuesta no válida, usando fallback local');
+                throw new Error('Backend response not valid');
+
+            } catch (backendError) {
+                console.log('🔄 [SUGERENCIAS-BACKEND] Error o timeout, usando fallback local:', backendError);
+                // 🔥 FALLBACK AUTOMÁTICO A SUGERENCIAS LOCALES
+                return this.getFallbackSuggestions(query, jobsReales);
             }
 
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/autocomplete`;
-            const response = await fetch(
-                `${apiEndpoint}?q=${encodeURIComponent(query)}&limit=6`
-            );
-
-            if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
-            }
-
-            const data: ApiResponse = await response.json();
-            console.log('🔍 [SUGERENCIAS] Respuesta:', data);
-
-            if (data.success && data.data && Array.isArray(data.data)) {
-                const sugerencias = data.data
-                    .map((item: EspecialidadBackend) => item.nombre)
-                    .filter((nombre: string) => nombre && nombre.trim())
-                    .slice(0, 6);
-
-                console.log('🔍 [SUGERENCIAS] Sugerencias:', sugerencias);
-                return sugerencias;
-            }
-
-            console.log('⚠️ [SUGERENCIAS] No hay sugerencias');
-            return [];
         } catch (error) {
-            console.error('❌ [SERVICE] Error obteniendo sugerencias:', error);
-            return [];
+            console.error('❌ [SUGERENCIAS] Error general, usando fallback local:', error);
+            // 🔥 FALLBACK FINAL A SUGERENCIAS LOCALES
+            return this.getFallbackSuggestions(query, jobsReales);
         }
     }
-}
 
-function capitalizarPrimera(texto: string): string {
-    texto = texto.trim();
-    return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : '';
+    // 🔥 MODIFICADO: Fallback mejorado para separar servicios individualmente
+    // 🔥 MODIFICADO: Fallback mejorado para eliminar duplicidad
+    private static getFallbackSuggestions(query: string, jobs: Job[]): string[] {
+        console.log('🔄 [SUGERENCIAS-LOCAL] Generando sugerencias locales para:', query);
+
+        const queryLower = query.toLowerCase();
+
+        // 🔥 NUEVO: Usar Set para evitar duplicados desde el principio
+        const todasLasSugerencias = new Set<string>();
+
+        // 🔥 EXTRAER SERVICIOS INDIVIDUALES
+        jobs.forEach(job => {
+            if (job.service) {
+                job.service
+                    .split(',')
+                    .map(servicio => servicio.trim())
+                    .filter(servicio =>
+                        servicio &&
+                        servicio.toLowerCase().includes(queryLower) &&
+                        servicio.length > 0
+                    )
+                    .forEach(servicio => todasLasSugerencias.add(servicio));
+            }
+        });
+
+        // 🔥 EXTRAER OTROS CAMPOS (SOLO SI NO ESTÁN YA EN LOS SERVICIOS)
+        jobs.forEach(job => {
+            // Título - solo agregar si no es similar a servicios existentes
+            if (job.title &&
+                job.title.toLowerCase().includes(queryLower) &&
+                !this.estaContenidoEnServicios(job.title, Array.from(todasLasSugerencias))) {
+                todasLasSugerencias.add(job.title);
+            }
+
+            // Especialidad - solo agregar si no es similar a servicios existentes
+            if (job.especialidad &&
+                job.especialidad.toLowerCase().includes(queryLower) &&
+                !this.estaContenidoEnServicios(job.especialidad, Array.from(todasLasSugerencias))) {
+                todasLasSugerencias.add(job.especialidad);
+            }
+
+            // Empresa - solo agregar si no es similar a servicios existentes
+            if (job.company &&
+                job.company.toLowerCase().includes(queryLower) &&
+                !this.estaContenidoEnServicios(job.company, Array.from(todasLasSugerencias))) {
+                todasLasSugerencias.add(job.company);
+            }
+        });
+
+        const sugerenciasFinales = Array.from(todasLasSugerencias).slice(0, 8);
+
+        console.log('✅ [SUGERENCIAS-LOCAL] Sugerencias sin duplicados:', sugerenciasFinales);
+        return sugerenciasFinales;
+    }
+
+    // 🔥 NUEVO: Método para verificar si un término ya está contenido en servicios
+    private static estaContenidoEnServicios(termino: string, servicios: string[]): boolean {
+        const terminoLower = termino.toLowerCase();
+
+        return servicios.some(servicio =>
+            servicio.toLowerCase().includes(terminoLower) ||
+            terminoLower.includes(servicio.toLowerCase())
+        );
+    }
 }
 
 export default function BusquedaAutocompletado({
@@ -244,6 +358,18 @@ export default function BusquedaAutocompletado({
     const [historial, setHistorial] = useState<string[]>([]);
     const [cargandoHistorial, setCargandoHistorial] = useState(false);
     const [inputFocused, setInputFocused] = useState(false);
+    const [loadingResultados, setLoadingResultados] = useState(false);
+    const [mensajeNoResultados, setMensajeNoResultados] = useState("");
+
+    const debounceSugerenciasRef = useRef<NodeJS.Timeout | null>(null);
+    const debounceBusquedaRef = useRef<NodeJS.Timeout | null>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const terminoBusquedaAnterior = useRef("");
+    const historialCargado = useRef(false);
+    const busquedaEnCurso = useRef(false);
+
+    const caracteresValidos = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ´'" ,\s\-]*$/;
 
     // Normaliza texto: primera letra en mayúscula, mantiene el resto
     const capitalizarPrimera = (texto: string) => {
@@ -251,25 +377,18 @@ export default function BusquedaAutocompletado({
         if (!t) return "";
         return t.charAt(0).toUpperCase() + t.slice(1);
     };
+    // 🔥 NUEVA FUNCIÓN: Normalizar texto para búsqueda
+    const normalizarTexto = useCallback((texto: string): string => {
+        if (!texto) return "";
 
-    // 🔥 NUEVO: Estado para controlar loading en área de resultados
-    const [loadingResultados, setLoadingResultados] = useState(false);
-    // 🔥 NUEVO: Estado para mensaje de no resultados
-    const [mensajeNoResultados, setMensajeNoResultados] = useState("");
-
-    // 🔥 CORRECCIÓN: Separar los debounce refs para evitar conflictos
-    const debounceSugerenciasRef = useRef<NodeJS.Timeout | null>(null);
-    const debounceBusquedaRef = useRef<NodeJS.Timeout | null>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const terminoBusquedaAnterior = useRef("");
-    const historialCargado = useRef(false);
-    // 🔥 NUEVO: Ref para controlar búsquedas en curso
-    const busquedaEnCurso = useRef(false);
-    // 🔥 NUEVO: Id incremental para cada búsqueda, se pasa a onSearch
-    const searchIdRef = useRef(0);
-
-    const caracteresValidos = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ´'" ,\s\-]*$/;
+        return texto
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remover acentos
+            .replace(/[´,'"“"‘’,\-]/g, '')   // Remover caracteres especiales
+            .replace(/\s+/g, ' ')           // Normalizar espacios
+            .trim()
+            .toLowerCase();
+    }, []);
 
     // 🔥 EFECTO: Limpiar historial automáticamente al recargar
     useEffect(() => {
@@ -279,37 +398,26 @@ export default function BusquedaAutocompletado({
             console.log('🧹 [AUTOCOMPLETADO] Limpiando historial por recarga de página');
 
             try {
-                // Limpiar historial del backend
                 await BusquedaService.clearHistorial(apiConfig?.endpoint);
-
-                // Limpiar historial local
                 setHistorial([]);
                 localStorage.removeItem("historialBusquedas");
-
-                // Marcar como cargado para evitar limpiezas múltiples
                 historialCargado.current = true;
-
                 console.log('✅ [AUTOCOMPLETADO] Historial limpiado correctamente');
             } catch (error) {
                 console.error('❌ [AUTOCOMPLETADO] Error limpiando historial:', error);
-                // Fallback: limpiar solo el local
                 setHistorial([]);
                 localStorage.removeItem("historialBusquedas");
                 historialCargado.current = true;
             }
         };
 
-        // Ejecutar inmediatamente al montar (recarga)
         limpiarHistorialAlRecargar();
 
-        // También limpiar cuando se detecte una recarga de página
         const handleBeforeUnload = () => {
-            // Preparar para la próxima recarga
             historialCargado.current = false;
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
-
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
@@ -318,13 +426,12 @@ export default function BusquedaAutocompletado({
     // Sincronizar con valorInicial
     useEffect(() => {
         console.log('🔄 [AUTOCOMPLETADO] valorInicial actualizado:', valorInicial);
-        const valorCapitalizado = capitalizarPrimera(valorInicial);
-        if (valorCapitalizado !== query) {
-            setQuery(valorCapitalizado);
+        if (valorInicial !== query) {
+            setQuery(valorInicial);
         }
     }, [valorInicial]);
 
-    // Cargar historial del backend (SOLO si no se ha limpiado recientemente)
+    // Cargar historial del backend
     useEffect(() => {
         if (!mostrarHistorial || historialCargado.current) return;
 
@@ -333,7 +440,6 @@ export default function BusquedaAutocompletado({
                 setCargandoHistorial(true);
                 const terminos = await BusquedaService.getHistorial(apiConfig?.endpoint);
 
-                // Solo establecer historial si no está vacío y no hemos limpiado recientemente
                 if (terminos.length > 0 && !historialCargado.current) {
                     setHistorial(terminos);
                     console.log('📚 [HISTORIAL] Historial cargado:', terminos);
@@ -345,7 +451,6 @@ export default function BusquedaAutocompletado({
                 historialCargado.current = true;
             } catch (error) {
                 console.error('Error cargando historial del backend:', error);
-                // Fallback a localStorage
                 try {
                     const stored = localStorage.getItem("historialBusquedas");
                     if (stored && !historialCargado.current) {
@@ -368,7 +473,6 @@ export default function BusquedaAutocompletado({
     useEffect(() => {
         const texto = query.trim();
 
-        // CONDICIONES PARA MOSTRAR HISTORIAL - asegurar que devuelvan boolean
         const debeMostrarHistorial = Boolean(
             inputFocused &&
             texto.length === 0 &&
@@ -376,7 +480,6 @@ export default function BusquedaAutocompletado({
             mostrarHistorial
         );
 
-        // CONDICIONES PARA MOSTRAR SUGERENCIAS - asegurar que devuelvan boolean
         const debeMostrarSugerencias = Boolean(
             inputFocused &&
             texto.length >= 1 &&
@@ -407,38 +510,7 @@ export default function BusquedaAutocompletado({
         }
     }, [apiConfig?.endpoint]);
 
-    const normalizarTexto = useCallback((texto: string): string => {
-        return texto
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[´,'"“"‘’,\-]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .toLowerCase();
-    }, []);
-
-    const buscarTrabajosLocal = useCallback((texto: string, jobs: Job[]): Job[] => {
-        if (!texto.trim()) return jobs;
-
-        const textoNormalizado = normalizarTexto(texto);
-
-        return jobs.filter(job => {
-            if (campoBusqueda === "all") {
-                // Búsqueda en múltiples campos (SIN especialidad)
-                return (
-                    (job.service && normalizarTexto(job.service).includes(textoNormalizado)) ||
-                    (job.title && normalizarTexto(job.title).includes(textoNormalizado)) ||
-                    (job.company && normalizarTexto(job.company).includes(textoNormalizado)) ||
-                    (job.location && normalizarTexto(job.location).includes(textoNormalizado))
-                );
-            } else {
-                // Buscar en campo específico
-                const campoValor = job[campoBusqueda];
-                return campoValor && normalizarTexto(String(campoValor)).includes(textoNormalizado);
-            }
-        }).slice(0, maxResultados);
-    }, [normalizarTexto, campoBusqueda, maxResultados]);
-
+    // 🔥 NUEVA FUNCIÓN: Guardar en historial
     const guardarEnHistorial = useCallback((texto: string) => {
         if (!mostrarHistorial) return;
 
@@ -456,76 +528,52 @@ export default function BusquedaAutocompletado({
             console.error("Error guardando historial en localStorage:", error);
         }
     }, [historial, mostrarHistorial]);
+    // 🔥 MODIFICADO: Búsqueda local simple
+    const buscarTrabajosLocal = useCallback((texto: string, jobs: Job[]): Job[] => {
+        if (!texto.trim()) return jobs;
 
-    const buscarSugerenciasBackend = useCallback(async (texto: string): Promise<string[]> => {
-        try {
-            const tTrim = String(texto || '').trim();
-            if (tTrim.length < 2) {
-                console.log('⚠️ [SUGERENCIAS] Texto demasiado corto para sugerencias:', tTrim);
-                return [];
+        const textoNormalizado = normalizarTexto(texto);
+
+        return jobs.filter(job => {
+            if (campoBusqueda === "all") {
+                // 🔥 BÚSQUEDA MEJORADA: Incluir búsqueda en servicios individuales
+                const serviciosIndividuales = job.service
+                    ? job.service.split(',').map(s => normalizarTexto(s.trim()))
+                    : [];
+
+                const enServiciosIndividuales = serviciosIndividuales.some(servicio =>
+                    servicio.includes(textoNormalizado)
+                );
+
+                return (
+                    enServiciosIndividuales ||
+                    (job.service && normalizarTexto(job.service).includes(textoNormalizado)) ||
+                    (job.title && normalizarTexto(job.title).includes(textoNormalizado)) ||
+                    (job.company && normalizarTexto(job.company).includes(textoNormalizado)) ||
+                    (job.especialidad && normalizarTexto(job.especialidad).includes(textoNormalizado))
+                );
+            } else {
+                // Buscar en campo específico
+                const campoValor = job[campoBusqueda];
+
+                // 🔥 SI ES EL CAMPO SERVICE, BUSCAR EN SERVICIOS INDIVIDUALES TAMBIÉN
+                if (campoBusqueda === 'service' && campoValor) {
+                    const serviciosIndividuales = String(campoValor)
+                        .split(',')
+                        .map(s => normalizarTexto(s.trim()));
+
+                    return serviciosIndividuales.some(servicio =>
+                        servicio.includes(textoNormalizado)
+                    );
+                }
+
+                return campoValor && normalizarTexto(String(campoValor)).includes(textoNormalizado);
             }
+        }).slice(0, maxResultados);
+    }, [normalizarTexto, campoBusqueda, maxResultados]);
 
-            if (!caracteresValidos.test(tTrim)) {
-                console.log('⚠️ [SUGERENCIAS] Texto contiene caracteres inválidos:', texto);
-                return [];
-            }
-
-            console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', texto);
-
-            const sugerenciasBackend = await BusquedaService.getAutocompleteSuggestions(tTrim, apiConfig?.endpoint);
-            console.log('🔍 [SUGERENCIAS] Sugerencias del backend:', sugerenciasBackend);
-
-            if (sugerenciasBackend.length > 0) {
-                return sugerenciasBackend;
-            }
-
-            // Fallback a búsqueda local para sugerencias
-            console.log('🔄 [SUGERENCIAS] Usando fallback a búsqueda local para sugerencias');
-            const resultadosLocales = buscarTrabajosLocal(texto, datos);
-
-            // Extraer términos únicos de los campos disponibles (SIN especialidad)
-            const terminosUnicos = Array.from(
-                new Set(
-                    resultadosLocales
-                        .flatMap(job => [
-                            job.title,
-                            job.service,
-                            job.company,
-                            job.location
-                        ])
-                        .filter(Boolean)
-                        .map(term => String(term))
-                )
-            );
-            return terminosUnicos.slice(0, 6);
-
-        } catch (error) {
-            console.error('❌ [SUGERENCIAS] Error conectando al backend:', error);
-
-            // Fallback completo a búsqueda local
-            console.log('🔄 [SUGERENCIAS] Usando fallback local por error');
-            const resultadosLocales = buscarTrabajosLocal(texto, datos);
-
-            // Extraer términos únicos de los campos disponibles (SIN especialidad)
-            const terminosUnicos = Array.from(
-                new Set(
-                    resultadosLocales
-                        .flatMap(job => [
-                            job.title,
-                            job.service,
-                            job.company,
-                            job.location
-                        ])
-                        .filter(Boolean)
-                        .map(term => String(term))
-                )
-            );
-            return terminosUnicos.slice(0, 6);
-        }
-    }, [buscarTrabajosLocal, datos, apiConfig?.endpoint]);
-
-    const ejecutarBusquedaCompleta = useCallback(async (texto: string, guardarEnHistorialFlag: boolean = true) => {
-        // 🔥 CORRECCIÓN: Verificar si ya hay una búsqueda en curso
+    // 🔥 MODIFICADO: Búsqueda principal con fallback automático
+    const ejecutarBusquedaCompleta = useCallback(async (texto: string, guardarEnHistorialFlag: boolean = true, esEspecialidad: boolean = false) => {
         if (busquedaEnCurso.current) {
             console.log('⏸️ [BÚSQUEDA] Ya hay una búsqueda en curso, omitiendo...');
             return;
@@ -551,94 +599,193 @@ export default function BusquedaAutocompletado({
             setEstadoBusqueda("idle");
             setResultados([]);
             setLoadingResultados(false);
-            setMensajeNoResultados(""); // 🔥 Limpiar mensaje de no resultados
-            // invalidar búsquedas previas e informar vacío
-            searchIdRef.current += 1;
-            onSearch("", [], searchIdRef.current);
+            setMensajeNoResultados("");
+            onSearch("", []);
             return;
         }
 
-        console.log('✅ [BÚSQUEDA COMPLETA] Ejecutando búsqueda para:', textoLimpio);
+        console.log('🚀 [BÚSQUEDA] Ejecutando búsqueda para:', textoLimpio);
 
-        // 🔥 CORRECCIÓN: Marcar que hay una búsqueda en curso
         busquedaEnCurso.current = true;
         setEstadoBusqueda("loading");
+        setMostrarSugerencias(true);
         setLoadingResultados(true);
         setMostrarHistorialLocal(false);
-        setMensajeNoResultados(""); // 🔥 Limpiar mensaje anterior
+        setMensajeNoResultados("");
 
         terminoBusquedaAnterior.current = textoLimpio;
 
         if (guardarEnHistorialFlag && mostrarHistorial) {
             guardarEnHistorial(textoLimpio);
         }
-        // id de esta búsqueda (se asigna dentro del try)
-        let mySearchId = 0;
 
         try {
-            // generar id único para esta búsqueda y pasarlo a onSearch
-            mySearchId = ++searchIdRef.current;
-            console.log('🔍 [BÚSQUEDA] Buscando jobs reales...');
+            console.log('🔍 [BÚSQUEDA] Buscando trabajos...');
 
-            const resultadosBackend = await BusquedaService.searchJobsInBackend(textoLimpio, datos, apiConfig?.endpoint);
+            let resultadosFinales: Job[] = [];
 
-            console.log('🔍 [BÚSQUEDA] Resultados backend (jobs reales):', resultadosBackend);
-
-            if (resultadosBackend.length > 0) {
-                setResultados(resultadosBackend);
-                setEstadoBusqueda("success");
-                setMensajeNoResultados(""); // 🔥 Limpiar mensaje si hay resultados
-                onSearch(textoLimpio, resultadosBackend, mySearchId);
+            if (esEspecialidad) {
+                // 🔥 BÚSQUEDA CON FALLBACK AUTOMÁTICO
+                resultadosFinales = await BusquedaService.searchByEspecialidad(textoLimpio, datos);
             } else {
-                const resultadosLocales = buscarTrabajosLocal(textoLimpio, datos);
-                console.log('🔍 [BÚSQUEDA] Resultados locales:', resultadosLocales);
+                // 🔥 BÚSQUEDA CON FALLBACK AUTOMÁTICO
+                resultadosFinales = await BusquedaService.searchJobsOptimized(textoLimpio, datos, apiConfig?.endpoint);
+            }
 
-                if (resultadosLocales.length > 0) {
-                    setResultados(resultadosLocales);
-                    setEstadoBusqueda("success");
-                    setMensajeNoResultados(""); // 🔥 Limpiar mensaje si hay resultados
-                    onSearch(textoLimpio, resultadosLocales, mySearchId);
-                } else {
-                    // 🔥 NUEVO: Pasar array vacío y dejar que la página maneje el mensaje
-                    setResultados([]);
-                    setEstadoBusqueda("success");
-                    onSearch(textoLimpio, [], mySearchId); // 🔥 Pasar array vacío
-                    console.log('❌ [BÚSQUEDA] No se encontraron resultados');
-                }
+            console.log('📊 [BÚSQUEDA] Resultados encontrados:', resultadosFinales.length);
+
+            if (resultadosFinales.length > 0) {
+                setResultados(resultadosFinales);
+                setEstadoBusqueda("success");
+                setMensajeNoResultados("");
+                onSearch(textoLimpio, resultadosFinales);
+            } else {
+                setResultados([]);
+                setEstadoBusqueda("success");
+                onSearch(textoLimpio, []);
+                setMensajeNoResultados(`No se encontraron resultados para "${textoLimpio}"`);
+                console.log('❌ [BÚSQUEDA] No se encontraron resultados');
             }
 
         } catch (error) {
-            console.error("Error en búsqueda backend, usando búsqueda local:", error);
+            console.error("❌ [BÚSQUEDA] Error:", error);
 
-            if (error instanceof Error) {
-                setMensaje(error.message);
-            } else {
-                setMensaje("Error al conectar con el servidor");
+            // 🔥 FALLBACK FINAL: Búsqueda local como último recurso
+            console.log('🔄 [BÚSQUEDA] Usando búsqueda local como fallback final');
+            const resultadosLocales = buscarTrabajosLocal(textoLimpio, datos);
+
+            setResultados(resultadosLocales);
+            setEstadoBusqueda(resultadosLocales.length > 0 ? "success" : "success");
+            onSearch(textoLimpio, resultadosLocales);
+
+            if (resultadosLocales.length === 0) {
+                setMensajeNoResultados(`No se encontraron resultados para "${textoLimpio}"`);
             }
 
-            setEstadoBusqueda("error");
-            // asegurar que la página reciba el id de esta búsqueda fallida
-            onSearch(textoLimpio, [], mySearchId);
         } finally {
-            // 🔥 CORRECCIÓN: Liberar el flag de búsqueda en curso
             busquedaEnCurso.current = false;
             setLoadingResultados(false);
         }
     }, [datos, onSearch, buscarTrabajosLocal, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint]);
 
+    // 🔥 MODIFICADO: Sugerencias con fallback automático
+    // 🔥 MODIFICADO: Sugerencias con separación de servicios individuales
+    const buscarSugerencias = useCallback(async (texto: string): Promise<string[]> => {
+        try {
+            if (!caracteresValidos.test(texto)) {
+                return [];
+            }
+
+            console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', texto);
+
+            // 🔥 USAR SERVICIO CON FALLBACK AUTOMÁTICO
+            const sugerenciasOptimizadas = await BusquedaService.getAutocompleteSuggestions(
+                texto,
+                datos,
+                apiConfig?.endpoint
+            );
+
+            console.log('✅ [SUGERENCIAS] Sugerencias encontradas:', sugerenciasOptimizadas);
+
+            // 🔥 SI EL BACKEND NO DEVUELVE NADA, USAR FALLBACK LOCAL MEJORADO
+            if (sugerenciasOptimizadas.length === 0) {
+                console.log('🔄 [SUGERENCIAS] Usando fallback local mejorado');
+                return generarSugerenciasLocales(texto);
+            }
+
+            return sugerenciasOptimizadas;
+
+        } catch (error) {
+            console.error('❌ [SUGERENCIAS] Error:', error);
+
+            // 🔥 FALLBACK LOCAL MEJORADO
+            console.log('🔄 [SUGERENCIAS] Usando fallback local por error');
+            return generarSugerenciasLocales(texto);
+        }
+    }, [datos, apiConfig?.endpoint]);
+
+    // 🔥 NUEVA FUNCIÓN: Generar sugerencias locales con servicios separados
+    // 🔥 MODIFICADO: Generar sugerencias locales sin duplicidad
+    const generarSugerenciasLocales = useCallback((texto: string): string[] => {
+        const textoLower = texto.toLowerCase();
+
+        // 🔥 NUEVO: Usar Set para evitar duplicados
+        const todasLasSugerencias = new Set<string>();
+
+        // 🔥 EXTRAER SERVICIOS INDIVIDUALES
+        datos.forEach(job => {
+            if (job.service) {
+                job.service
+                    .split(',')
+                    .map(servicio => servicio.trim())
+                    .filter(servicio =>
+                        servicio &&
+                        servicio.toLowerCase().includes(textoLower) &&
+                        servicio.length > 0
+                    )
+                    .forEach(servicio => todasLasSugerencias.add(servicio));
+            }
+        });
+
+        // 🔥 FUNCIÓN PARA VERIFICAR DUPLICIDAD
+        const estaContenidoEnServicios = (termino: string): boolean => {
+            const terminoLower = termino.toLowerCase();
+            const serviciosArray = Array.from(todasLasSugerencias);
+
+            return serviciosArray.some(servicio =>
+                servicio.toLowerCase().includes(terminoLower) ||
+                terminoLower.includes(servicio.toLowerCase())
+            );
+        };
+
+        // 🔥 EXTRAER OTROS CAMPOS (SOLO SI NO ESTÁN YA EN LOS SERVICIOS)
+        datos.forEach(job => {
+            // Título - solo agregar si no es similar a servicios existentes
+            if (job.title &&
+                job.title.toLowerCase().includes(textoLower) &&
+                !estaContenidoEnServicios(job.title)) {
+                todasLasSugerencias.add(job.title);
+            }
+
+            // Especialidad - solo agregar si no es similar a servicios existentes
+            if (job.especialidad &&
+                job.especialidad.toLowerCase().includes(textoLower) &&
+                !estaContenidoEnServicios(job.especialidad)) {
+                todasLasSugerencias.add(job.especialidad);
+            }
+
+            // Empresa - solo agregar si no es similar a servicios existentes
+            if (job.company &&
+                job.company.toLowerCase().includes(textoLower) &&
+                !estaContenidoEnServicios(job.company)) {
+                todasLasSugerencias.add(job.company);
+            }
+        });
+
+        const sugerenciasFinales = Array.from(todasLasSugerencias).slice(0, 8);
+
+        console.log('🔍 [SUGERENCIAS-LOCAL] Servicios individuales encontrados:', Array.from(todasLasSugerencias));
+        console.log('✅ [SUGERENCIAS-LOCAL] Sugerencias finales sin duplicados:', sugerenciasFinales);
+
+        return sugerenciasFinales;
+    }, [datos]);
+
+    // 🔥 SELECCIONAR SUGERENCIA
     const seleccionarSugerencia = useCallback(async (texto: string) => {
-        const t = capitalizarPrimera(texto);
-        setQuery(t);
+        console.log('🎯 [SUGERENCIA] Seleccionada:', texto);
+
+        setQuery(texto);
         setSugerencias([]);
         setMensaje("");
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
-        setMensajeNoResultados(""); // 🔥 Limpiar mensaje al seleccionar sugerencia
-        await ejecutarBusquedaCompleta(texto, true);
+        setMensajeNoResultados("");
+
+        await ejecutarBusquedaCompleta(texto, true, false);
     }, [ejecutarBusquedaCompleta]);
 
     const ejecutarBusqueda = useCallback(async () => {
-        await ejecutarBusquedaCompleta(query, true);
+        await ejecutarBusquedaCompleta(query, true, false);
     }, [query, ejecutarBusquedaCompleta]);
 
     const limpiarBusqueda = useCallback(() => {
@@ -651,19 +798,18 @@ export default function BusquedaAutocompletado({
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
         setLoadingResultados(false);
-        setMensajeNoResultados(""); // 🔥 Limpiar mensaje al limpiar búsqueda
+        setMensajeNoResultados("");
         terminoBusquedaAnterior.current = "";
-        // 🔥 CORRECCIÓN: Resetear el flag de búsqueda en curso
         busquedaEnCurso.current = false;
 
-        // invalidar búsquedas previas e informar con id
-        searchIdRef.current += 1;
-        onSearch("", datos, searchIdRef.current);
+        onSearch("", datos);
         inputRef.current?.focus();
     }, [datos, onSearch]);
 
     const manejarKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
+            setMostrarSugerencias(false);
+            setMostrarHistorialLocal(false);
             ejecutarBusqueda();
         } else if (e.key === 'Escape') {
             setMostrarSugerencias(false);
@@ -673,115 +819,75 @@ export default function BusquedaAutocompletado({
         }
     }, [ejecutarBusqueda]);
 
-    // 🔥 Efecto solo para sugerencias (se ejecuta con cada carácter)
+    // 🔥 EFECTO PARA SUGERENCIAS
     useEffect(() => {
-        // 🔥 CORRECCIÓN: Usar el ref específico para sugerencias
         if (debounceSugerenciasRef.current) {
             clearTimeout(debounceSugerenciasRef.current);
         }
 
         const texto = query.trim();
 
-        const actualizarVisualizacion = () => {
-            const textoLimpio = texto.trim();
-
-            if (!textoLimpio) {
-                setSugerencias([]);
-                setMensaje("");
-                setEstadoSugerencias("idle");
-                setMensajeNoResultados(""); // 🔥 Limpiar mensaje
-                return;
-            }
-
-            if (!caracteresValidos.test(texto)) {
-                console.log('❌ [BLOQUEO] Carácter inválido detectado');
-                setMensaje("Solo se permiten caracteres alfabéticos y los especiales: ´ , - , comilla simple y comilla doble");
-                setSugerencias([]);
-                setEstadoSugerencias("error");
-                setMensajeNoResultados(""); // 🔥 Limpiar mensaje
-                return;
-            }
-        };
-
-        actualizarVisualizacion();
-
         if (texto.length >= 1 && inputFocused) {
             setEstadoSugerencias("loading");
-            setMensajeNoResultados(""); // 🔥 Limpiar mensaje anterior
+            setMostrarSugerencias(true);
 
-            // 🔥 CORRECCIÓN: Usar el ref específico para sugerencias
             debounceSugerenciasRef.current = setTimeout(async () => {
                 try {
-                    console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', texto);
-                    const sugerenciasBackend = await buscarSugerenciasBackend(texto);
-                    console.log('🔍 [SUGERENCIAS] Sugerencias encontradas:', sugerenciasBackend);
+                    console.log('🔍 [SUGERENCIAS] Buscando para:', texto);
+                    const sugerenciasBackend = await buscarSugerencias(texto);
 
-                    setSugerencias(sugerenciasBackend);
-                    setEstadoSugerencias(sugerenciasBackend.length > 0 ? "success" : "success");
+                    if (query.trim() === texto) {
+                        setSugerencias(sugerenciasBackend);
+                        setEstadoSugerencias(sugerenciasBackend.length > 0 ? "success" : "success");
+                        setMostrarSugerencias(true);
 
-                    if (sugerenciasBackend.length === 0) {
-                        // 🔥 NUEVO: Mensaje personalizado para sugerencias
-                        const mensajeSugerencias = `No se encontraron coincidencias para "${texto}"`;
-                        setMensajeNoResultados(mensajeSugerencias);
-                        setMensaje(mensajeSugerencias);
-                    } else {
-                        setMensaje("");
-                        setMensajeNoResultados(""); // 🔥 Limpiar mensaje si hay sugerencias
+                        if (sugerenciasBackend.length === 0) {
+                            setMensajeNoResultados(`No se encontraron coincidencias para "${texto}"`);
+                        } else {
+                            setMensajeNoResultados("");
+                        }
                     }
-
                 } catch (error) {
-                    console.error('❌ [SUGERENCIAS] Error buscando sugerencias:', error);
+                    console.error('❌ [SUGERENCIAS] Error:', error);
                     setEstadoSugerencias("error");
-                    setMensaje("Error al buscar sugerencias");
                     setSugerencias([]);
-                    setMensajeNoResultados(""); // 🔥 Limpiar mensaje en error
                 }
-            }, 400); // 🔥 AUMENTAR el debounce a 400ms para escribir rápido
+            }, 400);
         } else {
             setSugerencias([]);
             setEstadoSugerencias("idle");
-            setMensaje("");
-            setMensajeNoResultados(""); // 🔥 Limpiar mensaje
+            setMostrarSugerencias(false);
         }
 
         return () => {
-            // 🔥 CORRECCIÓN: Limpiar solo el ref de sugerencias
             if (debounceSugerenciasRef.current) {
                 clearTimeout(debounceSugerenciasRef.current);
             }
         };
-    }, [query, inputFocused, buscarSugerenciasBackend]);
+    }, [query, inputFocused, buscarSugerencias]);
 
-    // 🔥 Efecto separado para búsqueda automática (se ejecuta con cada carácter NUEVO)
+    // 🔥 EFECTO PARA BÚSQUEDA AUTOMÁTICA
     useEffect(() => {
-        // 🔥 CORRECCIÓN: Usar el ref específico para búsqueda
         if (debounceBusquedaRef.current) {
             clearTimeout(debounceBusquedaRef.current);
         }
 
         const texto = query.trim();
 
-        // Solo ejecutar búsqueda automática si:
-        // - Hay texto
-        // - El input está enfocado  
-        // - El texto es DIFERENTE al anterior (nuevo carácter)
-        // - No hay búsqueda en curso
-        if (texto.length >= 1 && inputFocused && texto !== terminoBusquedaAnterior.current && !busquedaEnCurso.current) {
-            console.log('🚀 [BÚSQUEDA-AUTO] Programando búsqueda automática para:', texto);
+        if (texto.length >= 2 && inputFocused && texto !== terminoBusquedaAnterior.current && !busquedaEnCurso.current) {
+            console.log('🚀 [BÚSQUEDA-AUTO] Programando búsqueda automática:', texto);
 
-            // 🔥 CORRECCIÓN: Usar debounce también para búsquedas automáticas
             debounceBusquedaRef.current = setTimeout(() => {
-                console.log('📊 [BÚSQUEDA-AUTO] Texto anterior:', terminoBusquedaAnterior.current);
-
-                // Actualizar referencia ANTES de ejecutar la búsqueda
-                terminoBusquedaAnterior.current = texto;
-                setLoadingResultados(true);
-                ejecutarBusquedaCompleta(texto, false);
-            }, 500); // 🔥 AUMENTAR el debounce a 500ms para búsquedas
+                if (query.trim() === texto) {
+                    console.log('📊 [BÚSQUEDA-AUTO] Ejecutando búsqueda para:', texto);
+                    terminoBusquedaAnterior.current = texto;
+                    setLoadingResultados(true);
+                    ejecutarBusquedaCompleta(texto, false, false);
+                }
+            }, 700);
         }
 
         return () => {
-            // 🔥 CORRECCIÓN: Limpiar solo el ref de búsqueda
             if (debounceBusquedaRef.current) {
                 clearTimeout(debounceBusquedaRef.current);
             }
@@ -815,19 +921,15 @@ export default function BusquedaAutocompletado({
                         placeholder={placeholder}
                         value={query}
                         onChange={(e) => {
-                            const nuevoValorRaw = e.target.value;
-                            const nuevoValor = capitalizarPrimera(nuevoValorRaw);
+                            const nuevoValor = e.target.value;
                             setQuery(nuevoValor);
 
                             if (nuevoValor === "") {
                                 setEstadoBusqueda("idle");
                                 setLoadingResultados(false);
-                                setMensajeNoResultados(""); // 🔥 Limpiar mensaje
-                                // invalidar búsquedas previas e informar vacío con id
-                                searchIdRef.current += 1;
-                                onSearch("", datos, searchIdRef.current);
+                                setMensajeNoResultados("");
+                                onSearch("", datos);
                                 terminoBusquedaAnterior.current = "";
-                                // 🔥 CORRECCIÓN: Resetear flag de búsqueda en curso
                                 busquedaEnCurso.current = false;
                             }
                         }}
@@ -840,7 +942,7 @@ export default function BusquedaAutocompletado({
 
                                 setTimeout(async () => {
                                     try {
-                                        const sugerenciasBackend = await buscarSugerenciasBackend(query);
+                                        const sugerenciasBackend = await buscarSugerencias(query);
                                         setSugerencias(sugerenciasBackend);
                                         setEstadoSugerencias(sugerenciasBackend.length > 0 ? "success" : "success");
 
@@ -888,13 +990,7 @@ export default function BusquedaAutocompletado({
                     {query.length}/80 caracteres
                 </div>
 
-                {estadoBusqueda === "error" && mensaje && (
-                    <div className="mensaje-error-global">
-                        {mensaje}
-                    </div>
-                )}
-
-                {/* 🔥 NUEVO: Mostrar loading en área de resultados */}
+                {/* Mostrar loading en área de resultados */}
                 {loadingResultados && (
                     <div className="loading-resultados">
                         <div className="spinner-resultados"></div>
@@ -902,7 +998,7 @@ export default function BusquedaAutocompletado({
                     </div>
                 )}
 
-                {/* HISTORIAL - Solo se muestra cuando se cumplen todas las condiciones */}
+                {/* HISTORIAL */}
                 {mostrarHistorialLocal && (
                     <ul className="caja-sugerencias">
                         <li className="sugerencias-header">
@@ -933,13 +1029,13 @@ export default function BusquedaAutocompletado({
                     </ul>
                 )}
 
-                {/* SUGERENCIAS - Solo se muestra cuando se cumplen todas las condiciones */}
+                {/* SUGERENCIAS */}
                 {mostrarSugerencias && (
                     <>
                         {estadoSugerencias === "loading" && (
                             <div className="caja-sugerencias cargando">
                                 <div className="spinner"></div>
-                                Buscando ...
+                                Buscando sugerencias...
                             </div>
                         )}
 
