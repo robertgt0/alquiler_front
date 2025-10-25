@@ -66,6 +66,7 @@ export function AppointmentModal({
   // Confirmación
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const isEdit = false;
 
   //  dias feriados 
   const holidays = ["2025-11-01", "2025-11-02","2025-12-24"]; // Feriados 
@@ -329,6 +330,7 @@ async function loadBookedDays() {
           {/* Formulario ubicación */}
           {!formSubmitted && selectedDate && selectedTime && <div ref={locationFormRef} className="mt-6"><LocationForm onSubmit={handleFormSubmit} /></div>}
 
+          
           {/* Resumen cita */}
           {formSubmitted && (
             <div className="mt-6 p-4 rounded-lg border bg-slate-50">
@@ -352,13 +354,31 @@ async function loadBookedDays() {
                   {((locationData?.notas ?? "") as string).trim() || "No especificada"}
                 </p>
               </div>
+
               <div className="mt-4 flex gap-3">
                 <Button className="flex-1 text-white bg-blue-600 hover:bg-blue-700" onClick={handleConfirm} disabled={saving}>
-                  {saving ? "Guardando..." : "Confirmar Cita"}
+                  {saving ? "Guardando..." : isEdit ? "Guardar cambios" : "Confirmar Cita"}
                 </Button>
-                {/* Cancelar */}
+
+                {/* Editar ubicación: vuelve a mostrar LocationForm para cambiar mapa/dirección */}
                 <Button
                   variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    // permitir editar la ubicación (mostrar el formulario otra vez)
+                    setFormSubmitted(false);
+                    // opcional: forzar scroll hasta el formulario si existe
+                    setTimeout(() => {
+                      locationFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 50);
+                  }}
+                >
+                  Editar ubicación
+                </Button>
+
+                {/* Cancelar (resetea selección de hora solo) */}
+                <Button
+                  variant="ghost"
                   className="flex-1"
                   onClick={() => {
                     setSelectedTime(null);
