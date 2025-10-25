@@ -13,5 +13,8 @@ export interface Job {
   
 }
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> edfc765309a4e50c0906e6879b64748b7968cac2
