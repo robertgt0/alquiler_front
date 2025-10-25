@@ -10,31 +10,10 @@ export default function Home() {
 
         <div className="flex flex-col gap-4">
           <Link
-            href="/epic_VisualizadorDeTrabajosAgendadosVistaCliente"
-            className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors text-center"
-          >
-            Trabajos Agendados (Cliente)
-          </Link>
-
-          <Link
-            href="/epic_VisualizadorDeTrabajosAgendadosVistaProveedor"
-            className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-green-600 transition-colors text-center"
-          >
-            Trabajos Agendados (Proveedor)
-          </Link>
-
-          <Link
-            href="/solicitud-trabajo"
-            className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-purple-600 transition-colors text-center"
-          >
-            Solicitud Trabajo
-          </Link>
-
-          <Link
             href="/register_a_job"
             className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-red-600 transition-colors text-center"
           >
-            Registrar Trabajo
+            Agregar Disponibilidad
           </Link>
 
           {/* 🔹 Agrego tu epic HU-2 */}
@@ -42,9 +21,23 @@ export default function Home() {
             href="/agenda_proveedor"
             className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-cyan-600 transition-colors text-center"
           >
-            Agenda proveedor
+            Agendar tu servicio
           </Link>
-          
+
+          <Link
+            href="/epic_VisualizadorDeTrabajosAgendadosVistaProveedor"
+            className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-green-600 transition-colors text-center"
+          >
+            Trabajos Agendados (Vista-Proveedor)
+          </Link>
+
+          <Link
+            href="/epic_VisualizadorDeTrabajosAgendadosVistaCliente"
+            className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors text-center"
+          >
+           Mis Trabajos (Vista-Cliente)
+          </Link>
+
         </div>
       </main>
     </div>
