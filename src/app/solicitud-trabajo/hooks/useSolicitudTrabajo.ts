@@ -114,7 +114,7 @@ export function useSolicitudTrabajo(
           (mock.status as Status) ?? (mock.ok ? "ok" : "error");
 
         setEnviado(mock.ok);
-        setMensaje(COPY[status]); // 💡 también priorizamos el copy del front aquí
+        setMensaje(COPY[status]); // también priorizamos el copy del front aquí
       } catch {
         setEnviado(false);
         setMensaje(COPY.error);

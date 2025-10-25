@@ -21,3 +21,4 @@ export interface ISolicitudResponse {
   message: string;
   raw?: unknown;
 }
+
