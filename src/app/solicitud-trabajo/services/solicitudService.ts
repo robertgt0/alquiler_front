@@ -1,9 +1,4 @@
-import {
-  ISolicitud,
-  ISolicitudResponse,
-  IFranjaDisponible,
-} from "../interfaces/Solicitud.interface";
-import { isInsideAnyFranja, overlaps } from "../utils/helpers";
+const BASE_URL = "http://localhost:5000";
 
 /**
  * URL del API (configurable por entorno)
@@ -76,24 +71,12 @@ export async function enviarSolicitudMock(
   // Simulación de latencia de red
   await new Promise((r) => setTimeout(r, 600));
 
-  // 1) Validar contra franjas HU2
-  if (!isInsideAnyFranja(data.horaInicio, data.horaFin, franjas)) {
-    return { ok: false, status: "unavailable", message: "Horario no disponible" };
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error?.message || "Error al enviar la solicitud");
   }
 
-  // 2) Revisar “reservas” previas
-  const key = `solicitudes:${providerId}:${date}`;
-  const prev = JSON.parse(localStorage.getItem(key) || "[]") as ISolicitud[];
-
-  const conflict = prev.some((s) =>
-    overlaps(s.horaInicio, s.horaFin, data.horaInicio, data.horaFin)
-  );
-  if (conflict) {
-    return { ok: false, status: "conflict", message: "Horario ya reservado" };
-  }
-
-  // 3) Guardar “reserva” nueva
-  localStorage.setItem(key, JSON.stringify([...prev, data]));
-
-  return { ok: true, status: "ok", message: "Solicitud enviada con éxito" };
+  const result = await res.json();
+  console.log("✅ Respuesta del backend:", result);
+  return result;
 }
