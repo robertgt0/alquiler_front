@@ -19,4 +19,6 @@ export interface ISolicitudResponse {
   ok: boolean;
   status: SolicitudStatus;
   message: string;
+  raw?: unknown;
 }
+
