@@ -32,13 +32,10 @@ const COPY: Record<Status, string> = {
 export function useSolicitudTrabajo(
   franjas: IFranjaDisponible[],
   date: string,
-  _providerId?: string
+  providerId: string
 ) {
-  // Marcar explícitamente las props aún no usadas para que ESLint no avise:
-  void franjas;
-  void _providerId;
-
   const [loading, setLoading] = useState(false);
+  const [enviado, setEnviado] = useState(false);
   const [mensaje, setMensaje] = useState("");
 
   const enviar = async (data: Pick<ISolicitud, "horaInicio" | "horaFin">) => {
@@ -125,8 +122,7 @@ export function useSolicitudTrabajo(
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  return { loading, mensaje, setMensaje, enviar };
+  return { loading, enviado, mensaje, setMensaje, enviar };
 }
-
