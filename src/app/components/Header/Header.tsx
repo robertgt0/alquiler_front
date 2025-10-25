@@ -41,13 +41,19 @@ export default function Header() {
     }
   };
 
-  // 🔹 Iniciar sesión (solo en sessionStorage)
+  // 🔹 Iniciar sesión (solo en sessionStorage) y pedir geolocalización
   const handleLogin = () => {
     setIsLoggedIn(true);
     sessionStorage.setItem('isLoggedIn', 'true');
+
+    // Emitir evento para geolocalización
+    window.dispatchEvent(new CustomEvent("solicitar-geolocalizacion"));
+
+    // Emitir evento para notificar login exitoso
+    window.dispatchEvent(new CustomEvent("login-exitoso"));
   };
 
-  // 🔹 Cerrar sesión (solo en sessionStorage)
+  // 🔹 Cerrar sesión
   const handleLogout = () => {
     setIsLoggedIn(false);
     sessionStorage.removeItem('isLoggedIn');
@@ -57,11 +63,8 @@ export default function Header() {
 
   return (
     <>
-      {/* ========================= */}
       {/* HEADER DESKTOP / TABLET */}
-      {/* ========================= */}
       <header className="hidden sm:flex items-center justify-between p-4 bg-[#EEF7FF] shadow-md fixed top-0 left-0 w-full z-10">
-        {/* 🔹 LOGO */}
         <div className="flex items-center">
           <Link href="/">
             <Icono size={40} />
@@ -69,7 +72,6 @@ export default function Header() {
           <span className="ml-2 text-xl font-bold text-[#11255A]">Servineo</span>
         </div>
 
-        {/* 🔹 BARRA DE BÚSQUEDA */}
         <div className="flex-grow mx-8">
           <div className="relative">
             <input
@@ -95,23 +97,20 @@ export default function Header() {
           </div>
         </div>
 
-        {/* 🔹 ELEMENTOS DEL HEADER */}
         <div className="flex items-center space-x-4">
           {!isLoggedIn ? (
             <>
               <Link href="/ser-fixer">
-                <button className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
+                <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
                   Ser Fixer
                 </button>
               </Link>
-
               <button
                 onClick={handleLogin}
                 className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF]"
               >
                 Iniciar Sesión
               </button>
-
               <Link href="/register">
                 <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF]">
                   Registrarse
@@ -121,15 +120,10 @@ export default function Header() {
           ) : (
             <>
               <Link href="/ser-fixer">
-                <button
-                  onClick={() => router.push('/404')}
-                  className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a]"
-                >
+                <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
                   Ser Fixer
                 </button>
               </Link>
-
-              {/* 🔹 ÁREA DEL PERFIL CLICKEABLE */}
               <div
                 onClick={() => router.push('/404')}
                 className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition"
@@ -149,9 +143,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* ========================= */}
-      {/* HEADER MÓVIL SUPERIOR */}
-      {/* ========================= */}
+      {/* HEADER MÓVIL */}
       <header className="sm:hidden fixed top-0 left-0 w-full p-2 bg-[#EEF7FF] shadow-md z-10">
         <div className="flex items-center space-x-2 w-full">
           <Link href="/">
@@ -182,9 +174,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* ========================= */}
-      {/* FOOTER MÓVIL INFERIOR */}
-      {/* ========================= */}
+      {/* FOOTER MÓVIL */}
       <footer
         className={`sm:hidden fixed bottom-0 left-0 w-full px-3 py-2 bg-[#EEF7FF] shadow-md z-20 
         transform transition-transform duration-300 ease-in-out
@@ -210,28 +200,19 @@ export default function Header() {
             </div>
           ) : (
             <div className="flex items-center justify-center space-x-2">
-              <button
-                onClick={() => router.push('/404')}
-                className="px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]"
+              <Link href="/ser-fixer">
+                <button className="px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
+                  Ser Fixer
+                </button>
+              </Link>
+              <span className="text-[#11255A] text-xs font-semibold">Nombre de Usuario</span>
+              <svg
+                className="w-5 h-5 text-[#2a87ff]"
+                fill="currentColor"
+                viewBox="0 0 24 24"
               >
-                Ser Fixer
-              </button>
-
-              {/* 🔹 Perfil clickeable móvil */}
-              <div
-                onClick={() => router.push('/404')}
-                className="flex items-center space-x-1 cursor-pointer hover:opacity-80 transition"
-                title="Ver perfil"
-              >
-                <span className="text-[#11255A] text-xs font-semibold select-none">Nombre de Usuario</span>
-                <svg
-                  className="w-5 h-5 text-[#2a87ff]"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                </svg>
-              </div>
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+              </svg>
             </div>
           )}
         </div>
