@@ -215,6 +215,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     if (!searchTerm.trim()) {
       setSearchResults(allJobs);
       setFiltrosAplicados(false);
+      setSortBy("Fecha (Reciente)");
     }
   }, [searchTerm, allJobs]);
 
@@ -264,8 +265,8 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     setSearchTerm("");
     setSearchResults(allJobs);
     setFiltrosAplicados(false);
-    setSortBy("Fecha (Reciente)");
     actualizarURL("");
+     setTimeout(() => setSortBy("Fecha (Reciente)"), 0);
   };
 
   // NUEVO HANDLER PARA LIMPIAR FILTROS
