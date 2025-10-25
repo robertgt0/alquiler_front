@@ -67,6 +67,42 @@ export function AppointmentModal({
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  //  dias feriados 
+  const holidays = ["2025-11-01", "2025-11-02","2025-12-24"]; // Feriados 
+
+  const isIn = (list: string[], d: Date) => list.includes(toYYYYMMDD(d));
+  const isPast = (d: Date) => d < new Date();
+
+  const modifiers = {
+    past: (d: Date) => isPast(d),
+    holiday: (d: Date) => isIn(holidays, d),
+    booked: (d: Date) => isIn(bookedDays, d),
+  };
+
+  const modifiersClassNames = {
+    past: "opacity-50 pointer-events-none",
+    holiday: "bg-red-300 text-red-800 rounded-full",
+    booked: "bg-blue-200 text-blue-800 rounded-full",
+  };
+  
+ //  Días ya ocupados
+const [bookedDays, setBookedDays] = useState<string[]>([]);
+
+// Cargar días con citas del proveedor desde el backend 
+async function loadBookedDays() {
+  try {
+    if (!providerId) return; 
+    const res = await fetch(`${API_URL}/api/devcode/citas/proveedor/${providerId}`);
+    if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
+    const data: any[] = await res.json();
+    const fechasUnicas: string[] = [...new Set(data.map((cita: any) => cita.fecha))];
+
+    console.log("📅 Fechas con citas para proveedor:", fechasUnicas);
+    setBookedDays(fechasUnicas);
+  } catch (error) {
+    console.error(" Error cargando citas del proveedor:", error);
+  }
+}
   // ---- UI helpers ----
   const formatDateForSummary = (date: Date) =>
     date.toLocaleDateString("es-ES", {
@@ -141,16 +177,17 @@ export function AppointmentModal({
 
   // Init cuando se abre el modal
   useEffect(() => {
-    if (open) {
-      const today = new Date();
-      setSelectedDate(today);
-      setSelectedTime(null);
-      setSelectedSlot(null);
-      setFormSubmitted(false);
-      setLocationData(null);
-      loadAvailable(today);
-    }
-  }, [open]);
+  if (open) {
+    const today = new Date();
+    setSelectedDate(today);
+    setSelectedTime(null);
+    setSelectedSlot(null);
+    setFormSubmitted(false);
+    setLocationData(null);
+    loadAvailable(today);
+    loadBookedDays(); 
+  }
+}, [open]);
 
   // Recargar disponibilidad cuando cambia fecha/props
   useEffect(() => {
@@ -229,7 +266,27 @@ export function AppointmentModal({
           {/* Calendario y horarios */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
-              <Calendar mode="single" selected={selectedDate ?? undefined} onSelect={handleDateSelect} className="w-full" captionLayout="dropdown-months" />
+              <Calendar
+              mode="single"
+              selected={selectedDate ?? undefined}
+              onSelect={handleDateSelect}
+              className="w-full"
+              captionLayout="dropdown-months"
+              disabled={[
+                { before: new Date() },
+                (day: Date) =>
+                  bookedDays.includes(toYYYYMMDD(day)) ||
+                  holidays.includes(toYYYYMMDD(day)),
+              ]}
+              modifiers={{
+                booked: (day: Date) => bookedDays.includes(toYYYYMMDD(day)),
+                holiday: (day: Date) => holidays.includes(toYYYYMMDD(day)),
+              }}
+              modifiersStyles={{
+                booked: { backgroundColor: "#93C5FD", color: "#1E3A8A", borderRadius: "8px" },
+                holiday: { backgroundColor: "#FCA5A5", color: "#7F1D1D", borderRadius: "8px" },
+              }}
+            />
               <div className="mt-4 text-xs space-y-2">
                 {Object.entries(APPOINTMENT_STATES).map(([key, state]) => (
                   <div key={key} className="flex items-center space-x-2">
