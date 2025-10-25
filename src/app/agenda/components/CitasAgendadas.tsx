@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AppointmentModal from "./appointment-modal";
 
 interface Cita {
   _id: string;
@@ -20,6 +21,8 @@ interface Cita {
     _id: string;
     nombre: string;
   } | null;
+  ubicacion?: any;
+  clienteId?: string;
 }
 
 const CitasAgendadas = () => {
@@ -28,24 +31,54 @@ const CitasAgendadas = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // cliente fijo en tu código original
   const clienteId = "68fb93e079308369b5a0f264";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  // fetchCitas disponible en todo el componente
+  const fetchCitas = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/devcode/citas/cliente/${clienteId}`);
+      if (!res.ok) throw new Error("Error al obtener citas");
+      const data: Cita[] = await res.json();
+      setCitas(data);
+    } catch (err: any) {
+      setError(err.message || "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCitas = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/devcode/citas/cliente/${clienteId}`);
-        if (!res.ok) throw new Error("Error al obtener citas");
-        const data: Cita[] = await res.json();
-        setCitas(data);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCitas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Estado para editar
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCita, setSelectedCita] = useState<Cita | null>(null);
+
+  const handleEditar = (cita: Cita) => {
+    setSelectedCita(cita);
+    setModalOpen(true);
+  };
+
+  // Mapea la cita al formato que espera appointment-modal (InitialAppointment)
+  const mapToInitial = (cita: Cita | null) => {
+    if (!cita) return null;
+    return {
+      id: cita._id,
+      fecha: cita.fecha,
+      horario: {
+        inicio: cita.horario?.inicio ?? "",
+        fin: cita.horario?.fin ?? "",
+      },
+      ubicacion: cita.ubicacion ?? null,
+      patientName: cita.proveedorId?.nombre ?? "",
+    };
+  };
 
   if (loading) {
     return (
@@ -104,7 +137,10 @@ const CitasAgendadas = () => {
                 Estado: {cita.estado}
               </p>
               <div className="mt-4 flex justify-end">
-                <button className="bg-purple-500 text-white rounded px-4 py-2">
+                <button
+                  onClick={() => handleEditar(cita)}
+                  className="bg-purple-500 text-white rounded px-4 py-2"
+                >
                   Editar Cita
                 </button>
               </div>
@@ -112,6 +148,24 @@ const CitasAgendadas = () => {
           ))
         )}
       </div>
+
+      {modalOpen && (
+        <AppointmentModal
+          open={modalOpen}
+          onOpenChange={(open) => {
+            setModalOpen(open);
+            if (!open) {
+              setSelectedCita(null);
+              // refrescar lista después de cerrar (posible cambio)
+              fetchCitas();
+            }
+          }}
+          patientName={selectedCita?.proveedorId?.nombre ?? "Proveedor"}
+          providerId={selectedCita?.proveedorId?._id ?? ""}
+          servicioId={selectedCita?.servicioId?._id ?? ""}
+          clienteId={selectedCita?.clienteId ?? clienteId}
+        />
+      )}
     </div>
   );
 };
