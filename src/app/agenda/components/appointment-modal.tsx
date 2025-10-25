@@ -11,6 +11,10 @@ import ModalConfirmacion from "./ModalConfirmacion";
 
 type UISlot = { label: string; startISO: string; endISO: string };
 
+interface LocationFormProps {
+  onSubmit: (location: { direccion: string; notas: string }) => void
+}
+
 interface AppointmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,22 +47,27 @@ export function AppointmentModal({
 }: AppointmentModalProps) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+  // Fecha / hora
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<UISlot | null>(null);
   const [dateInput, setDateInput] = useState("");
 
+  // Disponibilidad
   const [availableSlots, setAvailableSlots] = useState<UISlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotsError, setSlotsError] = useState<string | null>(null);
 
+  // Ubicación (los datos vienen de <LocationForm />)
   const [locationData, setLocationData] = useState<any>(null);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const locationFormRef = useRef<HTMLDivElement | null>(null);
 
+  // Confirmación
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // ---- UI helpers ----
   const formatDateForSummary = (date: Date) =>
     date.toLocaleDateString("es-ES", {
       weekday: "long",
@@ -79,6 +88,7 @@ export function AppointmentModal({
   const handleTimeSelect = (slot: UISlot) => {
     setSelectedTime(slot.label);
     setSelectedSlot(slot);
+    // Scroll suave hacia el formulario
     setTimeout(() => {
       locationFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
@@ -89,9 +99,11 @@ export function AppointmentModal({
     setFormSubmitted(true);
   };
 
+  // ---- Carga de disponibilidad desde backend ----
   async function loadAvailable(date: Date) {
     if (!date || !providerId) return;
 
+    // Mock: Simular horarios disponibles sin fetch
     setLoadingSlots(true);
     setSlotsError(null);
     setAvailableSlots([]);
@@ -127,6 +139,7 @@ export function AppointmentModal({
     }
   }
 
+  // Init cuando se abre el modal
   useEffect(() => {
     if (open) {
       const today = new Date();
@@ -139,10 +152,12 @@ export function AppointmentModal({
     }
   }, [open]);
 
+  // Recargar disponibilidad cuando cambia fecha/props
   useEffect(() => {
     if (open && selectedDate && providerId) loadAvailable(selectedDate);
   }, [selectedDate, providerId, open]);
 
+  // ---- POST /api/appointments ----
   const handleConfirm = async () => {
     if (!API_URL) return alert("Falta NEXT_PUBLIC_API_URL en .env.local");
     if (!selectedDate || !selectedSlot) return alert("Selecciona fecha y horario");
@@ -177,8 +192,7 @@ export function AppointmentModal({
         return alert(body?.message || `Error HTTP ${res.status}`);
       }
 
-      setAvailableSlots(prev => prev.filter(slot => slot.startISO !== selectedSlot.startISO));
-
+      // Mostramos modal de confirmación y cerramos el modal principal
       setShowConfirmationModal(true);
       onOpenChange(false);
       setSelectedTime(null);
@@ -263,19 +277,46 @@ export function AppointmentModal({
             <div className="mt-6 p-4 rounded-lg border bg-slate-50">
               <h4 className="font-semibold mb-2 text-blue-700">Resumen de la cita</h4>
               <div className="text-sm space-y-1 text-blue-800">
-                <p><strong>Proveedor:</strong> {patientName}</p>
-                <p><strong>Fecha:</strong> {selectedDate ? formatDateForSummary(selectedDate) : ""}</p>
-                <p><strong>Hora:</strong> {selectedTime}</p>
+                <p>
+                  <strong>Proveedor:</strong> {patientName}
+                </p>
+                <p>
+                  <strong>Fecha:</strong> {selectedDate ? formatDateForSummary(selectedDate) : ""}
+                </p>
+                <p>
+                  <strong>Hora:</strong> {selectedTime}
+                </p>
+                <p>
+                  <strong>Ubicación:</strong>{" "}
+                  {((locationData?.direccion ?? "") as string).trim() || "No especificada"}
+                </p>
+                <p>
+                  <strong>Nota adicional:</strong>{" "}
+                  {((locationData?.notas ?? "") as string).trim() || "No especificada"}
+                </p>
               </div>
               <div className="mt-4 flex gap-3">
-                <Button className="flex-1 text-white bg-blue-600 hover:bg-blue-700" onClick={handleConfirm} disabled={saving}>{saving ? "Guardando..." : "Confirmar Cita"}</Button>
-                <Button variant="outline" className="flex-1" onClick={() => setSelectedTime(null)}>Cancelar</Button>
+                <Button className="flex-1 text-white bg-blue-600 hover:bg-blue-700" onClick={handleConfirm} disabled={saving}>
+                  {saving ? "Guardando..." : "Confirmar Cita"}
+                </Button>
+                {/* Cancelar */}
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedTime(null);
+                    setFormSubmitted(false);
+                  }}
+                >
+                  Cancelar
+                </Button>
               </div>
             </div>
           )}
         </div>
       </DialogContent>
 
+      {/* Modal de confirmación (visual) */}
       <ModalConfirmacion isOpen={showConfirmationModal} onClose={() => setShowConfirmationModal(false)} />
     </Dialog>
   );
