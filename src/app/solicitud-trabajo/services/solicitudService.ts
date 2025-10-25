@@ -41,7 +41,7 @@ export async function enviarSolicitud(
   });
 
   if (!res.ok) {
-    //Intentar leer un mensaje de error del backend
+    // Intentar leer un mensaje de error del backend
     const error = await res.json().catch(() => ({}));
     const msg = (error as any)?.message || "Error al enviar la solicitud";
     return { ok: false, status: "error", message: msg, raw: error };
