@@ -148,7 +148,7 @@ const Calendario: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-white py-8 px-12">
+    <div className="min-h-screen w-full bg-white py-4 px-4 sm:py-8 sm:px-12">
       <div className="w-full max-w-7xl mx-auto">
         <div className="bg-white rounded-xl mb-8">
           <div className="border-b-4 border-blue-600 pb-3 mb-8 inline-block">
