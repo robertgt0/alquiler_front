@@ -1,6 +1,7 @@
 export interface ISolicitud {
   horaInicio: string; // "HH:MM"
   horaFin: string;    // "HH:MM"
+  date: string;       // "YYYY-MM-DD"
 }
 
 export interface IFranjaDisponible {
