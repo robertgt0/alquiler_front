@@ -108,25 +108,25 @@ const Horario: React.FC<HorarioProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full bg-white p-6">
-      <div className="w-full px-4">
-        <div className="bg-white rounded-2xl p-6">
-          <div className="flex items-center gap-4 border-b border-gray-200 pb-6 mb-8">
-            <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl font-bold shadow-lg flex-shrink-0">
+    <div className="min-h-screen w-full bg-white py-4 px-4 sm:p-6">
+      <div className="w-full sm:px-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-6">
+          <div className="flex items-center gap-3 sm:gap-4 border-b border-gray-200 pb-4 sm:pb-6 mb-6 sm:mb-8">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg sm:text-xl font-bold shadow-lg flex-shrink-0">
               {infoProveedor.nombre.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800">{infoProveedor.profesion}</h2>
-              <p className="text-gray-600 text-base">{infoProveedor.nombre}</p>
+              <h2 className="text-base sm:text-lg font-bold text-gray-800">{infoProveedor.profesion}</h2>
+              <p className="text-sm sm:text-base text-gray-600">{infoProveedor.nombre}</p>
             </div>
           </div>
 
-          <div className="mb-8">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-blue-600">
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <h3 className="text-base sm:text-lg font-bold text-blue-600">
                 HORARIOS DISPONIBLES
               </h3>
-              <p className="text-gray-700 text-sm">
+              <p className="text-gray-700 text-xs sm:text-sm">
                 Para:{" "}
                 <span className="font-semibold">
                   {formatearFecha(fechaSeleccionada)}
@@ -135,90 +135,142 @@ const Horario: React.FC<HorarioProps> = ({
             </div>
           </div>
 
-          <div className="mb-8 min-h-[250px]">
+          <div className="mb-6 sm:mb-8 min-h-[200px] sm:min-h-[250px]">
             {/* 🆕 Mostrar estado de carga */}
             {cargando ? (
-              <div className="py-16 flex flex-col items-center justify-center">
-                <div className="text-6xl mb-4 animate-pulse">⏳</div>
-                <p className="text-gray-500 text-base text-center">
+              <div className="py-12 sm:py-16 flex flex-col items-center justify-center">
+                <div className="text-4xl sm:text-6xl mb-4 animate-pulse">⏳</div>
+                <p className="text-gray-500 text-sm sm:text-base text-center">
                   Cargando horarios disponibles...
                 </p>
               </div>
             ) : error ? (
               /* 🆕 Mostrar error si falla la conexión */
-              <div className="py-16 flex flex-col items-center justify-center">
-                <div className="text-6xl mb-4">⚠️</div>
-                <p className="text-red-500 text-base text-center font-semibold mb-2">
+              <div className="py-12 sm:py-16 flex flex-col items-center justify-center">
+                <div className="text-4xl sm:text-6xl mb-4">⚠️</div>
+                <p className="text-red-500 text-sm sm:text-base text-center font-semibold mb-2 px-4">
                   {error}
                 </p>
-                <p className="text-gray-500 text-sm text-center">
+                <p className="text-gray-500 text-xs sm:text-sm text-center px-4">
                   Asegúrate de que el backend esté corriendo en http://localhost:5000
                 </p>
               </div>
             ) : mensaje || horarios.length === 0 ? (
               /* 🆕 Mostrar mensaje del backend o "sin horarios" */
-              <div className="py-16 flex flex-col items-center justify-center">
-                <div className="text-6xl mb-4">📅</div>
-                <p className="text-gray-500 text-base text-center">
+              <div className="py-12 sm:py-16 flex flex-col items-center justify-center">
+                <div className="text-4xl sm:text-6xl mb-4">📅</div>
+                <p className="text-gray-500 text-sm sm:text-base text-center px-4">
                   {mensaje || "No hay horarios disponibles para esta fecha"}
                 </p>
               </div>
             ) : (
-              /* ✅ Mostrar horarios cargados desde el backend */
-              <div className="space-y-3">
-                <div className="grid grid-cols-4 gap-6 text-center font-bold text-gray-700 text-base pb-3 border-b-2 border-gray-200">
-                  <div className="text-left">Horario</div>
-                  <div>Hora inicio</div>
-                  <div>Hora fin</div>
-                  <div>Costo/Hora</div>
+              /* ✅ Mostrar horarios - Diseño responsive */
+              <>
+                {/* Vista de tabla para desktop (oculta en móvil) */}
+                <div className="hidden sm:block space-y-3">
+                  <div className="grid grid-cols-4 gap-6 text-center font-bold text-gray-700 text-base pb-3 border-b-2 border-gray-200">
+                    <div className="text-left">Horario</div>
+                    <div>Hora inicio</div>
+                    <div>Hora fin</div>
+                    <div>Costo/Hora</div>
+                  </div>
+
+                  {horarios.map((h, index) => (
+                    <div
+                      key={h.id}
+                      className="grid grid-cols-4 gap-6 items-center py-5 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <div className="text-blue-600 font-bold text-lg">
+                        Horario {index + 1}
+                      </div>
+                      <div className="text-center">
+                        <span className="text-3xl font-bold text-gray-800">
+                          {h.horaInicio.split(":")[0]}
+                        </span>
+                        <span className="text-2xl text-gray-800 mx-1">:</span>
+                        <span className="text-3xl font-bold text-gray-800">
+                          {h.horaInicio.split(":")[1]}
+                        </span>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-3xl font-bold text-gray-800">
+                          {h.horaFin.split(":")[0]}
+                        </span>
+                        <span className="text-2xl text-gray-800 mx-1">:</span>
+                        <span className="text-3xl font-bold text-gray-800">
+                          {h.horaFin.split(":")[1]}
+                        </span>
+                      </div>
+                      <div className="text-center text-base font-semibold text-gray-800">
+                        {h.costo} <span className="text-gray-600">{h.moneda}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                {horarios.map((h, index) => (
-                  <div
-                    key={h.id}
-                    className="grid grid-cols-4 gap-6 items-center py-5 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <div className="text-blue-600 font-bold text-lg">
-                      Horario {index + 1}
+                {/* Vista de tarjetas para móvil (oculta en desktop) */}
+                <div className="sm:hidden space-y-4">
+                  {horarios.map((h, index) => (
+                    <div
+                      key={h.id}
+                      className="bg-white border-2 border-blue-200 rounded-xl p-4 hover:shadow-lg transition-shadow"
+                    >
+                      <div className="text-blue-600 font-bold text-lg mb-3">
+                        Horario {index + 1}
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 text-sm font-medium">Hora inicio:</span>
+                          <div className="text-center">
+                            <span className="text-2xl font-bold text-gray-800">
+                              {h.horaInicio.split(":")[0]}
+                            </span>
+                            <span className="text-xl text-gray-800 mx-1">:</span>
+                            <span className="text-2xl font-bold text-gray-800">
+                              {h.horaInicio.split(":")[1]}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600 text-sm font-medium">Hora fin:</span>
+                          <div className="text-center">
+                            <span className="text-2xl font-bold text-gray-800">
+                              {h.horaFin.split(":")[0]}
+                            </span>
+                            <span className="text-xl text-gray-800 mx-1">:</span>
+                            <span className="text-2xl font-bold text-gray-800">
+                              {h.horaFin.split(":")[1]}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                          <span className="text-gray-600 text-sm font-medium">Costo/Hora:</span>
+                          <div className="text-base font-bold text-gray-800">
+                            {h.costo} <span className="text-gray-600 font-normal">{h.moneda}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <span className="text-3xl font-bold text-gray-800">
-                        {h.horaInicio.split(":")[0]}
-                      </span>
-                      <span className="text-2xl text-gray-800 mx-1">:</span>
-                      <span className="text-3xl font-bold text-gray-800">
-                        {h.horaInicio.split(":")[1]}
-                      </span>
-                    </div>
-                    <div className="text-center">
-                      <span className="text-3xl font-bold text-gray-800">
-                        {h.horaFin.split(":")[0]}
-                      </span>
-                      <span className="text-2xl text-gray-800 mx-1">:</span>
-                      <span className="text-3xl font-bold text-gray-800">
-                        {h.horaFin.split(":")[1]}
-                      </span>
-                    </div>
-                    <div className="text-center text-base font-semibold text-gray-800">
-                      {h.costo} <span className="text-gray-600">{h.moneda}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
-          <div className="flex justify-center gap-6 pt-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 pt-4">
             <button
               onClick={solicitarTrabajo}
-              className="bg-blue-600 text-white px-10 py-3 rounded-lg text-base font-bold hover:bg-gray-500 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto bg-blue-600 text-white px-8 sm:px-10 py-3 rounded-lg text-sm sm:text-base font-bold hover:bg-gray-500 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={horarios.length === 0 || cargando}
             >
               {cargando ? "Cargando..." : "Solicitar Trabajo"}
             </button>
             <button
               onClick={onVolver}
-              className="bg-blue-600 text-white px-10 py-3 rounded-lg text-base font-bold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
+              className="w-full sm:w-auto bg-blue-600 text-white px-8 sm:px-10 py-3 rounded-lg text-sm sm:text-base font-bold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
             >
               Atrás
             </button>
