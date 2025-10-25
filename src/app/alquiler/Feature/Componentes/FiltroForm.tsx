@@ -17,6 +17,7 @@ interface FiltrosFormProps {
   onFilterNoResults?: (noResults: boolean) => void;
   // NUEVA PROP: Notifica cuando se limpian los filtros
   onClearFilters?: () => void;
+  disabled?: boolean;
 }
 
 interface Option {
@@ -34,6 +35,7 @@ export default function FiltrosForm({
   totalItems,
   onFilterNoResults,
   onClearFilters, // NUEVA PROP
+  disabled = false, 
 }: FiltrosFormProps) {
   const router = useRouter();
   const {
@@ -55,7 +57,11 @@ export default function FiltrosForm({
   } = useFiltros();
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
+ const [usuariosOrdenados, setUsuariosOrdenados] = useState<any[]>([]);
 
+
+
+ 
   useEffect(() => {
     if (onResults) {
       onResults(usuarios);
@@ -164,7 +170,7 @@ export default function FiltrosForm({
         )}
       </div>
 
-      {/* ORDENAMIENTO Y CONTEO */}
+     {/* ORDENAMIENTO Y CONTEO */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t pt-4 mt-4">
         {/* ORDENAR POR */}
         <div className="flex items-center gap-2 mb-3 sm:mb-0">
@@ -172,7 +178,15 @@ export default function FiltrosForm({
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="border border-gray-400 rounded-lg px-3 py-2 text-sm text-black focus:ring-blue-500 focus:border-blue-500"
+            className={`border border-gray-400 rounded-lg px-3 py-2 text-sm text-black focus:ring-blue-500 focus:border-blue-500 ${
+              disabled ? "opacity-60 cursor-not-allowed" : ""
+            }`}
+            disabled={disabled} //  Aquí aplicamos el control
+            title={
+              disabled
+                ? "No hay resultados para ordenar"
+                : "Seleccionar criterio de ordenamiento"
+            }
           >
             {opcionesOrdenamiento?.map((opcion) => (
               <option key={opcion} value={opcion}>

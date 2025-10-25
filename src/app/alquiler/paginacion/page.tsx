@@ -99,13 +99,24 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
       case "Nombre Z-A":
         sorted.sort((a, b) => b.nombre.localeCompare(a.nombre));
         break;
-      case "Mayor Calificación (⭐)":
+      
+        case "Mayor Calificación (⭐)":
         sorted.sort((a, b) => {
-          const servA = a.servicios?.filter(s => s.disponible)?.length || 0;
-          const servB = b.servicios?.filter(s => s.disponible)?.length || 0;
-          return servB - servA;
+          const calA = a.calificacion ?? 0; // usa 0 si no tiene calificación
+          const calB = b.calificacion ?? 0;
+          return calB - calA; // orden descendente (mayor primero)
         });
         break;
+
+       case "Fecha (Reciente)":
+      sorted.sort((a, b) => {
+        const fechaA = new Date(a.fecha_registro ?? 0).getTime();
+        const fechaB = new Date(b.fecha_registro ?? 0).getTime();
+
+        return fechaB - fechaA; // Más recientes primero
+      });
+      break;
+
     }
     return sorted;
   };
@@ -138,6 +149,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     [sortBy, usuariosFiltrados]
   );
 
+  
   // ---------------- Hook de paginación ----------------
   const {
     currentPage,
@@ -148,7 +160,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     handlePrevPage,
     totalItems,
   } = usePagination(jobsToDisplay, itemsPerPage);
-
+   const sinResultados = currentItems.length === 0;
   // ---------------- Cargar trabajos ----------------
   useEffect(() => {
     const loadJobs = async () => {
@@ -252,6 +264,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     setSearchTerm("");
     setSearchResults(allJobs);
     setFiltrosAplicados(false);
+    setSortBy("Fecha (Reciente)");
     actualizarURL("");
   };
 
@@ -261,7 +274,8 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     setFiltersNoResults(false);
     setUsuariosFiltrados([]);
     setModoVista("jobs");
-    setSearchResults(allJobs); // Asegurar que se muestren todos los jobs
+    setSearchResults(allJobs);
+    setSortBy("Fecha (Reciente)");  // Asegurar que se muestren todos los jobs
   };
 
   const handleViewDetails = (job: Job) => {
@@ -310,6 +324,10 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
             setSort={setSortBy}
             opcionesOrdenamiento={opcionesOrdenamiento}
             totalItems={totalItems}
+            disabled={
+              (modoVista === "jobs" && jobsToDisplay.length === 0) ||
+              (modoVista === "usuarios" && usuariosFiltrados.length === 0)
+            }
           />
         </div>
 
