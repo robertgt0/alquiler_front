@@ -110,7 +110,7 @@ const Calendario: React.FC = () => {
         <div className="bg-white rounded-xl mb-8">
           <div className="border-b-4 border-blue-600 pb-3 mb-8 inline-block">
             <h1 className="text-3xl font-bold text-blue-600">
-              AGENDA TU SERVICIO
+              AGREGAR DISPONIBILIDAD
             </h1>
           </div>
           
