@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import {
   ISolicitud,
@@ -8,7 +10,24 @@ import {
   isInsideAnyFranja,
   isTimeInsideAnyFranja,
 } from "../utils/helpers";
-import { enviarSolicitudMock } from "../services/solicitudService";
+import { enviarSolicitud, enviarSolicitudMock } from "../services/solicitudService";
+
+// Tipos flexibles para normalizar la respuesta del backend/mock
+type Status = "ok" | "unavailable" | "conflict" | "error";
+type BackendResponse = {
+  ok?: boolean;
+  status?: Status | string;
+  message?: string; // lo ignoraremos para priorizar copy del front
+  raw?: unknown;
+};
+
+// Copys propios del front por estado
+const COPY: Record<Status, string> = {
+  ok: "Solicitud enviada con éxito",
+  unavailable: "Horario no disponible",
+  conflict: "Horario ya reservado",
+  error: "No pudimos enviar la solicitud. Intenta nuevamente.",
+};
 
 export function useSolicitudTrabajo(
   franjas: IFranjaDisponible[],
@@ -19,56 +38,87 @@ export function useSolicitudTrabajo(
   const [enviado, setEnviado] = useState(false);
   const [mensaje, setMensaje] = useState("");
 
-  const enviar = async (data: ISolicitud) => {
+  const enviar = async (data: Pick<ISolicitud, "horaInicio" | "horaFin">) => {
     setMensaje("");
+    setEnviado(false);
 
-    // 1) Validaciones básicas
-    if (!data.horaInicio || !data.horaFin) {
-      setEnviado(false);
-      setMensaje("Selecciona hora inicio y hora fin para solicitar el trabajo.");
+    const { horaInicio, horaFin } = data;
+
+    // 0) Validaciones de presencia (con mensajes específicos)
+    if (!horaInicio && !horaFin) {
+      setMensaje("Debe seleccionar todos los campos para solicitar el trabajo");
       return;
     }
-    if (toMinutes(data.horaFin) <= toMinutes(data.horaInicio)) {
-      setEnviado(false);
+    if (!horaInicio) {
+      setMensaje("Debe seleccionar una hora inicio para solicitar el trabajo");
+      return;
+    }
+    if (!horaFin) {
+      setMensaje("Debe seleccionar una hora fin para solicitar el trabajo");
+      return;
+    }
+
+    // 1) Orden de horas
+    if (toMinutes(horaFin) <= toMinutes(horaInicio)) {
       setMensaje("La hora fin debe ser mayor a la hora inicio.");
       return;
     }
 
-    // 2) Validación puntual: cada hora debe existir en alguna franja disponible
-    const inicioOk = isTimeInsideAnyFranja(data.horaInicio, franjas);
-    const finOk = isTimeInsideAnyFranja(data.horaFin, franjas);
+    // 2) Validación puntual por franja para cada hora
+    const inicioOk = isTimeInsideAnyFranja(horaInicio, franjas);
+    const finOk = isTimeInsideAnyFranja(horaFin, franjas);
 
     if (!inicioOk && !finOk) {
-      setEnviado(false);
       setMensaje("Horario no disponible");
       return;
     }
     if (!inicioOk) {
-      setEnviado(false);
       setMensaje("Hora inicio no disponible");
       return;
     }
     if (!finOk) {
-      setEnviado(false);
       setMensaje("Hora fin no disponible");
       return;
     }
 
-    // 3) Validación del rango completo: debe caer dentro de UNA franja
-    if (!isInsideAnyFranja(data.horaInicio, data.horaFin, franjas)) {
-      setEnviado(false);
+    // 3) Validación de que TODO el rango cae en UNA franja
+    if (!isInsideAnyFranja(horaInicio, horaFin, franjas)) {
       setMensaje("Horario no disponible");
       return;
     }
 
-    // 4) Simulación de envío (seguirá validando conflictos/reservas)
+    // 4) Payload con el nuevo campo `date` (para backend)
+    const payload: ISolicitud = {
+      date,
+      horaInicio,
+      horaFin,
+    };
+
     setLoading(true);
     try {
-      const resp = await enviarSolicitudMock(date, providerId, data, franjas);
-      setEnviado(resp.ok);
-      setMensaje(resp.message);
+      // Intento contra el backend real
+      const resp = (await enviarSolicitud(payload)) as BackendResponse | void;
+
+      // Normalizamos un status para decidir el copy del frontend
+      const status: Status =
+        (resp?.status as Status) ??
+        (resp && resp.ok === false ? "error" : "ok");
+
+      setEnviado(status === "ok");
+      setMensaje(COPY[status]); // 💡 priorizamos SIEMPRE el mensaje del front
     } catch {
-      setMensaje("No pudimos enviar la solicitud. Intenta nuevamente.");
+      // Fallback al mock si el backend falla
+      try {
+        const mock = await enviarSolicitudMock(date, providerId, payload, franjas);
+        const status: Status =
+          (mock.status as Status) ?? (mock.ok ? "ok" : "error");
+
+        setEnviado(mock.ok);
+        setMensaje(COPY[status]); // 💡 también priorizamos el copy del front aquí
+      } catch {
+        setEnviado(false);
+        setMensaje(COPY.error);
+      }
     } finally {
       setLoading(false);
     }
