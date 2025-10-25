@@ -43,7 +43,7 @@ const TimePicker: React.FC<TimePickerProps> = ({ label, value, onChange }) => {
                 <select 
                     value={currentMinuto} 
                     onChange={handleMinutoChange}
-                    className="w-full p-3 border border-gray-300 bg-white rounded-lg text-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-3 border border-gray-300 bg-white rounded-lg text-lg text-gray-800 focus:ring-2 focus:ring-blue-500"
                 >
                     {minutos.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
