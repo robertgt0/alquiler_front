@@ -14,6 +14,11 @@ import { isInsideAnyFranja, overlaps } from "../utils/helpers";
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:5000";
 
+/** Type guard simple para acceder a campos de objetos desconocidos */
+function isRecord(x: unknown): x is Record<string, unknown> {
+  return typeof x === "object" && x !== null && !Array.isArray(x);
+}
+
 /**
  * Llamado REAL al backend.
  * - Mapea los nombres de campos según lo que espera el backend:
@@ -21,9 +26,8 @@ const BASE_URL =
  *   horaInicio  -> hora_inicio
  *   horaFin     -> hora_fin
  *
- * Retorna un objeto con al menos { ok, status, message } para mantener
- * coherencia con el flujo de la UI. Incluye el payload crudo en `raw` por si
- * hace falta debugear.
+ * Retorna un objeto con { ok, status, message } para mantener coherencia
+ * con el flujo de la UI.
  */
 export async function enviarSolicitud(
   data: ISolicitud
@@ -45,18 +49,32 @@ export async function enviarSolicitud(
     }),
   });
 
+  // Si la respuesta HTTP no es OK, intentar leer 'message' del body
   if (!res.ok) {
-    // Intentar leer un mensaje de error del backend
-    const error = await res.json().catch(() => ({}));
-    const msg = (error as any)?.message || "Error al enviar la solicitud";
-    return { ok: false, status: "error", message: msg, raw: error };
+    let msg = "Error al enviar la solicitud";
+    try {
+      const errorJson = (await res.json()) as unknown;
+      if (isRecord(errorJson) && typeof errorJson.message === "string") {
+        msg = errorJson.message;
+      }
+    } catch {
+      // ignorar si no hay JSON de error
+    }
+    return { ok: false, status: "error", message: msg };
   }
 
-  const result = await res.json().catch(() => ({}));
-  const message =
-    (result as any)?.message || "Solicitud enviada con éxito";
+  // 2xx => leer body por si trae un mensaje, sino usar el copy por defecto
+  let message = "Solicitud enviada con éxito";
+  try {
+    const okJson = (await res.json()) as unknown;
+    if (isRecord(okJson) && typeof okJson.message === "string") {
+      message = okJson.message;
+    }
+  } catch {
+    // si no hay body JSON, mantenemos el mensaje por defecto
+  }
 
-  return { ok: true, status: "ok", message, raw: result };
+  return { ok: true, status: "ok", message };
 }
 
 /**
