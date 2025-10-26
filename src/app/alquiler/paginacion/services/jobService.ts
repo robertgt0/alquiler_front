@@ -23,11 +23,16 @@ interface UserFromAPI {
 
 export const getJobs = async (): Promise<Job[]> => {
   try {
-    // Usar variable de entorno para la URL base (permite cambiar entre local y remoto)
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
-    const endpoint = `${API_BASE.replace(/\/+$/, '')}/borbotones/usuarios?limit=1000`;
+    // Usar variable de entorno para la URL base
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const endpoint = `${API_BASE}/borbotones/usuarios?limit=1000`;
+    console.log('Fetching jobs from:', endpoint);
 
-    const response = await fetch(endpoint);
+    const response = await fetch(endpoint, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
 
     if (!response.ok) {
       // intentar leer cuerpo para depuración (no lanzar si no es JSON)
@@ -66,7 +71,9 @@ export const getJobs = async (): Promise<Job[]> => {
         return steps[Math.floor(Math.random() * steps.length)];
       };
 
-      return {
+      const preferredId = (user as any).id_usuario ?? (user as any).id ?? user._id;
+    return {
+        id: preferredId ? String(preferredId) : undefined,
         title: firstService?.nombre || "Sin servicio",
         company: user.nombre,
         service: (user.servicios || []).map((s) => s.nombre).join(", "),

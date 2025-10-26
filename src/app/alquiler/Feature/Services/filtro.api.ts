@@ -100,30 +100,42 @@ export async function getCiudades(
 }
 
 /* --------- departamentos (Bolivia) --------- */
-export async function getDepartamentos(): Promise<Option[]> {
-  const url = `${FILTROS_BASE}/departamentos`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    let body = '';
-    try { body = await res.text(); } catch (e) { body = '<no body>'; }
-    console.error(`[filtro.api] getDepartamentos fallo ${res.status} -> ${url}\n${body}`);
-    throw new Error(`Error ${res.status} al obtener departamentos`);
+export const getDepartamentos = async (): Promise<Option[]> => {
+  try {
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const url = `${API_BASE}/borbotones/departamentos`;
+    console.log('Fetching departamentos from:', url);
+    
+    const res = await fetch(url, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+    if (!res.ok) {
+      let body = '';
+      try { body = await res.text(); } catch (e) { body = '<no body>'; }
+      console.error(`[filtro.api] getDepartamentos fallo ${res.status} -> ${url}\n${body}`);
+      throw new Error(`Error ${res.status} al obtener departamentos`);
+    }
+    const json: unknown = await res.json();
+
+    const ok =
+      typeof json === "object" &&
+      json !== null &&
+      (json as DepartamentosResponse).success === true &&
+      Array.isArray((json as DepartamentosResponse).data) &&
+      (json as DepartamentosResponse).data.every((d: unknown) => typeof d === "string");
+    if (!ok) throw new Error("Respuesta inválida (departamentos)");
+
+    return (json as DepartamentosResponse).data.map((d: string) => ({ value: d, label: d }));
+  } catch (error) {
+    console.error('[filtro.api] Error en getDepartamentos:', error);
+    throw error;
   }
-  const json: unknown = await res.json();
-
-  const ok =
-    typeof json === "object" &&
-    json !== null &&
-    (json as DepartamentosResponse).success === true &&
-    Array.isArray((json as DepartamentosResponse).data) &&
-    (json as DepartamentosResponse).data.every((d: unknown) => typeof d === "string");
-  if (!ok) throw new Error("Respuesta inválida (departamentos)");
-
-  return (json as DepartamentosResponse).data.map((d: string) => ({ value: d, label: d }));
 }
 
 /* --------- ciudades por departamento (frontend helper) --------- */
-export async function getCiudadesPorDepartamento(departamento: string): Promise<Option[]> {
+export const getCiudadesPorDepartamento = async (departamento: string): Promise<Option[]> => {
   const url = new URL(`${FILTROS_BASE}/ciudades/por-departamento`);
   url.searchParams.set("departamento", departamento);
   

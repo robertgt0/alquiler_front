@@ -42,6 +42,7 @@ export interface UsuarioResumen extends UsuarioBase {
   // Los campos base son suficientes para el resumen
   calificacion?: number; // Calificación promedio del usuario (1-5 estrellas)
   totalCalificaciones?: number; // Número total de calificaciones recibidas
+  descripcion?: string; // Descripción del profesional
 }
 
 // Respuestas de API

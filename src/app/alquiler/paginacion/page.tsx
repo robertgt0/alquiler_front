@@ -40,7 +40,8 @@ function BusquedaContent() {
 
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
-  const [modoVista, setModoVista] = useState<"jobs" | "usuarios">("jobs");
+    type ModoVista = "jobs" | "usuarios";
+    const [modoVista, setModoVista] = useState<ModoVista>("jobs");
   const [filtersNoResults, setFiltersNoResults] = useState(false);
   const [filtrosAplicados, setFiltrosAplicados] = useState(false);
 
@@ -99,24 +100,15 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
       case "Nombre Z-A":
         sorted.sort((a, b) => b.nombre.localeCompare(a.nombre));
         break;
-      
-        case "Mayor Calificación (⭐)":
+      case "Mayor Calificación (⭐)":
         sorted.sort((a, b) => {
-          const calA = a.calificacion ?? 0; // usa 0 si no tiene calificación
+          const calA = a.calificacion ?? 0;
           const calB = b.calificacion ?? 0;
-          return calB - calA; // orden descendente (mayor primero)
+          return calB - calA;
         });
         break;
-
-       case "Fecha (Reciente)":
-      sorted.sort((a, b) => {
-        const fechaA = new Date(a.fecha_registro ?? 0).getTime();
-        const fechaB = new Date(b.fecha_registro ?? 0).getTime();
-
-        return fechaB - fechaA; // Más recientes primero
-      });
-      break;
-
+      default:
+        break;
     }
     return sorted;
   };
@@ -161,6 +153,11 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     totalItems,
   } = usePagination(jobsToDisplay, itemsPerPage);
    const sinResultados = currentItems.length === 0;
+
+  const handleViewDetails = (id: string | number) => {
+    router.push(`/alquiler/${id}`);
+  };
+
   // ---------------- Cargar trabajos ----------------
   useEffect(() => {
     const loadJobs = async () => {
@@ -279,8 +276,13 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     setSortBy("Fecha (Reciente)");  // Asegurar que se muestren todos los jobs
   };
 
-  const handleViewDetails = (job: Job) => {
-    console.log("Ver detalles de:", job);
+  const navigateToDetails = (job: Job) => {
+    // Redirigir a la página de detalles usando el id
+    if (job.id) {
+      router.push(`/alquiler/${job.id}`);
+    } else {
+      alert("No se encontró el ID del usuario/trabajo.");
+    }
   };
 
   // ---------------- Lógica para determinar qué mostrar ----------------
@@ -341,20 +343,16 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
             {usuariosFiltrados.length > 0 ? (
               <>
                 <div className="UserProfilesContainer space-y-6">
-                  {usuariosOrdenados.map((u) => (
-                    <div key={u._id} className="UserProfileContainer">
-                      {UserProfileCard ? (
-                        <UserProfileCard
-                          usuario={u}
-                          onContactClick={() => {
-                            console.log("Contactar a:", u.nombre);
-                          }}
-                        />
-                      ) : (
-                        <div className="p-4 bg-gray-100 rounded">Componente no disponible: {u.nombre}</div>
-                      )}
-                    </div>
-                  ))}
+                    {usuariosFiltrados.map((usuario) => (
+                      <UserProfileCard
+                        key={usuario.id_usuario}
+                        usuario={usuario}
+                        onContactClick={() => {
+                          console.log('Navegando a usuario:', usuario);
+                          router.push(`/alquiler/${usuario.id_usuario}`);
+                        }}
+                      />
+                    ))}
                 </div>
                 <p className="text-sm text-gray-600 mt-4">
                   Se encontraron {usuariosFiltrados.length} profesionales
@@ -366,7 +364,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
               </p>
             )}
             <button
-              onClick={handleClearFilters}
+              onClick={() => { handleClearFilters(); router.back(); }}
               className="inline-block mt-6 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
             >
               Volver a ofertas
@@ -429,7 +427,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
                           <JobCard
                             key={`${job.title}-${index}`}
                             {...job}
-                            onViewDetails={() => handleViewDetails(job)}
+                            onViewDetails={() => navigateToDetails(job)}
                           />
                         ))}
                       </div>

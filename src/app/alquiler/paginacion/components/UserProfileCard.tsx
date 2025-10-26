@@ -8,10 +8,15 @@ import { MdLocationOn, MdAccessTime } from 'react-icons/md';
 interface UserProfileCardProps {
   usuario: UsuarioResumen;
   onContactClick?: () => void;
+  onViewDetails?: (id: string | number) => void;
 }
 
-const UserProfileCard: FC<UserProfileCardProps> = ({ usuario, onContactClick }) => {
-  useEffect(() => {}, [usuario]);
+const UserProfileCard: FC<UserProfileCardProps> = ({ usuario, onContactClick, onViewDetails }) => {
+  const handleViewDetails = () => {
+    if (onViewDetails && usuario.id_usuario) {
+      onViewDetails(usuario.id_usuario);
+    }
+  };
 
   const {
     nombre,
@@ -93,9 +98,17 @@ const UserProfileCard: FC<UserProfileCardProps> = ({ usuario, onContactClick }) 
             </div>
           )}
 
-          <div className="flex items-center text-xs text-gray-500 mb-2">
+          <div className="flex items-center text-xs text-gray-500 mb-4">
             <MdAccessTime className="mr-1" />
             Registrado: {formatearFecha(fecha_registro)}
+          </div>
+
+          {/* Sobre el Profesional */}
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Sobre el Profesional</h3>
+            <div className="bg-gray-50 rounded-lg p-3 text-gray-600 text-sm">
+              {usuario.descripcion || 'Sin descripción. Este profesional no ha añadido una descripción todavía.'}
+            </div>
           </div>
 
           {/* Botón de acción */}
@@ -104,7 +117,7 @@ const UserProfileCard: FC<UserProfileCardProps> = ({ usuario, onContactClick }) 
               onClick={onContactClick}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-sm mt-4"
             >
-              Ver Detalles
+              Ver Detalles del Profesional
             </button>
           )}
         </div>
