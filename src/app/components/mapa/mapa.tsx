@@ -1,3 +1,4 @@
+//src/app/components/mapa/mapa.tsx
 "use client";
 
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -112,7 +113,6 @@ function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: num
 // ✅ Componente principal del mapa
 export default function Mapa({
   isLoggedIn,
-  ubicaciones,
   fixers = [],
   ubicacionSeleccionada,
   onUbicacionClick,
@@ -283,7 +283,7 @@ export default function Mapa({
         </MapContainer>
 
         {/* ✅ Contador SOBRE el mapa - Solo en PC/Tablet - Z-INDEX CORREGIDO */}
-        <div className="absolute top-3 right-3 hidden sm:block z-[5]"> {/* z-[5] más bajo que header */}
+        <div className="absolute top-3 right-3 hidden sm:block z-5"> {/* z-[5] más bajo que header */}
           {fixers.length > 0 ? (
             <div
               style={{
