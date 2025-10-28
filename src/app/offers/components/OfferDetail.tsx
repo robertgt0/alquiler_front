@@ -101,7 +101,7 @@ export default function OfferDetail() {
         <button type="button" onClick={() => router.push('/offers')} style={btnGhost}>← Volver</button>
         <div style={{ display: 'flex', gap: 12 }}>
           <button type="button" disabled={!isOwner} style={btnPrimary(!isOwner)}
-                  onClick={() => isOwner && router.push(`/aniadir_nueva_oferta_de_trabajo?edit=${offer.id}`)}>
+                  onClick={() => isOwner && router.push(`/addNewJobOffer?edit=${offer.id}`)}>
             Editar Oferta
           </button>
           <button type="button" disabled={!isOwner} style={btnDanger(!isOwner)} onClick={doDelete}>
