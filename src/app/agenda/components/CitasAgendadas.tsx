@@ -164,6 +164,10 @@ const CitasAgendadas = () => {
           providerId={selectedCita?.proveedorId?._id ?? ""}
           servicioId={selectedCita?.servicioId?._id ?? ""}
           clienteId={selectedCita?.clienteId ?? clienteId}
+          // AÑADE ESTAS PROPS PARA EDITAR:
+          initialAppointment={mapToInitial(selectedCita)}
+          isEditing={true}
+          appointmentId={selectedCita?._id}
         />
       )}
     </div>
