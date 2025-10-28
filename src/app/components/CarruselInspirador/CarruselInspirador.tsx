@@ -60,7 +60,7 @@ export default function CarruselInspirador() {
           >
             {/* Imagen a la izquierda */}
             <div className="w-full md:w-1/2 flex justify-center items-center bg-blue-100 rounded-2xl md:rounded-none md:rounded-l-2xl overflow-hidden p-2 md:p-4">
-              <Image
+              <img
                 src={slide.image}
                 alt={slide.title}
                 className="w-[95%] md:w-[90%] h-auto md:h-[460px] object-contain rounded-2xl shadow-md transition-transform duration-500 hover:scale-[1.03]"
