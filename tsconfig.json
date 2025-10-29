@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ESNext",
     "lib": [
       "dom",
       "dom.iterable",
@@ -22,7 +22,7 @@
         "name": "next"
       }
     ],
-    "baseUrl": ".", // ⬅️ FALTABAAAA
+    "baseUrl": ".", // <- FALTABAAAA
     "paths": {
       "@/*": [
         "./src/*"
@@ -30,9 +30,9 @@
     }
   },
   "include": [
+    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "next-env.d.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": [
