@@ -11,6 +11,7 @@ interface AccesoRestringidoProps {
 
 export default function AccesoRestringido({ 
   servicioNombre, 
+  servicioId, 
   onClose,
   isModal = false 
 }: AccesoRestringidoProps) {
