@@ -50,7 +50,7 @@ export class UbicacionManager {
     try {
       // Intentar usar revoke() si está disponible (no estándar pero funciona en algunos navegadores)
       if (navigator.permissions && 'revoke' in navigator.permissions) {
-        await (navigator.permissions as any).revoke({ name: 'geolocation' });
+       await (navigator.permissions as { revoke?: (permission: { name: string }) => Promise<void> }).revoke?.({ name: 'geolocation' });
         console.log("Permisos reseteados exitosamente");
         return true;
       }

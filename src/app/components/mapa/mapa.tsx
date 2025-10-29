@@ -109,7 +109,6 @@ function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: num
 
 export default function Mapa({
   isLoggedIn,
-  ubicaciones,
   fixers = [],
   ubicacionSeleccionada,
   onUbicacionClick,

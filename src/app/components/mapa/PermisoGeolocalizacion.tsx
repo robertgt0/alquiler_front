@@ -1,7 +1,7 @@
 // components/PermisoGeolocalizacion.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { UbicacionManager } from './UbicacionManager';
 
 interface PermisoGeolocalizacionProps {
@@ -16,49 +16,7 @@ export default function PermisoGeolocalizacion({ isLoggedIn }: PermisoGeolocaliz
 
   const ubicacionManager = UbicacionManager.getInstancia();
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      inicializarListenerPermisos();
-    } else {
-      setEstadoPermisos('prompt');
-    }
-  }, [isLoggedIn]);
-
-  // ✅ NUEVO: Inicializar listener para cambios en permisos
-  const inicializarListenerPermisos = async () => {
-    try {
-      if (!navigator.permissions) {
-        console.log('Permissions API no soportada');
-        await verificarEstadoPermisos();
-        return;
-      }
-
-      // Obtener el estado inicial
-      const estado = await ubicacionManager.obtenerEstadoPermisos();
-      setEstadoPermisos(estado);
-
-      // ✅ ESCUCHAR CAMBIOS EN PERMISOS
-      const result = await navigator.permissions.query({ name: 'geolocation' });
-      
-      // Configurar el listener para cambios
-      result.onchange = () => {
-        console.log('Estado de permisos cambió:', result.state);
-        setEstadoPermisos(result.state as 'granted' | 'denied' | 'prompt');
-        
-        // Si se concedieron permisos, obtener la ubicación automáticamente
-        if (result.state === 'granted') {
-          console.log('Permisos concedidos - obteniendo ubicación...');
-          window.dispatchEvent(new CustomEvent('solicitar-geolocalizacion'));
-        }
-      };
-
-    } catch (error) {
-      console.log('Error al inicializar listener de permisos:', error);
-      await verificarEstadoPermisos();
-    }
-  };
-
-  const verificarEstadoPermisos = async () => {
+  const verificarEstadoPermisos = useCallback(async () => {
     try {
       const estado = await ubicacionManager.obtenerEstadoPermisos();
       setEstadoPermisos(estado);
@@ -66,12 +24,43 @@ export default function PermisoGeolocalizacion({ isLoggedIn }: PermisoGeolocaliz
       console.log('Error al verificar permisos:', error);
       setEstadoPermisos('prompt');
     }
-  };
+  }, [ubicacionManager]);
+
+  const inicializarListenerPermisos = useCallback(async () => {
+    try {
+      if (!navigator.permissions) {
+        console.log('Permissions API no soportada');
+        await verificarEstadoPermisos();
+        return;
+      }
+
+      const estado = await ubicacionManager.obtenerEstadoPermisos();
+      setEstadoPermisos(estado);
+
+      const result = await navigator.permissions.query({ name: 'geolocation' });
+      
+      result.onchange = () => {
+        console.log('Estado de permisos cambió:', result.state);
+        setEstadoPermisos(result.state as 'granted' | 'denied' | 'prompt');
+      };
+
+    } catch (error) {
+      console.log('Error al inicializar listener de permisos:', error);
+      await verificarEstadoPermisos();
+    }
+  }, [ubicacionManager, verificarEstadoPermisos]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      inicializarListenerPermisos();
+    } else {
+      setEstadoPermisos('prompt');
+    }
+  }, [isLoggedIn, inicializarListenerPermisos]);
 
   const handleSolicitarPermisos = async () => {
     if (!isLoggedIn) return;
     
-    // Si los permisos están denegados, mostrar modal de reset
     if (estadoPermisos === 'denied') {
       setMostrarModalReset(true);
       return;
@@ -84,7 +73,7 @@ export default function PermisoGeolocalizacion({ isLoggedIn }: PermisoGeolocaliz
       
       if (concedido) {
         setEstadoPermisos('granted');
-        // Disparar evento para que el mapa actualice la ubicación
+        console.log('Usuario concedió permisos - obteniendo ubicación...');
         window.dispatchEvent(new CustomEvent('solicitar-geolocalizacion'));
       } else {
         setEstadoPermisos('denied');
@@ -107,7 +96,6 @@ export default function PermisoGeolocalizacion({ isLoggedIn }: PermisoGeolocaliz
         console.log("Permisos reseteados, intentando solicitar nuevamente...");
         setEstadoPermisos('prompt');
         
-        // Esperar un momento y luego solicitar permisos nuevamente
         setTimeout(async () => {
           const concedido = await ubicacionManager.solicitarPermisosGeolocalizacion();
           setEstadoPermisos(concedido ? 'granted' : 'denied');
@@ -117,7 +105,6 @@ export default function PermisoGeolocalizacion({ isLoggedIn }: PermisoGeolocaliz
           }
         }, 1000);
       } else {
-        // Si no se puede resetear, guiar al usuario
         if (confirm('No se pueden resetear los permisos automáticamente. ¿Quieres ver instrucciones para habilitarlos manualmente en tu navegador?')) {
           window.open('https://support.google.com/chrome/answer/142065?hl=es&co=GENIE.Platform%3DDesktop', '_blank');
         }
@@ -180,7 +167,6 @@ export default function PermisoGeolocalizacion({ isLoggedIn }: PermisoGeolocaliz
   return (
     <>
       <div className="fixed bottom-20 right-4 z-[1000] flex flex-col items-end">
-        {/* Tooltip */}
         {mostrarTooltip && (
           <div className="mb-2 bg-gray-800 text-white text-sm rounded-lg py-2 px-3 max-w-xs shadow-lg">
             {getTooltipText()}
@@ -188,7 +174,6 @@ export default function PermisoGeolocalizacion({ isLoggedIn }: PermisoGeolocaliz
           </div>
         )}
         
-        {/* Botón */}
         <button
           className={`
             w-12 h-12 rounded-full shadow-lg transition-all duration-200 
@@ -210,7 +195,6 @@ export default function PermisoGeolocalizacion({ isLoggedIn }: PermisoGeolocaliz
         </button>
       </div>
 
-      {/* Modal de confirmación para resetear permisos */}
       {mostrarModalReset && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1001]">
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4">

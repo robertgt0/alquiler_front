@@ -1,7 +1,7 @@
 // components/PopupFixer.tsx
 "use client";
 import { FC } from "react";
-import { FaStar, FaCheck } from "react-icons/fa";
+import { FaCheck } from "react-icons/fa";
 
 export interface Fixer {
   _id: string;

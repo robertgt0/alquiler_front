@@ -1,4 +1,3 @@
-// components/MapaWrapper.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -23,7 +22,6 @@ export default function MapaWrapper() {
 
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [cargando, setCargando] = useState(true);
-  const [mostrarSenalizacion, setMostrarSenalizacion] = useState(false);
 
   // Sigue rastreando si el permiso fue solicitado (inicia en falso)
   const [permisoDecidido, setPermisoDecidido] = useState(false);
@@ -61,9 +59,7 @@ export default function MapaWrapper() {
 
         ubicacionManager.setUbicacion(ubicacionTemporal);
         setUbicacionSeleccionada(ubicacionTemporal);
-        setMostrarSenalizacion(true);
         setPermisoDecidido(true);
-        setTimeout(() => setMostrarSenalizacion(false), 3000);
       },
       () => {
         // ✅ FALLBACK: Si se rechaza, volver a la Plaza

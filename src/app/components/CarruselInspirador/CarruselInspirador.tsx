@@ -24,8 +24,6 @@ const slides = [
   },
 ];
 
-import Image from 'next/image';
-
 export default function CarruselInspirador() {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);

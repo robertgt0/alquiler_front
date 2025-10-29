@@ -27,7 +27,6 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 🔹 Manejo de búsqueda: al presionar Enter → Error 404
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -35,17 +34,15 @@ export default function Header() {
     }
   };
 
-  // 🔹 Simulación de iniciar sesión + pedir ubicación + notificar login
+  // 🔹 CORREGIDO: Solo notificar login, NO solicitar ubicación automáticamente
   const handleLogin = () => {
     setIsLoggedIn(true);
 
-    // ✅ Emitir evento para geolocalización
-    const eventGeo = new CustomEvent("solicitar-geolocalizacion");
-    window.dispatchEvent(eventGeo);
-    
-    // ✅ NUEVO: Emitir evento para notificar login exitoso al MapaWrapper
+    // ✅ SOLO emitir evento para notificar login exitoso al MapaWrapper
     const eventLogin = new CustomEvent("login-exitoso");
     window.dispatchEvent(eventLogin);
+    
+    console.log("Login exitoso - Ubicación NO solicitada automáticamente");
   };
 
   if (!isClient) return null;

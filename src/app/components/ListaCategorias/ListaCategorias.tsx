@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState} from "react";
 import TarjetaCategoria from "./TarjetaCategoria";
 import BotonVerMas from "./BotonVerMas";
 import type { Categoria } from "./tipos";
