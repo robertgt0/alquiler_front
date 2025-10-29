@@ -223,9 +223,9 @@ export default function Header() {
               </Link>
             </div>
           ) : (
-            <div className="flex items-center justify-center space-x-2 w-full">
+            <div className="flex items-center justify-center space-x-1 w-full">
               <Link href="/ser-fixer" className="flex-1">
-                <button className="w-full px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
+                <button className="w-full px-2 py-1.5 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
                   Ser Fixer
                 </button>
               </Link>
@@ -255,7 +255,7 @@ export default function Header() {
       </footer>
 
       {/* Espacio para el header fijo */}
-      <div className="h-16 sm:h-20"></div>
+      <div className="h-16 sm:h-0"></div>
     </>
   );
 }
