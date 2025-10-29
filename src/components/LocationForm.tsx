@@ -273,7 +273,6 @@ export default function LocationForm() {
         </div>
       )}
 
-      {/* Botones de acción */}
       <div className="flex justify-end space-x-4 pt-6 border-t">
         <button
           type="button"
