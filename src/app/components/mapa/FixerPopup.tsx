@@ -12,11 +12,28 @@ export interface Fixer {
   rating?: number;
   verified?: boolean;
   whatsapp?: string;
+  imagenPerfil?: string; // Nuevo campo
 }
 
 const FixerPopup: FC<{ fixer: Fixer }> = ({ fixer }) => {
+  // Imagen de respaldo
+  const backupImage = "/imagenes_respaldo/perfil-default.jpg";
+  const imageUrl = fixer.imagenPerfil || backupImage;
+
   return (
     <div className="w-[220px] p-2">
+      {/* Imagen de perfil - MANTENIENDO EL MISMO DISEÑO */}
+      <div className="flex justify-center mb-2">
+        <img 
+          src={imageUrl}
+          alt={`Perfil de ${fixer.nombre}`}
+          className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
+          onError={(e) => {
+            e.currentTarget.src = backupImage;
+          }}
+        />
+      </div>
+
       <h3 className="text-sm font-semibold text-blue-600 mb-1">{fixer.nombre}</h3>
       <p className="text-xs text-gray-600 bg-gray-100 rounded p-1 mb-1">
         🛠️ {fixer.especialidad}

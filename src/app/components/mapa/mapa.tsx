@@ -140,6 +140,9 @@ export default function Mapa({
           .toUpperCase()
       : "FX";
 
+    // Imagen de perfil con respaldo
+    const imagenPerfil = f.imagenPerfil || "/imagenes_respaldo/image2.png";
+
     const especialidades =
       f.especialidad
         ?.split(",")
@@ -160,18 +163,20 @@ export default function Mapa({
     const popupHtml = `
       <div style="width:250px;font-family:'Inter',sans-serif;padding:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
+          <!-- IMAGEN DE PERFIL AGREGADA AQUÍ -->
           <div style="
-            background:#2563eb;
-            color:white;
-            border-radius:50%;
             width:40px;
             height:40px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-weight:600;
+            border-radius:50%;
+            overflow:hidden;
+            border:2px solid #bfdbfe;
           ">
-            ${iniciales}
+            <img 
+              src="${imagenPerfil}" 
+              alt="${f.nombre}"
+              style="width:100%;height:100%;object-fit:cover;"
+              onerror="this.src='/imagenes_respaldo/perfil-default.jpg'"
+            />
           </div>
           <div style="flex:1;">
             <h3 style="margin:0;font-size:14px;color:#111827;display:flex;align-items:center;gap:5px;">
