@@ -9,7 +9,7 @@ export type CategoryDTO = {
 
 // ✅ Define la URL base del backend dinámicamente
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") || "http://localhost:5000";
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") || "http://localhost:4000";
 
 // ✅ Obtener todas las categorías
 export async function getCategories(): Promise<CategoryDTO[]> {

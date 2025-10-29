@@ -1,213 +1,130 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { upsertFixerFinal } from "@/lib/api/fixer";
+import { useState } from "react";
+import { acceptTerms } from "@/lib/api/fixer";
+import StepProgress from "../components/StepProgress";
+import type { StepTermsProps } from "./types";
 
-const K_ID = "FIXER_ID";                 // string
-const K_USER = "FIXER_USER";            // si no tienes auth, usaremos dummy
-const K_CI = "FIXER_IDENTITY";          // string (CI)
-const K_LOCATION = "FIXER_LOCATION";    // {lat,lng,address?}
-const K_CATEGORIES = "FIXER_CATEGORIES";// string[]
-const K_PAYMENT = "FIXER_PAYMENT";      // { methods:[], accountOwner?, accountNumber? }
-
-type Props = {
-  onBack?: () => void;
-  onNext?: () => void; // si manejas navegación externa
+const METHOD_LABEL: Record<string, string> = {
+  card: "Tarjeta",
+  qr: "Codigo QR",
+  cash: "Efectivo",
 };
 
-export default function StepTermsView({ onBack, onNext }: Props) {
-  const [open, setOpen] = useState(false);     // modal abierto/cerrado
-  const [accept, setAccept] = useState(false); // checkbox
-  const [saving, setSaving] = useState(false);
+export default function StepTermsView({ fixerId, summary, onBack, onFinish }: StepTermsProps) {
+  const [checked, setChecked] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // (Opcional) exigir scrolleo completo antes de aceptar
-  const [scrolledEnd, setScrolledEnd] = useState(false);
-  const boxRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const el = boxRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const end = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 2;
-      setScrolledEnd(end);
-    };
-    el.addEventListener("scroll", onScroll);
-    onScroll();
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [open]);
-
-  const canAccept = accept /* && scrolledEnd */; // activa scrolledEnd si QA lo pide
-
-  // Recolectar datos guardados del wizard
-  const payload = useMemo(() => {
-    const id = localStorage.getItem(K_ID) || undefined;
-    const userId = localStorage.getItem(K_USER) || "dummy-user-123";
-    const ci = localStorage.getItem(K_CI) || "";
-
-    let location: any = null;
-    try { location = JSON.parse(localStorage.getItem(K_LOCATION) || "null"); } catch {}
-
-    let categories: string[] = [];
-    try { categories = JSON.parse(localStorage.getItem(K_CATEGORIES) || "[]"); } catch {}
-
-    let payment: any = { methods: [] as string[] };
-    try { payment = JSON.parse(localStorage.getItem(K_PAYMENT) || "{}"); } catch {}
-
-    return {
-      id,
-      userId,
-      ci,
-      location,
-      categories,
-      payment,
-      termsAcceptedAt: new Date().toISOString(),
-    };
-  }, []);
-
   async function handleAccept() {
-    setSaving(true);
-    setError(null);
+    if (!checked) {
+      setError("Debes aceptar los terminos para continuar");
+      return;
+    }
+
     try {
-      await upsertFixerFinal(payload);
-      localStorage.setItem("FIXER_DONE", "true");
-      // Redirige al perfil de fixer (ajusta a tu ruta real)
-      window.location.href = "/perfil/fixer";
-      // o usa onNext?.() si prefieres manejarlo fuera
-    } catch (e: any) {
-      setError("No se pudo registrar en este momento. Inténtalo nuevamente.");
+      setLoading(true);
+      setError(null);
+      await acceptTerms(fixerId);
+      onFinish();
+    } catch (err: any) {
+      setError(String(err?.message || "No se pudo registrar la aceptacion"));
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <h2 className="text-2xl font-semibold text-center mb-2">
-        Términos y condiciones
-      </h2>
+    <section className="mx-auto flex max-w-3xl flex-col gap-6">
+      <header className="rounded-3xl bg-white p-8 shadow-lg">
+        <StepProgress current={5} />
+        <h2 className="mt-2 text-2xl font-semibold text-slate-900">Terminos y condiciones</h2>
+        <p className="mt-2 text-sm text-slate-500">Antes de finalizar, revisa el resumen de tu registro y acepta los terminos para comenzar a ofrecer tus servicios.</p>
 
-      <p className="text-sm text-gray-600 text-center mb-6">
-        Antes de finalizar, revisa y acepta nuestros términos.
-      </p>
-
-      {/* Tarjeta con botón para abrir modal */}
-      <div className="border rounded-lg p-4 bg-white">
-        <div className="flex items-center justify-between gap-4">
+        <div className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-6">
           <div>
-            <p className="font-medium">Contrato de Términos y Servicios</p>
-            <p className="text-sm text-gray-500">
-              Haz clic en “Ver términos y condiciones” para leer el documento.
-            </p>
+            <p className="text-xs font-semibold uppercase text-slate-500">Documento</p>
+            <p className="text-lg font-semibold text-slate-800">C.I. {summary.ci}</p>
           </div>
-          <button
-            className="px-4 py-2 rounded border hover:bg-gray-50"
-            onClick={() => setOpen(true)}
-          >
-            Ver términos y condiciones
-          </button>
-        </div>
 
-        <div className="mt-4 flex items-center gap-2">
+          <div>
+            <p className="text-xs font-semibold uppercase text-slate-500">Categorias seleccionadas</p>
+            {summary.categories.length ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {summary.categories.map((category) => (
+                  <span key={category.id} className="rounded-full bg-blue-600/10 px-3 py-1 text-sm font-medium text-blue-700">
+                    {category.name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">Sin categorias registradas.</p>
+            )}
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase text-slate-500">Metodos de pago</p>
+            {summary.payment.methods.length ? (
+              <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                {summary.payment.methods.map((method) => (
+                  <li key={method}>
+                    <span className="font-semibold text-slate-800">{METHOD_LABEL[method] ?? method}</span>
+                    {method === "card" && summary.payment.card && (
+                      <span className="text-slate-500"> · Titular {summary.payment.card.holder}</span>
+                    )}
+                    {method === "qr" && summary.payment.qr && (
+                      <span className="text-slate-500"> · Titular {summary.payment.qr.holder}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">Aun no definiste metodos de pago.</p>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <article className="rounded-3xl bg-white p-8 shadow-lg">
+        <h3 className="text-lg font-semibold text-slate-900">Contrato de terminos y servicios</h3>
+        <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
+          <p>El Fixer se compromete a brindar servicios de calidad respetando las politicas de Servineo, la normativa vigente y a entregar informacion veridica dentro de la plataforma.</p>
+          <p>Al aceptar este documento autorizas el tratamiento de tus datos personales segun la Politica de Privacidad y garantizas que utilizaras la aplicacion de forma etica y responsable.</p>
+          <p>Servineo podra actualizar estos terminos cuando sea necesario. Te notificaremos cualquier cambio relevante por los canales oficiales.</p>
+        </div>
+      </article>
+
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+
+      <footer className="flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-lg">
+        <label className="flex items-start gap-3">
           <input
-            id="accept"
             type="checkbox"
-            className="h-4 w-4"
-            checked={accept}
-            onChange={(e) => setAccept(e.target.checked)}
+            checked={checked}
+            onChange={(event) => setChecked(event.target.checked)}
+            className="mt-1 h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
           />
-          <label htmlFor="accept" className="text-sm">
-            He leído y acepto los Términos y Condiciones
-          </label>
-        </div>
+          <span className="text-sm text-slate-600">He leido y acepto los terminos y condiciones de Servineo.</span>
+        </label>
 
-        {error && <div className="mt-3 text-sm text-red-600">{error}</div>}
-
-        <div className="mt-6 flex justify-between">
-          <button className="px-4 py-2 rounded border" onClick={() => onBack?.()} disabled={saving}>
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-blue-500 hover:text-blue-600"
+          >
             Atrás
           </button>
           <button
-            className="px-4 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
+            type="button"
             onClick={handleAccept}
-            disabled={!canAccept || saving}
+            disabled={!checked || loading}
+            className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving ? "Guardando..." : "Sí, acepto"}
+            {loading ? "Guardando..." : "Aceptar y finalizar"}
           </button>
         </div>
-      </div>
-
-      {/* Modal simple (overlay + contenido) */}
-      {open && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="font-semibold">Términos y condiciones</h3>
-              <button
-                className="text-sm text-gray-600 hover:text-black"
-                onClick={() => setOpen(false)}
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div ref={boxRef} className="p-4 max-h-[60vh] overflow-y-auto">
-              <ContratoContenido />
-            </div>
-
-            <div className="p-4 border-t text-right">
-              <button
-                className="px-4 py-2 rounded border hover:bg-gray-50"
-                onClick={() => setOpen(false)}
-              >
-                Entendido
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Contenido de relleno del contrato (puedes reemplazar por tu HTML real)
-function ContratoContenido() {
-  return (
-    <div className="prose max-w-none">
-      <p className="text-sm text-gray-500 mb-2">
-        Última actualización: {new Date().toLocaleDateString()}
-      </p>
-      <p>
-        Este contrato (“Términos”) regula el uso de la plataforma Servineo por
-        parte del Fixer. Al aceptar, confirmas que la información que registras
-        es verídica y te comprometes a cumplir las políticas de seguridad, ética
-        y calidad del servicio.
-      </p>
-      <ol>
-        <li>Respeto a clientes y cumplimiento de normas locales.</li>
-        <li>Prohibición de actividades fraudulentas o engañosas.</li>
-        <li>Responsabilidad sobre la calidad de los servicios prestados.</li>
-        <li>Autorización para tratamiento de datos conforme a ley.</li>
-        <li>Posibles actualizaciones de estos Términos.</li>
-      </ol>
-      <p>
-        Para más información, consulta nuestro centro de ayuda o comunícate con soporte.
-      </p>
-      <h4>Limitación de responsabilidad</h4>
-      <p>
-        La plataforma no se hace responsable por daños indirectos derivados de la
-        ejecución de servicios entre usuarios y Fixers. El Fixer asume la responsabilidad
-        de su trabajo y herramientas.
-      </p>
-      <h4>Privacidad y datos</h4>
-      <p>
-        Servineo protege tu información de acuerdo con nuestra política de privacidad.
-        Puedes solicitar rectificación o eliminación de tus datos conforme a la normativa vigente.
-      </p>
-      <p>
-        Al marcar “He leído y acepto”, confirmas la lectura y aceptación del documento.
-      </p>
-    </div>
+      </footer>
+    </section>
   );
 }

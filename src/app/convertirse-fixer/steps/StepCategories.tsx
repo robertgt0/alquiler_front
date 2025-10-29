@@ -1,146 +1,114 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import type { CategoryDTO } from "@/lib/api/categories";
+import { updateCategories as updateCategoriesApi } from "@/lib/api/fixer";
+import StepProgress from "../components/StepProgress";
+import { STORAGE_KEYS, saveToStorage } from "../storage";
+import type { StepCategoriesProps } from "./types";
 
-const CategoriesSelector = dynamic(
-  () => import("@/app/components/categories/CategoriesSelector"),
-  { ssr: false }
-);
+const CategoriesSelector = dynamic(() => import("@/app/components/categories/CategoriesSelector"), { ssr: false });
 
-type Props = {
-  onNext: () => void;
-  onBack: () => void;
-};
-
-export default function StepCategories({ onNext, onBack }: Props) {
-  const [open, setOpen] = useState(false);
-  const [categories, setCategories] = useState<CategoryDTO[]>([]);
-
-  const selectedIds = useMemo(() => categories.map((c) => c.id), [categories]);
+export default function StepCategories({ fixerId, selected, onBack, onComplete }: StepCategoriesProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [categories, setCategories] = useState<CategoryDTO[]>(selected);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   function handleSave(list: CategoryDTO[]) {
     setCategories(list);
-    setOpen(false);
+    setModalOpen(false);
   }
 
-  function removeOne(id: string) {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+  function handleRemove(id: string) {
+    setCategories((prev) => prev.filter((item) => item.id !== id));
+  }
+
+  async function handleNext() {
+    if (!categories.length) {
+      setError("Selecciona al menos un tipo de trabajo");
+      return;
+    }
+
+    try {
+      setError(null);
+      setLoading(true);
+      const ids = categories.map((category) => category.id);
+      await updateCategoriesApi(fixerId, ids);
+      saveToStorage(STORAGE_KEYS.categories, categories);
+      onComplete(categories);
+    } catch (err: any) {
+      setError(String(err?.message || "No se pudieron guardar las categorias"));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div>
-      <h1>¿Qué tipos de trabajo sabes hacer?</h1>
-      <p>
-        Selecciona los que apliquen a tu trabajo; podrás elegir más después.
-      </p>
+    <section className="mx-auto flex max-w-4xl flex-col gap-6">
+      <header className="rounded-3xl bg-white p-8 shadow-lg">
+        <div className="flex flex-col gap-2">
+          <StepProgress current={3} />
+          <h2 className="text-2xl font-semibold text-slate-900">¿Que tipos de trabajos sabes hacer?</h2>
+          <p className="text-sm text-slate-500">Selecciona los servicios que ofreces. Podras agregar mas categorias despues.</p>
+        </div>
 
-      <div
-        style={{
-          border: "1px solid #E5E7EB",
-          borderRadius: 12,
-          padding: 16,
-          marginTop: 12,
-        }}
-      >
-        {categories.length === 0 ? (
-          <p style={{ color: "#555", marginBottom: 12 }}>
-            Aún no has seleccionado tipos de trabajo.
-          </p>
-        ) : (
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              flexWrap: "wrap",
-              marginBottom: 12,
-            }}
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+          {categories.length === 0 ? (
+            <p className="text-sm text-slate-500">Aun no has seleccionado tipos de trabajo.</p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {categories.map((category) => (
+                <span key={category.id} className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
+                  {category.name}
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(category.id)}
+                    className="rounded-full bg-white px-2 text-xs font-semibold text-blue-500 shadow hover:text-blue-700"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="mt-4 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-blue-500 hover:text-blue-600"
           >
-            {categories.map((c) => (
-              <span
-                key={c.id}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "6px 10px",
-                  borderRadius: 999,
-                  background: "#EEF2FF",
-                  border: "1px solid #C7D2FE",
-                  fontSize: 14,
-                }}
-              >
-                {c.name}
-                <button
-                  onClick={() => removeOne(c.id)}
-                  title="Quitar"
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    cursor: "pointer",
-                    fontWeight: 700,
-                  }}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
+            Seleccionar tipo de trabajo
+          </button>
+        </div>
+        {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      </header>
 
+      <footer className="flex items-center justify-between rounded-3xl bg-white p-6 shadow-lg">
         <button
-          onClick={() => setOpen(true)}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid #ddd",
-            background: "#fff",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          Seleccionar tipo de trabajo
-        </button>
-      </div>
-
-      <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
-        <button
+          type="button"
           onClick={onBack}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid #ddd",
-            background: "#fff",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
+          className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-blue-500 hover:text-blue-600"
         >
           Atrás
         </button>
         <button
-          onClick={onNext}
-          disabled={categories.length === 0}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "none",
-            background: categories.length === 0 ? "#9CA3AF" : "#2563eb",
-            color: "#fff",
-            fontWeight: 600,
-            cursor: categories.length === 0 ? "not-allowed" : "pointer",
-          }}
+          type="button"
+          onClick={handleNext}
+          disabled={loading}
+          className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Siguiente
+          {loading ? "Guardando..." : "Siguiente"}
         </button>
-      </div>
+      </footer>
 
       <CategoriesSelector
-        open={open}
-        selectedIds={selectedIds}
-        onClose={() => setOpen(false)}
+        open={modalOpen}
+        selectedIds={categories.map((category) => category.id)}
+        onClose={() => setModalOpen(false)}
         onSave={handleSave}
       />
-    </div>
+    </section>
   );
 }

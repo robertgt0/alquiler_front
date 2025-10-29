@@ -1,132 +1,107 @@
-// src/lib/api/fixer.ts
+import type { PaymentMethodKey } from "@/types/payment";
 
-// Tomamos la variable cruda (para preservar tu lógica de MOCK si está vacía)
 const RAW_API = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE = RAW_API ? RAW_API.replace(/\/+$/, "") : "http://localhost:4000";
+const FIXER_BASE = `${API_BASE}/api/fixers`;
 
-// ✅ Sanea la base (quita / final) y usa localhost si no hay env
-const API_BASE = RAW_API ? RAW_API.replace(/\/+$/, "") : "http://localhost:5000";
+type ApiSuccess<T> = { success: true; data: T } & Record<string, unknown>;
+type ApiFailure = { success: false; message: string };
 
-// Tipos de respuesta (como tenías)
-type ApiOk<T> = { success: true; data: T } & Record<string, any>;
-type ApiFail = { success: false; message: string };
-type ApiResp<T> = ApiOk<T> | ApiFail;
-
-// ---------------------------------------------------------------------
-// Utilidad: fetch con tolerancia a error (igual a tu enfoque)
-async function safeFetch(url: string, init?: RequestInit) {
-  const res = await fetch(url, init);
-  let json: any = null;
+async function request<T = any>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(path, init);
+  let payload: any = null;
   try {
-    json = await res.json();
+    payload = await res.json();
   } catch {
-    // sin cuerpo JSON
+    // no json body
   }
   if (!res.ok) {
-    const msg = json?.message || `Error HTTP ${res.status}`;
-    throw new Error(msg);
+    const message = payload?.message || `Error HTTP ${res.status}`;
+    throw new Error(message);
   }
-  return json;
+  return payload;
 }
 
-// ---------------------------------------------------------------------
-// 1) Verificar CI único
-export async function checkCI(ci: string, excludeId?: string) {
-  const url = new URL(`${API_BASE}/api/fixer/check-ci`);
-  url.searchParams.set("ci", ci);
-  if (excludeId) url.searchParams.set("excludeId", excludeId);
-
-  const json = await safeFetch(url.toString(), { cache: "no-store" });
-  return json as { success: true; unique: boolean; message: string };
-}
-
-// 2) Crear Fixer (mínimo)
-export async function createFixer(data: { userId: string; ci?: string; location?: any }) {
-  const json = (await safeFetch(`${API_BASE}/api/fixer`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  })) as ApiResp<any>;
-
-  if ((json as ApiFail).success === false) {
-    throw new Error((json as ApiFail).message || "No se pudo crear el Fixer");
-  }
-  return json as ApiOk<any>;
-}
-
-// 3) Actualizar solo CI
-export async function updateIdentity(id: string, ci: string) {
-  const json = (await safeFetch(`${API_BASE}/api/fixer/${id}/identity`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ci }),
-  })) as ApiResp<any>;
-
-  if ((json as ApiFail).success === false) {
-    throw new Error((json as ApiFail).message || "No se pudo actualizar el C.I.");
-  }
-  return json as ApiOk<any>;
-}
-
-// 4) Guardar categorías del fixer
-export async function setFixerCategories(id: string, categories: string[]) {
-  const json = (await safeFetch(`${API_BASE}/api/fixer/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ categories }),
-  })) as ApiResp<any>;
-
-  if ((json as ApiFail).success === false) {
-    throw new Error((json as ApiFail).message || "No se pudieron guardar las categorías");
-  }
-  return json as ApiOk<any>;
-}
-
-// ---------------------------------------------------------------------
-// 5) Upsert final (HU05): CI + ubicación + categorías + pago + terms
-export type FinalFixerPayload = {
-  id?: string;
+export type FixerDTO = {
+  id: string;
   userId: string;
-  ci: string;
-  location: { lat: number; lng: number; address?: string } | null;
-  categories: string[];
-  payment: {
-    methods: ("card" | "qr" | "cash")[];
-    accountOwner?: string;
-    accountNumber?: string;
-  };
-  termsAcceptedAt: string; // ISO
+  ci?: string;
+  location?: { lat: number; lng: number; address?: string };
+  categories?: string[];
+  paymentMethods?: ("card" | "qr" | "cash")[];
+  paymentAccounts?: Record<string, { holder: string; accountNumber: string }>;
+  termsAccepted?: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
-export async function upsertFixerFinal(payload: FinalFixerPayload) {
-  // 🔒 Preservamos tu comportamiento original:
-  // si NO hay NEXT_PUBLIC_API_URL definido (RAW_API vacío), hacemos MOCK
-  if (!RAW_API) {
-    console.warn("[upsertFixerFinal] NEXT_PUBLIC_API_URL vacío. Mock OK.");
-    return { success: true, data: payload } as ApiOk<any>;
-  }
+export async function checkCI(ci: string, excludeId?: string) {
+  const url = new URL(`${FIXER_BASE}/check-ci`);
+  url.searchParams.set("ci", ci);
+  if (excludeId) url.searchParams.set("excludeId", excludeId);
+  return request<{ success: true; unique: boolean; message: string }>(url.toString(), {
+    cache: "no-store",
+  });
+}
 
-  // Si tiene 'id', actualiza; si no, crea.
-  if (payload.id) {
-    const json = (await safeFetch(`${API_BASE}/api/fixer/${payload.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })) as ApiResp<any>;
-
-    if ((json as ApiFail).success === false) {
-      throw new Error((json as ApiFail).message || "No se pudo actualizar el Fixer");
-    }
-    return json as ApiOk<any>;
-  }
-
-  const json = (await safeFetch(`${API_BASE}/api/fixer`, {
+export async function createFixer(payload: {
+  userId: string;
+  ci: string;
+  location?: { lat: number; lng: number; address?: string };
+}): Promise<ApiSuccess<FixerDTO>> {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-  })) as ApiResp<any>;
+  });
+}
 
-  if ((json as ApiFail).success === false) {
-    throw new Error((json as ApiFail).message || "No se pudo crear el Fixer");
+export async function getFixer(id: string): Promise<ApiSuccess<FixerDTO>> {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}`, { cache: "no-store" });
+}
+
+export async function updateIdentity(id: string, ci: string): Promise<ApiSuccess<FixerDTO>> {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}/identity`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ci }),
+  });
+}
+
+export async function updateLocation(id: string, location: { lat: number; lng: number; address?: string }) {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}/location`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(location),
+  });
+}
+
+export async function updateCategories(id: string, categories: string[]) {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}/categories`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ categories }),
+  });
+}
+
+export async function updatePayments(
+  id: string,
+  payload: {
+    methods: PaymentMethodKey[];
+    accounts?: Partial<Record<PaymentMethodKey, { holder: string; accountNumber: string }>>;
   }
-  return json as ApiOk<any>;
+) {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}/payments`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function acceptTerms(id: string) {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}/terms`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accepted: true }),
+  });
 }

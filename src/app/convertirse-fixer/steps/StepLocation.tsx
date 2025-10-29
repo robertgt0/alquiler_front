@@ -1,160 +1,134 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
-import type { Coords } from "@/app/components/location/SelectLocationModal";
+import { updateLocation as updateLocationApi } from "@/lib/api/fixer";
+import StepProgress from "../components/StepProgress";
+import { STORAGE_KEYS, saveToStorage } from "../storage";
+import type { StepLocationProps } from "./types";
 
-const SelectLocationModal = dynamic(
-  () => import("@/app/components/location/SelectLocationModal"),
-  { ssr: false }
-);
-const SelectedMap = dynamic(
-  () => import("@/app/components/location/SelectedMap"),
-  { ssr: false }
-);
+const SelectLocationModal = dynamic(() => import("@/app/components/location/SelectLocationModal"), { ssr: false });
+const SelectedMap = dynamic(() => import("@/app/components/location/SelectedMap"), { ssr: false });
 
-type Props = {
-  onNext: () => void;
-  onBack: () => void;
+type SavedLocation = {
+  lat: number;
+  lng: number;
+  address?: string;
+  radiusMeters?: number;
 };
 
-type Saved = Coords & { address?: string; radiusMeters?: number };
+export default function StepLocation({ fixerId, initialLocation, onBack, onComplete }: StepLocationProps) {
+  const [selected, setSelected] = useState<SavedLocation | null>(initialLocation ?? null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-export default function StepLocation({ onNext, onBack }: Props) {
-  // estado persistente opcional
-  const [selected, setSelected] = useState<Saved | null>(null);
-  const [open, setOpen] = useState(false);
-
-  const lat = selected?.lat ?? null;
-  const lng = selected?.lng ?? null;
-
-  // abrir modal “Añadir mi ubicación”
   function openModal() {
-    setOpen(true);
+    setModalOpen(true);
   }
 
-  function handleConfirm(loc: Saved) {
-    setSelected(loc);
-    setOpen(false);
+  function handleConfirm(location: SavedLocation) {
+    setSelected(location);
+    setModalOpen(false);
+  }
+
+  async function handleNext() {
+    if (!selected) {
+      setError("Selecciona una ubicacion antes de continuar");
+      return;
+    }
+
+    try {
+      setError(null);
+      setLoading(true);
+      const payload = { lat: selected.lat, lng: selected.lng, address: selected.address };
+      await updateLocationApi(fixerId, payload);
+      saveToStorage(STORAGE_KEYS.location, payload);
+      onComplete(payload);
+    } catch (err: any) {
+      setError(String(err?.message || "No se pudo guardar la ubicacion"));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div>
-      <h1>Establece tu ubicación</h1>
-      <p>
-        Esta es la zona donde estarás disponible para trabajar, puedes cambiar
-        esto más adelante.
-      </p>
-
-      <div
-        style={{
-          border: "1px solid #E5E7EB",
-          borderRadius: 12,
-          padding: 16,
-          marginTop: 12,
-        }}
-      >
-        {!selected ? (
-          <>
-            <p style={{ marginBottom: 12, color: "#555" }}>
-              No has seleccionado una ubicación.
-            </p>
-            <button
-              onClick={openModal}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 8,
-                border: "none",
-                background: "#2563eb",
-                color: "#fff",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Añadir mi ubicación
-            </button>
-          </>
-        ) : (
-          <>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>
-                Ubicación elegida
-              </div>
+    <section className="mx-auto flex max-w-4xl flex-col gap-6">
+      <header className="rounded-3xl bg-white p-8 shadow-lg">
+        <div className="flex flex-col gap-2">
+          <StepProgress current={2} />
+          <h2 className="text-2xl font-semibold text-slate-900">Establece tu ubicacion de trabajo</h2>
+          <p className="text-sm text-slate-500">Selecciona la zona donde estaras disponible para trabajar. Podras modificarla mas adelante.</p>
+        </div>
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+          {!selected ? (
+            <div className="flex flex-col items-start gap-4">
+              <p className="text-sm text-slate-600">Aun no has seleccionado tu ubicacion.</p>
               <button
+                type="button"
                 onClick={openModal}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 8,
-                  border: "1px solid #ddd",
-                  background: "#fff",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
+                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500"
               >
-                Cambiar ubicación
+                Añadir mi ubicacion
               </button>
             </div>
-
-            <div style={{ fontSize: 13, marginBottom: 8 }}>
-              Lat: {selected.lat.toFixed(6)} &nbsp; | &nbsp; Lng:{" "}
-              {selected.lng.toFixed(6)}{" "}
-              {selected.radiusMeters ? (
-                <>
-                  &nbsp; | &nbsp; Radio:{" "}
-                  <b>{Math.round(selected.radiusMeters)} m</b>
-                </>
-              ) : null}
+          ) : (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Ubicacion elegida</p>
+                  <p className="text-xs text-slate-500">
+                    Lat: {selected.lat.toFixed(6)} · Lng: {selected.lng.toFixed(6)}
+                    {selected.address ? ` · ${selected.address}` : ""}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={openModal}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-blue-500 hover:text-blue-600"
+                >
+                  Cambiar ubicacion
+                </button>
+              </div>
+              <div className="overflow-hidden rounded-2xl border border-slate-200">
+                <SelectedMap
+                  lat={selected.lat}
+                  lng={selected.lng}
+                  radiusMeters={selected.radiusMeters ?? 1000}
+                  height={280}
+                />
+              </div>
             </div>
+          )}
+        </div>
+        {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      </header>
 
-            <SelectedMap
-              lat={selected.lat}
-              lng={selected.lng}
-              radiusMeters={selected.radiusMeters ?? 1000}
-              height={260}
-            />
-          </>
-        )}
-      </div>
-
-      <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
+      <footer className="flex items-center justify-between rounded-3xl bg-white p-6 shadow-lg">
         <button
+          type="button"
           onClick={onBack}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "1px solid #ddd",
-            background: "#fff",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
+          className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-blue-500 hover:text-blue-600"
         >
           Atrás
         </button>
         <button
-          onClick={onNext}
-          disabled={!lat || !lng}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 8,
-            border: "none",
-            background: !lat || !lng ? "#9CA3AF" : "#2563eb",
-            color: "#fff",
-            fontWeight: 600,
-            cursor: !lat || !lng ? "not-allowed" : "pointer",
-          }}
+          type="button"
+          onClick={handleNext}
+          disabled={!selected || loading}
+          className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Siguiente
+          {loading ? "Guardando..." : "Siguiente"}
         </button>
-      </div>
+      </footer>
 
-      {/* Modal */}
       <SelectLocationModal
-        open={open}
+        open={modalOpen}
         initialCenter={selected ? { lat: selected.lat, lng: selected.lng } : null}
         initialRadius={selected?.radiusMeters ?? 1000}
         onConfirm={handleConfirm}
-        onCancel={() => setOpen(false)}
+        onCancel={() => setModalOpen(false)}
       />
-    </div>
+    </section>
   );
 }
