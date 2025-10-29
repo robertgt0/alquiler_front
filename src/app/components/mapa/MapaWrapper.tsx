@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import BuscadorUbicaciones from "./BuscadorUbicaciones";
 import FixersHeader from "./FixersHeader";
+import PermisoGeolocalizacion from "./PermisoGeolocalizacion"; // ✅ NUEVO IMPORT
 import { Ubicacion, Fixer, UserLocation, UbicacionFromAPI } from "../../types";
 import { UbicacionManager } from "./UbicacionManager";
 import { ubicacionesRespaldo, fixersRespaldo, fixersDefinidos } from "../data/fixersData";
@@ -191,39 +192,42 @@ export default function MapaWrapper() {
       </div>
     );
 
-  return (
-    <div className="flex flex-col items-center">
-      {usandoRespaldo && (
-        <div className="w-full max-w-6xl px-4 mb-4">
-          {/* Mensaje de respaldo si es necesario */}
-        </div>
-      )}
+return (
+  <div className="flex flex-col items-center">
+    {usandoRespaldo && (
+      <div className="w-full max-w-6xl px-4 mb-4">
+        {/* Mensaje de respaldo si es necesario */}
+      </div>
+    )}
 
-      <BuscadorUbicaciones
-        ubicaciones={ubicaciones}
-        onBuscar={(u) => {
-          setUbicacionSeleccionada(u);
-          ubicacionManager.setUbicacion(u);
-          const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
-          setFixersFiltrados(cercanos);
-        }}
-        ubicacionActual={ubicacionSeleccionada}
-      />
-      <FixersHeader />
+    <BuscadorUbicaciones
+      ubicaciones={ubicaciones}
+      onBuscar={(u) => {
+        setUbicacionSeleccionada(u);
+        ubicacionManager.setUbicacion(u);
+        const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
+        setFixersFiltrados(cercanos);
+      }}
+      ubicacionActual={ubicacionSeleccionada}
+    />
+    <FixersHeader />
 
-      <Mapa
-        isLoggedIn={isLoggedIn}
-        ubicaciones={ubicaciones}
-        fixers={fixersFiltrados}
-        ubicacionSeleccionada={ubicacionSeleccionada}
-        onUbicacionClick={(u) => {
-          setUbicacionSeleccionada(u);
-          ubicacionManager.setUbicacion(u);
-          const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
-          setFixersFiltrados(cercanos);
-        }}
-        onMarcadorAgregado={handleMarcadorAgregado}
-      />
-    </div>
-  );
+    <Mapa
+      isLoggedIn={isLoggedIn}
+      ubicaciones={ubicaciones}
+      fixers={fixersFiltrados}
+      ubicacionSeleccionada={ubicacionSeleccionada}
+      onUbicacionClick={(u) => {
+        setUbicacionSeleccionada(u);
+        ubicacionManager.setUbicacion(u);
+        const cercanos = ubicacionManager.filtrarFixersCercanos(fixers);
+        setFixersFiltrados(cercanos);
+      }}
+      onMarcadorAgregado={handleMarcadorAgregado}
+    />
+
+    {/* ✅ NUEVO: Botón de permisos de geolocalización con prop isLoggedIn */}
+    <PermisoGeolocalizacion isLoggedIn={isLoggedIn} />
+  </div>
+);
 }

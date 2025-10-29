@@ -56,7 +56,6 @@ interface MapaProps {
   onMarcadorAgregado?: (lat: number, lng: number) => void;
 }
 
-// ✅ Componente para actualizar la vista según ubicación seleccionada
 function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
   const map = useMap();
   useEffect(() => {
@@ -65,7 +64,6 @@ function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
   return null;
 }
 
-// ✅ NUEVO componente para manejar presión prolongada en el mapa (PC y móvil) - VERSIÓN COMPATIBLE
 function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: number) => void }) {
   const map = useMap();
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -109,7 +107,6 @@ function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: num
   return null;
 }
 
-// ✅ Componente principal del mapa
 export default function Mapa({
   isLoggedIn,
   ubicaciones,
@@ -131,17 +128,8 @@ export default function Mapa({
     });
 
   const fixerMarkers = fixers.map((f) => {
-    const iniciales = f.nombre
-      ? f.nombre
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .substring(0, 2)
-          .toUpperCase()
-      : "FX";
-
-    // Imagen de perfil con respaldo
     const imagenPerfil = f.imagenPerfil || "/imagenes_respaldo/image2.png";
+    const tieneWhatsApp = f.whatsapp && f.whatsapp.trim() !== '';
 
     const especialidades =
       f.especialidad
@@ -163,7 +151,6 @@ export default function Mapa({
     const popupHtml = `
       <div style="width:250px;font-family:'Inter',sans-serif;padding:8px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <!-- IMAGEN DE PERFIL AGREGADA AQUÍ -->
           <div style="
             width:40px;
             height:40px;
@@ -179,7 +166,7 @@ export default function Mapa({
             />
           </div>
           <div style="flex:1;">
-            <h3 style="margin:0;font-size:14px;color:#111827;display:flex;align-items:center;gap:5px;">
+            <h3 style="margin:0;font-size:14px;font-weight:bold;color:#2a87ff;display:flex;align-items:center;gap:5px;">
               ${f.nombre}
               ${f.verified ? '<span style="color:#2563eb;">✔️</span>' : ""}
             </h3>
@@ -197,8 +184,8 @@ export default function Mapa({
         <div style="margin-bottom:8px;">${especialidades}</div>
 
         ${
-          f.whatsapp && isLoggedIn
-            ? `<a href="https://wa.me/${f.whatsapp.replace(
+          tieneWhatsApp && isLoggedIn
+            ? `<a href="https://wa.me/${f.whatsapp?.replace(
                 /\D/g,
                 ""
               )}?text=${encodeURIComponent(
@@ -208,17 +195,26 @@ export default function Mapa({
               )}" target="_blank"
                 style="display:flex;align-items:center;justify-content:center;gap:6px;
                 background:#25D366;color:white;font-weight:500;border-radius:6px;
-                text-decoration:none;padding:8px 0;font-size:13px;margin-top:8px;">
+                text-decoration:none;padding:8px 0;font-size:12px;margin-top:8px;"
+                title="Contactar a ${f.nombre} por WhatsApp">
                 Contactar por WhatsApp
               </a>`
-            : f.whatsapp
-            ? `<button onclick="window.location.href='/404'" 
+            : tieneWhatsApp
+            ? `<button onclick="window.location.href='/login'" 
                 style="display:flex;align-items:center;justify-content:center;gap:6px;
                 background:#25D366;color:white;font-weight:500;border-radius:6px;
-                text-decoration:none;padding:8px 0;font-size:13px;margin-top:8px;border:none;cursor:pointer;width:100%">
-                Contactar por WhatsApp
+                text-decoration:none;padding:8px 0;font-size:12px;margin-top:8px;border:none;cursor:pointer;width:100%"
+                title="Inicia sesión para contactar a ${f.nombre}">
+                Iniciar sesión para contactar
               </button>`
-            : ""
+            : `<button 
+                style="display:flex;align-items:center;justify-content:center;gap:6px;
+                background:#9ca3af;color:white;font-weight:500;border-radius:6px;
+                text-decoration:none;padding:8px 0;font-size:12px;margin-top:8px;border:none;cursor:not-allowed;width:100%"
+                disabled
+                title="Este fixer no tiene número de WhatsApp registrado">
+                No disponible para contactar
+              </button>`
         }
       </div>
     `;
@@ -231,21 +227,19 @@ export default function Mapa({
     };
   });
 
-  // ✅ Maneja la presión prolongada
   const handleLongPress = (lat: number, lng: number) => {
     setMarcadorPersonalizado([lat, lng]);
-    setMostrarUbicacionesPredefinidas(false); // ✅ Ocultar ubicaciones predefinidas al presionar
+    setMostrarUbicacionesPredefinidas(false);
     
     if (onMarcadorAgregado) {
       onMarcadorAgregado(lat, lng);
     }
   };
 
-  // ✅ Efecto para mostrar ubicaciones predefinidas cuando se selecciona una ubicación
   useEffect(() => {
     if (ubicacionSeleccionada) {
       setMostrarUbicacionesPredefinidas(true);
-      setMarcadorPersonalizado(null); // ✅ Ocultar marcador personalizado al buscar
+      setMarcadorPersonalizado(null);
     }
   }, [ubicacionSeleccionada]);
 
@@ -262,7 +256,6 @@ export default function Mapa({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {/* ✅ SOLO mostrar ubicación seleccionada si se deben mostrar predefinidas */}
           {ubicacionSeleccionada && mostrarUbicacionesPredefinidas && (
             <Marker
               position={ubicacionSeleccionada.posicion}
@@ -275,7 +268,6 @@ export default function Mapa({
             </Marker>
           )}
 
-          {/* ✅ Marcador por presión prolongada (siempre visible cuando existe) */}
           {marcadorPersonalizado && (
             <Marker position={marcadorPersonalizado} icon={redMarkerIcon}>
               <Popup>📍 Ubicación seleccionada</Popup>
@@ -287,8 +279,7 @@ export default function Mapa({
           <LongPressHandler onLongPress={handleLongPress} />
         </MapContainer>
 
-        {/* ✅ Contador SOBRE el mapa - Solo en PC/Tablet - Z-INDEX CORREGIDO */}
-        <div className="absolute top-3 right-3 hidden sm:block z-[5]"> {/* z-[5] más bajo que header */}
+        <div className="absolute top-3 right-3 hidden sm:block z-[5]">
           {fixers.length > 0 ? (
             <div
               style={{
@@ -300,10 +291,10 @@ export default function Mapa({
                 fontSize: "14px",
                 whiteSpace: "nowrap",
                 border: "1px solid #bae6fd",
+                fontWeight: "bold",
               }}
             >
-              <strong style={{ fontWeight: "bold" }}>{fixers.length}</strong>{" "}
-              Fixers Activos
+              <strong>{fixers.length}</strong> Fixers Activos
             </div>
           ) : (
             <div
@@ -316,6 +307,7 @@ export default function Mapa({
                 fontSize: "14px",
                 whiteSpace: "nowrap",
                 border: "1px solid #fed7aa",
+                fontWeight: "bold",
               }}
             >
               ¡No hay fixers cerca!
@@ -324,7 +316,6 @@ export default function Mapa({
         </div>
       </div>
 
-      {/* ✅ Contador DEBAJO del mapa - Solo en móvil */}
       <div className="mt-2 text-center block sm:hidden">
         {fixers.length > 0 ? (
           <div
@@ -336,10 +327,10 @@ export default function Mapa({
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               fontSize: "14px",
               display: "inline-block",
+              fontWeight: "bold",
             }}
           >
-            <strong style={{ fontWeight: "bold" }}>{fixers.length}</strong>{" "}
-            Fixers Activos
+            <strong>{fixers.length}</strong> Fixers Activos
           </div>
         ) : (
           <div
@@ -351,6 +342,7 @@ export default function Mapa({
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               fontSize: "14px",
               display: "inline-block",
+              fontWeight: "bold",
             }}
           >
             ¡No hay fixers cerca!

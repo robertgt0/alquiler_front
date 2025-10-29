@@ -32,9 +32,9 @@ export default function UserLocationMarker({ position, accuracy }: UserLocationM
     >
       <Popup>
         <div className="text-center">
-          <strong>📍 Tu ubicación</strong>
+          <strong className="text-sm sm:text-base font-bold text-[#2a87ff]">📍 Tu ubicación</strong>
           {accuracy && (
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs sm:text-sm text-gray-700 mt-1">
               Precisión: ±{accuracy.toFixed(0)} metros
             </p>
           )}

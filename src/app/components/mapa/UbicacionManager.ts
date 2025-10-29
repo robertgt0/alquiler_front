@@ -15,6 +15,86 @@ export class UbicacionManager {
     return UbicacionManager.instancia;
   }
 
+  // 📍 Verificar si los permisos de geolocalización están concedidos
+  public async verificarPermisosGeolocalizacion(): Promise<boolean> {
+    if (!navigator.permissions) {
+      return false;
+    }
+    
+    try {
+      const result = await navigator.permissions.query({ name: 'geolocation' });
+      return result.state === 'granted';
+    } catch (error) {
+      console.log('Error al verificar permisos:', error);
+      return false;
+    }
+  }
+
+  // 📍 Obtener el estado actual de permisos
+  public async obtenerEstadoPermisos(): Promise<'granted' | 'denied' | 'prompt'> {
+    if (!navigator.permissions) {
+      return 'prompt';
+    }
+    
+    try {
+      const result = await navigator.permissions.query({ name: 'geolocation' });
+      return result.state as 'granted' | 'denied' | 'prompt';
+    } catch (error) {
+      console.log('Error al obtener estado de permisos:', error);
+      return 'prompt';
+    }
+  }
+
+  // 🔄 Intentar resetear permisos (funciona limitadamente)
+  public async resetearPermisosGeolocalizacion(): Promise<boolean> {
+    try {
+      // Intentar usar revoke() si está disponible (no estándar pero funciona en algunos navegadores)
+      if (navigator.permissions && 'revoke' in navigator.permissions) {
+        await (navigator.permissions as any).revoke({ name: 'geolocation' });
+        console.log("Permisos reseteados exitosamente");
+        return true;
+      }
+      
+      // Alternativa: limpiar caché de geolocalización
+      if (navigator.geolocation && 'clearWatch' in navigator.geolocation) {
+        // Esto no resetea permisos pero limpia watchers
+        console.log("Cache de geolocalización limpiado");
+      }
+      
+      return false;
+    } catch (error) {
+      console.log('Error al resetear permisos:', error);
+      return false;
+    }
+  }
+
+  // 📍 Solicitar permisos de geolocalización
+  public async solicitarPermisosGeolocalizacion(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        console.log("Geolocalización no soportada");
+        resolve(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          console.log("Permisos de geolocalización concedidos");
+          resolve(true);
+        },
+        (error) => {
+          console.log("Permisos de geolocalización denegados:", error);
+          resolve(false);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: Infinity
+        }
+      );
+    });
+  }
+
   // 📍 Guarda la ubicación actual
   public setUbicacion(ubicacion: Ubicacion) {
     this.ubicacionActual = ubicacion;
