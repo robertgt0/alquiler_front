@@ -63,7 +63,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
     const fetchHorarios = async () => {
       setCargando(true);
       try {
-        const res = await fetch(`https://back-1kgu.onrender.com/api/los_vengadores/horarios/${fechaKey}`);
+        const res = await fetch(`https://back-los-vengadores-4.onrender.com/api/los_vengadores/horarios/${fechaKey}`);
         if (!res.ok) throw new Error("Error al cargar horarios");
         //const data = await res.json();
         //setHorarios(data.data || []);
@@ -177,7 +177,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
     try {
       // Primero eliminamos los horarios marcados
       for (const id of horariosEliminados) {
-        await fetch(`https://back-1kgu.onrender.com/api/los_vengadores/horarios/${id}`, {
+        await fetch(`https://back-los-vengadores-4.onrender.com/api/los_vengadores/horarios/${id}`, {
           method: "DELETE",
         });
       }
@@ -186,7 +186,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
       for (const horario of horarios) {
         if (horario.id.startsWith("temp-")) {
           // Crear nuevo horario
-          const res = await fetch(`https://back-1kgu.onrender.com/api/los_vengadores/horarios`, {
+          const res = await fetch(`https://back-los-vengadores-4.onrender.com/api/los_vengadores/horarios`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -203,7 +203,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
           );
         } else {
           // Actualizar horario existente
-          const res = await fetch(`https://back-1kgu.onrender.com/api/los_vengadores/horarios/${horario.id}`, {
+          const res = await fetch(`https://back-los-vengadores-4.onrender.com/api/los_vengadores/horarios/${horario.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

@@ -12,7 +12,7 @@ import { isInsideAnyFranja, overlaps } from "../utils/helpers";
  *   # en local, por defecto: http://localhost:5000
  */
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://localhost:5000";
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "https://back-los-vengadores-4.onrender.com";
 
 /** Type guard simple para acceder a campos de objetos desconocidos */
 function isRecord(x: unknown): x is Record<string, unknown> {
