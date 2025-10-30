@@ -78,6 +78,7 @@ export function AppointmentModal({
 
   // Días ya ocupados
   const [bookedDays, setBookedDays] = useState<string[]>([]);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
   // Cargar días con citas del proveedor desde el backend
   async function loadBookedDays() {
@@ -118,7 +119,10 @@ export function AppointmentModal({
     setSelectedDate(date);
     setSelectedTime(null);
     setSelectedSlot(null);
-    if (date) setDateInput(date.toLocaleDateString("es-ES"));
+    if (date) {
+      setDateInput(date.toLocaleDateString("es-ES"));
+      setCurrentMonth(date);
+    }
   };
 
   const handleToday = () => handleDateSelect(new Date());
@@ -216,30 +220,23 @@ export function AppointmentModal({
   // Init cuando se abre el modal
   useEffect(() => {
     if (open) {
-      console.log(" Inicializando modal en modo:", isEditing ? "EDICIÓN" : "CREACIÓN");
-      console.log(" Cita inicial:", initialAppointment);
-
       if (isEditing && initialAppointment) {
         // MODO EDICIÓN
         const initialDate = new Date(initialAppointment.fecha);
         setSelectedDate(initialDate);
         setDateInput(initialDate.toLocaleDateString("es-ES"));
 
+        setCurrentMonth(initialDate);
         if (initialAppointment.ubicacion) {
           setLocationData(initialAppointment.ubicacion);
           setFormSubmitted(true);
         }
-
-        console.log(" Datos precargados para edición:", {
-          fecha: initialAppointment.fecha,
-          horario: initialAppointment.horario,
-          ubicacion: initialAppointment.ubicacion
-        });
       } else {
         // MODO CREACIÓN
         const today = new Date();
         setSelectedDate(today);
         setDateInput(today.toLocaleDateString("es-ES"));
+        setCurrentMonth(today);
         setSelectedTime(null);
         setSelectedSlot(null);
         setFormSubmitted(false);
@@ -270,6 +267,9 @@ export function AppointmentModal({
 
     // Fines de semana
     if (isWeekend(day)) return true;
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 6);
+    if (day > maxDate) return true;
 
     // Feriados
     if (holidays.includes(dateStr)) return true;
@@ -309,15 +309,12 @@ export function AppointmentModal({
         estado: "pendiente",
       };
 
-      console.log("Enviando payload:", payload);
-
       let url = `${API_URL}/api/devcode/citas`;
       let method = "POST";
 
       if (isEditing && appointmentId) {
         url = `${API_URL}/api/devcode/citas/${appointmentId}`;
         method = "PUT";
-        console.log(" Actualizando cita existente:", appointmentId);
       }
 
       const res = await fetch(url, {
@@ -363,12 +360,23 @@ export function AppointmentModal({
         <div className="p-6">
           {/* Barra superior */}
           <div className="flex items-center justify-between mb-6">
-            <Input 
-              type="text" 
-              placeholder="dd/mm/aaaa" 
-              value={dateInput} 
-              onChange={e => setDateInput(e.target.value)} 
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-32" 
+            <Input
+              type="text"
+              placeholder="dd/mm/aaaa"
+              value={dateInput}
+              onChange={(e) => {
+                const val = e.target.value;
+                setDateInput(val);
+                const [dd, mm, yyyy] = val.split("/").map(Number);
+                if (dd && mm && yyyy) {
+                  const newDate = new Date(yyyy, mm - 1, dd);
+                  if (!isNaN(newDate.getTime())) {
+                    setSelectedDate(newDate);
+                    setCurrentMonth(newDate);
+                  }
+                }
+              }}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-32"
             />
             <div className="flex gap-2">
               <Button onClick={() => selectedDate && loadAvailable(selectedDate)} className="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-lg text-sm font-medium text-blue-600">
@@ -387,6 +395,8 @@ export function AppointmentModal({
                 mode="single"
                 selected={selectedDate}
                 onSelect={handleDateSelect}
+                month={currentMonth}
+                onMonthChange={setCurrentMonth}
                 className="w-full"
                 captionLayout="dropdown-months"
                 disabled={isDayDisabled}
