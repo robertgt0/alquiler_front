@@ -1,26 +1,33 @@
-import Header from "./componentes/Header/Header";
-import Footer from "./componentes/Footer/Footer";
-import CarruselInspirador from "./componentes/CarruselInspirador/CarruselInspirador";
-import Mapa from "./componentes/mapa/MapaWrapper";
-import Lista from "./componentes/Lista/Lista";
-import CarruselOfertas from "./componentes/CarruselOfertas/CarruselOfertas";
+// src/app/page.tsx
+import Mapa from "./components/mapa/MapaWrapper";
+import CarruselOfertas from "./components/CarruselOfertas/CarruselOfertas";
+import HomeFixer from "./components/ListaCategorias/HomeFixer";
+import type { Categoria } from "./components/ListaCategorias/tipos";
+import Footer from "./components/Footer/Footer";
+import CarruselInspirador from "./components/CarruselInspirador/CarruselInspirador";
 
-export default function HomePage() {
+import categorias, { type CategoriaBase } from "./components/data/categoriasData";
+
+export default function Home() {
   return (
-    <main className="container-fluid p-0">
-      <Header />
+    <main>
       <section className="my-5">
         <CarruselInspirador />
       </section>
-      <section className="my-5">
+
+      <section id="mapa" className="my-10">
         <Mapa />
       </section>
-      <section className="my-5">
-        <Lista />
+
+      <section id="servicios" className="my-5 w-full">
+        {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
+        <HomeFixer categorias={categorias as CategoriaBase[]} />
       </section>
-      <section className="my-5">
+
+      <section id="trabajos-recientes" className="my-5 w-full">
         <CarruselOfertas />
       </section>
+
       <Footer />
     </main>
   );
