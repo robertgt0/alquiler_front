@@ -102,8 +102,7 @@ export async function getCiudades(
 /* --------- departamentos (Bolivia) --------- */
 export const getDepartamentos = async (): Promise<Option[]> => {
   try {
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const url = `${API_BASE}/borbotones/departamentos`;
+    const url = `${FILTROS_BASE}/departamentos`;
     console.log('Fetching departamentos from:', url);
     
     const res = await fetch(url, {
