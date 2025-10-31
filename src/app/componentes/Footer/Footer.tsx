@@ -17,6 +17,11 @@ const modalContents = {
     title: 'Política de Privacidad',
     content: (
       <>
+        <div className="mb-6 p-3 bg-[#f8fafc] border-l-4 border-[#52abff] rounded-r">
+          <p className="text-sm font-medium text-[#11255a]">
+            <span className="text-[#52abff]">Última actualización:</span> 22/10/25
+          </p>
+        </div>
         <p>En <strong>Servineo</strong>, valoramos la privacidad de nuestros usuarios. Esta política explica cómo recopilamos, usamos y protegemos tu información personal:</p>
         <p><strong>Datos recopilados:</strong> nombre, correo electrónico, teléfono y datos necesarios para prestar el servicio.</p>
         <p><strong>Uso de la información:</strong> solo utilizamos tus datos para gestionar solicitudes, brindar soporte y mejorar nuestros servicios.</p>
@@ -56,6 +61,11 @@ const modalContents = {
     title: 'Política de Cookies',
     content: (
       <>
+        <div className="mb-6 p-3 bg-[#f8fafc] border-l-4 border-[#52abff] rounded-r">
+          <p className="text-sm font-medium text-[#11255a]">
+            <span className="text-[#52abff]">Última actualización:</span> 22/10/25
+          </p>
+        </div>
         <p>Este sitio utiliza cookies para mejorar la experiencia del usuario:</p>
         <p><strong>Cookies esenciales:</strong> necesarias para el funcionamiento básico del sitio.</p>
         <p><strong>Cookies de análisis:</strong> nos ayudan a entender cómo interactúan los visitantes con la página para mejorarla.</p>
@@ -149,9 +159,9 @@ const Footer = () => {
               </a>
             </li>
             <li className="flex items-center justify-center md:justify-start">
-              <a href="mailto:servineo@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+              <a href="mailto:servineobol@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
                 <FaEnvelope className="mr-3 text-[#52abff]" />
-                <span className="text-sm">servineo@gmail.com</span>
+                <span className="text-sm">servineobol@gmail.com</span>
               </a>
             </li>
             <li className="flex items-center justify-center md:justify-start">
