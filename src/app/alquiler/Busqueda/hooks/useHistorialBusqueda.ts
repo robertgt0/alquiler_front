@@ -15,7 +15,7 @@ interface UseSearchHistoryReturn {
   setMostrarHistorialLocal: (show: boolean) => void;
   guardarEnHistorial: (texto: string) => void;
   limpiarHistorialBackend: () => Promise<void>;
-  seleccionarDelHistorial: (texto: string) => void;
+  seleccionarDelHistorial: (texto: string) => string;
   cargarHistorialBackend: () => Promise<void>;
 }
 
@@ -102,7 +102,7 @@ export function useSearchHistory({
     }
   }, [mostrarHistorial, apiConfig?.endpoint]);
 
-  // 🔥 Limpiar historial automáticamente al recargar
+  //  Limpiar historial automáticamente al recargar
   useEffect(() => {
     const limpiarHistorialAlRecargar = async () => {
       if (!mostrarHistorial || historialCargado.current) return;
@@ -149,7 +149,7 @@ export function useSearchHistory({
 
     const nuevoHistorial = Array.from(
       new Set([textoNormalizado, ...historial])
-    ).slice(0, 10);
+    ).slice(0, 5);
 
     setHistorial(nuevoHistorial);
     try {

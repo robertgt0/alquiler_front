@@ -326,6 +326,8 @@ export default function BusquedaAutocompletado({
 
     const caracteresValidos = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ´'" ,\s\-]*$/;
 
+
+
     // USAR HOOK DE HISTORIAL
     const {
         historial,
@@ -339,6 +341,8 @@ export default function BusquedaAutocompletado({
         mostrarHistorial,
         apiConfig
     });
+
+
 
     // Normaliza texto: primera letra en mayúscula, mantiene el resto
     const capitalizarPrimera = (texto: string) => {
@@ -368,6 +372,8 @@ export default function BusquedaAutocompletado({
         }
     }, [valorInicial]);
 
+
+
     // Efecto para controlar la visibilidad del historial y sugerencias
     useEffect(() => {
         const texto = query.trim();
@@ -389,6 +395,8 @@ export default function BusquedaAutocompletado({
         setMostrarSugerencias(debeMostrarSugerencias);
 
     }, [query, inputFocused, historial, mostrarHistorial, estadoSugerencias, sugerencias, mensajeNoResultados, setMostrarHistorialLocal]);
+
+
 
     // MODIFICADO: Búsqueda local simple
     const buscarTrabajosLocal = useCallback((texto: string, jobs: Job[]): Job[] => {
@@ -630,6 +638,8 @@ export default function BusquedaAutocompletado({
         return sugerenciasFinales;
     }, [datos]);
 
+
+    
     // SELECCIONAR SUGERENCIA
     const seleccionarSugerencia = useCallback(async (texto: string) => {
         console.log('🎯 [SUGERENCIA] Seleccionada:', texto);
@@ -646,15 +656,18 @@ export default function BusquedaAutocompletado({
 
     // SELECCIONAR DEL HISTORIAL
     const manejarSeleccionHistorial = useCallback(async (texto: string) => {
-        const textoSeleccionado = seleccionarDelHistorial(texto);
-        setQuery(textoSeleccionado);
-        setSugerencias([]);
-        setMensaje("");
-        setMostrarSugerencias(false);
-        setMensajeNoResultados("");
+    const textoSeleccionado = seleccionarDelHistorial(texto) || "";
+    setQuery(textoSeleccionado);
+    setSugerencias([]);
+    setMensaje("");
+    setMostrarSugerencias(false);
+    setMensajeNoResultados("");
 
+    if (textoSeleccionado) {
         await ejecutarBusquedaCompleta(textoSeleccionado, true, false);
-    }, [seleccionarDelHistorial, ejecutarBusquedaCompleta]);
+    }
+}, [seleccionarDelHistorial, ejecutarBusquedaCompleta]);
+
 
     const ejecutarBusqueda = useCallback(async () => {
         await ejecutarBusquedaCompleta(query, true, false);
