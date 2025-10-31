@@ -37,7 +37,7 @@ const APPOINTMENT_STATES = {
 };
 
 const toYYYYMMDD = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 
 export function AppointmentModal({
   open,
@@ -371,7 +371,6 @@ export function AppointmentModal({
                 if (dd && mm && yyyy) {
                   const newDate = new Date(yyyy, mm - 1, dd);
                   if (!isNaN(newDate.getTime())) {
-                    setSelectedDate(newDate);
                     setCurrentMonth(newDate);
                   }
                 }
@@ -379,8 +378,31 @@ export function AppointmentModal({
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-32"
             />
             <div className="flex gap-2">
-              <Button onClick={() => selectedDate && loadAvailable(selectedDate)} className="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-lg text-sm font-medium text-blue-600">
-                Buscar
+             <Button onClick={() => {
+              const [dd, mm, yyyy] = dateInput.split("/").map(Number);
+              if (dd && mm && yyyy) {
+                const newDate = new Date(yyyy, mm - 1, dd);
+                
+                const isValidDate =
+                !isNaN(newDate.getTime()) &&
+                newDate.getFullYear() === yyyy &&
+                newDate.getMonth() === mm - 1 &&
+                newDate.getDate() === dd;
+
+                if (isValidDate) {
+                  setSelectedDate(newDate);
+                  setCurrentMonth(newDate);
+                  loadAvailable(newDate);
+                } else {
+                  alert("Fecha inválida. Por favor, asegúrate de que el día y el mes sean correctos (dd/mm/aaaa).");
+                }
+                } else {
+                  alert("Ingresa una fecha completa formato (dd/mm/aaaa)");
+                }
+              }}  
+              className="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-lg text-sm font-medium text-blue-600"
+              >
+              Buscar
               </Button>
               <Button onClick={handleToday} className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium text-gray-800">
                 Hoy
