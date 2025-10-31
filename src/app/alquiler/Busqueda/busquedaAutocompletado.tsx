@@ -4,6 +4,7 @@ import { Search, Clock, X } from "lucide-react";
 import { Job } from "../paginacion/types/job";
 import "./busqueda.css";
 import { Trash2 } from "lucide-react";
+import { useSearchHistory } from './hooks/useHistorialBusqueda';
 
 type EstadoSugerencias = "idle" | "loading" | "error" | "success";
 type EstadoBusqueda = "idle" | "loading" | "success" | "error";
@@ -46,7 +47,7 @@ function getApiRoot(): string {
 class BusquedaService {
     private static API_BASE = getApiRoot();
 
-    // 🔥 NUEVO: Búsqueda local robusta como fallback principal
+    // Búsqueda local robusta como fallback principal
     static busquedaLocalInteligente(query: string, jobs: Job[]): Job[] {
         if (!query.trim()) return [];
 
@@ -66,7 +67,7 @@ class BusquedaService {
         return resultados.slice(0, 50);
     }
 
-    // 🔥 MODIFICADO: Búsqueda principal con fallback automático a local
+    // Búsqueda principal con fallback automático
     static async searchJobsOptimized(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
         try {
             console.log('🎯 [BÚSQUEDA] Buscando trabajos para:', query);
@@ -75,7 +76,7 @@ class BusquedaService {
                 return [];
             }
 
-            // 🔥 INTENTAR BACKEND PRIMERO
+            // iNTENTAR BACKEND PRIMERO
             try {
                 console.log('🚀 [BACKEND] Intentando conexión con backend...');
 
@@ -132,7 +133,7 @@ class BusquedaService {
         }
     }
 
-    // 🔥 MODIFICADO: Búsqueda por especialidad con fallback automático
+    // Búsqueda por especialidad con fallback automático
     static async searchByEspecialidad(especialidad: string, jobsReales: Job[]): Promise<Job[]> {
         if (!especialidad.trim()) {
             return [];
@@ -176,48 +177,7 @@ class BusquedaService {
         }
     }
 
-    private static validarCaracteres(texto: string): boolean {
-        const validCharsRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ´'" ,\s\-]+$/;
-        return validCharsRegex.test(texto);
-    }
-
-    static async getHistorial(endpoint?: string): Promise<string[]> {
-        try {
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
-            const response = await fetch(apiEndpoint);
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    return data.data || data.historial || [];
-                }
-            }
-            return [];
-        } catch (error) {
-            console.error('❌ [SERVICE] Error obteniendo historial:', error);
-            return [];
-        }
-    }
-
-    static async clearHistorial(endpoint?: string): Promise<boolean> {
-        try {
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
-            const response = await fetch(apiEndpoint, {
-                method: 'DELETE',
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.success || false;
-            }
-            return false;
-        } catch (error) {
-            console.error('❌ [SERVICE] Error limpiando historial:', error);
-            return false;
-        }
-    }
-
-    // 🔥 MODIFICADO: Sugerencias con fallback automático robusto
+    // Sugerencias con fallback automático robusto
     static async getAutocompleteSuggestions(query: string, jobsReales: Job[], endpoint?: string): Promise<string[]> {
         try {
             console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', query);
@@ -271,14 +231,13 @@ class BusquedaService {
         }
     }
 
-    // 🔥 MODIFICADO: Fallback mejorado para separar servicios individualmente
-    // 🔥 MODIFICADO: Fallback mejorado para eliminar duplicidad
+    // Fallback mejorado para eliminar duplicidad
     private static getFallbackSuggestions(query: string, jobs: Job[]): string[] {
         console.log('🔄 [SUGERENCIAS-LOCAL] Generando sugerencias locales para:', query);
 
         const queryLower = query.toLowerCase();
 
-        // 🔥 NUEVO: Usar Set para evitar duplicados desde el principio
+        // Usar Set para evitar duplicados desde el principio
         const todasLasSugerencias = new Set<string>();
 
         // 🔥 EXTRAER SERVICIOS INDIVIDUALES
@@ -326,7 +285,7 @@ class BusquedaService {
         return sugerenciasFinales;
     }
 
-    // 🔥 NUEVO: Método para verificar si un término ya está contenido en servicios
+    //  Método para verificar si un término ya está contenido en servicios
     private static estaContenidoEnServicios(termino: string, servicios: string[]): boolean {
         const terminoLower = termino.toLowerCase();
 
@@ -353,23 +312,33 @@ export default function BusquedaAutocompletado({
     const [estadoBusqueda, setEstadoBusqueda] = useState<EstadoBusqueda>("idle");
     const [mensaje, setMensaje] = useState("");
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
-    const [mostrarHistorialLocal, setMostrarHistorialLocal] = useState(false);
     const [resultados, setResultados] = useState<Job[]>([]);
-    const [historial, setHistorial] = useState<string[]>([]);
-    const [cargandoHistorial, setCargandoHistorial] = useState(false);
-    const [inputFocused, setInputFocused] = useState(false);
     const [loadingResultados, setLoadingResultados] = useState(false);
     const [mensajeNoResultados, setMensajeNoResultados] = useState("");
+    const [inputFocused, setInputFocused] = useState(false);
 
     const debounceSugerenciasRef = useRef<NodeJS.Timeout | null>(null);
     const debounceBusquedaRef = useRef<NodeJS.Timeout | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const terminoBusquedaAnterior = useRef("");
-    const historialCargado = useRef(false);
     const busquedaEnCurso = useRef(false);
 
     const caracteresValidos = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ´'" ,\s\-]*$/;
+
+    // USAR HOOK DE HISTORIAL
+    const {
+        historial,
+        cargandoHistorial,
+        mostrarHistorialLocal,
+        setMostrarHistorialLocal,
+        guardarEnHistorial,
+        limpiarHistorialBackend,
+        seleccionarDelHistorial
+    } = useSearchHistory({
+        mostrarHistorial,
+        apiConfig
+    });
 
     // Normaliza texto: primera letra en mayúscula, mantiene el resto
     const capitalizarPrimera = (texto: string) => {
@@ -377,7 +346,8 @@ export default function BusquedaAutocompletado({
         if (!t) return "";
         return t.charAt(0).toUpperCase() + t.slice(1);
     };
-    // 🔥 NUEVA FUNCIÓN: Normalizar texto para búsqueda
+
+    // NUEVA FUNCIÓN: Normalizar texto para búsqueda
     const normalizarTexto = useCallback((texto: string): string => {
         if (!texto) return "";
 
@@ -390,39 +360,6 @@ export default function BusquedaAutocompletado({
             .toLowerCase();
     }, []);
 
-    // 🔥 EFECTO: Limpiar historial automáticamente al recargar
-    useEffect(() => {
-        const limpiarHistorialAlRecargar = async () => {
-            if (!mostrarHistorial || historialCargado.current) return;
-
-            console.log('🧹 [AUTOCOMPLETADO] Limpiando historial por recarga de página');
-
-            try {
-                await BusquedaService.clearHistorial(apiConfig?.endpoint);
-                setHistorial([]);
-                localStorage.removeItem("historialBusquedas");
-                historialCargado.current = true;
-                console.log('✅ [AUTOCOMPLETADO] Historial limpiado correctamente');
-            } catch (error) {
-                console.error('❌ [AUTOCOMPLETADO] Error limpiando historial:', error);
-                setHistorial([]);
-                localStorage.removeItem("historialBusquedas");
-                historialCargado.current = true;
-            }
-        };
-
-        limpiarHistorialAlRecargar();
-
-        const handleBeforeUnload = () => {
-            historialCargado.current = false;
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, [mostrarHistorial, apiConfig?.endpoint]);
-
     // Sincronizar con valorInicial
     useEffect(() => {
         console.log('🔄 [AUTOCOMPLETADO] valorInicial actualizado:', valorInicial);
@@ -430,44 +367,6 @@ export default function BusquedaAutocompletado({
             setQuery(valorInicial);
         }
     }, [valorInicial]);
-
-    // Cargar historial del backend
-    useEffect(() => {
-        if (!mostrarHistorial || historialCargado.current) return;
-
-        const cargarHistorialBackend = async () => {
-            try {
-                setCargandoHistorial(true);
-                const terminos = await BusquedaService.getHistorial(apiConfig?.endpoint);
-
-                if (terminos.length > 0 && !historialCargado.current) {
-                    setHistorial(terminos);
-                    console.log('📚 [HISTORIAL] Historial cargado:', terminos);
-                } else {
-                    console.log('📚 [HISTORIAL] Historial vacío o ya limpiado');
-                    setHistorial([]);
-                }
-
-                historialCargado.current = true;
-            } catch (error) {
-                console.error('Error cargando historial del backend:', error);
-                try {
-                    const stored = localStorage.getItem("historialBusquedas");
-                    if (stored && !historialCargado.current) {
-                        setHistorial(JSON.parse(stored));
-                    }
-                } catch (localError) {
-                    console.error('Error con localStorage:', localError);
-                } finally {
-                    historialCargado.current = true;
-                }
-            } finally {
-                setCargandoHistorial(false);
-            }
-        };
-
-        cargarHistorialBackend();
-    }, [mostrarHistorial, apiConfig?.endpoint]);
 
     // Efecto para controlar la visibilidad del historial y sugerencias
     useEffect(() => {
@@ -489,46 +388,9 @@ export default function BusquedaAutocompletado({
         setMostrarHistorialLocal(debeMostrarHistorial);
         setMostrarSugerencias(debeMostrarSugerencias);
 
-    }, [query, inputFocused, historial, mostrarHistorial, estadoSugerencias, sugerencias, mensajeNoResultados]);
+    }, [query, inputFocused, historial, mostrarHistorial, estadoSugerencias, sugerencias, mensajeNoResultados, setMostrarHistorialLocal]);
 
-    const limpiarHistorialBackend = useCallback(async () => {
-        try {
-            const success = await BusquedaService.clearHistorial(apiConfig?.endpoint);
-            if (success) {
-                setHistorial([]);
-                setMostrarHistorialLocal(false);
-                localStorage.removeItem("historialBusquedas");
-                historialCargado.current = true;
-                console.log('✅ Historial limpiado correctamente');
-            } else {
-                console.error('❌ Error al limpiar historial en el backend');
-                setMensaje("Error al limpiar el historial");
-            }
-        } catch (error) {
-            console.error('❌ Error limpiando historial:', error);
-            setMensaje("Error de conexión al limpiar historial");
-        }
-    }, [apiConfig?.endpoint]);
-
-    // 🔥 NUEVA FUNCIÓN: Guardar en historial
-    const guardarEnHistorial = useCallback((texto: string) => {
-        if (!mostrarHistorial) return;
-
-        const textoNormalizado = texto.trim();
-        if (!textoNormalizado) return;
-
-        const nuevoHistorial = Array.from(
-            new Set([textoNormalizado, ...historial])
-        ).slice(0, 10);
-
-        setHistorial(nuevoHistorial);
-        try {
-            localStorage.setItem("historialBusquedas", JSON.stringify(nuevoHistorial));
-        } catch (error) {
-            console.error("Error guardando historial en localStorage:", error);
-        }
-    }, [historial, mostrarHistorial]);
-    // 🔥 MODIFICADO: Búsqueda local simple
+    // MODIFICADO: Búsqueda local simple
     const buscarTrabajosLocal = useCallback((texto: string, jobs: Job[]): Job[] => {
         if (!texto.trim()) return jobs;
 
@@ -556,7 +418,7 @@ export default function BusquedaAutocompletado({
                 // Buscar en campo específico
                 const campoValor = job[campoBusqueda];
 
-                // 🔥 SI ES EL CAMPO SERVICE, BUSCAR EN SERVICIOS INDIVIDUALES TAMBIÉN
+                // SI ES EL CAMPO SERVICE, BUSCAR EN SERVICIOS INDIVIDUALES TAMBIÉN
                 if (campoBusqueda === 'service' && campoValor) {
                     const serviciosIndividuales = String(campoValor)
                         .split(',')
@@ -625,10 +487,10 @@ export default function BusquedaAutocompletado({
             let resultadosFinales: Job[] = [];
 
             if (esEspecialidad) {
-                // 🔥 BÚSQUEDA CON FALLBACK AUTOMÁTICO
+                // BÚSQUEDA CON FALLBACK AUTOMÁTICO
                 resultadosFinales = await BusquedaService.searchByEspecialidad(textoLimpio, datos);
             } else {
-                // 🔥 BÚSQUEDA CON FALLBACK AUTOMÁTICO
+                // BÚSQUEDA CON FALLBACK AUTOMÁTICO
                 resultadosFinales = await BusquedaService.searchJobsOptimized(textoLimpio, datos, apiConfig?.endpoint);
             }
 
@@ -650,7 +512,7 @@ export default function BusquedaAutocompletado({
         } catch (error) {
             console.error("❌ [BÚSQUEDA] Error:", error);
 
-            // 🔥 FALLBACK FINAL: Búsqueda local como último recurso
+            // FALLBACK FINAL: Búsqueda local como último recurso
             console.log('🔄 [BÚSQUEDA] Usando búsqueda local como fallback final');
             const resultadosLocales = buscarTrabajosLocal(textoLimpio, datos);
 
@@ -666,10 +528,9 @@ export default function BusquedaAutocompletado({
             busquedaEnCurso.current = false;
             setLoadingResultados(false);
         }
-    }, [datos, onSearch, buscarTrabajosLocal, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint]);
+    }, [datos, onSearch, buscarTrabajosLocal, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint, setMostrarHistorialLocal]);
 
-    // 🔥 MODIFICADO: Sugerencias con fallback automático
-    // 🔥 MODIFICADO: Sugerencias con separación de servicios individuales
+    // MODIFICADO: Sugerencias con fallback automático
     const buscarSugerencias = useCallback(async (texto: string): Promise<string[]> => {
         try {
             if (!caracteresValidos.test(texto)) {
@@ -687,7 +548,7 @@ export default function BusquedaAutocompletado({
 
             console.log('✅ [SUGERENCIAS] Sugerencias encontradas:', sugerenciasOptimizadas);
 
-            // 🔥 SI EL BACKEND NO DEVUELVE NADA, USAR FALLBACK LOCAL MEJORADO
+            // SI EL BACKEND NO DEVUELVE NADA, USAR FALLBACK LOCAL MEJORADO
             if (sugerenciasOptimizadas.length === 0) {
                 console.log('🔄 [SUGERENCIAS] Usando fallback local mejorado');
                 return generarSugerenciasLocales(texto);
@@ -698,21 +559,20 @@ export default function BusquedaAutocompletado({
         } catch (error) {
             console.error('❌ [SUGERENCIAS] Error:', error);
 
-            // 🔥 FALLBACK LOCAL MEJORADO
+            // FALLBACK LOCAL MEJORADO
             console.log('🔄 [SUGERENCIAS] Usando fallback local por error');
             return generarSugerenciasLocales(texto);
         }
     }, [datos, apiConfig?.endpoint]);
 
-    // 🔥 NUEVA FUNCIÓN: Generar sugerencias locales con servicios separados
-    // 🔥 MODIFICADO: Generar sugerencias locales sin duplicidad
+    // NUEVA FUNCIÓN: Generar sugerencias locales con servicios separados
     const generarSugerenciasLocales = useCallback((texto: string): string[] => {
         const textoLower = texto.toLowerCase();
 
-        // 🔥 NUEVO: Usar Set para evitar duplicados
+        // NUEVO: Usar Set para evitar duplicados
         const todasLasSugerencias = new Set<string>();
 
-        // 🔥 EXTRAER SERVICIOS INDIVIDUALES
+        // EXTRAER SERVICIOS INDIVIDUALES
         datos.forEach(job => {
             if (job.service) {
                 job.service
@@ -727,7 +587,7 @@ export default function BusquedaAutocompletado({
             }
         });
 
-        // 🔥 FUNCIÓN PARA VERIFICAR DUPLICIDAD
+        // FUNCIÓN PARA VERIFICAR DUPLICIDAD
         const estaContenidoEnServicios = (termino: string): boolean => {
             const terminoLower = termino.toLowerCase();
             const serviciosArray = Array.from(todasLasSugerencias);
@@ -738,7 +598,7 @@ export default function BusquedaAutocompletado({
             );
         };
 
-        // 🔥 EXTRAER OTROS CAMPOS (SOLO SI NO ESTÁN YA EN LOS SERVICIOS)
+        // EXTRAER OTROS CAMPOS (SOLO SI NO ESTÁN YA EN LOS SERVICIOS)
         datos.forEach(job => {
             // Título - solo agregar si no es similar a servicios existentes
             if (job.title &&
@@ -770,7 +630,7 @@ export default function BusquedaAutocompletado({
         return sugerenciasFinales;
     }, [datos]);
 
-    // 🔥 SELECCIONAR SUGERENCIA
+    // SELECCIONAR SUGERENCIA
     const seleccionarSugerencia = useCallback(async (texto: string) => {
         console.log('🎯 [SUGERENCIA] Seleccionada:', texto);
 
@@ -783,6 +643,18 @@ export default function BusquedaAutocompletado({
 
         await ejecutarBusquedaCompleta(texto, true, false);
     }, [ejecutarBusquedaCompleta]);
+
+    // SELECCIONAR DEL HISTORIAL
+    const manejarSeleccionHistorial = useCallback(async (texto: string) => {
+        const textoSeleccionado = seleccionarDelHistorial(texto);
+        setQuery(textoSeleccionado);
+        setSugerencias([]);
+        setMensaje("");
+        setMostrarSugerencias(false);
+        setMensajeNoResultados("");
+
+        await ejecutarBusquedaCompleta(textoSeleccionado, true, false);
+    }, [seleccionarDelHistorial, ejecutarBusquedaCompleta]);
 
     const ejecutarBusqueda = useCallback(async () => {
         await ejecutarBusquedaCompleta(query, true, false);
@@ -804,7 +676,7 @@ export default function BusquedaAutocompletado({
 
         onSearch("", datos);
         inputRef.current?.focus();
-    }, [datos, onSearch]);
+    }, [datos, onSearch, setMostrarHistorialLocal]);
 
     const manejarKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
@@ -817,9 +689,9 @@ export default function BusquedaAutocompletado({
             setInputFocused(false);
             inputRef.current?.blur();
         }
-    }, [ejecutarBusqueda]);
+    }, [ejecutarBusqueda, setMostrarHistorialLocal]);
 
-    // 🔥 EFECTO PARA SUGERENCIAS
+    // EFECTO PARA SUGERENCIAS
     useEffect(() => {
         if (debounceSugerenciasRef.current) {
             clearTimeout(debounceSugerenciasRef.current);
@@ -866,7 +738,7 @@ export default function BusquedaAutocompletado({
         };
     }, [query, inputFocused, buscarSugerencias]);
 
-    // 🔥 EFECTO PARA BÚSQUEDA AUTOMÁTICA
+    // EFECTO PARA BÚSQUEDA AUTOMÁTICA
     useEffect(() => {
         if (debounceBusquedaRef.current) {
             clearTimeout(debounceBusquedaRef.current);
@@ -908,7 +780,7 @@ export default function BusquedaAutocompletado({
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, []);
+    }, [setMostrarHistorialLocal]);
 
     return (
         <div className="busqueda-container" ref={containerRef}>
@@ -1012,7 +884,7 @@ export default function BusquedaAutocompletado({
                             <li
                                 key={i}
                                 className="item-historial"
-                                onClick={() => seleccionarSugerencia(item)}
+                                onClick={() => manejarSeleccionHistorial(item)}
                             >
                                 <Clock className="icono-historial" size={16} />
                                 {item}
