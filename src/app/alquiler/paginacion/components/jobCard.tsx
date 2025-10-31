@@ -1,6 +1,10 @@
 "use client";
 
 import React from 'react';
+//devcode
+import AppointmentButton from "../../../agenda/components/AgendarCitaButton";
+import { useServicios } from '../hooks/useServicios';
+//import { useEffect, useState } from "react";
 
 interface JobCardProps {
   title: string;
@@ -50,7 +54,6 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
     </div>
   );
 };
-
 const JobCard: React.FC<JobCardProps> = ({
   title,
   company,
@@ -63,7 +66,31 @@ const JobCard: React.FC<JobCardProps> = ({
   rating = 0,
   onViewDetails
 }) => {
+  // Usar el hook aquí
+  const { servicios, loading, error } = useServicios();
+
+  // Mostrar estados de carga y error
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="animate-pulse">
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 text-red-500">
+        Error: {error}
+      </div>
+    );
+  }
+
   return (
+
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
       {/* Encabezado con gradiente */}
       <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 p-6">
@@ -74,11 +101,10 @@ const JobCard: React.FC<JobCardProps> = ({
       <div className="p-6 flex-grow">
         {/* Estado y Calificación */}
         <div className="flex items-center justify-between mb-4">
-          <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-            employmentType === "Disponible" 
-              ? "bg-green-100 text-green-700 border border-green-200" 
-              : "bg-red-100 text-red-700 border border-red-200"
-          }`}>
+          <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${employmentType === "Disponible"
+            ? "bg-green-100 text-green-700 border border-green-200"
+            : "bg-red-100 text-red-700 border border-red-200"
+            }`}>
             {employmentType}
           </span>
           <div className="flex items-center gap-1">
@@ -127,19 +153,31 @@ const JobCard: React.FC<JobCardProps> = ({
           </svg>
           Registrado: {postedDate}
         </div>
-        
+
         <div className="mt-auto">
           {/* Botón centrado al final */}
-          <button
+          {/*<button
             onClick={onViewDetails}
             className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-sm hover:shadow"
           >
             Ver Detalles
-          </button>
+          </button>*/}
+          {/*agendar cita*/}
+          {/* Botón de Agendar Cita para cada servicio */}
+          {servicios.map((servicio) => (
+            servicio.proveedorId && (
+              <div key={servicio._id} className="mb-2">
+                <AppointmentButton
+                  proveedorId={servicio.proveedorId._id}
+                  servicioId={servicio._id}
+                />
+              </div>
+            )
+          ))}
         </div>
       </div>
     </div>
-    );
-  };
+  );
+};
 
-  export default JobCard;
+export default JobCard;

@@ -11,6 +11,9 @@ import { Job } from "./types/job";
 import BusquedaAutocompletado from "../Busqueda/busquedaAutocompletado";
 import FiltrosForm from "../Feature/Componentes/FiltroForm";
 import { UsuarioResumen } from "../Feature/Types/filtroType";
+//devcode
+import Sidebar from "../../agenda/components/Sidebar";
+
 
 // Componente de carga
 function LoadingFallback() {
@@ -40,8 +43,8 @@ function BusquedaContent() {
 
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
-    type ModoVista = "jobs" | "usuarios";
-    const [modoVista, setModoVista] = useState<ModoVista>("jobs");
+  type ModoVista = "jobs" | "usuarios";
+  const [modoVista, setModoVista] = useState<ModoVista>("jobs");
   const [filtersNoResults, setFiltersNoResults] = useState(false);
   const [filtrosAplicados, setFiltrosAplicados] = useState(false);
 
@@ -59,37 +62,37 @@ function BusquedaContent() {
     }
   }, [allJobs]);
 
- // ---------------- Opciones de ordenamiento ----------------
-const opcionesOrdenamiento = [
-  "Fecha (Reciente)",
-  "Nombre A-Z",
-  "Nombre Z-A",
-  "Mayor Calificación (⭐)",
-];
+  // ---------------- Opciones de ordenamiento ----------------
+  const opcionesOrdenamiento = [
+    "Fecha (Reciente)",
+    "Nombre A-Z",
+    "Nombre Z-A",
+    "Mayor Calificación (⭐)",
+  ];
 
-// ---------------- Funciones de ordenamiento ----------------
-const ordenarItems = (opcion: string, lista: Job[]) => {
-  const sorted = [...lista];
-  switch (opcion) {
-    case "Nombre A-Z":
-      // Cambiar de title a company para ordenar por nombre de persona
-      sorted.sort((a, b) => (a.company || "").localeCompare(b.company || ""));
-      break;
-    case "Nombre Z-A":
-      // Cambiar de title a company para ordenar por nombre de persona
-      sorted.sort((a, b) => (b.company || "").localeCompare(a.company || ""));
-      break;
-    case "Fecha (Reciente)":
-      sorted.sort(
-        (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
-      );
-      break;
-    case "Mayor Calificación (⭐)":
-      sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      break;
-  }
-  return sorted;
-};
+  // ---------------- Funciones de ordenamiento ----------------
+  const ordenarItems = (opcion: string, lista: Job[]) => {
+    const sorted = [...lista];
+    switch (opcion) {
+      case "Nombre A-Z":
+        // Cambiar de title a company para ordenar por nombre de persona
+        sorted.sort((a, b) => (a.company || "").localeCompare(b.company || ""));
+        break;
+      case "Nombre Z-A":
+        // Cambiar de title a company para ordenar por nombre de persona
+        sorted.sort((a, b) => (b.company || "").localeCompare(a.company || ""));
+        break;
+      case "Fecha (Reciente)":
+        sorted.sort(
+          (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
+        );
+        break;
+      case "Mayor Calificación (⭐)":
+        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+    }
+    return sorted;
+  };
 
   const ordenarUsuarios = (opcion: string, lista: UsuarioResumen[]) => {
     const sorted = [...lista];
@@ -141,7 +144,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     [sortBy, usuariosFiltrados]
   );
 
-  
+
   // ---------------- Hook de paginación ----------------
   const {
     currentPage,
@@ -152,7 +155,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     handlePrevPage,
     totalItems,
   } = usePagination(jobsToDisplay, itemsPerPage);
-   const sinResultados = currentItems.length === 0;
+  const sinResultados = currentItems.length === 0;
 
   const handleViewDetails = (id: string | number) => {
     router.push(`/alquiler/${id}`);
@@ -257,13 +260,13 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
       setBuscando(false);
     }
   };
-  
+
   const handleClearSearch = () => {
     setSearchTerm("");
     setSearchResults(allJobs);
     setFiltrosAplicados(false);
     actualizarURL("");
-     setTimeout(() => setSortBy("Fecha (Reciente)"), 0);
+    setTimeout(() => setSortBy("Fecha (Reciente)"), 0);
   };
 
   // NUEVO HANDLER PARA LIMPIAR FILTROS
@@ -287,14 +290,15 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
 
   // ---------------- Lógica para determinar qué mostrar ----------------
   // SOLUCIÓN: Cambiar la condición para que solo muestre "sin resultados" cuando realmente hay filtros activos
-  const mostrarSinResultadosFiltros = filtrosAplicados && 
-                                    modoVista === "jobs" && 
-                                    usuariosFiltrados.length === 0 &&
-                                    filtersNoResults; // Agregar esta condición
+  const mostrarSinResultadosFiltros = filtrosAplicados &&
+    modoVista === "jobs" &&
+    usuariosFiltrados.length === 0 &&
+    filtersNoResults; // Agregar esta condición
 
   // ---------------- Render ----------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 to-white">
+      <Sidebar />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-4xl font-extrabold text-blue-600 mb-10 border-l-4 border-blue-600 pl-4 tracking-wide">
           Ofertas de Trabajo
@@ -343,16 +347,16 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
             {usuariosFiltrados.length > 0 ? (
               <>
                 <div className="UserProfilesContainer space-y-6">
-                    {usuariosFiltrados.map((usuario) => (
-                      <UserProfileCard
-                        key={usuario.id_usuario}
-                        usuario={usuario}
-                        onContactClick={() => {
-                          console.log('Navegando a usuario:', usuario);
-                          router.push(`/alquiler/${usuario.id_usuario}`);
-                        }}
-                      />
-                    ))}
+                  {usuariosFiltrados.map((usuario) => (
+                    <UserProfileCard
+                      key={usuario.id_usuario}
+                      usuario={usuario}
+                      onContactClick={() => {
+                        console.log('Navegando a usuario:', usuario);
+                        router.push(`/alquiler/${usuario.id_usuario}`);
+                      }}
+                    />
+                  ))}
                 </div>
                 <p className="text-sm text-gray-600 mt-4">
                   Se encontraron {usuariosFiltrados.length} profesionales
@@ -378,8 +382,8 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
             ) : (
               <>
                 <div className="text-xl text-blue-700 font-semibold mb-6">
-                  {mostrarSinResultadosFiltros 
-                    ? "No se encontraron ofertas" 
+                  {mostrarSinResultadosFiltros
+                    ? "No se encontraron ofertas"
                     : `Mostrando ${currentItems.length} de ${totalItems} Ofertas Disponibles`}
                 </div>
 
@@ -395,7 +399,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
                       <p className="text-xl text-gray-600 mb-4">
                         No se encontraron ofertas con los filtros seleccionados
                       </p>
-                      <button 
+                      <button
                         onClick={handleClearFilters}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                       >
@@ -411,8 +415,8 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
                           : "No hay ofertas de trabajo disponibles en este momento."}
                       </p>
                       {searchTerm && (
-                        <button 
-                          onClick={handleClearSearch} 
+                        <button
+                          onClick={handleClearSearch}
                           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                           Ver todas las ofertas

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useFiltros } from "app/alquiler/Feature/Hooks/useFiltro";
-import type { UsuarioResumen } from "app/alquiler/Feature/Types/filtroType";
+import { useFiltros } from "../Hooks/useFiltro";
+import type { UsuarioResumen } from "../Types/filtroType";
 
 interface FiltrosFormProps {
   onResults?: (usuarios: any[]) => void; // Props pasadas desde paginacion para Ordenamiento y Búsqueda

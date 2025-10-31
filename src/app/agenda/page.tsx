@@ -20,19 +20,19 @@ export default function Home() {
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-useEffect(() => {
-  fetch(`${API_URL}/api/devcode/servicios`)
-    .then(res => res.json())
-    .then(response => {
-      // response tiene la forma { success: true, data: [...] }
-      if (response.success && Array.isArray(response.data)) {
-        setServicios(response.data);
-      } else {
-        console.error("Respuesta inesperada del backend:", response);
-        setServicios([]);
-      }
-    })
-    .catch(err => console.error("Error al cargar servicios:", err));
+  useEffect(() => {
+    fetch(`${API_URL}/api/devcode/servicios`)
+      .then(res => res.json())
+      .then(response => {
+        // response tiene la forma { success: true, data: [...] }
+        if (response.success && Array.isArray(response.data)) {
+          setServicios(response.data);
+        } else {
+          console.error("Respuesta inesperada del backend:", response);
+          setServicios([]);
+        }
+      })
+      .catch(err => console.error("Error al cargar servicios:", err));
   }, []);
 
 
@@ -46,52 +46,52 @@ useEffect(() => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-7xl px-4">
-        {servicios.map((prov) => (
-          <div key={prov._id} className="bg-white p-6 rounded-xl shadow-lg flex flex-col justify-between min-h-[250px]">
-            <div className="flex items-center mb-4">
-              <div className="bg-purple-500 text-white font-bold rounded-xl h-12 w-12 flex items-center justify-center mr-4">
-                {prov.proveedorId?.nombre?.split(" ").map(n => n[0]).join("") || "NA"}
+          {servicios.map((prov) => (
+            <div key={prov._id} className="bg-white p-6 rounded-xl shadow-lg flex flex-col justify-between min-h-[250px]">
+              <div className="flex items-center mb-4">
+                <div className="bg-purple-500 text-white font-bold rounded-xl h-12 w-12 flex items-center justify-center mr-4">
+                  {prov.proveedorId?.nombre?.split(" ").map(n => n[0]).join("") || "NA"}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">{prov.nombre}</h3>
+                  <p className="text-gray-600 text-sm">{prov.proveedorId?.nombre || "Proveedor no asignado"}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold">{prov.nombre}</h3>
-                <p className="text-gray-600 text-sm">{prov.proveedorId?.nombre || "Proveedor no asignado"}</p>
+
+              <p className="text-gray-700 text-sm flex-1">{prov.descripcion}</p>
+
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-purple-600 font-bold text-lg">${prov.precio}/hora</span>
               </div>
-            </div>
-
-            <p className="text-gray-700 text-sm flex-1">{prov.descripcion}</p>
-
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-purple-600 font-bold text-lg">${prov.precio}/hora</span>
-            </div>
-            <div className="mt-4 flex items-center justify-between">
-              <div className="flex items-center">
-                {/* Estrellas */}
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={`text-yellow-400 ${i < prov.rating ? "opacity-100" : "opacity-30"}`}
-                  >
-                    ★
+              <div className="mt-4 flex items-center justify-between">
+                <div className="flex items-center">
+                  {/* Estrellas */}
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`text-yellow-400 ${i < prov.rating ? "opacity-100" : "opacity-30"}`}
+                    >
+                      ★
+                    </span>
+                  ))}
+                  {/* Número de rating */}
+                  <span className="ml-2 text-gray-700 font-semibold text-sm">
+                    {prov.rating} {prov.rating === 1 ? "estrella" : "estrellas"}
                   </span>
-                ))}
-                {/* Número de rating */}
-                <span className="ml-2 text-gray-700 font-semibold text-sm">
-                  {prov.rating} {prov.rating === 1 ? "estrella" : "estrellas"}
-                </span>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                {prov.proveedorId && (
+                  <AppointmentButton
+                    proveedorId={prov.proveedorId._id}  // seguro ahora
+                    servicioId={prov._id}
+                  />
+                )}
               </div>
             </div>
-
-            <div className="mt-4 flex justify-end">
-              {prov.proveedorId && (
-                <AppointmentButton
-                  proveedorId={prov.proveedorId._id}  // seguro ahora
-                  servicioId={prov._id}
-                />
-              )}
-            </div>
-          </div>
           ))}
-          
+
         </div>
       </div>
     </div>
