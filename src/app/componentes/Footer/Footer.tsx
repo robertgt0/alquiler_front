@@ -26,11 +26,11 @@ const modalContents = {
         <p><strong>Datos recopilados:</strong> nombre, correo electrónico, teléfono y datos necesarios para prestar el servicio.</p>
         <p><strong>Uso de la información:</strong> solo utilizamos tus datos para gestionar solicitudes, brindar soporte y mejorar nuestros servicios.</p>
         <p><strong>Protección:</strong> aplicamos medidas técnicas y organizativas para resguardar tu información.</p>
-        <p><strong>Derechos del usuario:</strong> puedes acceder, rectificar o eliminar tus datos personales escribiéndonos a <a href="mailto:servineo@gmail.com" className="text-blue-600 hover:underline">nuestro correo de contacto</a>.</p>
+        <p><strong>Derechos del usuario:</strong> puedes acceder, rectificar o eliminar tus datos personales escribiéndonos a <a href="mailto:servineobol@gmail.com" className="text-blue-600 hover:underline">nuestro correo de contacto</a>.</p>
         <p>Adicionalmente, almacenamos algunos registros de actividad (logs) para mejorar la seguridad y detectar patrones anómalos que puedan indicar fraudes o mal uso de la plataforma.</p>
         <p>Cuando compartes información en tu perfil o en mensajes con otros usuarios, recuerda que parte de esos datos pueden ser visibles a terceros según la configuración de privacidad que hayas seleccionado.</p>
         <p>Podemos compartir datos agregados y anonimizados con socios para análisis estadístico. Nunca compartiremos información personal identificable con terceros sin tu consentimiento explícito, salvo en los casos previstos por la ley.</p>
-        <p>Si tienes dudas sobre el tratamiento de tus datos, puedes solicitar un informe o ejercer tus derechos enviando una solicitud a <a href="mailto:servineo@gmail.com" className="text-blue-600 hover:underline">servineo@gmail.com</a>. Responderemos en los plazos legales correspondientes.</p>
+        <p>Si tienes dudas sobre el tratamiento de tus datos, puedes solicitar un informe o ejercer tus derechos enviando una solicitud a <a href="mailto:servineobol@gmail.com" className="text-blue-600 hover:underline">servineobol@gmail.com</a>. Responderemos en los plazos legales correspondientes.</p>
         <p>Esta política puede actualizarse periódicamente; te recomendamos revisarla con regularidad para estar al tanto de los cambios.</p>
       </>
     )
@@ -73,7 +73,7 @@ const modalContents = {
         <p>Puedes configurar o desactivar las cookies en la configuración de tu navegador.</p>
         <p>Algunas cookies son gestionadas por terceros (por ejemplo, proveedores de analítica). Te recomendamos revisar las políticas de estos servicios si te interesa un control más detallado.</p>
         <p>Si prefieres no aceptar cookies de análisis, puedes cambiar tu configuración en cualquier momento; sin embargo, esto puede limitar algunas funcionalidades o la personalización del contenido.</p>
-        <p>Para consultas sobre las cookies que utilizamos o para solicitar su eliminación, contacta a <a href="mailto:servineo@gmail.com" className="text-blue-600 hover:underline">servineo@gmail.com</a>.</p>
+        <p>Para consultas sobre las cookies que utilizamos o para solicitar su eliminación, contacta a <a href="mailto:servineobol@gmail.com" className="text-blue-600 hover:underline">servineobol@gmail.com</a>.</p>
         <p>En algunos casos, las cookies nos permiten recordar el estado de tu carrito o guardar progresos en formularios para que no pierdas tu trabajo si cierras la pestaña accidentalmente.</p>
         <p>También utilizamos cookies para experimentar mejoras en la interfaz (A/B testing). Estos experimentos nos ayudan a decidir qué cambios benefician más a los usuarios en términos de usabilidad y rendimiento.</p>
         <p>Si utilizas varios dispositivos, algunas preferencias pueden sincronizarse mediante cookies asociadas a tu cuenta para ofrecer una experiencia coherente entre dispositivos.</p>
