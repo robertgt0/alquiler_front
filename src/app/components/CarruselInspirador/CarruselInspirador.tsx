@@ -1,6 +1,6 @@
-
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image"; // <-- 1. IMPORTADO
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const slides = [
@@ -58,9 +58,13 @@ export default function CarruselInspirador() {
           >
             {/* Imagen a la izquierda */}
             <div className="w-full md:w-1/2 flex justify-center items-center bg-blue-100 rounded-2xl md:rounded-none md:rounded-l-2xl overflow-hidden p-2 md:p-4">
-              <img
+              {/* --- 2. MODIFICADO --- */}
+              <Image
                 src={slide.image}
                 alt={slide.title}
+                width={800}  // <-- ¡Ajusta esto a la relación de aspecto de tu imagen!
+                height={600} // <-- ¡Ajusta esto a la relación de aspecto de tu imagen!
+                priority={index === 0} // Opcional pero recomendado
                 className="w-[95%] md:w-[90%] h-auto md:h-[460px] object-contain rounded-2xl shadow-md transition-transform duration-500 hover:scale-[1.03]"
               />
             </div>
@@ -74,7 +78,7 @@ export default function CarruselInspirador() {
                 {slide.description}
               </p>
 
-             <a
+              <a
                 href="#trabajos-recientes" // Cambiado de "#ofertas"
                 className="inline-block px-5 py-2 sm:px-6 sm:py-3 bg-[#2a87ff] text-white rounded-lg text-sm sm:text-base hover:bg-blue-600 transition"
               >
@@ -116,6 +120,4 @@ export default function CarruselInspirador() {
       </div>
     </div>
   );
-};
-
-
+}
