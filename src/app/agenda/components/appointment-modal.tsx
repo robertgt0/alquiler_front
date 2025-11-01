@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
 import { cn } from "@/lib/utils";
+import { createAndNotify } from "@/lib/appointments";
 import LocationForm from "./LocationForms";
 import ModalConfirmacion from "./ModalConfirmacion";
 
@@ -307,10 +308,15 @@ export function AppointmentModal({
         },
         ubicacion: locationData,
         estado: "pendiente",
+        cliente: {
+          nombre: patientName,
+          email: "adrianvallejosflores24@gmail.com", //reemplázalo dinámicamente si lo tienes
+        },
       };
 
       console.log("Enviando payload:", payload);
 
+      /*
       let url = `${API_URL}/api/devcode/citas`;
       let method = "POST";
 
@@ -332,6 +338,43 @@ export function AppointmentModal({
         if (res.status === 409) return alert(body?.message || "Horario no disponible.");
         return alert(body?.message || `Error HTTP ${res.status}`);
       }
+      */
+     
+     // 💡 Si es edición, actualizamos SIN enviar notificación.
+      if (isEditing && appointmentId) {
+        const res = await fetch(`${API_URL}/api/devcode/citas/${appointmentId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const body = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          if (res.status === 409) return alert(body?.message || "Horario no disponible.");
+          return alert(body?.message || `Error HTTP ${res.status}`);
+        }
+
+        setShowConfirmationModal(true);
+        onOpenChange(false);
+        return;
+      }
+
+      // 🧠 En caso de creación nueva → crea y notifica
+      const resultNotify = await createAndNotify(payload);
+
+      if (!resultNotify.ok) {
+        console.error("❌ Error al crear o notificar:", resultNotify.error);
+        alert("No se pudo crear la cita ni enviar la notificación.");
+        return;
+      }
+
+      if (!resultNotify.notified) {
+        alert("La cita se creó correctamente, pero no se pudo enviar la notificación.");
+      } else {
+        console.log("✅ Cita creada y notificación enviada:", resultNotify);
+      }
+
 
       // Mostramos modal de confirmación y cerramos el modal principal
       setShowConfirmationModal(true);
