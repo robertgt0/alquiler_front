@@ -123,7 +123,7 @@ const Footer = () => {
 
   return (
     <>
-  <footer className="bg-[#11255a] text-[#d8ecff]" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+  <footer className="bg-[#11255a] text-[#d8ecff] font-sans">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="border-t border-[#1140bc] mb-8"></div>
       {/* Grid: stack on small screens, three columns on md+ */}
@@ -134,13 +134,13 @@ const Footer = () => {
             <div className="mr-3 flex-shrink-0">
               <Icono size={50} />
             </div>
-            <h3 className="text-2xl font-bold">Servineo</h3>
+            <h3 className="text-2xl font-bold font-heading">Servineo</h3>
           </div>
           <p className="text-[#b9ddff] text-sm sm:text-base">La plataforma líder que conecta clientes con proveedores de servicios profesionales. Encuentra el fixer perfecto para tu proyecto.</p>
         </div>
 
         <div className="space-y-4">
-          <h4 className="text-xl font-semibold">Enlaces Rápidos</h4>
+          <h4 className="text-xl font-semibold font-heading">Enlaces Rápidos</h4>
       <nav className="flex flex-col space-y-2 items-center md:items-start">
       <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
       <a href="#mapa" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
@@ -150,7 +150,7 @@ const Footer = () => {
         </div>
                 
         <div className="space-y-4">
-          <h4 className="text-xl font-semibold">Soporte</h4>
+          <h4 className="text-xl font-semibold font-heading">Soporte</h4>
           <ul className="space-y-3">
             <li className="flex items-center justify-center md:justify-start">
               <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">

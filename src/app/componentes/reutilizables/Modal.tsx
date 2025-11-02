@@ -63,10 +63,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div ref={modalRef} className="relative w-full max-w-2xl bg-[#eef7ff] rounded-lg shadow-xl text-[#13378b] font-inter">
+      <div ref={modalRef} className="relative w-full max-w-2xl bg-[#eef7ff] rounded-lg shadow-xl text-[#13378b]">
         <div className="max-h-[90vh] overflow-hidden rounded-lg">
           <div className="flex items-start justify-between p-6 pb-4 border-b border-[#b9ddff]">
-            <h3 className="text-xl font-semibold text-[#11255a]" style={{ fontFamily: 'Poppins, Anton, Roboto, sans-serif' }}>{title}</h3>
+            <h3 className="text-xl font-semibold text-[#11255a] font-heading">{title}</h3>
             <button
               ref={closeBtnRef}
               onClick={onClose}
@@ -76,7 +76,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
               <IoClose size={24} />
             </button>
           </div>
-          <div className="p-6 overflow-auto text-base max-h-[70vh] space-y-4">
+          <div className="p-6 overflow-auto text-base max-h-[70vh] space-y-4 font-heading">
             {children}
           </div>
         </div>
