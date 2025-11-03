@@ -1,0 +1,122 @@
+import { Job } from "../types/job";
+
+interface UserFromAPI {
+  _id: string;
+  nombre: string;
+  fecha_registro: string;
+  activo: boolean;
+  ciudad: string | {
+    nombre?: string;
+    ciudad?: string;
+    departamento?: string;
+    provincia?: string;
+    zona?: string;
+  };
+  servicios?: Array<{
+    nombre: string;
+    precio_personalizado?: number;
+    precio?: number;
+  }>;
+  calificacion_promedio?: number;
+  calificacion?: number;
+}
+
+// Función auxiliar para generar un trabajo de ejemplo
+const generateExampleJobs = (count: number): Job[] => {
+  const currentDate = new Date();
+  return Array.from({ length: count }, (_, index) => {
+    const jobDate = new Date(currentDate.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000);
+    return {
+      id: `example-${index + 1}`,
+      title: `Servicio de Ejemplo ${index + 1}`,
+      company: `Profesional ${index + 1}`,
+      service: `Servicio ${Math.floor(index/3) + 1}`,
+      location: ['La Paz', 'Cochabamba', 'Santa Cruz', 'Oruro'][Math.floor(Math.random() * 4)],
+      postedDate: jobDate.toLocaleDateString(),
+      date: jobDate.toISOString(),
+      salaryRange: `Bs ${Math.floor(Math.random() * 500 + 200)}`,
+      employmentType: Math.random() > 0.2 ? "Disponible" : "No disponible",
+      employmentTypeColor: Math.random() > 0.2 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600",
+      rating: Math.floor(Math.random() * 3 + 3)
+    };
+  });
+};
+
+export const getJobs = async (): Promise<Job[]> => {
+  try {
+    // Usar variable de entorno para la URL base
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const endpoint = `${API_BASE}/borbotones/usuarios?limit=50`; // Aumentamos a 50 para tener más datos
+    
+    console.log('Obteniendo trabajos desde:', endpoint);
+
+    const response = await fetch(endpoint, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.error(`Error ${response.status} al obtener trabajos`);
+      return generateExampleJobs(50); // Generamos 50 trabajos de ejemplo
+    }
+
+    const json: { data?: UserFromAPI[] } = await response.json();
+
+    // Mapear datos de la API al formato Job
+    let mappedJobs: Job[] = (json.data || []).map((user: UserFromAPI) => {
+      let location = "Sin ciudad";
+      if (typeof user.ciudad === 'string') {
+        location = user.ciudad;
+      } else if (user.ciudad && typeof user.ciudad === 'object') {
+        const nombre = user.ciudad.nombre || user.ciudad.ciudad || '';
+        const dept = user.ciudad.departamento || user.ciudad.provincia || user.ciudad.zona || '';
+        location = dept ? `${nombre}, ${dept}` : nombre || "Sin ciudad";
+      }
+
+      const firstService = (user.servicios && user.servicios[0]) || null;
+      const registerDate = new Date(user.fecha_registro);
+
+      const apiRating = user.calificacion_promedio ?? user.calificacion ?? null;
+      const randomRating = () => {
+        const steps = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+        return steps[Math.floor(Math.random() * steps.length)];
+      };
+
+      const preferredId = (user as any).id_usuario ?? (user as any).id ?? user._id;
+      
+      return {
+        id: preferredId ? String(preferredId) : undefined,
+        title: firstService?.nombre || "Sin servicio",
+        company: user.nombre,
+        service: (user.servicios || []).map((s) => s.nombre).join(", "),
+        location,
+        postedDate: registerDate.toLocaleDateString(),
+        date: registerDate.toISOString(),
+        salaryRange: firstService && (firstService.precio_personalizado ?? firstService.precio)
+          ? `Bs ${Number(firstService.precio_personalizado ?? firstService.precio).toLocaleString('es-BO')}`
+          : undefined,
+        employmentType: user.activo ? "Disponible" : "No disponible",
+        employmentTypeColor: user.activo
+          ? "bg-green-50 text-green-600"
+          : "bg-red-50 text-red-600",
+        rating: apiRating ? Number(apiRating) : randomRating()
+      } as Job;
+    });
+
+    // Si no hay suficientes trabajos reales, agregar trabajos de ejemplo
+    if (mappedJobs.length < 50) { // Aseguramos tener al menos 50 trabajos
+      const exampleJobsNeeded = 50 - mappedJobs.length;
+      const exampleJobs = generateExampleJobs(exampleJobsNeeded);
+      mappedJobs = [...mappedJobs, ...exampleJobs];
+    }
+
+    console.log(`Total de trabajos disponibles: ${mappedJobs.length}`);
+    return mappedJobs;
+
+  } catch (error) {
+    console.error('Error al obtener trabajos:', error);
+    // En caso de error, devolver trabajos de ejemplo
+    return generateExampleJobs(50);
+  }
+};
