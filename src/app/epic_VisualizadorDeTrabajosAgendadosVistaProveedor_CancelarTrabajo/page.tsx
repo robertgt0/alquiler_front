@@ -1,5 +1,5 @@
 "use client";
-// url para entrar a esta pagina 
+//url para acceder a esta pagina 
 //http://localhost:3000/epic_VisualizadorDeTrabajosAgendadosVistaProveedor_CancelarTrabajo
 
 import React, { useState, useEffect } from "react";
