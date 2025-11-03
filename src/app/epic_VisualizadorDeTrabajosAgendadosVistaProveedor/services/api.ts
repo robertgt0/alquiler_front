@@ -1,4 +1,8 @@
+
+
+import { fetchTrabajosCliente } from '@/app/epic_VisualizadorDeTrabajosAgendadosVistaCliente/services/api';
 import { Job } from '../interfaces/types';
+export type Role = 'cliente' | 'proveedor';
 // Importamos 'JobStatus' para usarlo en nuestros mocks
 import { JobStatus } from '../interfaces/types';
 // Las funciones 'convertirAISO' y 'normalizarEstado' no las necesitamos aquí
@@ -157,7 +161,37 @@ const MOCK_JOBS: Job[] = [
     status: 'pending',
     cancelReason: '',
     description: 'Apertura de puerta (llaves olvidadas).',
-  }
+  },
+  {
+    id: 'mock-c16',
+    clientName: 'Armando Paredes',
+    service: 'Albañil',
+    startISO: '2025-11-25T10:00:00.000Z', // Nov 25
+    endISO: '2025-11-25T11:00:00.000Z',
+    status: 'cancelled',
+    cancelReason: 'Tuve que cancelar porque habia bloqueos y no pude llegar.',
+    description: 'El trabajo es la construcción de un muro perimetral de 20 metros.',
+  },
+  {
+    id: 'mock-c17',
+    clientName: 'Isac Diaz',
+    service: 'Albañil',
+    startISO: '2025-11-25T10:00:00.000Z', // Nov 25
+    endISO: '2025-11-25T11:00:00.000Z',
+    status: 'done',
+    cancelReason: '',
+    description: 'El trabajo es la construcción de un muro perimetral de 20 metros.',
+  },
+{
+    id: 'mock-c18',
+    clientName: 'Dabel Lucana',
+    service: 'Carpintería',
+    startISO: '2025-11-25T15:00:00.000Z', // Nov 25
+    endISO: '2025-11-25T16:00:00.000Z',
+    status: 'cancelled',
+    cancelReason: '',
+    description: 'Arreglar la puerta del garaje.',
+  },
 ];
 // --- FIN DE DATOS FALSOS (MOCK) ---
 
