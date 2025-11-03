@@ -48,7 +48,7 @@ export const useGeolocation = (options: PositionOptions = {}) => {
 
     setLoading(true);
     navigator.geolocation.getCurrentPosition(successHandler, errorHandler, defaultOptions);
-  }, []);
+  }, [defaultOptions]);
 
   const refreshLocation = () => {
     setLoading(true);
