@@ -1,6 +1,7 @@
 "use client"; // 👈 1. Convertir a Client Component
 
 import { useState, useEffect } from "react"; // 👈 2. Importar hooks
+import "leaflet/dist/leaflet.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";

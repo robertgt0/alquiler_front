@@ -1,10 +1,10 @@
 @import "tailwindcss";
-@import 'leaflet/dist/leaflet.css';
+@import "leaflet/dist/leaflet.css";
 
-:root {
+/*:root {
   --background: #ffffff;
   --foreground: #171717;
-}
+}*/
 
 @theme inline {
   --color-background: var(--background);
@@ -13,13 +13,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-
-@media (prefers-color-scheme: dark) {
+/*@media (prefers-color-scheme: dark) {
   :root {
     --background: #ffffff;
     --foreground: #000000;
   }
-}
+}*/
 
 body {
   background: var(--background);
