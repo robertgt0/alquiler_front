@@ -1,3 +1,4 @@
+import type { CategoryDTO } from "@/lib/api/categories";
 import type { PaymentMethodKey } from "@/types/payment";
 
 const RAW_API = process.env.NEXT_PUBLIC_API_URL || "";
@@ -44,6 +45,14 @@ export type FixerDTO = {
   memberSince?: string;
 };
 
+export type FixerWithCategoriesDTO = FixerDTO & { categoriesInfo: CategoryDTO[] };
+
+export type FixersByCategoryDTO = {
+  category: CategoryDTO;
+  total: number;
+  fixers: FixerWithCategoriesDTO[];
+};
+
 export async function checkCI(ci: string, excludeId?: string) {
   const url = new URL(`${FIXER_BASE}/check-ci`);
   url.searchParams.set("ci", ci);
@@ -67,6 +76,16 @@ export async function createFixer(payload: {
 
 export async function getFixer(id: string): Promise<ApiSuccess<FixerDTO>> {
   return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}`, { cache: "no-store" });
+}
+
+export async function getFixersByCategory(search?: string): Promise<FixersByCategoryDTO[]> {
+  const url = new URL(`${FIXER_BASE}/by-category`);
+  const trimmed = search?.trim();
+  if (trimmed) {
+    url.searchParams.set("search", trimmed);
+  }
+  const response = await request<ApiSuccess<FixersByCategoryDTO[]>>(url.toString(), { cache: "no-store" });
+  return response.data;
 }
 
 export async function updateIdentity(id: string, ci: string): Promise<ApiSuccess<FixerDTO>> {

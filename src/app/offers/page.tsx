@@ -10,7 +10,7 @@ export default function OffersPage() {
         </div>
         <nav style={{ display: 'flex', gap: 16, color: '#616E8A' }}>
           <a href="/offers" style={{ textDecoration: 'none', color: '#616E8A' }}>Encontrar Fixers</a>
-          <a href="#" style={{ textDecoration: 'none', color: '#616E8A' }}>Fixer</a>
+          <a href="/fixers" style={{ textDecoration: 'none', color: '#616E8A' }}>Ver fixers por trabajo</a>
           <a href="#" style={{ textDecoration: 'none', color: '#616E8A' }}>Mis Ofertas</a>
           <a href="#" style={{ textDecoration: 'none', color: '#616E8A' }}>Ayuda</a>
         </nav>
