@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, Circle, useMap, ScaleControl } from 'react-leaflet';
 import L from 'leaflet';
 import { Offer, Location } from '../interfaces/types';
 import { calculateDistance, formatDistance } from '../utils/mapHelpers';
@@ -26,7 +26,7 @@ interface MapComponentProps {
 }
 
 // MapController con key única para forzar re-render
-const MapController: React.FC<{ center: Location; zoom: number; trigger: number }> = ({ center, zoom, trigger }) => {
+const MapController: React.FC<{ center: Location; zoom: number; trigger: number; onZoomChange?: (zoom: number) => void }> = ({ center, zoom, trigger, onZoomChange }) => {
   const map = useMap();
   
   useEffect(() => {
@@ -36,6 +36,23 @@ const MapController: React.FC<{ center: Location; zoom: number; trigger: number 
       duration: 1
     });
   }, [trigger]); // CLAVE: Solo reacciona al trigger, no a center directamente
+  
+  // Escuchar cambios de zoom en tiempo real (incluyendo scroll)
+  useEffect(() => {
+    const handleZoomEnd = () => {
+      const currentZoom = map.getZoom();
+      console.log('🔍 Zoom cambiado a:', currentZoom);
+      if (onZoomChange) {
+        onZoomChange(currentZoom);
+      }
+    };
+
+    map.on('zoomend', handleZoomEnd);
+    
+    return () => {
+      map.off('zoomend', handleZoomEnd);
+    };
+  }, [map, onZoomChange]);
   
   return null;
 };
@@ -71,6 +88,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 }) => {
   const [mapCenter, setMapCenter] = useState<Location>(userLocation);
   const [mapZoom, setMapZoom] = useState<number>(15); // Zoom más cercano por defecto
+  const [currentZoom, setCurrentZoom] = useState<number>(15); // Estado para zoom actual
   const [centerTrigger, setCenterTrigger] = useState<number>(0); // Contador para forzar centrado
   const mapRef = useRef<L.Map | null>(null);
 
@@ -99,17 +117,34 @@ export const MapComponent: React.FC<MapComponentProps> = ({
     console.log('🔴 Botón centrar presionado');
     setMapCenter(userLocation);
     setMapZoom(15);
+    setCurrentZoom(15);
     setCenterTrigger(prev => prev + 1); // Incrementar trigger para forzar MapController
   };
 
   const handleZoomIn = () => {
-    setMapZoom((prev) => Math.min(prev + 1, 18));
-    setCenterTrigger(prev => prev + 1);
+    if (currentZoom < 18) {
+      const newZoom = currentZoom + 1;
+      setMapZoom(newZoom);
+      setCurrentZoom(newZoom);
+      setCenterTrigger(prev => prev + 1);
+    }
   };
 
   const handleZoomOut = () => {
-    setMapZoom((prev) => Math.max(prev - 1, 3));
-    setCenterTrigger(prev => prev + 1);
+    if (currentZoom > 3) {
+      const newZoom = currentZoom - 1;
+      setMapZoom(newZoom);
+      setCurrentZoom(newZoom);
+      setCenterTrigger(prev => prev + 1);
+    }
+  };
+
+  // Función para manejar cambios de zoom desde MapController
+  const handleMapZoomChange = (zoom: number) => {
+    setCurrentZoom(zoom);
+    if (onZoomChange) {
+      onZoomChange(zoom);
+    }
   };
 
   return (
@@ -126,7 +161,15 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <MapController center={mapCenter} zoom={mapZoom} trigger={centerTrigger} />
+        {/* Barra de escala */}
+        <ScaleControl position="bottomleft" imperial={false} />
+        
+        <MapController 
+          center={mapCenter} 
+          zoom={mapZoom} 
+          trigger={centerTrigger} 
+          onZoomChange={handleMapZoomChange} 
+        />
 
         {/* Círculo azul mostrando el radio de distancia */}
         <Circle
@@ -228,6 +271,11 @@ export const MapComponent: React.FC<MapComponentProps> = ({
 
       {/* Botones de control */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+        {/* Indicador de zoom */}
+        <div className="bg-white text-gray-800 px-3 py-2 rounded-lg shadow-lg text-sm font-semibold text-center">
+          🔍 Zoom: {currentZoom}
+        </div>
+        
         <button
           onClick={handleCenterUser}
           className="bg-red-600 text-white p-3 rounded-lg shadow-lg hover:bg-red-700 transition text-sm font-semibold flex items-center gap-2"
@@ -237,14 +285,20 @@ export const MapComponent: React.FC<MapComponentProps> = ({
         </button>
         <button
           onClick={handleZoomIn}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition font-bold text-xl"
+          disabled={currentZoom >= 18}
+          className={`text-white px-4 py-2 rounded-lg shadow-lg transition font-bold text-xl ${
+            currentZoom >= 18 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          }`}
           title="Acercar"
         >
           +
         </button>
         <button
           onClick={handleZoomOut}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition font-bold text-xl"
+          disabled={currentZoom <= 3}
+          className={`text-white px-4 py-2 rounded-lg shadow-lg transition font-bold text-xl ${
+            currentZoom <= 3 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+          }`}
           title="Alejar"
         >
           -

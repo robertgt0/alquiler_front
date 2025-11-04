@@ -101,13 +101,26 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </div>
 
           {/* Contador de resultados */}
-          <div className="bg-green-50 p-3 rounded-lg">
-            <p className="text-sm text-center">
-              <span className="font-bold text-green-700 text-lg">{filteredCount}</span>
-              <span className="text-gray-600"> de </span>
-              <span className="font-bold text-gray-800">{totalOffers}</span>
-              <span className="text-gray-600"> ofertas</span>
-            </p>
+          <div className={`p-3 rounded-lg border-2 ${filteredCount === 0 ? 'bg-orange-50 border-orange-300' : 'bg-green-50 border-green-300'}`}>
+            <div className="text-center">
+              {filteredCount === 0 ? (
+                <>
+                  <p className="text-orange-600 font-bold text-base mb-1">
+                    ⚠️ No hay ofertas disponibles
+                  </p>
+                  <p className="text-gray-600 text-xs">
+                    Ajusta los filtros para ver más resultados
+                  </p>
+                </>
+              ) : (
+                <>
+                  <span className="font-bold text-green-700 text-lg">{filteredCount}</span>
+                  <span className="text-gray-600"> de </span>
+                  <span className="font-bold text-gray-800">{totalOffers}</span>
+                  <span className="text-gray-600"> ofertas</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
