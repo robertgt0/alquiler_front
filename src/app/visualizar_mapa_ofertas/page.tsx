@@ -79,9 +79,17 @@ export default function VisualizarMapaOfertas() {
       </div>
 
       <div className="bg-gray-800 text-white p-3 text-center text-sm">
-        Mostrando {filters.filteredOffers.length} ofertas activas | 
-        Tu ubicacion: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)} |
-        Radio: {filters.maxDistance} km
+        {filters.filteredOffers.length === 0 ? (
+          <span className="text-yellow-300 font-semibold text-base">
+            ⚠️ No hay ofertas que coincidan con los filtros aplicados
+          </span>
+        ) : (
+          <>
+            Mostrando {filters.filteredOffers.length} ofertas activas | 
+            Tu ubicacion: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)} |
+            Radio: {filters.maxDistance} km
+          </>
+        )}
       </div>
     </div>
   );
