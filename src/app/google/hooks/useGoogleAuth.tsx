@@ -24,20 +24,28 @@ export const useGoogleAuth = () => {
 
     try {
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://alquiler-front-nine.vercel.app';
+      const redirectUri = process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/google/callback';
+      
       if (!clientId) throw new Error('Google Client ID no configurado');
+
+      const state = btoa(JSON.stringify({ 
+        timestamp: Date.now().toString(), 
+        type: type // ← ENVIAR EL TIPO CORRECTO
+      }));
 
       const authParams = new URLSearchParams({
         client_id: clientId,
-        redirect_uri: `${baseUrl}/auth/google/callback`,
+        redirect_uri: redirectUri,
         response_type: 'code',
         scope: 'openid email profile',
         access_type: 'offline',
         prompt: 'consent',
-        state: btoa(JSON.stringify({ timestamp: Date.now().toString(), type })),
+        state: state,
       });
 
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${authParams.toString()}`;
+      
+      console.log(`🔗 Redirigiendo a Google OAuth para: ${type}`);
       window.location.href = googleAuthUrl;
 
       return { success: true };
@@ -53,18 +61,14 @@ export const useGoogleAuth = () => {
 
   // 2) Finaliza el flujo: guarda y redirige
   const finalizeFromGoogleProfile = useCallback((profile: GoogleProfile) => {
-    // Construimos el objeto que quieres
     const datosFormularioGoogle = {
       nombre: profile?.name ?? '',
       correo: profile?.email ?? '',
-      fotoPerfil: profile?.picture, // si luego lo quieres usar en otro paso
+      fotoPerfil: profile?.picture,
       terminosYCondiciones: true,
     };
 
-    // Guardar en sessionStorage con la clave que ya usa tu página siguiente
     sessionStorage.setItem('datosUsuarioParcial', JSON.stringify(datosFormularioGoogle));
-
-    // Redirigir al paso de imagen + ubicación
     router.push('/ImagenLocalizacion');
   }, [router]);
 
@@ -72,6 +76,6 @@ export const useGoogleAuth = () => {
     isLoading,
     error,
     handleGoogleAuth,
-    finalizeFromGoogleProfile, // <-- expuesto para usarlo en el callback
+    finalizeFromGoogleProfile,
   };
 };
