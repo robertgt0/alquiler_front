@@ -8,9 +8,17 @@ import { useState } from "react";
  * - No cambia el estado real del trabajo
  * - Solo muestra mensajes y simula una acción rápida de UI
  */
+
+type TipoAccion = "confirmar" | "rechazar" | null;
+
+interface MensajeUI {
+  tipo: Exclude<TipoAccion, null>;
+  texto: string;
+}
+
 export function useGestionSolicitud() {
-  const [loading, setLoading] = useState<"confirmar" | "rechazar" | null>(null);
-  const [mensaje, setMensaje] = useState("");
+  const [loading, setLoading] = useState<TipoAccion>(null);
+  const [mensaje, setMensaje] = useState<MensajeUI | null>(null);
 
   const wait = (ms = 300) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -18,10 +26,11 @@ export function useGestionSolicitud() {
     setLoading("confirmar");
     try {
       await wait(300);
-      // Mensaje de interfaz. La actualización real será del backend cuando esté integrado.
-      setMensaje(
-        "Tu confirmación fue enviada. El estado se actualizará cuando el sistema procese la solicitud."
-      );
+      setMensaje({
+        tipo: "confirmar",
+        texto:
+          "Solicitud Confirmada. El estado se actualizará cuando el sistema procese la solicitud.",
+      });
     } finally {
       setLoading(null);
     }
@@ -31,9 +40,11 @@ export function useGestionSolicitud() {
     setLoading("rechazar");
     try {
       await wait(300);
-      setMensaje(
-        "Tu rechazo fue enviado. El estado se actualizará cuando el sistema procese la solicitud."
-      );
+      setMensaje({
+        tipo: "rechazar",
+        texto:
+          "Solicitud Rechazada. El estado se actualizará cuando el sistema procese la solicitud.",
+      });
     } finally {
       setLoading(null);
     }

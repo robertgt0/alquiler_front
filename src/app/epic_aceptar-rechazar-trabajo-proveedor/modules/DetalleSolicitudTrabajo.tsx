@@ -40,7 +40,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
 
   const handleConfirmar = async () => {
     if (!botonesHabilitados) return;
-    setMensaje("");
+    setMensaje(null);
     tAccionRef.current = performance.now();
     await simularConfirmar();
     const dt = Math.round(performance.now() - (tAccionRef.current ?? 0));
@@ -51,7 +51,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
 
   const handleRechazar = async () => {
     if (!botonesHabilitados) return;
-    setMensaje("");
+    setMensaje(null);
     tAccionRef.current = performance.now();
     await simularRechazar();
     const dt = Math.round(performance.now() - (tAccionRef.current ?? 0));
@@ -97,14 +97,18 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
         </div>
       </div>
 
-      {/* Mensaje de acción (solo UI) */}
+      {/* Mensaje de acción (solo UI, centrado y con color por tipo) */}
       {mensaje && (
         <div
-          className="mt-6 rounded-md border px-5 py-3 text-base Poppins bg-gray-50 text-gray-700"
+          className={`mt-6 w-full text-center text-[17px] font-medium Poppins rounded-md px-5 py-3 border ${
+            mensaje.tipo === "confirmar"
+              ? "bg-[#DFFFE3] border-[#3DD45E] text-[#0E5B1C]"
+              : "bg-[#FFE3E3] border-[#FF4D4D] text-[#A10000]"
+          }`}
           role="status"
           aria-live="polite"
         >
-          {mensaje}
+          {mensaje.texto}
         </div>
       )}
 
@@ -128,7 +132,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
             {loading === "rechazar" ? "Rechazando…" : "Rechazar"}
           </button>
 
-          <button
+        <button
             type="button"
             onClick={handleConfirmar}
             disabled={!botonesHabilitados}
