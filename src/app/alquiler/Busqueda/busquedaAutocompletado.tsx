@@ -336,6 +336,7 @@ export default function BusquedaAutocompletado({
         setMostrarHistorialLocal,
         guardarEnHistorial,
         limpiarHistorialBackend,
+        eliminarDelHistorial,
         seleccionarDelHistorial
     } = useSearchHistory({
         mostrarHistorial,
@@ -883,7 +884,7 @@ export default function BusquedaAutocompletado({
                     </div>
                 )}
 
-                {/* HISTORIAL */}
+                            {/* HISTORIAL */}
                 {mostrarHistorialLocal && (
                     <ul className="caja-sugerencias">
                         <li className="sugerencias-header">
@@ -899,8 +900,22 @@ export default function BusquedaAutocompletado({
                                 className="item-historial"
                                 onClick={() => manejarSeleccionHistorial(item)}
                             >
+                                <div className="contenedor-texto-historial">
                                 <Clock className="icono-historial" size={16} />
-                                {item}
+
+                                <span className="texto-historial">{item}</span>
+                                </div>
+
+                                {/*Botón de borrar individualmente */}
+                                <button
+                                    className="boton-eliminar-historial"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); eliminarDelHistorial(item);
+                                    }}
+                                    title="Eliminar elemento"
+                                >
+                                    ✕
+                                </button>
                             </li>
                         ))}
 
@@ -913,6 +928,7 @@ export default function BusquedaAutocompletado({
                         </li>
                     </ul>
                 )}
+
 
                 {/* SUGERENCIAS */}
                 {mostrarSugerencias && (

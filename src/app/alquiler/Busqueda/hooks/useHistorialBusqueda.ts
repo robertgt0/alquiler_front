@@ -17,6 +17,7 @@ interface UseSearchHistoryReturn {
   limpiarHistorialBackend: () => Promise<void>;
   seleccionarDelHistorial: (texto: string) => string;
   cargarHistorialBackend: () => Promise<void>;
+  eliminarDelHistorial: (texto: string) => void;
 }
 
 class HistoryService {
@@ -176,6 +177,13 @@ export function useSearchHistory({
       console.error('❌ Error limpiando historial:', error);
     }
   }, [apiConfig?.endpoint]);
+ 
+  
+   const eliminarDelHistorial = useCallback((texto: string) => {
+    const nuevoHistorial = historial.filter(item => item !== texto);
+    setHistorial(nuevoHistorial);
+    localStorage.setItem("historialBusquedas", JSON.stringify(nuevoHistorial));
+  }, [historial]);
 
   // 🔥 Seleccionar item del historial
   const seleccionarDelHistorial = useCallback((texto: string) => {
@@ -192,6 +200,7 @@ export function useSearchHistory({
     guardarEnHistorial,
     limpiarHistorialBackend,
     seleccionarDelHistorial,
+    eliminarDelHistorial,
     cargarHistorialBackend
   };
 }
