@@ -6,14 +6,41 @@ import { SolicitudClienteDetalle } from "../interfaces/SolicitudCliente.interfac
 // 🗓️ “Jueves 25 de noviembre”
 function formatearFecha(fechaISO: string): string {
   const fecha = new Date(fechaISO);
-  const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  return `${dias[fecha.getUTCDay()]} ${fecha.getUTCDate()} de ${meses[fecha.getUTCMonth()]}`;
+  const dias = [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+  ];
+  const meses = [
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+  ];
+  return `${dias[fecha.getUTCDay()]} ${fecha.getUTCDate()} de ${
+    meses[fecha.getUTCMonth()]
+  }`;
 }
 
-export default function DetalleSolicitudCliente({ data }: { data: SolicitudClienteDetalle }) {
+export default function DetalleSolicitudCliente({
+  data,
+}: {
+  data: SolicitudClienteDetalle;
+}) {
   return (
-    <div className="w-full max-w-3xl mx-auto border border-[#0C4FE9] rounded-md p-8 sm:p-10 bg-white shadow-sm">
+    <div className="w-full max-w-3xl mx-auto border border-white rounded-md p-8 sm:p-10 bg-white">
       <h1 className="text-[#0C4FE9] Poppins text-4xl font-bold text-center mb-8">
         Trabajo
       </h1>
@@ -45,7 +72,7 @@ export default function DetalleSolicitudCliente({ data }: { data: SolicitudClien
       </div>
 
       {/* 🔹 Botón Atrás alineado a la izquierda */}
-      <div className="mt-9 flex items-center justify-between">
+      <div className="mt-9 flex justify-start">
         <button
           type="button"
           onClick={() => window.history.back()}
@@ -53,9 +80,6 @@ export default function DetalleSolicitudCliente({ data }: { data: SolicitudClien
         >
           Atrás
         </button>
-
-        {/* placeholder a la derecha para mantener el layout simétrico */}
-        <div />
       </div>
     </div>
   );
