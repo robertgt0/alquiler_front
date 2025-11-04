@@ -2,7 +2,7 @@ export type EstadoTrabajo = "Pendiente" | "Confirmado" | "Cancelado" | "Terminad
 
 export interface SolicitudClienteDetalle {
   id: string;
-  proveedor: string;  // 👈 cambia el label
+  proveedor: string;  // cambia el label
   fechaISO: string;   // "YYYY-MM-DD"
   horaInicio: string; // "HH:MM"
   horaFin: string;    // "HH:MM"

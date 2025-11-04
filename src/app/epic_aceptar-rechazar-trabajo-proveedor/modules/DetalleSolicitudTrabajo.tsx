@@ -5,7 +5,7 @@ import EtiquetaEstado from "../components/EtiquetaEstado";
 import { SolicitudDetalle } from "../interfaces/Trabajo.interface";
 import { useGestionSolicitud } from "../hooks/useGestionSolicitud";
 
-// 🗓️ Formato de fecha literal (ej: Martes 25 de noviembre)
+//Formato de fecha literal (ej: Martes 25 de noviembre)
 function formatearFecha(fechaISO: string): string {
   const fecha = new Date(fechaISO);
   const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
@@ -18,13 +18,13 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
   const { loading, mensaje, setMensaje, simularConfirmar, simularRechazar } =
     useGestionSolicitud();
 
-  // CA1: Botones habilitados solo si el estado es "Pendiente"
+  //Botones habilitados solo si el estado es "Pendiente"
   const botonesHabilitados = useMemo(
     () => data.estado === "Pendiente" && !loading,
     [data.estado, loading]
   );
 
-  // CA5: medir tiempo de carga de la vista "Trabajo"
+  //medir tiempo de carga de la vista "Trabajo"
   useEffect(() => {
     const t0 = performance.now();
     const id = requestAnimationFrame(() => {
@@ -35,7 +35,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
     return () => cancelAnimationFrame(id);
   }, []);
 
-  // CA7: medir tiempo desde clic hasta fin de la acción de UI (simulada)
+  //medir tiempo desde clic hasta fin de la acción de UI (simulada)
   const tAccionRef = useRef<number | null>(null);
 
   const handleConfirmar = async () => {
@@ -69,7 +69,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
         Trabajo
       </h1>
 
-      {/* Campos visibles (CA12–CA17) */}
+      {/* Campos visibles */}
       <div className="text-[19px] leading-8 Poppins">
         <div className="grid grid-cols-[120px_1fr] gap-y-3 gap-x-6">
           <span className="font-bold">Cliente:</span>
@@ -91,7 +91,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
 
           <span className="font-bold">Estado:</span>
           <span>
-            {/* CA11: "Pendiente" en amarillo (lo maneja EtiquetaEstado) */}
+            {/*"Pendiente" en amarillo (lo maneja EtiquetaEstado) */}
             <EtiquetaEstado estado={data.estado} />
           </span>
         </div>
@@ -112,7 +112,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
         </div>
       )}
 
-      {/* Botones (colores CA8–CA10) */}
+      {/* Botones */}
       <div className="mt-9 flex items-center justify-between">
         <button
           type="button"
