@@ -136,14 +136,6 @@ export default function ConvertirseFixerPage() {
         >
           Ir a mis ofertas
         </a>
-        {fixerId && (
-          <a
-            href={`/fixers/${fixerId}`}
-            className="rounded-xl border border-blue-600 px-6 py-3 text-sm font-semibold text-blue-600 transition hover:bg-blue-50"
-          >
-            Ver mi perfil publico
-          </a>
-        )}
       </section>
     );
   }
@@ -320,5 +312,6 @@ export default function ConvertirseFixerPage() {
     </div>
   );
 }
+
 
 

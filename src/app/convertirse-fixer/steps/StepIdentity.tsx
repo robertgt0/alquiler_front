@@ -13,6 +13,17 @@ export default function StepIdentity({ fixerId, userId, initialCI, onComplete }:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  if (!userId) {
+    return (
+      <section className="mx-auto flex max-w-xl flex-col gap-4 rounded-3xl bg-white p-8 text-center shadow-lg">
+        <h2 className="text-2xl font-semibold text-slate-900">Selecciona un usuario antes de continuar</h2>
+        <p className="text-sm text-slate-500">
+          No detectamos un <strong>ObjectId</strong> de usuario valido. Regresa al paso anterior e ingresa el identificador del requester que deseas convertir.
+        </p>
+      </section>
+    );
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
@@ -54,8 +65,12 @@ export default function StepIdentity({ fixerId, userId, initialCI, onComplete }:
     <form onSubmit={handleSubmit} className="mx-auto flex max-w-xl flex-col gap-6 rounded-3xl bg-white p-8 shadow-lg">
       <header className="flex flex-col gap-2">
         <StepProgress current={1} />
-        <h2 className="text-2xl font-semibold text-slate-900">¿Cual es tu numero de C.I.?</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Cual es tu numero de C.I.?</h2>
         <p className="text-sm text-slate-500">Necesitamos tu documento para validar que puedas trabajar como Fixer en la plataforma.</p>
+        <p className="text-xs text-slate-400">
+          Usuario actual:
+          <code className="ml-2 rounded bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">{userId}</code>
+        </p>
       </header>
 
       <div className="flex flex-col gap-3">
@@ -87,3 +102,7 @@ export default function StepIdentity({ fixerId, userId, initialCI, onComplete }:
     </form>
   );
 }
+
+
+
+

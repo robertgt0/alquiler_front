@@ -33,6 +33,15 @@ export type FixerDTO = {
   termsAccepted?: boolean;
   createdAt: string;
   updatedAt: string;
+  name?: string;
+  city?: string;
+  photoUrl?: string;
+  whatsapp?: string;
+  bio?: string;
+  jobsCount?: number;
+  ratingAvg?: number;
+  ratingCount?: number;
+  memberSince?: string;
 };
 
 export async function checkCI(ci: string, excludeId?: string) {
