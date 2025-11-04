@@ -1,34 +1,18 @@
 // src/app/page.tsx
-import Mapa from "./components/mapa/MapaWrapper";
-import CarruselOfertas from "./components/CarruselOfertas/CarruselOfertas";
-import HomeFixer from "./components/ListaCategorias/HomeFixer";
-import type { Categoria } from "./components/ListaCategorias/tipos";
-import Footer from "./components/Footer/Footer";
-import CarruselInspirador from "./components/CarruselInspirador/CarruselInspirador";
 
-import categorias, { type CategoriaBase } from "./components/data/categoriasData";
+// 1. Importa la función 'redirect' de next/navigation
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <main>
-      <section className="my-5">
-        <CarruselInspirador />
-      </section>
+  
+  // 2. Llama a la redirección inmediatamente
+  // Esto le dice a Next.js que envíe al usuario a "/Homepage"
+  redirect('/Homepage');
 
-      <section id="mapa" className="my-10">
-        <Mapa />
-      </section>
-
-      <section id="servicios" className="my-5 w-full">
-        {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
-        <HomeFixer categorias={categorias as CategoriaBase[]} />
-      </section>
-
-      <section id="trabajos-recientes" className="my-5 w-full">
-        <CarruselOfertas />
-      </section>
-
-      <Footer />
-    </main>
-  );
+  /* No es necesario retornar nada de HTML (como <main>, <h1>, etc.)
+     porque la redirección detendrá la renderización de esta página
+     y enviará al usuario a la nueva ruta.
+     Puedes retornar null si lo prefieres.
+  */
+  return null;
 }

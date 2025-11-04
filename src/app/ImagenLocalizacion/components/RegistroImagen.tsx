@@ -352,7 +352,8 @@ export default function RegistroImagen() {
     sessionStorage.removeItem("datosUsuarioParcial");
     setTimeout(() => {
       setSuccessOpen(false);
-      router.push("/home");
+      // ✅ CAMBIO: Redirigir a /login en lugar de /home
+      router.push("/login");
     }, 3000);
   } catch (err: unknown) {
     console.error("Error al crear usuario:", err);

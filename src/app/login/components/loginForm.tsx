@@ -25,7 +25,8 @@ export const LoginForm: React.FC = () => {
   const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
-    await handleGoogleAuth();
+    // Para login, usar tipo "login" específicamente
+    await handleGoogleAuth('login');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,8 +60,8 @@ export const LoginForm: React.FC = () => {
       const eventLogin = new CustomEvent("login-exitoso");
       window.dispatchEvent(eventLogin);
       
-      // Redirigir a home
-      router.push('/');
+      // Redirigir a Homepage en lugar de home
+      router.push('/Homepage');
     } catch (error: unknown) {
       console.error('Error completo al iniciar sesión:', error);
       

@@ -7,7 +7,7 @@ import AppleIcon from '../assets/icons8-apple-50.png';
 import { useRouter } from "next/navigation";
 import { checkEmailExists } from '../../teamsys/services/checkEmailExists';
 import { EmailExistsMessage } from './emailExistsMessage';
-import { Link } from 'lucide-react';
+import Link from 'next/link';
 
 export const RegistrationForm: React.FC = () => {
   const router = useRouter();
@@ -23,7 +23,8 @@ export const RegistrationForm: React.FC = () => {
   const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
-    await handleGoogleAuth();
+    // Para registro, usar tipo "register" específicamente
+    await handleGoogleAuth('register');
   };
 
   const formularioValido =

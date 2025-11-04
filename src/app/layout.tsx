@@ -68,7 +68,7 @@ export default function RootLayout({
         <Header />
 
         {/* SOLUCIÓN: Cambiar el padding para que funcione en todos los dispositivos */}
-        <div className="pt-16 sm:pt-20">
+        <div className="pt-16 sm:pt-10">
           {/* Aumenté el padding-top */}
           {children}
         </div>
