@@ -6,6 +6,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import Header from "./components/Header/Header";
+import HelpButton from "./components/HelpButton/HelpButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -71,6 +72,8 @@ export default function RootLayout({
         <div className="pt-16 sm:pt-20"> {/* Aumenté el padding-top */}
           {children}
         </div>
+        {/* Botón de ayuda flotante (WhatsApp) */}
+        <HelpButton />
       </body>
     </html>
   );
