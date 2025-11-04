@@ -1,39 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { confirmarSolicitud, rechazarSolicitud } from "../services/solicitudProveedorService";
 
-export function useGestionSolicitud(id: string) {
+/**
+ * Hook SOLO-frontend:
+ * - No llama backend
+ * - No cambia el estado real del trabajo
+ * - Solo muestra mensajes y simula una acción rápida de UI
+ */
+export function useGestionSolicitud() {
   const [loading, setLoading] = useState<"confirmar" | "rechazar" | null>(null);
   const [mensaje, setMensaje] = useState("");
 
-  // 🟦 Acción: Confirmar solicitud
-  async function onConfirmar() {
-    setMensaje("");
+  const wait = (ms = 300) => new Promise<void>((r) => setTimeout(r, ms));
+
+  async function simularConfirmar() {
     setLoading("confirmar");
     try {
-      await confirmarSolicitud(id); // 👉 conexión real con backend más adelante
-      setMensaje("✅ Solicitud confirmada. El trabajo pasará a 'Confirmado'.");
-    } catch {
-      setMensaje("❌ No se pudo confirmar. Intenta nuevamente.");
+      await wait(300);
+      // Mensaje de interfaz. La actualización real será del backend cuando esté integrado.
+      setMensaje(
+        "Tu confirmación fue enviada. El estado se actualizará cuando el sistema procese la solicitud."
+      );
     } finally {
       setLoading(null);
     }
   }
 
-  // 🔴 Acción: Rechazar solicitud
-  async function onRechazar() {
-    setMensaje("");
+  async function simularRechazar() {
     setLoading("rechazar");
     try {
-      await rechazarSolicitud(id);
-      setMensaje("⚠️ Solicitud rechazada. El trabajo pasará a 'Cancelado'.");
-    } catch {
-      setMensaje("❌ No se pudo rechazar. Intenta nuevamente.");
+      await wait(300);
+      setMensaje(
+        "Tu rechazo fue enviado. El estado se actualizará cuando el sistema procese la solicitud."
+      );
     } finally {
       setLoading(null);
     }
   }
 
-  return { loading, mensaje, setMensaje, onConfirmar, onRechazar };
+  return { loading, mensaje, setMensaje, simularConfirmar, simularRechazar };
 }
