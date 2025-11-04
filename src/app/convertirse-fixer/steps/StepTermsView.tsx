@@ -39,23 +39,42 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
       <header className="rounded-3xl bg-white p-8 shadow-lg">
         <StepProgress current={5} />
         <h2 className="mt-2 text-2xl font-semibold text-slate-900">Terminos y condiciones</h2>
-        <p className="mt-2 text-sm text-slate-500">Antes de finalizar, revisa el resumen de tu registro y acepta los terminos para comenzar a ofrecer tus servicios.</p>
+        <p className="mt-2 text-sm text-slate-500">
+          Revisa el resumen de tu registro y confirma los datos antes de aceptar los terminos.
+        </p>
 
-        <div className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+        <div className="mt-6 space-y-5 rounded-2xl border border-slate-200 bg-slate-50 p-6">
           <div>
             <p className="text-xs font-semibold uppercase text-slate-500">Documento</p>
             <p className="text-lg font-semibold text-slate-800">C.I. {summary.ci}</p>
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">Categorias seleccionadas</p>
+            <p className="text-xs font-semibold uppercase text-slate-500">Habilidades registradas</p>
             {summary.categories.length ? (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {summary.categories.map((category) => (
-                  <span key={category.id} className="rounded-full bg-blue-600/10 px-3 py-1 text-sm font-medium text-blue-700">
-                    {category.name}
-                  </span>
-                ))}
+              <div className="mt-3 space-y-3">
+                {summary.categories.map((category) => {
+                  const personal = (category.customDescription ?? "").trim();
+                  const text = personal || category.description || "Sin descripcion disponible.";
+                  const badgeLabel = personal ? "Descripcion personalizada" : "Descripcion general";
+                  const badgeClass = personal
+                    ? "bg-purple-100 text-purple-700 border border-purple-200"
+                    : "bg-slate-200 text-slate-700 border border-slate-300";
+
+                  return (
+                    <div key={category.id} className="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{category.name}</p>
+                          <p className="mt-2 text-sm text-slate-600">{text}</p>
+                        </div>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass}`}>
+                          {badgeLabel}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="mt-2 text-sm text-slate-500">Sin categorias registradas.</p>
@@ -70,10 +89,10 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
                   <li key={method}>
                     <span className="font-semibold text-slate-800">{METHOD_LABEL[method] ?? method}</span>
                     {method === "card" && summary.payment.card && (
-                      <span className="text-slate-500"> · Titular {summary.payment.card.holder}</span>
+                      <span className="text-slate-500"> - Titular {summary.payment.card.holder}</span>
                     )}
                     {method === "qr" && summary.payment.qr && (
-                      <span className="text-slate-500"> · Titular {summary.payment.qr.holder}</span>
+                      <span className="text-slate-500"> - Titular {summary.payment.qr.holder}</span>
                     )}
                   </li>
                 ))}
@@ -88,13 +107,19 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
       <article className="rounded-3xl bg-white p-8 shadow-lg">
         <h3 className="text-lg font-semibold text-slate-900">Contrato de terminos y servicios</h3>
         <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
-          <p>El Fixer se compromete a brindar servicios de calidad respetando las politicas de Servineo, la normativa vigente y a entregar informacion veridica dentro de la plataforma.</p>
-          <p>Al aceptar este documento autorizas el tratamiento de tus datos personales segun la Politica de Privacidad y garantizas que utilizaras la aplicacion de forma etica y responsable.</p>
-          <p>Servineo podra actualizar estos terminos cuando sea necesario. Te notificaremos cualquier cambio relevante por los canales oficiales.</p>
+          <p>
+            El fixer se compromete a brindar servicios de calidad respetando las politicas de Servineo y la normativa
+            vigente. Toda la informacion suministrada debe ser verdadera.
+          </p>
+          <p>
+            Al aceptar este documento autorizas el tratamiento de tus datos personales segun la Politica de Privacidad y garantizas
+            que usaras la aplicacion de manera etica y responsable.
+          </p>
+          <p>Servineo podra actualizar estos terminos y te notificara cualquier cambio relevante por los canales oficiales.</p>
         </div>
       </article>
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+  {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
       <footer className="flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-lg">
         <label className="flex items-start gap-3">
@@ -113,7 +138,7 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
             onClick={onBack}
             className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-blue-500 hover:text-blue-600"
           >
-            Atrás
+            Atras
           </button>
           <button
             type="button"

@@ -23,12 +23,27 @@ async function request<T = any>(path: string, init?: RequestInit): Promise<T> {
   return payload;
 }
 
+export type FixerSkillDTO = {
+  categoryId: string;
+  customDescription?: string;
+};
+
+export type FixerSkillInfoDTO = {
+  category: CategoryDTO;
+  description: string;
+  customDescription?: string;
+  source: "personal" | "general";
+};
+
 export type FixerDTO = {
   id: string;
   userId: string;
   ci?: string;
   location?: { lat: number; lng: number; address?: string };
   categories?: string[];
+  skills?: FixerSkillDTO[];
+  categoriesInfo?: CategoryDTO[];
+  skillsInfo?: FixerSkillInfoDTO[];
   paymentMethods?: ("card" | "qr" | "cash")[];
   paymentAccounts?: Record<string, { holder: string; accountNumber: string }>;
   termsAccepted?: boolean;
@@ -45,12 +60,20 @@ export type FixerDTO = {
   memberSince?: string;
 };
 
-export type FixerWithCategoriesDTO = FixerDTO & { categoriesInfo: CategoryDTO[] };
+export type FixerWithCategoriesDTO = FixerDTO & {
+  categoriesInfo: CategoryDTO[];
+  skillsInfo?: FixerSkillInfoDTO[];
+};
 
 export type FixersByCategoryDTO = {
   category: CategoryDTO;
   total: number;
   fixers: FixerWithCategoriesDTO[];
+};
+
+export type UpdateCategoriesPayload = {
+  categories: string[];
+  skills?: FixerSkillDTO[];
 };
 
 export async function checkCI(ci: string, excludeId?: string) {
@@ -104,11 +127,11 @@ export async function updateLocation(id: string, location: { lat: number; lng: n
   });
 }
 
-export async function updateCategories(id: string, categories: string[]) {
+export async function updateCategories(id: string, payload: UpdateCategoriesPayload) {
   return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}/categories`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ categories }),
+    body: JSON.stringify(payload),
   });
 }
 

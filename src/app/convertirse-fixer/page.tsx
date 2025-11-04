@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CategoryDTO } from "@/lib/api/categories";
 import { getFixer } from "@/lib/api/fixer";
 import type { PaymentState } from "@/types/payment";
@@ -10,6 +10,7 @@ import StepLocation from "./steps/StepLocation";
 import StepCategories from "./steps/StepCategories";
 import StepPayment from "./steps/StepPayment";
 import StepTermsView from "./steps/StepTermsView";
+import type { SelectedCategory } from "./steps/types";
 import { STORAGE_KEYS, loadFromStorage, removeFromStorage, saveToStorage } from "./storage";
 
 const ENV_USER_ID = process.env.NEXT_PUBLIC_DEFAULT_USER_ID ?? "";
@@ -31,7 +32,7 @@ export default function ConvertirseFixerPage() {
   const [fixerId, setFixerId] = useState<string | null>(null);
   const [ci, setCi] = useState("");
   const [location, setLocation] = useState<FixerLocation | null>(null);
-  const [categories, setCategories] = useState<CategoryDTO[]>([]);
+  const [categories, setCategories] = useState<SelectedCategory[]>([]);
   const [payment, setPayment] = useState<PaymentState>(DEFAULT_PAYMENT_STATE);
   const [finished, setFinished] = useState(false);
   const [loadingFixer, setLoadingFixer] = useState(false);
@@ -44,7 +45,7 @@ export default function ConvertirseFixerPage() {
     const storedFixerId = loadFromStorage<string | null>(STORAGE_KEYS.fixerId, null);
     const storedCI = loadFromStorage<string | null>(STORAGE_KEYS.ci, null);
     const storedLocation = loadFromStorage<FixerLocation | null>(STORAGE_KEYS.location, null);
-    const storedCategories = loadFromStorage<CategoryDTO[]>(STORAGE_KEYS.categories, []);
+    const storedCategories = loadFromStorage<SelectedCategory[]>(STORAGE_KEYS.categories, []);
     const storedPayment = loadFromStorage<PaymentState | null>(STORAGE_KEYS.payment, null);
 
     if (storedFixerId) setFixerId(storedFixerId);
@@ -68,18 +69,36 @@ export default function ConvertirseFixerPage() {
         const data = response.data;
         if (data.ci) setCi(data.ci);
         if (data.location) setLocation({ lat: data.location.lat, lng: data.location.lng, address: data.location.address });
-        if (Array.isArray(data.categories) && data.categories.length) {
+        if (Array.isArray(data.skillsInfo) && data.skillsInfo.length) {
+          const mapped: SelectedCategory[] = data.skillsInfo
+            .filter((skill) => Boolean(skill?.category))
+            .map((skill) => ({
+              ...skill.category,
+              customDescription: skill.source === "personal" ? skill.customDescription ?? skill.description : undefined,
+            }));
+          if (!cancelled) setCategories(mapped);
+        } else if (Array.isArray(data.categories) && data.categories.length) {
           try {
             const all = await fetchCategories();
-            const mapped = all.filter((item) => data.categories?.includes(item.id));
-            if (!cancelled) setCategories(mapped);
+            const selection = all.filter((item) => data.categories?.includes(item.id));
+            const customLookup = new Map(
+              (Array.isArray(data.skills) ? data.skills : []).map((skill: any) => [
+                typeof skill?.categoryId === "string" ? skill.categoryId : "",
+                typeof skill?.customDescription === "string" ? skill.customDescription : "",
+              ])
+            );
+            const fallback: SelectedCategory[] = selection.map((item) => ({
+              ...item,
+              customDescription: (customLookup.get(item.id) || "").trim() || undefined,
+            }));
+            if (!cancelled) setCategories(fallback);
           } catch (err) {
             console.warn("No se pudieron obtener categorias", err);
           }
         }
         if (Array.isArray(data.paymentMethods)) {
           setPayment((prev) => ({
-            methods: data.paymentMethods,
+            methods: data.paymentMethods as PaymentState["methods"],
             card: data.paymentAccounts?.card ?? prev.card ?? null,
             qr: data.paymentAccounts?.qr ?? prev.qr ?? null,
           }));
@@ -191,7 +210,7 @@ export default function ConvertirseFixerPage() {
     );
   }
 
-  let content: JSX.Element | null = null;
+  let content: ReactNode = null;
 
   switch (step) {
     case 0:
