@@ -4,11 +4,16 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import Icono from './Icono';
 import { useRouter } from 'next/navigation';
+import SimpleProfileMenu from '@/app/Menu/components/Menu';
 
 export default function Header() {
   const [isClient, setIsClient] = useState(false);
   const [areButtonsVisible, setAreButtonsVisible] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+   // control si el menu esta visible
+   const [menuVisible, setMenuVisible] = useState(false);
+
   const lastScrollY = useRef(0);
   const router = useRouter();
 
@@ -48,6 +53,18 @@ export default function Header() {
       window.removeEventListener('logout-exitoso', handleLogoutEvent);
     };
   }, []);
+
+  // cerrar menu al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as HTMLElement).closest(".menu-container")) {
+        setMenuVisible(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+    
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -143,30 +160,33 @@ export default function Header() {
                   Ser Fixer
                 </button>
               </Link>
+              
+              {/* ICONO CON MENÚ PERSONALIZADO */}
               <div className="flex items-center space-x-2">
                 <span className="font-semibold text-[#11255A]">Usuario</span>
-                <div className="relative group">
+
+                <div className="relative menu-container">
                   <svg
+                    onClick={() => setMenuVisible(!menuVisible)} // 👈 Al hacer clic, abre/cierra tu menú
                     className="w-8 h-8 text-[#2a87ff] cursor-pointer"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
                     <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
                   </svg>
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Cerrar Sesión
-                    </button>
-                  </div>
+
+                  {menuVisible && (
+                    <div className="absolute right-0 mt-2 z-50">
+                      <SimpleProfileMenu /> {/* 👈 Tu menú reemplaza el botón Cerrar Sesión */}
+                    </div>
+                  )}
                 </div>
               </div>
             </>
           )}
         </div>
       </header>
+
 
       {/* HEADER MÓVIL SUPERIOR */}
       <header className="sm:hidden fixed top-0 left-0 w-full p-2 bg-[#EEF7FF] shadow-md z-50">
@@ -229,30 +249,28 @@ export default function Header() {
                   Ser Fixer
                 </button>
               </Link>
-              <div className="flex items-center space-x-1 flex-1 justify-end">
+              <div className="relative menu-container flex items-center space-x-1 flex-1 justify-end">
                 <span className="text-[#11255A] text-xs font-semibold truncate">Usuario</span>
-                <div className="relative group">
-                  <svg
-                    className="w-5 h-5 text-[#2a87ff] cursor-pointer"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                  </svg>
-                  <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-3 py-1 text-xs text-gray-700 hover:bg-gray-100"
-                    >
-                      Cerrar Sesión
-                    </button>
+                <svg
+                  onClick={() => setMenuVisible(!menuVisible)} // 👈 Misma lógica para móvil
+                  className="w-5 h-5 text-[#2a87ff] cursor-pointer"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                </svg>
+
+                {menuVisible && (
+                  <div className="absolute right-0 top-full mt-2 z-50">
+                    <SimpleProfileMenu /> {/* 👈 Tu menú aquí también */}
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}
         </div>
       </footer>
+
 
       {/* Espacio para el header fijo */}
       <div className="h-16 sm:h-20"></div>
