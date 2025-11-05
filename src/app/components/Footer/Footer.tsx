@@ -12,7 +12,7 @@ import Modal from '../reutilizables/Modal';
 // AÑADIDO: Importamos tu componente de icono
 import Icono from '../Header/Icono';
 
-// Contenido para cada modal (sin cambios)
+// Contenido para cada modal (sin cambioss)
 const modalContents = {
   privacy: {
     title: 'Política de Privacidad',
