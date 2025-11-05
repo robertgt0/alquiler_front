@@ -82,7 +82,7 @@ export default function GestorMetodos({
   const toggleSeleccionEliminar = (metodoId: string) => {
     limpiarError();
     
-    //  VERIFICAR SI ES EL MÉTODO DE REGISTRO
+    // VERIFICAR SI ES EL MÉTODO DE REGISTRO
     const metodo = metodos.find(m => m.id === metodoId);
     if (metodo?.esMetodoRegistro) {
       setError("No se puede eliminar el método de autenticación con el que te registraste");
@@ -129,7 +129,7 @@ export default function GestorMetodos({
       
       // MÉTODO CORREO/CONTRASEÑA
       if (metodoId === 'correo') {
-        //  VERIFICAR que Google esté activo para tener el email
+        // VERIFICAR que Google esté activo para tener el email
         const googleEstaActivo = metodosActivos.some(m => m.id === 'google');
         
         if (!googleEstaActivo) {
@@ -159,17 +159,24 @@ export default function GestorMetodos({
       setCargandoGoogle(true);
       limpiarError();
       
-      //  OBTENER EL EMAIL DEL USUARIO ACTUAL
-      const userData = await apiService.getCurrentUser();
+      // 📌 OBTENER USERDATA DESDE SESSIONSTORAGE
+      const userDataString = sessionStorage.getItem('userData');
+      
+      if (!userDataString) {
+        throw new Error("No se encontraron datos de usuario en sessionStorage");
+      }
+      
+      // 📌 CONVERTIR JSON A OBJETO
+      const userData = JSON.parse(userDataString);
       const userEmail = userData.email;
       
       if (!userEmail) {
-        throw new Error("No se pudo obtener el correo del usuario");
+        throw new Error("No se pudo obtener el correo del usuario desde sessionStorage");
       }
       
       console.log('📧 Activando Google con email:', userEmail);
       
-      //  ENVIAR SOLO EL EMAIL AL BACKEND
+      // 📌 ENVIAR SOLO EL EMAIL AL BACKEND
       await apiService.setupGoogleAuth(userEmail);
       await activarMetodo('google');
       
@@ -187,17 +194,24 @@ export default function GestorMetodos({
     try {
       limpiarError();
       
-      // OBTENER EL EMAIL DEL USUARIO ACTUAL (el mismo de Google)
-      const userData = await apiService.getCurrentUser();
+      // 📌 OBTENER USERDATA DESDE SESSIONSTORAGE
+      const userDataString = sessionStorage.getItem('userData');
+      
+      if (!userDataString) {
+        throw new Error("No se encontraron datos de usuario en sessionStorage");
+      }
+      
+      // 📌 CONVERTIR JSON A OBJETO
+      const userData = JSON.parse(userDataString);
       const userEmail = userData.email;
       
       if (!userEmail) {
-        throw new Error("No se pudo obtener el correo del usuario");
+        throw new Error("No se pudo obtener el correo del usuario desde sessionStorage");
       }
       
       console.log('🔐 Configurando Correo/Contraseña para:', userEmail);
       
-      //  ENVIAR EMAIL + CONTRASEÑA AL BACKEND
+      // 📌 ENVIAR EMAIL + CONTRASEÑA AL BACKEND
       await apiService.setupEmailPassword(userEmail, contrasena);
       
       if (metodoSeleccionadoParaContrasena) {
