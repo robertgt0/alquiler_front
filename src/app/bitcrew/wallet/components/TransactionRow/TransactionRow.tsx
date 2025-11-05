@@ -1,5 +1,6 @@
 import React from 'react';
 import './TransactionRow.css';
+import { BsCreditCard2FrontFill } from 'react-icons/bs';
 // import { BsWallet } from 'react-icons/bs'; // Icono de ejemplo
 
 interface TransactionRowProps {
@@ -22,8 +23,7 @@ const TransactionRow: React.FC<TransactionRowProps> = ({ transaction }) => {
       {/* Requerimiento: [Icono] */}
       <div className="transaction-icon">
         {/* <BsWallet size={20} /> */}
-        {/* Placeholder para tu icono "S" */}
-        <div className="icon-placeholder">S</div>
+        <BsCreditCard2FrontFill size={20} />
       </div>
       
       {/* Requerimiento: [Descripción/Fecha] */}

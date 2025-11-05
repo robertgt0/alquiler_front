@@ -17,18 +17,6 @@
   color: #555;
 }
 
-/* Placeholder temporal para el icono "S" */
-.icon-placeholder {
-  font-weight: bold;
-  font-family: monospace;
-  font-size: 18px;
-  width: 20px;
-  height: 20px;
-  text-align: center;
-  line-height: 20px;
-}
-
-
 .transaction-details {
   flex-grow: 1; /* Esto empuja el monto hacia la derecha */
   display: flex;
