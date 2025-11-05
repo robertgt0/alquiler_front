@@ -1,0 +1,59 @@
+/* Requerimiento: Diseño de fila [Icono] [Descripción/Fecha] [Monto] */
+.transaction-row {
+  display: flex;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.transaction-icon {
+  margin-right: 16px;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+}
+
+/* Placeholder temporal para el icono "S" */
+.icon-placeholder {
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  line-height: 20px;
+}
+
+
+.transaction-details {
+  flex-grow: 1; /* Esto empuja el monto hacia la derecha */
+  display: flex;
+  flex-direction: column;
+}
+
+.transaction-details .type {
+  font-weight: 600;
+  color: #333;
+}
+
+.transaction-details .date {
+  font-size: 14px;
+  color: #888;
+}
+
+.transaction-amount {
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+/* Requerimiento: No seleccionable y "Bs." garantizado */
+.transaction-amount .amount,
+.transaction-amount .currency {
+  user-select: none;
+  cursor: default;
+}
