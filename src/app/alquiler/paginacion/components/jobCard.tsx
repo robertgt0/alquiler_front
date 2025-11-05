@@ -1,8 +1,6 @@
 "use client";
 
 import React from 'react';
-//devcode
-import AppointmentButton from "../../../agenda/components/AgendarCitaButton";
 import { useServicios } from '../hooks/useServicios';
 //import { useEffect, useState } from "react";
 
@@ -66,29 +64,6 @@ const JobCard: React.FC<JobCardProps> = ({
   rating = 0,
   onViewDetails
 }) => {
-  // Usar el hook aquí
-  const { servicios, loading, error } = useServicios();
-
-  // Mostrar estados de carga y error
-  if (loading) {
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-6 text-red-500">
-        Error: {error}
-      </div>
-    );
-  }
-
   return (
 
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
@@ -156,24 +131,13 @@ const JobCard: React.FC<JobCardProps> = ({
 
         <div className="mt-auto">
           {/* Botón centrado al final */}
-          {/*<button
+          {<button
             onClick={onViewDetails}
             className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-sm hover:shadow"
           >
             Ver Detalles
-          </button>*/}
-          {/*agendar cita*/}
-          {/* Botón de Agendar Cita para cada servicio */}
-          {servicios.map((servicio) => (
-            servicio.proveedorId && (
-              <div key={servicio._id} className="mb-2">
-                <AppointmentButton
-                  proveedorId={servicio.proveedorId._id}
-                  servicioId={servicio._id}
-                />
-              </div>
-            )
-          ))}
+          </button>}
+          
         </div>
       </div>
     </div>
