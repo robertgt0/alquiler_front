@@ -28,6 +28,10 @@ export type FixerDTO = {
   ci?: string;
   location?: { lat: number; lng: number; address?: string };
   categories?: string[];
+  fixerJobs?: Array<{
+    jobId: string;
+    customDescription?: string;
+  }>;
   paymentMethods?: ("card" | "qr" | "cash")[];
   paymentAccounts?: Record<string, { holder: string; accountNumber: string }>;
   termsAccepted?: boolean;
@@ -103,5 +107,55 @@ export async function acceptTerms(id: string) {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ accepted: true }),
+  });
+}
+
+
+// Obtener trabajos del fixer con descripciones personalizadas
+export async function getFixerJobs(fixerId: string) {
+  return request<ApiSuccess<Array<{
+    jobId: string;
+    jobName: string;
+    customDescription?: string;
+    generalDescription?: string;
+  }>>>(`${FIXER_BASE}/${fixerId}/jobs`, {
+    cache: "no-store",
+  });
+}
+
+// Obtener descripción de un trabajo específico del fixer
+export async function getFixerJobDescription(fixerId: string, jobId: string) {
+  return request<ApiSuccess<{
+    jobId: string;
+    jobName: string;
+    customDescription?: string;
+    generalDescription?: string;
+  }>>(`${FIXER_BASE}/${fixerId}/jobs/${jobId}`, {
+    cache: "no-store",
+  });
+}
+
+// Actualizar trabajos del fixer (reemplazar todos)
+export async function updateFixerJobs(
+  fixerId: string, 
+  jobs: Array<{ jobId: string; customDescription?: string }>
+) {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${fixerId}/jobs`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jobs }),
+  });
+}
+
+// Agregar un trabajo al fixer
+export async function addFixerJob(
+  fixerId: string,
+  jobId: string,
+  customDescription?: string
+) {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${fixerId}/jobs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jobId, customDescription }),
   });
 }
