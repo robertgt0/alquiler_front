@@ -110,8 +110,9 @@ export async function acceptTerms(id: string) {
   });
 }
 
+// ========== FUNCIONES DE TRABAJOS CON DESCRIPCIONES (Daniel + Nicolás) ==========
 
-// Obtener trabajos del fixer con descripciones personalizadas
+// Obtener trabajos del fixer con descripciones personalizadas (Daniel)
 export async function getFixerJobs(fixerId: string) {
   return request<ApiSuccess<Array<{
     jobId: string;
@@ -123,7 +124,7 @@ export async function getFixerJobs(fixerId: string) {
   });
 }
 
-// Obtener descripción de un trabajo específico del fixer
+// Obtener descripción de un trabajo específico del fixer (Daniel)
 export async function getFixerJobDescription(fixerId: string, jobId: string) {
   return request<ApiSuccess<{
     jobId: string;
@@ -135,7 +136,7 @@ export async function getFixerJobDescription(fixerId: string, jobId: string) {
   });
 }
 
-// Actualizar trabajos del fixer (reemplazar todos)
+// Actualizar trabajos del fixer - reemplazar todos (Nicolás)
 export async function updateFixerJobs(
   fixerId: string, 
   jobs: Array<{ jobId: string; customDescription?: string }>
@@ -147,15 +148,19 @@ export async function updateFixerJobs(
   });
 }
 
-// Agregar un trabajo al fixer
+// Agregar un trabajo al fixer (Nicolás)
 export async function addFixerJob(
   fixerId: string,
-  jobId: string,
-  customDescription?: string
+  job: {
+    jobId: string;
+    jobName?: string;
+    generalDescription?: string;
+    customDescription?: string;
+  }
 ) {
   return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${fixerId}/jobs`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jobId, customDescription }),
+    body: JSON.stringify(job),
   });
 }
