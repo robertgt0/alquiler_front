@@ -60,20 +60,16 @@ export default function VerDetallesPage() {
     } catch (error) {
       console.error('Error en handleEnviarClick:', error);
       alert('No se pudo enviar tu calificación. Inténtalo de nuevo.');
-      
-      // IMPORTANTE: Lanzamos el error para que el modal
-      // detenga el 'isSubmitting' pero NO cierre ni redirija.
       throw error; 
     }
     */
     // --- FIN: LÓGICA DE BACKEND ---
 
-    // Simulación de una llamada de red (borrar en producción)
+    // Simulación
     await new Promise((resolve) => setTimeout(resolve, 1000));
     console.log('Calificación enviada (simulación)');
 
     // --- ÉXITO: Cerrar y redirigir ---
-    // Si la lógica del backend fue exitosa (no hubo 'throw error'):
     setIsModalOpen(false);
     router.push(redirectPath);
   };
@@ -83,28 +79,27 @@ export default function VerDetallesPage() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-100 p-24">
       <h1 className="text-3xl font-bold mb-8">Detalles del Trabajo</h1>
 
-      {/* ... Contenido de la página ... */}
       <div className="bg-white p-8 rounded-lg shadow-md mb-8">
         <p>Contenido de los detalles del trabajo...</p>
       </div>
 
       <div className="flex gap-4">
         <button
-          onClick={() => router.back()} // Botón "Volver" de la página
+          onClick={() => router.back()}
           className="px-6 py-2 bg-gray-500 text-white rounded-lg font-semibold shadow hover:bg-gray-600 transition-colors"
         >
           Volver
         </button>
 
         <button
-          onClick={() => setIsModalOpen(true)} // Botón que abre el modal
+          onClick={() => setIsModalOpen(true)}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 transition-colors"
         >
           Calificar Proveedor
         </button>
       </div>
 
-      {/* Pasamos las 3 funciones nuevas al modal */}
+      {/* --- ESTA ES LA PARTE CORREGIDA --- */}
       <RatingModal
         isOpen={isModalOpen}
         onCloseClick={handleAtrasClick}
