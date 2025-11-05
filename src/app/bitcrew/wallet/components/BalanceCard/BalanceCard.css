@@ -1,99 +1,37 @@
 /* Requerimiento: Construir la tarjeta azul degradada */
 .balance-card {
-  background-image: linear-gradient(120deg, #11255A,#5C83BE, #8DC0FF); /* Ajusta estos colores a tu figma */
+  background-image: linear-gradient(120deg, #11255A, #5C83BE, #8DC0FF);
   color: white;
   padding: 24px;
   border-radius: 40px;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden; /* Buena práctica si se usan márgenes negativos */
 }
 
+/* --- Encabezado de la Tarjeta (Base/Móvil) --- */
 .card-header {
   margin-left: 22px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  font-size: 20px;
+  
+  /* Estilo base (móvil) */
+  font-size: 16px; 
   font-weight: 400;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  opacity: 1.1;
+  opacity: 1;
 }
 
+/* --- Iconos de Acción (Recargar y Ojo) --- */
 .card-icons {
   display: flex;
-  gap: 16px;
-}
-
-.balance-amount {
-  margin-left: 20px;
-  margin-top: -10px;
-
-  font-size: 65px;
-  font-weight: 800;
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  letter-spacing: -1px;
-}
-
-/* Requerimiento: que el usuario no pueda seleccionar el monto */
-.balance-amount .amount,
-.balance-amount .currency {
-  user-select: none;
-  cursor: default;
-}
-
-.card-footer {
-  padding: 4px 10px;
-  border-radius: 20px;
-
-  font-size: 14px;
-  font-weight: 500;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: rgba(255, 255, 255, 0.7);
-
-  margin-left: 25px;
-  margin-top: -5px;
-
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.card-number {
-  opacity: 0.7;
-}
-
-.card-status {
-  background-color: rgba(113, 225, 111, 0.53);
-  padding: 4px 10px;
-  border-radius: 20px;
-
-  font-size: 14px;
-  font-weight: 500;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* ... (Tus estilos de .balance-card, .balance-amount, etc. van aquí) ... */
-
-/* --- Estilos para los nuevos iconos --- */
-.card-header {
-  display: flex; /* <-- Importante para alinear "Balance Total" y los iconos */
-  justify-content: space-between;
-  align-items: center;
-  font-size: 18px;
-  font-weight: 600;
-  opacity: 0.9;
-}
-
-.card-icons {
-  display: flex;
-  gap: 10px; 
-  /* margin-left: auto; <-- Esto ya no es necesario si card-header usa space-between */
+  gap: 10px; /* Espacio entre iconos */
 }
 
 .icon-button {
   background: none;
   border: none;
-  color: white; /* <-- ¡Crítico para que se vean! */
+  color: white;
   cursor: pointer;
   padding: 5px;
   border-radius: 50%;
@@ -107,4 +45,64 @@
   background-color: rgba(255, 255, 255, 0.2);
 }
 
-/* ... (Tus otros estilos como .card-footer, etc.) ... */
+/* --- Monto del Balance (Base/Móvil) --- */
+.balance-amount {
+  margin-left: 20px;
+  margin-top: -10px;
+  
+  /* Estilo base (móvil) */
+  font-size: 34px; 
+  
+  font-weight: 800;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: -1px;
+}
+
+/* Requerimiento: Evitar selección de texto en montos */
+.balance-amount .amount,
+.balance-amount .currency {
+  user-select: none;
+  cursor: default;
+}
+
+/* --- Pie de Tarjeta (Número y Estado) --- */
+.card-footer {
+  margin-left: 25px;
+  margin-top: -5px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card-number {
+  opacity: 0.7;
+}
+
+.card-status {
+  background-color: rgba(113, 225, 111, 0.53);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 14px; /* Este anula al del footer, lo cual es intencional */
+  font-weight: 500;
+}
+
+
+/* --- ESTILOS RESPONSIVOS (PARA DESKTOP) --- */
+/* Se aplica solo cuando la pantalla mide 768px o más */
+@media (min-width: 768px) {
+  
+  /* Sobrescribe el tamaño del encabezado para desktop */
+  .card-header {
+    font-size: 20px;
+  }
+
+  /* Sobrescribe el tamaño del monto para desktop */
+  .balance-amount {
+    font-size: 65px; 
+  }
+}
