@@ -38,6 +38,11 @@ export default function SimpleProfileMenu() {
   const handleCerrarCambiarTelefono = () => setShowCambiarTelefono(false);
   const toggleSubMenu = () => setShowSubMenu(prev => !prev);
 
+    // Nueva función para redirigir a métodos de autenticación
+  const handleMetodosAutenticacionClick = () => {
+    router.push("/app/metodosAutenticacion"); // Ajusta la ruta según tu estructura de carpetas
+  };
+
   useEffect(() => {
     // Obtener usuario desde localStorage
   const storedUser = sessionStorage.getItem("userData");
@@ -109,7 +114,9 @@ export default function SimpleProfileMenu() {
           >
             Cambiar teléfono
           </button>
-          <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
+          <button
+            onClick={handleMetodosAutenticacionClick} // Actualizado con la nueva función
+            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
             Métodos de autenticación
           </button>
           <button
