@@ -7,7 +7,7 @@ import UserProfileCard from "./components/UserProfileCard";
 import Pagination from "./components/Pagination";
 import { getJobs } from "./services/jobService";
 import { usePagination } from "./hooks/usePagination";
-import { Job } from "./types/job";
+import { Job } from "../../../types/job";
 import BusquedaAutocompletado from "../Busqueda/busquedaAutocompletado";
 import FiltrosForm from "../Feature/Componentes/FiltroForm";
 import { UsuarioResumen } from "../Feature/Types/filtroType";
@@ -25,9 +25,12 @@ function LoadingFallback() {
 // Componente principal que usa useSearchParams - envuelto en Suspense
 function BusquedaContent() {
   const router = useRouter();
-
   const searchParams = useSearchParams();
+  
+  // Obtener parámetros de URL
   const urlQuery = searchParams.get("q") || "";
+  const urlPage = searchParams.get("page");
+  const urlSort = searchParams.get("sort");
 
   // ---------------- Estados principales ----------------
   const [allJobs, setAllJobs] = useState<Job[]>([]);
@@ -37,6 +40,32 @@ function BusquedaContent() {
 
   const [buscando, setBuscando] = useState(false);
   const [estadoBusqueda, setEstadoBusqueda] = useState<"idle" | "success" | "error">("idle");
+
+  // Efecto para sincronizar estados con URL y mantener la persistencia
+  useEffect(() => {
+    // Preservar los parámetros actuales de la URL
+    const currentParams = new URLSearchParams(window.location.search);
+    
+    // Validar y mantener la página actual
+    if (urlPage) {
+      const pageNum = parseInt(urlPage, 10);
+      if (isNaN(pageNum) || pageNum < 1) {
+        // Solo corregir si es inválido
+        currentParams.set('page', '1');
+        router.replace(`?${currentParams.toString()}`, { scroll: false });
+      }
+    } else if (sessionStorage.getItem('lastPage')) {
+      // Restaurar la última página conocida si no hay página en la URL
+      const lastPage = sessionStorage.getItem('lastPage');
+      currentParams.set('page', lastPage || '1');
+      router.replace(`?${currentParams.toString()}`, { scroll: false });
+    }
+
+    // Guardar la página actual en sessionStorage para persistencia
+    if (urlPage) {
+      sessionStorage.setItem('lastPage', urlPage);
+    }
+  }, [urlPage, router]);
 
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
@@ -115,7 +144,16 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
 
   // ---------------- Filtrado y ordenamiento ----------------
   const jobsToDisplay = useMemo(() => {
-    let data = searchResults.length > 0 ? searchResults : allJobs;
+    // Usar siempre allJobs como fuente de datos principal
+    let data = allJobs;
+    
+    // Si hay resultados de búsqueda, usar esos en su lugar
+    if (searchResults.length > 0) {
+      data = searchResults;
+    }
+    
+    // Log para debug
+    console.log('Total trabajos disponibles:', data.length);
     const normalizar = (texto: string) =>
       texto
         .toLowerCase()
@@ -364,7 +402,11 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
               </p>
             )}
             <button
-              onClick={() => { handleClearFilters(); router.back(); }}
+              onClick={() => {
+                handleClearFilters();
+                // Navegar a la página principal/inicio
+                router.push('/alquiler');
+              }}
               className="inline-block mt-6 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
             >
               Volver a ofertas

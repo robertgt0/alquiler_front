@@ -48,19 +48,56 @@ export default function Pagination({
         
         {/* Números de página */}
         <div className="flex items-center space-x-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button 
-              key={page}
-              onClick={() => handlePageChange(page)}
-              className={`w-12 h-12 rounded-xl font-bold transition-all duration-200 ${
-                page === currentPage
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg transform scale-110'
-                  : 'text-blue-600 hover:text-white hover:bg-blue-500 hover:shadow-md bg-blue-50'
-              }`}
-            >
-              {page}
-            </button>
-          ))}
+          {/* Primera página */}
+          {currentPage > 3 && (
+            <>
+              <button 
+                onClick={() => handlePageChange(1)}
+                className="w-12 h-12 rounded-xl font-bold transition-all duration-200 text-blue-600 hover:text-white hover:bg-blue-500 hover:shadow-md bg-blue-50"
+              >
+                1
+              </button>
+              {currentPage > 4 && (
+                <span className="w-8 text-center">...</span>
+              )}
+            </>
+          )}
+
+          {/* Páginas alrededor de la actual */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(page => {
+              if (totalPages <= 7) return true;
+              if (page === 1 || page === totalPages) return false;
+              return Math.abs(page - currentPage) <= 2;
+            })
+            .map((page) => (
+              <button 
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`w-12 h-12 rounded-xl font-bold transition-all duration-200 ${
+                  page === currentPage
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg transform scale-110'
+                    : 'text-blue-600 hover:text-white hover:bg-blue-500 hover:shadow-md bg-blue-50'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+          {/* Última página */}
+          {currentPage < totalPages - 2 && (
+            <>
+              {currentPage < totalPages - 3 && (
+                <span className="w-8 text-center">...</span>
+              )}
+              <button 
+                onClick={() => handlePageChange(totalPages)}
+                className="w-12 h-12 rounded-xl font-bold transition-all duration-200 text-blue-600 hover:text-white hover:bg-blue-500 hover:shadow-md bg-blue-50"
+              >
+                {totalPages}
+              </button>
+            </>
+          )}
         </div>
         
         {/* Botón Siguiente */}

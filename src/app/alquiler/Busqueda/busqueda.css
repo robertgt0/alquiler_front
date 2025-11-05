@@ -68,51 +68,66 @@
 /* BARRA DE BÚSQUEDA */
 .busqueda-barra {
     position: relative;
-    display: flex;
-    align-items: center;
     width: 100%;
-    background-color: white;
-    padding: 0.5rem 0.75rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+    padding: 0.25rem;
+    border-radius: 9999px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 2px solid #e5e7eb;
+    transition: all 0.2s ease;
     color: black;
+    margin: 1rem auto;
 }
 
 .busqueda-input {
     width: 100%;
-    padding: 10px 90px 10px 35px;
-    border-radius: 8px;
+    padding: 12px 90px 12px 45px;
+    border-radius: 9999px;
     border: none;
-    font-size: 15px;
-    background-color: transparent;
+    font-size: 16px;
+    background-color: #f8f9fa;
     outline: none;
+    transition: all 0.2s ease;
 }
 
 .busqueda-input:focus {
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    background-color: white;
+}
+
+.busqueda-barra:focus-within {
+    background-color: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .icono-busqueda {
     position: absolute;
-    left: 12px;
-    color: #888;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
     z-index: 2;
 }
 
 .btn-limpiar {
     position: absolute;
-    right: 100px;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
     background: transparent;
     border: none;
-    color: #777;
+    color: #6b7280;
     font-size: 18px;
     cursor: pointer;
     z-index: 2;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
 }
 
 .btn-limpiar:hover {
-    color: #111;
+    color: #374151;
+    background-color: #e5e7eb;
 }
 
 .contador-caracteres {
@@ -127,75 +142,71 @@
     color: #c0392b;
 }
 
-/* CAJA DE SUGERENCIAS - POSICIONAMIENTO CORREGIDO */
+/* CAJA DE SUGERENCIAS */
 .caja-sugerencias {
     position: absolute;
-    top: 70%;
-    margin-top: -1px;
-    /* 👈 Pequeño espacio después del contador */
+    top: 100%;
     left: 0;
     right: 0;
     background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 0 0 8px 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
     list-style: none;
-    margin: 0;
-    padding: 0;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    margin: 8px 0 0;
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     overflow: hidden;
     max-height: 250px;
     overflow-y: auto;
     animation: aparecer 0.2s ease-out;
-    color: black;
 }
 
 .caja-sugerencias li {
     padding: 12px 16px;
     font-size: 14px;
-    color: #333;
+    color: #374151;
     cursor: pointer;
-    transition: background-color 0.15s;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.caja-sugerencias li:last-child {
-    border-bottom: none;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 2px 0;
 }
 
 .caja-sugerencias li:hover {
-    background-color: #f8f9fa;
+    background-color: #f3f4f6;
 }
 
 .item-historial {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #666;
+    color: #6b7280;
 }
 
 .icono-historial {
-    color: #888;
+    color: #9ca3af;
     flex-shrink: 0;
 }
 
 .mensaje-sugerencia {
-    color: #666;
+    color: #6b7280;
     font-size: 14px;
     text-align: center;
     padding: 16px;
     background: #f9fafb;
+    border-radius: 8px;
+    margin: 4px;
     font-style: italic;
-    cursor: default;
 }
 
 .mensaje-error {
-    color: #c0392b;
+    color: #ef4444;
     font-size: 14px;
     text-align: center;
     padding: 16px;
-    background: #fdf0ef;
-    cursor: default;
+    background: #fef2f2;
+    border-radius: 8px;
+    margin: 4px;
 }
 
 .cargando {
@@ -203,12 +214,13 @@
     text-align: center;
     padding: 16px;
     font-size: 14px;
-    color: #555;
+    color: #6b7280;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    cursor: default;
+    border-radius: 8px;
+    margin: 4px;
 }
 
 .spinner {

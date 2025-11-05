@@ -44,6 +44,8 @@ function getApiRoot(): string {
     return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
 }
 
+
+
 class BusquedaService {
     private static API_BASE = getApiRoot();
 
@@ -66,7 +68,8 @@ class BusquedaService {
         console.log(`✅ [LOCAL] ${resultados.length} resultados encontrados`);
         return resultados.slice(0, 50);
     }
-
+  
+  
     // Búsqueda principal con fallback automático
     static async searchJobsOptimized(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
         try {
