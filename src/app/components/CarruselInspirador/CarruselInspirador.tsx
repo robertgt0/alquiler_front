@@ -99,7 +99,7 @@ const CarruselInspirador: React.FC = () => {
             onClick={handlePorQueServineo}
             className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 text-white px-6 py-3 rounded-full shadow-md"
           >
-            ¿Por qué escoger Servineo?
+            ¿Por qué elegir Servineo?
           </button>
         </div>
       </div>
