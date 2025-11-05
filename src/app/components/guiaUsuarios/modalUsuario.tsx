@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface ModalGuiaUsuarioProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface ModalGuiaUsuarioProps {
 
 export default function ModalGuiaUsuario({ isOpen, onClose }: ModalGuiaUsuarioProps) {
   const [noMostrar, setNoMostrar] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (isOpen) {
@@ -27,6 +29,8 @@ export default function ModalGuiaUsuario({ isOpen, onClose }: ModalGuiaUsuarioPr
       localStorage.setItem('noMostrarGuia', 'true');
     }
     onClose();
+    // Navegar a la sección de guía de usuarios
+    router.push('/Homepage#gia-usuarios-nuevos');
   };
 
   const handleRechazar = () => {
