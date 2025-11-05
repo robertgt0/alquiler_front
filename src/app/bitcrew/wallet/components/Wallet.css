@@ -1,0 +1,123 @@
+/* --- Estilos Base (Mobile First) --- */
+
+.wallet-app-container {
+  max-width: 1200px; /* Ancho máximo para desktop */
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #ffffff;
+}
+
+.wallet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header-title h1 {
+  font-size: 24px;
+  margin: 0;
+  color: #1a202c;
+}
+
+.header-title p {
+  font-size: 14px;
+  color: #718096;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.icon-action {
+  /* Estilo para los iconos de campana y settings */
+  color: #718096;
+}
+
+/* --- Botón Recargar Saldo --- */
+.reload-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* Estilo Mobile (fondo gris) */
+.reload-button.mobile-only {
+  background-color: #f0f2f5;
+  color: #1a202c;
+  width: 100%; /* Ocupa todo el ancho en mobile */
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Estilo Desktop (fondo azul) */
+.reload-button.desktop-only {
+  background-color: #4A90E2;
+  color: white;
+}
+
+
+/* --- Lógica Responsiva (Requerimiento 6) --- */
+
+/* Ocultar el botón de desktop en mobile */
+.reload-button.desktop-only {
+  display: none;
+}
+
+/* Ocultar iconos de campana/settings en mobile */
+.icon-action {
+  display: none;
+}
+
+
+/* --- Media Query para Desktop (a partir de 1024px) --- */
+@media (min-width: 1024px) {
+  .wallet-app-container {
+    padding: 40px;
+  }
+
+  .header-title h1 {
+    font-size: 30px; /* Más grande en desktop */
+  }
+
+  /* Mostrar el botón de desktop */
+  .reload-button.desktop-only {
+    display: flex;
+  }
+  
+  /* Mostrar los iconos */
+  .icon-action {
+    display: block;
+  }
+
+  /* Ocultar el botón de mobile */
+  .reload-button.mobile-only {
+    display: none;
+  }
+  
+  .wallet-main-content {
+    /* En desktop podríamos usar un layout de 2 columnas si quisiéramos,
+       pero tu mockup muestra 1 columna, así que lo mantenemos simple. */
+    max-width: 800px; /* Limitamos el ancho del contenido principal */
+  }
+
+  .transactions-header h2 {
+    font-size: 24px;
+  }
+}
