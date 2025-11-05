@@ -337,7 +337,10 @@ export default function BusquedaAutocompletado({
         guardarEnHistorial,
         limpiarHistorialBackend,
         eliminarDelHistorial,
-        seleccionarDelHistorial
+        seleccionarDelHistorial,
+        indiceSeleccionado,
+        setIndiceSeleccionado,
+        seleccionarPorIndice
     } = useSearchHistory({
         mostrarHistorial,
         apiConfig
@@ -640,7 +643,7 @@ export default function BusquedaAutocompletado({
     }, [datos]);
 
 
-    
+
     // SELECCIONAR SUGERENCIA
     const seleccionarSugerencia = useCallback(async (texto: string) => {
         console.log('🎯 [SUGERENCIA] Seleccionada:', texto);
@@ -657,17 +660,20 @@ export default function BusquedaAutocompletado({
 
     // SELECCIONAR DEL HISTORIAL
     const manejarSeleccionHistorial = useCallback(async (texto: string) => {
-    const textoSeleccionado = seleccionarDelHistorial(texto) || "";
-    setQuery(textoSeleccionado);
-    setSugerencias([]);
-    setMensaje("");
-    setMostrarSugerencias(false);
-    setMensajeNoResultados("");
+        const textoSeleccionado = seleccionarDelHistorial(texto) || "";
+        setQuery(textoSeleccionado);
+        setSugerencias([]);
+        setMensaje("");
+        setMostrarSugerencias(false);
+        setMensajeNoResultados("");
+        setIndiceSeleccionado(-1);
 
-    if (textoSeleccionado) {
-        await ejecutarBusquedaCompleta(textoSeleccionado, true, false);
-    }
-}, [seleccionarDelHistorial, ejecutarBusquedaCompleta]);
+        if (textoSeleccionado) {
+            await ejecutarBusquedaCompleta(textoSeleccionado, true, false);
+        }
+    }, [seleccionarDelHistorial, ejecutarBusquedaCompleta, setIndiceSeleccionado]);
+
+
 
 
     const ejecutarBusqueda = useCallback(async () => {
@@ -692,18 +698,69 @@ export default function BusquedaAutocompletado({
         inputRef.current?.focus();
     }, [datos, onSearch, setMostrarHistorialLocal]);
 
-    const manejarKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            setMostrarSugerencias(false);
-            setMostrarHistorialLocal(false);
-            ejecutarBusqueda();
-        } else if (e.key === 'Escape') {
-            setMostrarSugerencias(false);
-            setMostrarHistorialLocal(false);
-            setInputFocused(false);
-            inputRef.current?.blur();
+    const manejarKeyDown = useCallback(async (e: React.KeyboardEvent) => {
+        // Determinar qué lista estamos navegando
+        const itemsList = mostrarHistorialLocal ? historial : sugerencias;
+        const totalItems = itemsList.length;
+
+        // Lógica de Navegación (Solo si hay una lista visible)
+        if (mostrarHistorialLocal || mostrarSugerencias) {
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault(); // Evita que el cursor se mueva en el input
+                setIndiceSeleccionado(prevIndice =>
+                    prevIndice < totalItems - 1 ? prevIndice + 1 : 0
+                );
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault(); // Evita que el cursor se mueva en el input
+                setIndiceSeleccionado(prevIndice =>
+                    prevIndice > 0 ? prevIndice - 1 : totalItems - 1
+                );
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+
+                if (indiceSeleccionado !== -1) {
+                    const terminoSeleccionado = itemsList[indiceSeleccionado];
+
+                    if (mostrarHistorialLocal) {
+                        await manejarSeleccionHistorial(terminoSeleccionado);
+                    } else if (mostrarSugerencias) {
+                        await seleccionarSugerencia(terminoSeleccionado);
+                    }
+                } else {
+                    // Si Enter se presiona sin un elemento seleccionado, ejecuta la búsqueda normal
+                    ejecutarBusqueda();
+                }
+            } else if (e.key === 'Escape') {
+                setMostrarSugerencias(false);
+                setMostrarHistorialLocal(false);
+                setIndiceSeleccionado(-1); // Resetear el índice
+                setInputFocused(false);
+                inputRef.current?.blur();
+            } else {
+                // Si el usuario escribe, resetea la selección por índice
+                setIndiceSeleccionado(-1);
+            }
         }
-    }, [ejecutarBusqueda, setMostrarHistorialLocal]);
+        // Comportamiento normal si no hay listas visibles
+        else {
+            if (e.key === 'Enter') {
+                ejecutarBusqueda();
+            } else if (e.key === 'Escape') {
+                limpiarBusqueda();
+            }
+        }
+    }, [ejecutarBusqueda,
+        limpiarBusqueda,
+        setMostrarHistorialLocal,
+        mostrarHistorialLocal,
+        mostrarSugerencias,
+        historial,
+        sugerencias,
+        indiceSeleccionado,
+        setIndiceSeleccionado,
+        manejarSeleccionHistorial,
+        seleccionarSugerencia]);
 
     // EFECTO PARA SUGERENCIAS
     useEffect(() => {
@@ -884,7 +941,7 @@ export default function BusquedaAutocompletado({
                     </div>
                 )}
 
-                            {/* HISTORIAL */}
+                {/* HISTORIAL */}
                 {mostrarHistorialLocal && (
                     <ul className="caja-sugerencias">
                         <li className="sugerencias-header">
@@ -897,13 +954,14 @@ export default function BusquedaAutocompletado({
                         {historial.map((item, i) => (
                             <li
                                 key={i}
-                                className="item-historial"
+                                // 🔑 AÑADE LA LÓGICA DE SELECCIÓN AQUÍ:
+                                className={`item-historial ${i === indiceSeleccionado ? 'seleccionado' : ''}`}
                                 onClick={() => manejarSeleccionHistorial(item)}
                             >
                                 <div className="contenedor-texto-historial">
-                                <Clock className="icono-historial" size={16} />
+                                    <Clock className="icono-historial" size={16} />
 
-                                <span className="texto-historial">{item}</span>
+                                    <span className="texto-historial">{item}</span>
                                 </div>
 
                                 {/*Botón de borrar individualmente */}

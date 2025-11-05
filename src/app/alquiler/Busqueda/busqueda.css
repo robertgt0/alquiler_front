@@ -230,6 +230,20 @@
     }
 }
 
+/* Navegacion por teclado*/
+
+.item-historial.seleccionado,
+.caja-sugerencias li.seleccionado {
+    background-color: #e0f7fa; 
+    font-weight: 600; 
+    color: #000; 
+}
+
+.caja-sugerencias li:hover:not(.seleccionado) {
+    background-color: #f8f9fa;
+}
+
+
 /* CAJA DE RESULTADOS */
 .caja-resultados {
     margin-top: 80px;

@@ -18,7 +18,11 @@ interface UseSearchHistoryReturn {
   seleccionarDelHistorial: (texto: string) => string;
   cargarHistorialBackend: () => Promise<void>;
   eliminarDelHistorial: (texto: string) => void;
+  indiceSeleccionado: number;
+  setIndiceSeleccionado: (indice: number | ((prev: number) => number)) => void;
+  seleccionarPorIndice: (indice: number) => string | undefined;
 }
+
 
 class HistoryService {
   private static API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') || 'http://localhost:5000/api';
@@ -68,6 +72,9 @@ export function useSearchHistory({
   const [cargandoHistorial, setCargandoHistorial] = useState(false);
   const [mostrarHistorialLocal, setMostrarHistorialLocal] = useState(false);
   const historialCargado = useRef(false);
+  
+  //estado para controlar la navegacion
+  const [indiceSeleccionado, setIndiceSeleccionado] = useState<number>(-1);
 
   // Cargar historial del backend
   const cargarHistorialBackend = useCallback(async () => {
@@ -192,6 +199,15 @@ export function useSearchHistory({
     return texto;
   }, []);
 
+  //seleciona termino basado en indice
+  const seleccionarPorIndice = useCallback((indice: number): string | undefined => {
+    if (indice >= 0 && indice < historial.length) {
+      setMostrarHistorialLocal(false);
+      return historial[indice]; // Devuelve el término para iniciar la búsqueda
+    }
+    return undefined;
+  }, [historial]);
+
   return {
     historial,
     cargandoHistorial,
@@ -201,6 +217,10 @@ export function useSearchHistory({
     limpiarHistorialBackend,
     seleccionarDelHistorial,
     eliminarDelHistorial,
-    cargarHistorialBackend
+    cargarHistorialBackend,
+    //navegacion
+    indiceSeleccionado,
+    setIndiceSeleccionado,
+    seleccionarPorIndice
   };
 }
