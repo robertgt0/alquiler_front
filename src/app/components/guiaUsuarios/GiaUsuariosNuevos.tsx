@@ -109,12 +109,12 @@ const ChatIcon = () => (
  */
 const IntroGuide = ({ setVista }: { setVista: (vista: string) => void }) => {
   return (
-    <div className="bg-black text-white p-8 md:p-12 rounded-lg max-w-4xl mx-auto shadow-xl">
+    <div className="bg-blue-600 text-white p-8 md:p-12 rounded-lg max-w-4xl mx-auto shadow-xl">
       <div className="flex flex-col md:flex-row items-center gap-8">
         {/* Columna de Texto */}
         <div className="md:w-2/3">
-          <h3 className="text-2xl font-bold mb-4">¿Qué es SERVİNEO?</h3>
-          <p className="text-gray-300 mb-8">
+          <h3 className="text-2xl font-semibold text-center mb-4">¿Qué es SERVİNEO?</h3>
+          <p className="text-blue-100 mb-8 text-center">
             SERVİNEO es la plataforma que conecta a personas que necesitan
             servicios con profesionales calificados (Fixers) en Cochabamba,
             Bolivia. Desde reparaciones del hogar hasta servicios
@@ -123,13 +123,13 @@ const IntroGuide = ({ setVista }: { setVista: (vista: string) => void }) => {
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => setVista('cliente')}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-colors w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-blue-600 font-medium rounded-md hover:bg-gray-200 transition-colors w-full sm:w-auto text-sm"
             >
               Soy Cliente <ArrowRightIcon />
             </button>
             <button
               onClick={() => setVista('fixer')}
-              className="flex items-center justify-center gap-2 px-6 py-3 border border-gray-600 text-white font-semibold rounded-lg hover:bg-gray-900 transition-colors w-full sm:w-auto"
+              className="flex items-center justify-center gap-2 px-6 py-3 border border-blue-400 text-white font-medium rounded-md hover:bg-blue-700 transition-colors w-full sm:w-auto text-sm"
             >
               Quiero ser Fixer <ArrowRightIcon />
             </button>
@@ -138,10 +138,10 @@ const IntroGuide = ({ setVista }: { setVista: (vista: string) => void }) => {
 
         {/* Columna de Icono */}
         <div className="md:w-1/3 flex flex-col items-center justify-center text-center p-4">
-          <div className="bg-gray-800 rounded-full p-8 mb-4">
+          <div className="bg-blue-700 rounded-full p-8 mb-4">
             <HomeHammerIcon />
           </div>
-          <span className="text-lg font-semibold text-gray-300">
+          <span className="text-lg font-medium text-blue-100">
             Tu plataforma de servicios
           </span>
         </div>
@@ -184,10 +184,10 @@ const ClienteGuide = ({ setVista }: { setVista: (vista: string) => void }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-12">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">
+        <h2 className="text-2xl font-semibold text-center mb-2">
           Para Clientes: Cómo Contratar un Servicio
         </h2>
-        <p className="text-gray-600">
+        <p className="text-gray-600 text-center">
           Sigue estos simples pasos para encontrar y contratar al Fixer perfecto
           para tu necesidad
         </p>
@@ -202,21 +202,21 @@ const ClienteGuide = ({ setVista }: { setVista: (vista: string) => void }) => {
             } items-center gap-8`}
           >
             {/* Columna de Imagen/Icono */}
-            <div className="w-full md:w-1/2 bg-black rounded-lg p-8 h-64 flex flex-col items-center justify-center text-center">
+            <div className="w-full md:w-1/2 bg-blue-600 rounded-lg p-8 h-64 flex flex-col items-center justify-center text-center">
               {step.icon}
-              <p className="text-white mt-4">{step.iconLabel}</p>
+              <p className="text-white mt-4 text-sm">{step.iconLabel}</p>
             </div>
             {/* Columna de Texto */}
             <div className="w-full md:w-1/2 p-4">
-              <span className="inline-block bg-black text-white rounded-full w-8 h-8 items-center justify-center font-bold mb-4">
+              <span className="inline-block bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-medium mb-4 text-sm">
                 {index + 1}
               </span>
-              <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-              <p className="text-gray-700 mb-4">{step.description}</p>
+              <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
+              <p className="text-gray-700 mb-4 text-sm">{step.description}</p>
               {step.details.length > 0 && (
                 <ul className="list-none space-y-2">
                   {step.details.map((detail, i) => (
-                    <li key={i} className="flex items-center text-gray-600">
+                    <li key={i} className="flex items-center text-gray-600 text-sm">
                       <span className="text-green-500 mr-2">✔</span>
                       {detail}
                     </li>
@@ -231,7 +231,7 @@ const ClienteGuide = ({ setVista }: { setVista: (vista: string) => void }) => {
       <div className="text-center mt-12">
         <button
           onClick={() => setVista('intro')}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+          className="px-6 py-2 bg-white text-gray-900 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors font-medium text-sm"
         >
           ← Volver
         </button>
@@ -246,16 +246,16 @@ const ClienteGuide = ({ setVista }: { setVista: (vista: string) => void }) => {
 const FixerGuide = ({ setVista }: { setVista: (vista: string) => void }) => {
   return (
     <div className="max-w-4xl mx-auto text-center">
-      <h2 className="text-2xl font-bold mb-2">
+      <h2 className="text-2xl font-semibold text-center mb-2">
         Para Fixers: Cómo unirte a Servineo
       </h2>
-      <p className="text-gray-600 mb-8">
+      <p className="text-gray-600 text-center mb-8 text-sm">
         ¡Próximamente! Estamos preparando la guía para que puedas registrarte
         como Fixer.
       </p>
       <button
         onClick={() => setVista('intro')}
-        className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+        className="px-6 py-2 bg-white text-gray-900 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors font-medium text-sm"
       >
         ← Volver
       </button>
@@ -270,14 +270,13 @@ export default function GiaUsuariosNuevos() {
   const [vista, setVista] = useState('intro'); // 'intro', 'cliente', 'fixer'
 
   return (
-    // Aseguramos un padding general y la fuente base
-    <div className="p-4 md:p-8 font-sans bg-white">
+    <div className="p-4 md:p-8 bg-white">
       {/* Encabezado General (visible en todas las vistas) */}
       <header className="text-center mb-8 md:mb-12">
-        <h1 className="text-3xl font-bold text-black mb-2">
+        <h1 className="text-3xl font-semibold text-center text-gray-900 mb-2">
           Guía de Usuario SERVİNEO
         </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
+        <p className="text-gray-600 max-w-2xl mx-auto text-center text-sm">
           Aprende cómo funciona nuestra plataforma paso a paso. Ya sea que
           busques contratar un servicio o convertirte en un Fixer profesional.
         </p>
