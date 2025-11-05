@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 const RecargaQR: React.FC = () => {
   const [saldo] = useState<number>(12730.5);
   const [monto, setMonto] = useState<number | string>("");
+  const [montoError, setMontoError] = useState<string>(""); //estado para manejar el error
   const [nombre, setNombre] = useState<string>("");
   const [tipoDoc, setTipoDoc] = useState<string>("CI");
   const [nit, setNit] = useState<string>("");
@@ -16,7 +17,16 @@ const RecargaQR: React.FC = () => {
     let valid = true;
     const montoNum = Number(monto);
 
-    if (!monto || isNaN(montoNum) || montoNum <= 0 || montoNum > 3000) valid = false;
+    if (!monto) {
+      valid = false;
+      setMontoError("El monto es obligatorio");
+    } else if (isNaN(montoNum) || montoNum <= 0 || montoNum > 3000) {
+      valid = false;
+      setMontoError("Monto inválido (1 - 3000 BS)");
+    } else {
+      setMontoError("");
+    }
+    
     if (!nombre || !/^[a-zA-Z\s]+$/.test(nombre) || nombre.length > 40) valid = false;
     if (!nit || !/^\d{1,8}$/.test(nit)) valid = false;
     if (!telefono || telefono.length < 1) valid = false;
@@ -79,6 +89,7 @@ const RecargaQR: React.FC = () => {
               onChange={handleMontoChange}
               placeholder="500 BS"
             />
+            {montoError && <span className="text-red-500 text-sm">{montoError}</span>}
           </div>
 
           <div>
