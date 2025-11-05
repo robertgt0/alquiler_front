@@ -2,7 +2,7 @@
 'use client'; // Necesario si tus componentes usan hooks o estado
 
 import Wallet from './components/Wallet'; // Importamos el componente que hicimos
-import './Wallet.css';     // Importamos los estilos globales
+import './components/Wallet.css';     // Importamos los estilos globales
 
 export default function WalletPage() {
   // Esta es la página real que Next.js mostrará
