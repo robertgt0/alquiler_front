@@ -52,14 +52,14 @@ const PorQueServineoPage: React.FC = () => {
               "Profesionales que van hasta ti"
             </p>
             <p className="text-gray-700 text-justify leading-relaxed">
-              Con <span className="font-semibold text-blue-700">SERVINEO</span> no necesitas
-              perder tiempo en desplazamientos ni salir de casa. Los profesionales
-              llegan directamente a tu puerta, brindándote mayor comodidad al recibir
-              el servicio en la tranquilidad de tu hogar u oficina. Puedes agendar
-              según tu disponibilidad y adaptarte a tu propia rutina con total
-              flexibilidad horaria. Además, tendrás la ventaja de supervisar
-              directamente todo el trabajo y recibirlo en un entorno familiar, seguro
-              y controlado.
+              Con <span className="font-semibold text-blue-700">SERVINEO</span> no
+              necesitas perder tiempo en desplazamientos ni salir de casa. Los
+              profesionales llegan directamente a tu puerta, brindándote mayor
+              comodidad al recibir el servicio en la tranquilidad de tu hogar u
+              oficina. Puedes agendar según tu disponibilidad y adaptarte a tu
+              propia rutina con total flexibilidad horaria. Además, tendrás la
+              ventaja de supervisar directamente todo el trabajo y recibirlo en un
+              entorno familiar, seguro y controlado.
             </p>
           </div>
         </div>
@@ -163,21 +163,21 @@ const PorQueServineoPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 🔹 Sección final */}
-      <section className="w-full py-16 flex flex-col items-center bg-gray-50">
-        <h2 className="text-3xl font-semibold mb-8 text-gray-800">
+      {/* 🔹 Footer con misma paleta de colores que el header */}
+      <section className="w-full py-16 flex flex-col items-center bg-gradient-to-r from-blue-600 to-purple-700 text-white">
+        <h2 className="text-3xl font-semibold mb-8">
           ¿Listo para Unirte a SERVINEO?
         </h2>
         <div className="flex flex-wrap gap-8 justify-center">
           <button
             onClick={() => router.push("/")}
-            className="px-8 py-4 bg-white border border-gray-400 rounded-lg shadow hover:bg-gray-100 transition"
+            className="px-8 py-4 bg-white text-blue-700 font-semibold rounded-lg shadow hover:bg-gray-100 transition"
           >
             Volver al home page
           </button>
           <button
             onClick={() => router.push("/registro")}
-            className="px-8 py-4 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+            className="px-8 py-4 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700 transition"
           >
             Ir a registro
           </button>
