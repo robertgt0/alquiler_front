@@ -141,21 +141,21 @@ const Footer = () => {
         </div>
 
         <div className="space-y-4">
-            <h4 className="text-xl font-semibold font-heading">Enlaces Rápidos</h4>
-        <nav className="flex flex-col space-y-2 items-center md:items-start">
-        <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
-        <a href="#mapa" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
-        <a href="#servicios" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
-        </nav>
+            <h4 className="text-xl font-semibold font-heading">Categorias</h4>
+  <nav className="flex flex-col space-y-2 items-center md:items-start">
+  <a href="#trabajos-recientes" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
+  <a href="#mapa" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
+  <a href="#servicios" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
+  </nav>
           </div>
         
         <div className="space-y-4">
           <h4 className="text-xl font-semibold font-heading">Funciones del Sistema</h4>
           <nav className="flex flex-col space-y-2 items-center md:items-start">
-            <Link href="/ser-fixer" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Convertir en fixer</Link>
-            <button type="button" onClick={() => setActiveModal('howItWorks')} className="text-left hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
-            <Link href="/login" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Iniciar sesión</Link>
-            <Link href="/registro" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Registrarse</Link>
+            <Link href="/ser-fixer" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Convertir en fixer</Link>
+            <button type="button" onClick={() => setActiveModal('howItWorks')} className="text-left transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
+            <Link href="/login" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Iniciar sesión</Link>
+            <Link href="/registro" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Registrarse</Link>
           </nav>
         </div>
                 
@@ -163,19 +163,19 @@ const Footer = () => {
           <h4 className="text-xl font-semibold font-heading">Soporte</h4>
           <ul className="space-y-3">
             <li className="flex items-center justify-center md:justify-start">
-              <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+              <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
                 <FaPhone className="mr-3 text-[#52abff]" />
                 <span className="text-sm">+591 73782241</span>
               </a>
             </li>
             <li className="flex items-center justify-center md:justify-start">
-              <a href="mailto:servineobol@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+              <a href="mailto:servineobol@gmail.com" className="flex items-center transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
                 <FaEnvelope className="mr-3 text-[#52abff]" />
                 <span className="text-sm">servineobol@gmail.com</span>
               </a>
             </li>
             <li className="flex items-center justify-center md:justify-start">
-              <a href="https://www.google.com/maps/search/?api=1&query=Cochabamba,Cercado" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+              <a href="https://www.google.com/maps/search/?api=1&query=Cochabamba,Cercado" target="_blank" rel="noopener noreferrer" className="flex items-center transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
                 <FaMapMarkerAlt className="mr-3 text-[#52abff]" />
                 <span className="text-sm">Cochabamba, Cercado</span>
               </a>
@@ -184,12 +184,12 @@ const Footer = () => {
         </div>
       </div>
           
-      <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+        <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
       <p className="text-sm text-[#89c9ff]">© {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
         <div className="flex flex-wrap justify-center gap-4 w-full md:w-auto">
-        <button type="button" onClick={() => setActiveModal('privacy')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de privacidad</button>
-        <button type="button" onClick={() => setActiveModal('terms')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Términos de uso</button>
-        <button type="button" onClick={() => setActiveModal('cookies')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de cookies</button>
+        <button type="button" onClick={() => setActiveModal('privacy')} className="w-full md:w-auto text-sm hover:text-[#52abff] border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff] transform transition duration-200 ease-in-out hover:scale-105 hover:bg-[#0f2f66] hover:border-[#52abff]">Política de privacidad</button>
+        <button type="button" onClick={() => setActiveModal('terms')} className="w-full md:w-auto text-sm hover:text-[#52abff] border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff] transform transition duration-200 ease-in-out hover:scale-105 hover:bg-[#0f2f66] hover:border-[#52abff]">Términos de uso</button>
+        <button type="button" onClick={() => setActiveModal('cookies')} className="w-full md:w-auto text-sm hover:text-[#52abff] border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff] transform transition duration-200 ease-in-out hover:scale-105 hover:bg-[#0f2f66] hover:border-[#52abff]">Política de cookies</button>
       </div>
       </div>
     </div>
