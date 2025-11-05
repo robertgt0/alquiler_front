@@ -1,24 +1,54 @@
-// src/app/Homepage/page.tsx
-
-/*
- * IMPORTANTE:
- * He cambiado tus rutas de "./components/..." a "../components/..."
- * porque ahora este archivo está dentro de la carpeta 'Homepage',
- * y necesita "subir un nivel" para encontrar la carpeta 'components'.
-*/
+"use client";
+import { useState, useEffect } from 'react';
 import Mapa from "../components/mapa/MapaWrapper";
 import CarruselOfertas from "../components/CarruselOfertas/CarruselOfertas";
 import HomeFixer from "../components/ListaCategorias/HomeFixer";
 import type { Categoria } from "../components/ListaCategorias/tipos";
 import Footer from "../components/Footer/Footer";
 import CarruselInspirador from "../components/CarruselInspirador/CarruselInspirador";
-
+import WelcomeModal from '../components/WelcomeModal/WelcomeModal';
 import categorias, { type CategoriaBase } from "../components/data/categoriasData";
 
-// Es buena práctica que la función se llame como la página
 export default function Homepage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  useEffect(() => {
+    const guideViewed = localStorage.getItem('guiaVista');
+    if (guideViewed !== 'true') {
+      setIsModalOpen(true);
+    }
+  }, []);
+
+  const handleAccept = () => {
+    if (dontShowAgain) {
+      localStorage.setItem('guiaVista', 'true');
+    }
+    setIsModalOpen(false);
+    // Lógica para desplazar suavemente a la sección de la guía
+    document.getElementById('user-guide')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleDecline = () => {
+    if (dontShowAgain) {
+      localStorage.setItem('guiaVista', 'true');
+    }
+    setIsModalOpen(false);
+  };
+
+  const handleDontShowAgainChange = (checked: boolean) => {
+    setDontShowAgain(checked);
+  };
+
   return (
     <main>
+      <WelcomeModal
+        isOpen={isModalOpen}
+        onAccept={handleAccept}
+        onDecline={handleDecline}
+        dontShowAgain={dontShowAgain}
+        onDontShowAgainChange={handleDontShowAgainChange}
+      />
       <section className="my-0">
         <CarruselInspirador />
       </section>
