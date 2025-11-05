@@ -11,8 +11,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 16px;
-  opacity: 0.8;
+  font-size: 20px;
+  font-weight: 400;
+  opacity: 1.1;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .card-icons {
@@ -21,10 +23,11 @@
 }
 
 .balance-amount {
-  margin-top: 12px;
-  font-size: 36px;
-  font-weight: 700;
+  margin-top: 1px;
+  font-size: 65px;
+  font-weight: 800;
   letter-spacing: -1px;
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Requerimiento: que el usuario no pueda seleccionar el monto */
