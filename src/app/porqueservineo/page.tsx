@@ -10,6 +10,33 @@ export default function PorQueElegirnos() {
       </Head>
 
 
+  {/* Hero Section */}
+  <section className="bg-gradient-to-r from-blue-600 to-purple-700 text-white py-12">
+    <div className="container mx-auto px-4">
+      <div className="flex items-center">
+        {/* Logo a la izquierda - circular */}
+   
+        
+        {/* Texto centrado */}
+        <div className="flex-1 text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+            ¿Por Qué Elegir SERVINEO?
+          </h1>
+          <p className="text-lg md:text-xl">
+            La plataforma líder para servicios locales en tu comunidad
+          </p>
+        </div>
+        
+        {/* Espacio vacío para balancear el logo izquierdo */}
+        <div className="w-16 h-16 md:w-20 md:h-20 flex-shrink-0"></div>
+      </div>
+    </div>
+  </section>
+
+
+
+
+
       {/* Banner 1 - Enfoque Local */}
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
