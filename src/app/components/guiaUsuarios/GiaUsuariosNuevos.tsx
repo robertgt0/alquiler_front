@@ -208,7 +208,7 @@ const ClienteGuide = ({ setVista }: { setVista: (vista: string) => void }) => {
             </div>
             {/* Columna de Texto */}
             <div className="w-full md:w-1/2 p-4">
-              <span className="inline-block bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-medium mb-4 text-sm">
+              <span className="inline-block bg-blue-600 text-white rounded-full w-8 h-8 items-center justify-center font-medium mb-4 text-sm">
                 {index + 1}
               </span>
               <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
