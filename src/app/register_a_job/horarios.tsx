@@ -6,6 +6,9 @@ import { diasSemanaCompletos, mesesNombres } from "./Constantes";
 import type { Horario as HorarioType } from "./Constantes";
 import ModalHorario from "./disponibilidad/components/ModalHorario";
 
+const URL = "http://localhost:5000" //"https://back-1kgu.onrender.com/";
+const ID_PROVEEDOR = "6902c43438df4e88b6680640"; 
+
 // --- Props del Componente ---
 interface HorarioProps {
   fechaSeleccionada: Date;
@@ -63,7 +66,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
     const fetchHorarios = async () => {
       setCargando(true);
       try {
-        const res = await fetch(`https://back-los-vengadores-4.onrender.com/api/los_vengadores/horarios/${fechaKey}`);
+        const res = await fetch(`${URL}/api/los_vengadores/horarios/${fechaKey}`);
         if (!res.ok) throw new Error("Error al cargar horarios");
         //const data = await res.json();
         //setHorarios(data.data || []);
@@ -177,7 +180,7 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
     try {
       // Primero eliminamos los horarios marcados
       for (const id of horariosEliminados) {
-        await fetch(`https://back-los-vengadores-4.onrender.com/api/los_vengadores/horarios/${id}`, {
+        await fetch(`${URL}/api/los_vengadores/horarios/${id}`, {
           method: "DELETE",
         });
       }
@@ -186,14 +189,14 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
       for (const horario of horarios) {
         if (horario.id.startsWith("temp-")) {
           // Crear nuevo horario
-          const res = await fetch(`https://back-los-vengadores-4.onrender.com/api/los_vengadores/horarios`, {
+          const res = await fetch(`${URL}/api/los_vengadores/horarios`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              proveedorId: ID_PROVEEDOR,
               fecha: fechaKey,
               horaInicio: horario.horaInicio,
-              horaFin: horario.horaFin,
-              costo: horario.costo,
+              horaFin: horario.horaFin
             }),
           });
           const data = await res.json();
@@ -203,13 +206,12 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
           );
         } else {
           // Actualizar horario existente
-          const res = await fetch(`https://back-los-vengadores-4.onrender.com/api/los_vengadores/horarios/${horario.id}`, {
+          const res = await fetch(`${URL}/api/los_vengadores/horarios/${horario.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               horaInicio: horario.horaInicio,
-              horaFin: horario.horaFin,
-              costo: horario.costo,
+              horaFin: horario.horaFin
             }),
           });
           const data = await res.json();
@@ -267,10 +269,6 @@ const Horarios: React.FC<HorarioProps> = ({ fechaSeleccionada, onVolver }) => {
                 <div className="md:col-span-3">
                   <label className="text-xs font-semibold text-gray-500">Hora fin</label>
                   <p className="p-2 bg-white rounded border border-gray-300">{horario.horaFin}</p>
-                </div>
-                <div className="md:col-span-2">
-                   <label className="text-xs font-semibold text-gray-500">Costo/Hora</label>
-                   <p className="p-2 bg-white rounded border border-gray-300">{horario.costo} Bs/Hr.</p>
                 </div>
 
                 {/* Botones de acción */}
