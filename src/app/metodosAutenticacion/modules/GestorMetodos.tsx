@@ -65,6 +65,13 @@ export default function GestorMetodos({
     
     if (!modos.modoSeleccion) return;
     
+    // Verificar si el método ya está activo
+    const metodo = metodos.find(m => m.id === metodoId);
+    if (metodo?.activo) {
+      setError("Este método ya está activo");
+      return;
+    }
+    
     if (modos.metodosSeleccionados.includes(metodoId)) {
       setModos(prev => ({ ...prev, metodosSeleccionados: [] }));
     } else {
@@ -74,6 +81,13 @@ export default function GestorMetodos({
 
   const toggleSeleccionEliminar = (metodoId: string) => {
     limpiarError();
+    
+    //  VERIFICAR SI ES EL MÉTODO DE REGISTRO
+    const metodo = metodos.find(m => m.id === metodoId);
+    if (metodo?.esMetodoRegistro) {
+      setError("No se puede eliminar el método de autenticación con el que te registraste");
+      return;
+    }
     
     const esUnicoMetodoActivo = metodosActivos.length === 1;
     
@@ -115,6 +129,14 @@ export default function GestorMetodos({
       
       // MÉTODO CORREO/CONTRASEÑA
       if (metodoId === 'correo') {
+        //  VERIFICAR que Google esté activo para tener el email
+        const googleEstaActivo = metodosActivos.some(m => m.id === 'google');
+        
+        if (!googleEstaActivo) {
+          setError("Primero debe activar Google para tener el correo electrónico");
+          return;
+        }
+        
         setMetodoSeleccionadoParaContrasena(metodoId);
         setModalContrasenaAbierto(true);
       } 
@@ -137,9 +159,22 @@ export default function GestorMetodos({
       setCargandoGoogle(true);
       limpiarError();
       
-      const { authUrl } = await apiService.initiateGoogleSetup();
+      //  OBTENER EL EMAIL DEL USUARIO ACTUAL
+      const userData = await apiService.getCurrentUser();
+      const userEmail = userData.email;
       
-      window.location.href = authUrl;
+      if (!userEmail) {
+        throw new Error("No se pudo obtener el correo del usuario");
+      }
+      
+      console.log('📧 Activando Google con email:', userEmail);
+      
+      //  ENVIAR SOLO EL EMAIL AL BACKEND
+      await apiService.setupGoogleAuth(userEmail);
+      await activarMetodo('google');
+      
+      setCargandoGoogle(false);
+      desactivarModos();
       
     } catch (err) {
       console.error('Error en activarMetodoGoogle:', err);
@@ -152,7 +187,18 @@ export default function GestorMetodos({
     try {
       limpiarError();
       
-      await apiService.setupEmailPassword(contrasena);
+      // OBTENER EL EMAIL DEL USUARIO ACTUAL (el mismo de Google)
+      const userData = await apiService.getCurrentUser();
+      const userEmail = userData.email;
+      
+      if (!userEmail) {
+        throw new Error("No se pudo obtener el correo del usuario");
+      }
+      
+      console.log('🔐 Configurando Correo/Contraseña para:', userEmail);
+      
+      //  ENVIAR EMAIL + CONTRASEÑA AL BACKEND
+      await apiService.setupEmailPassword(userEmail, contrasena);
       
       if (metodoSeleccionadoParaContrasena) {
         await activarMetodo(metodoSeleccionadoParaContrasena);
@@ -172,6 +218,17 @@ export default function GestorMetodos({
     try {
       limpiarError();
       
+      // VERIFICAR SI SE INTENTA ELIMINAR MÉTODO DE REGISTRO
+      const metodosAEliminarConInfo = modos.metodosAEliminar.map(id => 
+        metodos.find(m => m.id === id)
+      ).filter(Boolean) as MetodoAutenticacion[];
+      
+      const contieneMetodoRegistro = metodosAEliminarConInfo.some(m => m.esMetodoRegistro);
+      if (contieneMetodoRegistro) {
+        setError("No se puede eliminar el método de autenticación con el que te registraste");
+        return;
+      }
+
       const metodosRestantes = metodosActivos.length - modos.metodosAEliminar.length;
       if (metodosRestantes < 1) {
         setError("Debe quedar al menos un método de autenticación activo");
@@ -189,7 +246,6 @@ export default function GestorMetodos({
     }
   };
 
-  // ✅ MÉTODOS DISPONIBLES - Correo/Contraseña SIEMPRE disponible
   const metodosDisponibles: MetodoAutenticacion[] = [
     {
       id: 'correo',
@@ -197,7 +253,8 @@ export default function GestorMetodos({
       tipo: 'correo',
       icono: '📧',
       color: 'blue',
-      activo: metodos.some(m => m.id === 'correo' && m.activo)
+      activo: metodos.some(m => m.id === 'correo' && m.activo),
+      esMetodoRegistro: metodos.find(m => m.id === 'correo')?.esMetodoRegistro || false
     },
     {
       id: 'google',
@@ -205,14 +262,25 @@ export default function GestorMetodos({
       tipo: 'google',
       icono: '🔐',
       color: 'red',
-      activo: metodos.some(m => m.id === 'google' && m.activo)
+      activo: metodos.some(m => m.id === 'google' && m.activo),
+      esMetodoRegistro: metodos.find(m => m.id === 'google')?.esMetodoRegistro || false
     },
   ];
 
-  // ✅ CORREGIDO: Mostrar Correo/Contraseña aunque esté activo, pero Google solo si no está activo
   const metodosDisponiblesFiltrados = metodosDisponibles.filter(m => 
-    m.id === 'correo' || !m.activo // ✅ Correo siempre visible, Google solo si no está activo
+    m.id === 'correo' || !m.activo 
   );
+
+  if (cargando) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando métodos de autenticación...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

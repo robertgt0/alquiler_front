@@ -42,7 +42,7 @@ export default function MetodoActivoPanel({
             texto="Eliminar"
             tipo="peligro"
             onClick={onActivarModoEliminar}
-            deshabilitado={metodosActivos.length === 0 || modos.modoEliminar || metodos.length <= 1}
+            deshabilitado={metodosActivos.length === 0 || modos.modoEliminar || metodosActivos.length <= 1}
             className="px-4 py-2"
           />
         </div>
@@ -53,29 +53,35 @@ export default function MetodoActivoPanel({
         {metodosActivos.length > 0 ? (
           metodosActivos.map((metodo) => {
             const estaSeleccionadoParaEliminar = modos.metodosAEliminar.includes(metodo.id);
+            const esMetodoRegistro = metodo.esMetodoRegistro;
+            const puedeEliminar = !esMetodoRegistro && metodosActivos.length > 1;
 
             return (
               <div key={metodo.id} className="flex items-center space-x-3">
                 {/* Checkbox para eliminar (solo en modo eliminar) */}
                 {modos.modoEliminar && (
                   <div 
-                    className={`w-6 h-6 border-2 rounded flex items-center justify-center transition-colors cursor-pointer ${
-                      estaSeleccionadoParaEliminar 
-                        ? 'border-black-500' 
-                        : 'border-black-300 bg-white hover:border-black-500'
+                    className={`w-6 h-6 border-2 rounded flex items-center justify-center transition-colors ${
+                      puedeEliminar ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
                     } ${
-                      metodos.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''
+                      estaSeleccionadoParaEliminar 
+                        ? 'border-blue-500 bg-blue-500' 
+                        : 'border-gray-300 bg-white hover:border-blue-500'
                     }`}
-                    onClick={() => metodos.length > 1 && onToggleEliminar(metodo.id)}
+                    onClick={() => puedeEliminar && onToggleEliminar(metodo.id)}
                   >
                     {estaSeleccionadoParaEliminar && (
-                      <span className="text-black text-sm font-bold">✓</span>
+                      <span className="text-white text-sm font-bold">✓</span>
                     )}
                   </div>
                 )}
 
                 {/* Cuadro del método activo */}
-                <div className=" p-4 w-full">
+                <div className={`border-2 rounded-lg p-4 w-full transition-all ${
+                  modos.modoEliminar && estaSeleccionadoParaEliminar 
+                    ? 'border-blue-500 bg-blue-50 shadow-md' 
+                    : 'border-gray-200 bg-white'
+                }`}>
                   <div className="flex items-center space-x-3">
                     {/* Icono del método */}
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -89,10 +95,29 @@ export default function MetodoActivoPanel({
                     {/* Nombre del método y estado */}
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-base font-semibold text-black-800">
-                          {metodo.nombre}
-                        </h3>
+                        <div className="flex items-center">
+                          <h3 className="text-base font-semibold text-gray-800">
+                            {metodo.nombre}
+                          </h3>
+                          {/* ✅ INDICADOR DE MÉTODO DE REGISTRO */}
+                          {esMetodoRegistro && (
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full ml-2">
+                              Registro
+                            </span>
+                          )}
+                        </div>
+                        {/* Indicador de estado activo */}
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                          Activo
+                        </span>
                       </div>
+                      
+                      {/* Mensaje informativo para método de registro */}
+                      {esMetodoRegistro && modos.modoEliminar && (
+                        <p className="text-red-500 text-xs mt-1 font-medium">
+                          No se puede eliminar el método de registro
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -122,7 +147,7 @@ export default function MetodoActivoPanel({
             texto={`Aceptar ${modos.metodosAEliminar.length > 0 ? `(${modos.metodosAEliminar.length})` : ''}`}
             tipo="peligro"
             onClick={onEliminarMetodos}
-            deshabilitado={modos.metodosAEliminar.length === 0 || metodos.length <= 1}
+            deshabilitado={modos.metodosAEliminar.length === 0 || metodosActivos.length <= 1}
             className="px-6 py-2"
           />
         </div>

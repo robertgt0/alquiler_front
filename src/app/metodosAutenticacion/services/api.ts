@@ -26,9 +26,26 @@ class ApiService {
     return response.json();
   }
 
-  // ✅ MÉTODOS DE AUTENTICACIÓN
+  // ✅ MÉTODOS DE AUTENTICACIÓN - CORREGIDOS
+
   async getAuthMethods(): Promise<MetodoAutenticacion[]> {
     return this.request<MetodoAutenticacion[]>('/auth/methods');
+  }
+
+  // ✅ CORREGIDO: Método para configurar Google con email
+  async setupGoogleAuth(email: string): Promise<void> {
+    return this.request<void>('/auth/setup-google', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  // ✅ CORREGIDO: Método para configurar Email/Contraseña
+  async setupEmailPassword(email: string, password: string): Promise<void> {
+    return this.request<void>('/auth/setup-email-password', {
+      method: 'POST', 
+      body: JSON.stringify({ email, password }),
+    });
   }
 
   async activateAuthMethod(methodId: string, data?: any): Promise<void> {
@@ -44,15 +61,9 @@ class ApiService {
     });
   }
 
-  async setupEmailPassword(password: string): Promise<void> {
-    return this.request<void>('/auth/setup-email-password', {
-      method: 'POST',
-      body: JSON.stringify({ password }),
-    });
-  }
-
-  async initiateGoogleSetup(): Promise<{ authUrl: string }> {
-    return this.request<{ authUrl: string }>('/auth/setup-google', {
+  // ✅ CORREGIDO: Renombrar este método para evitar conflicto
+  async initiateGoogleOAuth(): Promise<{ authUrl: string }> {
+    return this.request<{ authUrl: string }>('/auth/initiate-google-oauth', {
       method: 'POST',
     });
   }
@@ -76,13 +87,11 @@ class ApiService {
     });
   }
 
-  async getCurrentUser(): Promise<any> {
-    return this.request<any>('/auth/me');
-  }
+async getCurrentUser(): Promise<any> {
+  return this.request<any>('/auth/me');
+}
 }
 
-// ✅ EXPORTAR LA INSTANCIA (no la clase)
+// ✅ EXPORTAR LA INSTANCIA
 export const apiService = new ApiService();
-
-// ✅ EXPORTAR LA CLASE también por si se necesita
 export { ApiService };

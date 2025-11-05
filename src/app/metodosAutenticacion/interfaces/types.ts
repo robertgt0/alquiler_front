@@ -5,9 +5,10 @@ export interface MetodoAutenticacion {
   tipo: 'correo' | 'google' | 'otro';
   icono: string;
   color: string;
-  activo?: boolean; // ✅ Agregar esta propiedad opcional
-  fechaActivacion?: Date; // ✅ Opcional: para saber cuándo se activó
-  configurado?: boolean; // ✅ Opcional: si está completamente configurado
+  activo?: boolean; //  Agregar esta propiedad opcional
+  fechaActivacion?: Date; //  Opcional: para saber cuándo se activó
+  configurado?: boolean; //  Opcional: si está completamente configurado
+  esMetodoRegistro?: boolean;
 }
 
 export interface GestorMetodosProps {
@@ -24,4 +25,11 @@ export interface ModosInterfaz {
   modoEliminar: boolean;
   metodosSeleccionados: string[];
   metodosAEliminar: string[];
+}
+
+export interface UserData {
+  id: string;
+  email: string;
+  googleId?: string;
+  authMethod?: string;
 }

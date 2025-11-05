@@ -1,7 +1,7 @@
 // hooks/useAuthState.ts
 import { useState, useEffect } from 'react';
 import { MetodoAutenticacion } from '../interfaces/types';
-import { apiService } from '../services/api'; // ✅ Importar apiService
+import { apiService } from '../services/api';
 
 export function useAuthState() {
   const [metodos, setMetodos] = useState<MetodoAutenticacion[]>([]);
@@ -14,13 +14,34 @@ export function useAuthState() {
       setCargando(true);
       setError(null);
       
-      // ✅ Ahora usa apiService
-      const metodosBackend = await apiService.getAuthMethods();
+      // Obtener métodos del backend y datos del usuario
+      const [metodosBackend, userData] = await Promise.all([
+        apiService.getAuthMethods(),
+        apiService.getCurrentUser().catch(() => null) // Manejar error silenciosamente
+      ]);
       
-      const metodosConActivo = metodosBackend.map(metodo => ({
-        ...metodo,
-        activo: metodo.activo || false
-      }));
+      // Determinar método de registro del usuario
+      let metodoRegistro = '';
+      if (userData) {
+        // Si el usuario tiene googleId, se registró con Google
+        if (userData.googleId) {
+          metodoRegistro = 'google';
+        } 
+        // Si no tiene googleId pero tiene email, se registró con correo
+        else if (userData.email && !userData.googleId) {
+          metodoRegistro = 'correo';
+        }
+      }
+
+      const metodosConActivo = metodosBackend.map(metodo => {
+        // Si es el método con el que se registró, forzar a activo
+        const esMetodoRegistro = metodo.id === metodoRegistro;
+        return {
+          ...metodo,
+          activo: esMetodoRegistro || (metodo.activo || false),
+          esMetodoRegistro // Nueva propiedad para identificar
+        };
+      });
       
       setMetodos(metodosConActivo);
       setMetodosActivos(metodosConActivo.filter(m => m.activo));
@@ -29,7 +50,7 @@ export function useAuthState() {
       setError('Error al cargar métodos de autenticación');
       console.error('Error cargando métodos:', err);
       
-      // Fallback
+      // Fallback mejorado
       const metodosIniciales: MetodoAutenticacion[] = [
         {
           id: 'correo',
@@ -37,7 +58,8 @@ export function useAuthState() {
           tipo: 'correo',
           icono: '📧',
           color: 'blue',
-          activo: false
+          activo: false,
+          esMetodoRegistro: false
         },
         {
           id: 'google',
@@ -45,7 +67,8 @@ export function useAuthState() {
           tipo: 'google',
           icono: '🔐',
           color: 'red',
-          activo: false
+          activo: false,
+          esMetodoRegistro: false
         },
       ];
       
@@ -60,7 +83,7 @@ export function useAuthState() {
     try {
       setError(null);
       await apiService.activateAuthMethod(metodoId, datosAdicionales);
-      await cargarMetodos();
+      await cargarMetodos(); // Recargar para obtener estado actualizado
     } catch (err) {
       setError(`Error al activar método ${metodoId}: ${err}`);
       throw err;
@@ -71,12 +94,18 @@ export function useAuthState() {
     try {
       setError(null);
       
+      // Verificar si es método de registro
+      const metodo = metodos.find(m => m.id === metodoId);
+      if (metodo?.esMetodoRegistro) {
+        throw new Error("No se puede eliminar el método de autenticación con el que te registraste");
+      }
+
       if (metodosActivos.length <= 1) {
         throw new Error("No se puede eliminar el único método de autenticación");
       }
 
       await apiService.deactivateAuthMethod(metodoId);
-      await cargarMetodos();
+      await cargarMetodos(); // Recargar para obtener estado actualizado
     } catch (err) {
       setError(`Error al eliminar método ${metodoId}: ${err}`);
       throw err;
