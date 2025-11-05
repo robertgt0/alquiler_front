@@ -11,14 +11,17 @@
 }
 
 .transactions-header h2 {
-  font-size: 22px;
-  color: #1a202c;
+  font-size: 24px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 700;
+  color: #11255A;
   margin: 0;
 }
 
 .view-all-link {
   font-size: 14px;
-  color: #4A90E2;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #8DC0FF;
   text-decoration: none;
   font-weight: 500;
 }
