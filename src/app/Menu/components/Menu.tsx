@@ -101,27 +101,32 @@ export default function SimpleProfileMenu() {
 
       {/* Submenú */}
       {showSubMenu && (
-        <div className="flex flex-col space-y-3 pl-4 mt-3 border-l-2 border-gray-200">
-          <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
-            Cambiar contraseña
-          </button>
-          <button
-            onClick={handleCambiarTelefonoClick}
-            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
-          >
-            Cambiar teléfono
-          </button>
-          <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
-            Métodos de autenticación
-          </button>
-          <button
-            onClick={handleCerrarSesionesClick}
-            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left mt-2"
-          >
-            Cerrar sesiones
-          </button>
-        </div>
-      )}
+  <div className="flex flex-col space-y-3 pl-4 mt-3 border-l-2 border-gray-200
+                  max-h-[60vh] sm:max-h-[50vh] md:max-h-[40vh] overflow-y-auto">
+    <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
+      Cambiar contraseña
+    </button>
+    <button
+      onClick={handleCambiarTelefonoClick}
+      className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
+    >
+      Cambiar teléfono
+    </button>
+    <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
+      Métodos de autenticación
+    </button>
+    <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
+      Seguridad
+    </button>
+    <button
+      onClick={handleCerrarSesionesClick}
+      className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left mt-2"
+    >
+      Cerrar sesiones
+    </button>
+  </div>
+)}
+
 
       {/* Botón Cerrar sesión fuera del submenú */}
       <button
