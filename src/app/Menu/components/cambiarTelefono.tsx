@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ExitoMessageIcon from '../assets/iconos8-exito-50png.jpg';
 import { cambiarTelefono } from '@/app/teamsys/services/UserService';
@@ -9,14 +9,29 @@ import { cambiarTelefono } from '@/app/teamsys/services/UserService';
 interface CambiarTelefonoProps {
   onClose: () => void;
   userId: string;
+  telefonoActual: string;
+ 
 }
 
-export default function CambiarTelefono({ onClose, userId }: CambiarTelefonoProps) {
-  const [telefonoActual, setTelefonoActual] = useState('');
+export default function CambiarTelefono({ onClose, userId, telefonoActual }: CambiarTelefonoProps) {
+  const [telefonoActualInput, setTelefonoActualInput] = useState(telefonoActual || '');
   const [telefonoNuevo, setTelefonoNuevo] = useState('');
   const [errorActual, setErrorActual] = useState('');
   const [errorNuevo, setErrorNuevo] = useState('');
   const [mostrarExito, setMostrarExito] = useState(false);
+
+  // Leer el último teléfono del sessionStorage al abrir el formulario
+  useEffect(() => {
+  const user = sessionStorage.getItem('userData');
+  if (user) {
+    const usuario = JSON.parse(user);
+    setTelefonoActualInput(usuario.telefono || '');
+  } else {
+    setTelefonoActualInput(telefonoActual || '');
+  }
+}, []); // Se ejecuta solo al montar el componente
+
+
 
    const handleCerrarExito = () => {
     setMostrarExito(false);
@@ -75,8 +90,8 @@ export default function CambiarTelefono({ onClose, userId }: CambiarTelefonoProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const errorTelActual = validarNumero(telefonoActual);
-    const errorTelNuevo = validarNumero(telefonoNuevo, telefonoActual);
+    const errorTelActual = validarNumero(telefonoActualInput);
+    const errorTelNuevo = validarNumero(telefonoNuevo, telefonoActualInput);
 
     setErrorActual(errorTelActual);
     setErrorNuevo(errorTelNuevo);
@@ -91,17 +106,26 @@ export default function CambiarTelefono({ onClose, userId }: CambiarTelefonoProp
         return;
         }
 
-    setMostrarExito(true);
-   
+    // actualizando numero en el campo
+    setTelefonoActualInput(telefonoNuevo);
+    // Limpiamos input de teléfono nuevo y mostramos éxito
+      setTelefonoNuevo('');
+      setMostrarExito(true);
+
+      const user=sessionStorage.getItem("userData")
+      if(user){
+      const usuario=JSON.parse(user)
+          usuario.telefono = telefonoNuevo; // reemplaza el teléfono antiguo
+          sessionStorage.setItem("userData", JSON.stringify(usuario)); // guarda la versión actualizada
+      
+        }
 
     }catch(error){
       setErrorNuevo("Error en el servidor");
 
     }
-  
   }
   
-
   return (
     <div className="fixed inset-0 bg-blue-500 flex items-center justify-center z-50 px-4">
       <div className="bg-white rounded-3xl border border-gray-300 shadow-xl w-full max-w-md p-6 flex flex-col items-center text-center animate-fade-in">
@@ -117,13 +141,15 @@ export default function CambiarTelefono({ onClose, userId }: CambiarTelefonoProp
                     id="telefonoActual"
                     type="tel"
                     inputMode="numeric"
-                    value={telefonoActual}
+                    value={telefonoActualInput}
+                    readOnly
                     onChange={(e) =>
-                      handleChange(e.target.value, setTelefonoActual, setErrorActual)
-                    }
-                    onBlur={() =>
-                      handleBlur(telefonoActual, setErrorActual)
-                    }
+                      handleChange(e.target.value, setTelefonoActualInput, setErrorActual)
+                      }
+                     onBlur={() =>
+                      handleBlur(telefonoActualInput, setErrorActual)
+                    }  
+
                     className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm
                       focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950
                       ${errorActual ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
@@ -145,10 +171,10 @@ export default function CambiarTelefono({ onClose, userId }: CambiarTelefonoProp
                     inputMode="numeric"
                     value={telefonoNuevo}
                     onChange={(e) =>
-                      handleChange(e.target.value, setTelefonoNuevo, setErrorNuevo, telefonoActual)
+                      handleChange(e.target.value, setTelefonoNuevo, setErrorNuevo, telefonoActualInput)
                     }
                     onBlur={() =>
-                      handleBlur(telefonoNuevo, setErrorNuevo, telefonoActual)
+                      handleBlur(telefonoNuevo, setErrorNuevo, telefonoActualInput)
                     }
                     className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm
                       focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950
@@ -175,13 +201,13 @@ export default function CambiarTelefono({ onClose, userId }: CambiarTelefonoProp
                 <button
                   type="submit"
                   disabled={
-                    !telefonoActual ||
+                    !telefonoActualInput ||
                     !telefonoNuevo ||
                     !!errorActual ||
                     !!errorNuevo
                   }
                   className={`flex-1 py-2 rounded-2xl transition-colors duration-200 text-white focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-                    telefonoActual &&
+                    telefonoActualInput &&
                     telefonoNuevo &&
                     !errorActual &&
                     !errorNuevo

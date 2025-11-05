@@ -1,7 +1,7 @@
 
 
 import { UsuarioDocument } from "../../registro/interfaces/types";
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL??"http://localhost:5000 " ;
 
 export async function crearUsuario(usuario: UsuarioDocument) {
   const res = await fetch(`${API_URL}/api/teamsys/usuario`, {

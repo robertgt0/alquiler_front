@@ -15,7 +15,8 @@ export default function SimpleProfileMenu() {
     nombre: string;
     correo: string;
     fotoPerfil: string;
-  } | null>(null);
+    telefono: string;
+  } | null>(null)
 
   const router = useRouter();
 
@@ -54,6 +55,7 @@ export default function SimpleProfileMenu() {
         "Usuario",
       correo: parsed.correo || parsed.email || "correo@desconocido.com",
       fotoPerfil: parsed.fotoPerfil || "/images/default-profile.jpg",
+      telefono: parsed.telefono ||""
     });
   } catch (error) {
     console.error("Error al leer userData del localStorage:", error);
@@ -134,7 +136,9 @@ export default function SimpleProfileMenu() {
         <CerrarSesiones onContinue={handleContinue} onCancel={handleCancel} />
       )}
       {showCambiarTelefono && (
-        <CambiarTelefono onClose={handleCerrarCambiarTelefono} userId={user?.id || ""} />
+        <CambiarTelefono onClose={handleCerrarCambiarTelefono} 
+        userId={user?.id || ""}
+        telefonoActual={user?.telefono || ""} />
       )}
     </div>
   );
