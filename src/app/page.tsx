@@ -6,7 +6,6 @@ import Footer from "./components/Footer/Footer";
 import CarruselInspirador from "./components/CarruselInspirador/CarruselInspirador";
 import Link from "next/link";
 import categorias, { type CategoriaBase } from "./components/data/categoriasData";
-import HelpButton from "./components/HelpButton/HelpButton";
 
 export default function Home() {
   return (
@@ -15,8 +14,6 @@ export default function Home() {
       <section className="my-5">
         <CarruselInspirador />
       </section>
-
-      <HelpButton />
 
       {/* Mapa */}
       <section id="mapa" className="my-10">

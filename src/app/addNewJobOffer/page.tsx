@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getOfferById, createOffer, updateOffer, type Offer } from '@/app/offers/services/offersService';
 
@@ -13,7 +13,7 @@ function fileToDataURL(file: File): Promise<string> {
   });
 }
 
-function NuevaOFertaOEditarContent() {
+export default function NuevaOFertaOEditar() {
   const router = useRouter();
   const search = useSearchParams();
   const editId = search.get('edit'); // <-- si viene, estamos en modo edición
@@ -203,13 +203,5 @@ function NuevaOFertaOEditarContent() {
         </form>
       </section>
     </main>
-  );
-}
-
-export default function NuevaOFertaOEditar() {
-  return (
-    <Suspense fallback={<main className="p-6">Cargando...</main>}>
-      <NuevaOFertaOEditarContent />
-    </Suspense>
   );
 }
