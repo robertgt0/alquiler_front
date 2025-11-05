@@ -48,12 +48,13 @@ export const LoginForm: React.FC = () => {
 
       console.log('Login exitoso:', res);
       
-      // Guardar token en localStorage/sessionStorage
-      if (res.token) {
-        localStorage.setItem('authToken', res.token);
-        // También puedes guardar datos del usuario si los necesitas
-        localStorage.setItem('userData', JSON.stringify(res.user));
-      }
+      if (res.data) {
+      const token = res.token ?? res.data.token; 
+
+      if (token) sessionStorage.setItem('authToken', token);
+
+      sessionStorage.setItem('userData', JSON.stringify(res.data));
+    }
       
       // Disparar evento de login exitoso para que el Header se actualice
       const eventLogin = new CustomEvent("login-exitoso");
