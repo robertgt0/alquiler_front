@@ -1,4 +1,3 @@
-// components/Header/Header.tsx
 'use client';
 
 import Link from 'next/link';
@@ -16,9 +15,9 @@ export default function Header() {
   useEffect(() => {
     setIsClient(true);
 
-    // 🔹 Mantener sesión solo durante la pestaña abierta
-    const storedLogin = sessionStorage.getItem('isLoggedIn');
-    if (storedLogin === 'true') {
+    // Verificar si hay un token de sesión al cargar el componente
+    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (token) {
       setIsLoggedIn(true);
     }
 
@@ -29,11 +28,27 @@ export default function Header() {
       }
     };
 
+    // Escuchar evento de login exitoso
+    const handleLoginExitoso = () => {
+      setIsLoggedIn(true);
+    };
+
+    // Escuchar evento de logout
+    const handleLogoutEvent = () => {
+      setIsLoggedIn(false);
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('login-exitoso', handleLoginExitoso);
+    window.addEventListener('logout-exitoso', handleLogoutEvent);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('login-exitoso', handleLoginExitoso);
+      window.removeEventListener('logout-exitoso', handleLogoutEvent);
+    };
   }, []);
 
-  // 🔹 Redirigir búsqueda a /404 al presionar Enter
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -41,22 +56,22 @@ export default function Header() {
     }
   };
 
-  // 🔹 Iniciar sesión (solo en sessionStorage) y pedir geolocalización
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-    sessionStorage.setItem('isLoggedIn', 'true');
-
-    // Emitir evento para geolocalización
-    window.dispatchEvent(new CustomEvent("solicitar-geolocalizacion"));
-
-    // Emitir evento para notificar login exitoso
-    window.dispatchEvent(new CustomEvent("login-exitoso"));
-  };
-
-  // 🔹 Cerrar sesión
   const handleLogout = () => {
+    // Limpiar almacenamiento local
+    localStorage.removeItem('authToken');
+    sessionStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    sessionStorage.removeItem('userData');
+    
+    // Actualizar estado
     setIsLoggedIn(false);
-    sessionStorage.removeItem('isLoggedIn');
+    
+    // Disparar evento de logout
+    const eventLogout = new CustomEvent("logout-exitoso");
+    window.dispatchEvent(eventLogout);
+    
+    // Redirigir a home
+    router.push('/');
   };
 
   if (!isClient) return null;
@@ -64,7 +79,8 @@ export default function Header() {
   return (
     <>
       {/* HEADER DESKTOP / TABLET */}
-      <header className="hidden sm:flex items-center justify-between p-4 bg-[#EEF7FF] shadow-md fixed top-0 left-0 w-full z-10">
+      <header className="hidden sm:flex items-center justify-between p-4 bg-[#EEF7FF] shadow-md fixed top-0 left-0 w-full z-50">
+        {/* LOGO */}
         <div className="flex items-center">
           <Link href="/">
             <Icono size={40} />
@@ -72,7 +88,8 @@ export default function Header() {
           <span className="ml-2 text-xl font-bold text-[#11255A]">Servineo</span>
         </div>
 
-        <div className="flex-grow mx-8">
+        {/* BARRA DE BÚSQUEDA */}
+        <div className="grow mx-8">
           <div className="relative">
             <input
               type="text"
@@ -97,22 +114,24 @@ export default function Header() {
           </div>
         </div>
 
+        {/* ELEMENTOS DEL HEADER */}
         <div className="flex items-center space-x-4">
           {!isLoggedIn ? (
             <>
               <Link href="/ser-fixer">
-                <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
+                <button className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a] transition-colors">
                   Ser Fixer
                 </button>
               </Link>
-              <button
-                onClick={handleLogin}
-                className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF]"
-              >
-                Iniciar Sesión
-              </button>
-              <Link href="/register">
-                <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF]">
+
+              <Link href="/login">
+                <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
+                  Iniciar Sesión
+                </button>
+              </Link>
+
+              <Link href="/registro">
+                <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF] transition-colors">
                   Registrarse
                 </button>
               </Link>
@@ -120,31 +139,37 @@ export default function Header() {
           ) : (
             <>
               <Link href="/ser-fixer">
-                <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
+                <button className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a] transition-colors">
                   Ser Fixer
                 </button>
               </Link>
-              <div
-                onClick={() => router.push('/404')}
-                className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition"
-                title="Ver perfil"
-              >
-                <span className="font-semibold text-[#11255A] select-none">Nombre de Usuario</span>
-                <svg
-                  className="w-8 h-8 text-[#2a87ff]"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                </svg>
+              <div className="flex items-center space-x-2">
+                <span className="font-semibold text-[#11255A]">Usuario</span>
+                <div className="relative group">
+                  <svg
+                    className="w-8 h-8 text-[#2a87ff] cursor-pointer"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  </svg>
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                </div>
               </div>
             </>
           )}
         </div>
       </header>
 
-      {/* HEADER MÓVIL */}
-      <header className="sm:hidden fixed top-0 left-0 w-full p-2 bg-[#EEF7FF] shadow-md z-10">
+      {/* HEADER MÓVIL SUPERIOR */}
+      <header className="sm:hidden fixed top-0 left-0 w-full p-2 bg-[#EEF7FF] shadow-md z-50">
         <div className="flex items-center space-x-2 w-full">
           <Link href="/">
             <Icono size={28} />
@@ -174,9 +199,9 @@ export default function Header() {
         </div>
       </header>
 
-      {/* FOOTER MÓVIL */}
+      {/* FOOTER MÓVIL INFERIOR */}
       <footer
-        className={`sm:hidden fixed bottom-0 left-0 w-full px-3 py-2 bg-[#EEF7FF] shadow-md z-20 
+        className={`sm:hidden fixed bottom-0 left-0 w-full px-3 py-2 bg-[#EEF7FF] shadow-md z-50 
         transform transition-transform duration-300 ease-in-out
         ${areButtonsVisible ? 'translate-y-0' : 'translate-y-full'}`}
       >
@@ -185,38 +210,52 @@ export default function Header() {
 
           {!isLoggedIn ? (
             <div className="flex w-full space-x-1">
-              <button
-                onClick={handleLogin}
-                className="flex-1 px-2 py-1.5 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] w-full text-xs"
-              >
-                Iniciar Sesión
-              </button>
+              <Link href="/login" className="flex-1">
+                <button className="w-full px-2 py-1.5 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] text-xs">
+                  Iniciar Sesión
+                </button>
+              </Link>
 
-              <Link href="/register" className="flex-1">
-                <button className="px-2 py-1.5 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF] w-full text-xs">
+              <Link href="/registro" className="flex-1">
+                <button className="w-full px-2 py-1.5 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF] text-xs">
                   Registrarse
                 </button>
               </Link>
             </div>
           ) : (
-            <div className="flex items-center justify-center space-x-2">
-              <Link href="/ser-fixer">
-                <button className="px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
+            <div className="flex items-center justify-center space-x-2 w-full">
+              <Link href="/ser-fixer" className="flex-1">
+                <button className="w-full px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
                   Ser Fixer
                 </button>
               </Link>
-              <span className="text-[#11255A] text-xs font-semibold">Nombre de Usuario</span>
-              <svg
-                className="w-5 h-5 text-[#2a87ff]"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-              </svg>
+              <div className="flex items-center space-x-1 flex-1 justify-end">
+                <span className="text-[#11255A] text-xs font-semibold truncate">Usuario</span>
+                <div className="relative group">
+                  <svg
+                    className="w-5 h-5 text-[#2a87ff] cursor-pointer"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                  </svg>
+                  <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-3 py-1 text-xs text-gray-700 hover:bg-gray-100"
+                    >
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </footer>
+
+      {/* Espacio para el header fijo */}
+      <div className="h-16 sm:h-20"></div>
     </>
   );
 }
