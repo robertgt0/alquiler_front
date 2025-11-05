@@ -15,7 +15,13 @@ export default function PorQueElegirnos() {
     <div className="container mx-auto px-4">
       <div className="flex items-center">
         {/* Logo a la izquierda - circular */}
-   
+        <div className="flex-shrink-0 mr-6 md:mr-8">
+          <img 
+            src="/logo-servineo.jpg" 
+            alt="SERVINEO Logo"
+            className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-full border-2 border-white shadow-lg"
+          />
+        </div>
         
         {/* Texto centrado */}
         <div className="flex-1 text-center">
