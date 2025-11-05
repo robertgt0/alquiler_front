@@ -4,6 +4,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 // ELIMINADO: Ya no se usa Image
 // import Image from 'next/image';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
@@ -151,10 +152,10 @@ const Footer = () => {
         <div className="space-y-4">
           <h4 className="text-xl font-semibold font-heading">Funciones del Sistema</h4>
           <nav className="flex flex-col space-y-2 items-center md:items-start">
-            <a href="/convertir-fixer" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Convertir en fixer</a>
+            <Link href="/ser-fixer" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Convertir en fixer</Link>
             <button type="button" onClick={() => setActiveModal('howItWorks')} className="text-left hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
-            <a href="/login" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Iniciar sesión</a>
-            <a href="/registro" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Registrarse</a>
+            <Link href="/login" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Iniciar sesión</Link>
+            <Link href="/registro" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Registrarse</Link>
           </nav>
         </div>
                 
