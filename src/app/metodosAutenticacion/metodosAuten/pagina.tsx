@@ -1,10 +1,10 @@
-// page.tsx
+// /metodosAuten/pagina.tsx
 'use client';
 
 import React from 'react';
-import { useAuthState } from './hooks/useAuthState';
-import GestorMetodos from './modules/GestorMetodos';
-import LoadingState from './components/LoadingState';
+import { useAuthState } from '../hooks/useAuthState';
+import GestorMetodos from '../modules/GestorMetodos';
+import LoadingState from '../components/LoadingState';
 
 export default function PaginaMetodosAutenticacion() {
   const {

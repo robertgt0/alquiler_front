@@ -1,12 +1,114 @@
 // modules/GestorMetodos.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GestorMetodosProps, ModosInterfaz, MetodoAutenticacion } from '../interfaces/types';
 import MetodoActivoPanel from '../components/MetodoActivoPanel';
 import MetodosDisponiblesList from '../components/MetodosDisponiblesList';
 import ModalContrasena from '../components/ModalContrasena';
 import { apiService } from '../services/api';
+import { GoogleAuthService } from '../services/googleAuthService';
+
+
+// Función de diagnóstico para ver qué hay en sessionStorage
+const diagnosticarSessionStorage = () => {
+  console.log('🔍 DIAGNÓSTICO SESSIONSTORAGE:');
+  
+  if (typeof window === 'undefined') {
+    console.log('  - No estamos en el cliente');
+    return;
+  }
+  // Ver todas las keys en sessionStorage
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const key = sessionStorage.key(i);
+    const value = sessionStorage.getItem(key || '');
+    console.log(`  - Key: "${key}"`, value ? `Value: ${value.substring(0, 100)}...` : 'Value: null');
+  }
+  
+  // Ver específicamente userData
+  const userDataString = sessionStorage.getItem('userData');
+  console.log('  - userData encontrado:', userDataString ? 'SÍ' : 'NO');
+  
+  if (userDataString) {
+    try {
+      const userData = JSON.parse(userDataString);
+      console.log('  - userData parseado:', userData);
+      console.log('  - email en userData:', userData.email);
+    } catch (error) {
+      console.log('  - Error parseando userData:', error);
+    }
+  }
+  
+  console.log('🔍 FIN DIAGNÓSTICO');
+};
+
+// Función para obtener solo el email desde sessionStorage
+const obtenerEmailDesdeSessionStorage = (): string | null => {
+  try {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    const userDataString = sessionStorage.getItem('userData');
+    
+    if (!userDataString) {
+      console.warn('No se encontró userData en sessionStorage');
+      return null;
+    }
+
+    const userData = JSON.parse(userDataString);
+    const userEmail = userData.correo;
+    
+    if (!userEmail || typeof userEmail !== 'string') {
+      console.error('Email no encontrado o inválido en userData');
+      return null;
+    }
+
+    console.log('📧 Email obtenido:', userEmail);
+    return userEmail;
+    
+  } catch (error) {
+    console.error('Error al obtener email desde sessionStorage:', error);
+    return null;
+  }
+};
+
+// Función para autenticar con Google y obtener el email
+const autenticarConGoogleYComparar = async (emailDeSessionStorage: string): Promise<boolean> => {
+  try {
+    console.log('🔐 Iniciando autenticación con Google...');
+    
+    // 1. Autenticar con Google
+    const googleUser = await GoogleAuthService.signInWithGoogle();
+    const googleEmail = googleUser.email;
+    
+    console.log('🔍 Comparando emails:');
+    console.log('  - SessionStorage:', emailDeSessionStorage);
+    console.log('  - Google:', googleEmail);
+
+    // 2. Comparar emails
+    const emailsCoinciden = emailDeSessionStorage.toLowerCase() === googleEmail.toLowerCase();
+    
+    if (!emailsCoinciden) {
+      console.error('❌ Los emails no coinciden');
+      console.log('  - Email sessionStorage:', emailDeSessionStorage);
+      console.log('  - Email Google:', googleEmail);
+      return false;
+    }
+
+    console.log('✅ Los emails coinciden');
+    
+    // 3. Guardar el email de Google en sessionStorage para uso futuro
+    sessionStorage.setItem('googleEmail', googleEmail);
+    sessionStorage.setItem('googleUser', JSON.stringify(googleUser));
+    
+    return true;
+    
+  } catch (error) {
+    console.error('Error en autenticación con Google:', error);
+    throw error;
+  }
+};
 
 export default function GestorMetodos({
   metodos,
@@ -27,6 +129,13 @@ export default function GestorMetodos({
   const [metodoSeleccionadoParaContrasena, setMetodoSeleccionadoParaContrasena] = useState<string | null>(null);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  // Obtener el email al cargar el componente
+  useEffect(() => {
+    const email = obtenerEmailDesdeSessionStorage();
+    setUserEmail(email);
+  }, []);
 
   const limpiarError = () => setError(null);
 
@@ -65,7 +174,6 @@ export default function GestorMetodos({
     
     if (!modos.modoSeleccion) return;
     
-    // Verificar si el método ya está activo
     const metodo = metodos.find(m => m.id === metodoId);
     if (metodo?.activo) {
       setError("Este método ya está activo");
@@ -82,7 +190,6 @@ export default function GestorMetodos({
   const toggleSeleccionEliminar = (metodoId: string) => {
     limpiarError();
     
-    // VERIFICAR SI ES EL MÉTODO DE REGISTRO
     const metodo = metodos.find(m => m.id === metodoId);
     if (metodo?.esMetodoRegistro) {
       setError("No se puede eliminar el método de autenticación con el que te registraste");
@@ -120,16 +227,13 @@ export default function GestorMetodos({
     try {
       limpiarError();
 
-      // Verificar si el método YA ESTÁ ACTIVO
       const metodo = metodos.find(m => m.id === metodoId);
       if (metodo?.activo) {
         setError("Este método ya está activo");
         return;
       }
       
-      // MÉTODO CORREO/CONTRASEÑA
       if (metodoId === 'correo') {
-        // VERIFICAR que Google esté activo para tener el email
         const googleEstaActivo = metodosActivos.some(m => m.id === 'google');
         
         if (!googleEstaActivo) {
@@ -140,17 +244,15 @@ export default function GestorMetodos({
         setMetodoSeleccionadoParaContrasena(metodoId);
         setModalContrasenaAbierto(true);
       } 
-      // MÉTODO GOOGLE
       else if (metodoId === 'google') {
         await activarMetodoGoogle();
       } 
-      // OTROS MÉTODOS
       else {
         await activarMetodo(metodoId);
         desactivarModos();
       }
     } catch (err) {
-      setError(`Error al activar método: ${err}`);
+      setError(`Error al activar método: ${err instanceof Error ? err.message : 'Error desconocido'}`);
     }
   };
 
@@ -159,16 +261,8 @@ export default function GestorMetodos({
       setCargandoGoogle(true);
       limpiarError();
       
-      // 📌 OBTENER USERDATA DESDE SESSIONSTORAGE
-      const userDataString = sessionStorage.getItem('userData');
-      
-      if (!userDataString) {
-        throw new Error("No se encontraron datos de usuario en sessionStorage");
-      }
-      
-      // 📌 CONVERTIR JSON A OBJETO
-      const userData = JSON.parse(userDataString);
-      const userEmail = userData.email;
+      // Obtener email desde sessionStorage
+      const userEmail = obtenerEmailDesdeSessionStorage();
       
       if (!userEmail) {
         throw new Error("No se pudo obtener el correo del usuario desde sessionStorage");
@@ -176,12 +270,24 @@ export default function GestorMetodos({
       
       console.log('📧 Activando Google con email:', userEmail);
       
-      // 📌 ENVIAR SOLO EL EMAIL AL BACKEND
+      // AUTENTICAR CON GOOGLE Y COMPARAR
+      const autenticacionExitosa = await autenticarConGoogleYComparar(userEmail);
+      
+      if (!autenticacionExitosa) {
+        throw new Error("El email de sessionStorage no coincide con la cuenta de Google");
+      }
+      
+      // Si la autenticación fue exitosa, configurar Google Auth en el backend
       await apiService.setupGoogleAuth(userEmail);
       await activarMetodo('google');
       
       setCargandoGoogle(false);
       desactivarModos();
+      
+      // Recargar métodos si existe la función
+      if (recargarMetodos) {
+        recargarMetodos();
+      }
       
     } catch (err) {
       console.error('Error en activarMetodoGoogle:', err);
@@ -194,16 +300,8 @@ export default function GestorMetodos({
     try {
       limpiarError();
       
-      // 📌 OBTENER USERDATA DESDE SESSIONSTORAGE
-      const userDataString = sessionStorage.getItem('userData');
-      
-      if (!userDataString) {
-        throw new Error("No se encontraron datos de usuario en sessionStorage");
-      }
-      
-      // 📌 CONVERTIR JSON A OBJETO
-      const userData = JSON.parse(userDataString);
-      const userEmail = userData.email;
+      // Obtener email desde sessionStorage
+      const userEmail = obtenerEmailDesdeSessionStorage();
       
       if (!userEmail) {
         throw new Error("No se pudo obtener el correo del usuario desde sessionStorage");
@@ -211,7 +309,6 @@ export default function GestorMetodos({
       
       console.log('🔐 Configurando Correo/Contraseña para:', userEmail);
       
-      // 📌 ENVIAR EMAIL + CONTRASEÑA AL BACKEND
       await apiService.setupEmailPassword(userEmail, contrasena);
       
       if (metodoSeleccionadoParaContrasena) {
@@ -221,6 +318,11 @@ export default function GestorMetodos({
       setModalContrasenaAbierto(false);
       setMetodoSeleccionadoParaContrasena(null);
       desactivarModos();
+      
+      // Recargar métodos si existe la función
+      if (recargarMetodos) {
+        recargarMetodos();
+      }
       
     } catch (err) {
       console.error('Error en manejarConfirmacionContrasena:', err);
@@ -232,7 +334,6 @@ export default function GestorMetodos({
     try {
       limpiarError();
       
-      // VERIFICAR SI SE INTENTA ELIMINAR MÉTODO DE REGISTRO
       const metodosAEliminarConInfo = modos.metodosAEliminar.map(id => 
         metodos.find(m => m.id === id)
       ).filter(Boolean) as MetodoAutenticacion[];
@@ -255,8 +356,13 @@ export default function GestorMetodos({
       
       desactivarModos();
       
+      // Recargar métodos si existe la función
+      if (recargarMetodos) {
+        recargarMetodos();
+      }
+      
     } catch (err) {
-      setError(`Error al eliminar métodos: ${err}`);
+      setError(`Error al eliminar métodos: ${err instanceof Error ? err.message : 'Error desconocido'}`);
     }
   };
 
