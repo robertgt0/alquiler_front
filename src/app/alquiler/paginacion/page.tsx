@@ -7,7 +7,7 @@ import UserProfileCard from "./components/UserProfileCard";
 import Pagination from "./components/Pagination";
 import { getJobs } from "./services/jobService";
 import { usePagination } from "./hooks/usePagination";
-import { Job } from "./types/job";
+import { Job } from "../../../types/job";
 import BusquedaAutocompletado from "../Busqueda/busquedaAutocompletado";
 import FiltrosForm from "../Feature/Componentes/FiltroForm";
 import { UsuarioResumen } from "../Feature/Types/filtroType";
@@ -402,7 +402,11 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
               </p>
             )}
             <button
-              onClick={() => { handleClearFilters(); router.back(); }}
+              onClick={() => {
+                handleClearFilters();
+                // Navegar a la página principal/inicio
+                router.push('/alquiler');
+              }}
               className="inline-block mt-6 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
             >
               Volver a ofertas

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Job } from "../types/job";
+import { Job } from "../../../../types/job";
 
 export const usePagination = (items: Job[], itemsPerPage: number = 10) => { // 10 items por página
   const router = useRouter();

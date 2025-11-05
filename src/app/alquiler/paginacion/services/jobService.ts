@@ -1,4 +1,4 @@
-﻿import { Job } from "../types/job";
+﻿import { Job } from "../../../../types/job";
 
 // Funciones de utilidad para generar datos consistentes
 const seededRandom = (seed: number) => {
@@ -8,6 +8,18 @@ const seededRandom = (seed: number) => {
 
 const getConsistentItem = <T>(array: T[], seed: number): T => {
   return array[Math.floor(seededRandom(seed) * array.length)];
+};
+
+// Baraja un arreglo de forma determinista usando una semilla
+const seededShuffle = <T>(array: T[], seed: number): T[] => {
+  const copy = array.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(seededRandom(seed + i) * (i + 1));
+    const tmp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = tmp;
+  }
+  return copy;
 };
 
 // Tipos y interfaces
@@ -104,13 +116,13 @@ const generateRandomRating = (seed: number) => {
 };
 
 // Función para obtener un trabajo de ejemplo específico
-export const getExampleJob = (index: number): Job => {
+export const getExampleJob = (index: number, nombreOverride?: string): Job => {
   const currentDate = new Date();
   const dayOffset = Math.floor(seededRandom(index * 7) * 30);
   const jobDate = new Date(currentDate.getTime() - dayOffset * 24 * 60 * 60 * 1000);
   
   const servicio = getConsistentItem(SERVICIOS, index * 13);
-  const nombreCompleto = getConsistentItem(NOMBRES_COMPLETOS, index * 17);
+  const nombreCompleto = nombreOverride ?? getConsistentItem(NOMBRES_COMPLETOS, index * 17);
   const ciudad = getConsistentItem(CIUDADES, index * 23);
   
   const precioBase = servicio.precio_base;
@@ -139,7 +151,50 @@ export const getExampleJob = (index: number): Job => {
 
 // Función para generar múltiples trabajos de ejemplo
 const generateExampleJobs = (count: number): Job[] => {
-  return Array.from({ length: count }, (_, index) => getExampleJob(index));
+  // Generamos una lista de nombres únicos/barajados para evitar repeticiones en la misma página
+  const baseSeed = 12345;
+  const shuffled = seededShuffle(NOMBRES_COMPLETOS, baseSeed);
+  const names: string[] = [];
+
+  for (let i = 0; i < count; i++) {
+    if (i < shuffled.length) {
+      names.push(shuffled[i]);
+    } else {
+      // Si necesitamos más nombres que los disponibles, reutilizamos con sufijos para mantener variedad
+      const base = shuffled[i % shuffled.length];
+      const suffix = Math.floor(i / shuffled.length) + 1;
+      names.push(`${base} ${suffix}`);
+    }
+  }
+
+  const jobs = Array.from({ length: count }, (_, index) => getExampleJob(index, names[index]));
+
+  // Garantizar que la primera tarjeta (exclusiva) tenga siempre el nombre "Doryan Patzi"
+  if (jobs.length > 0) {
+    jobs[0].company = "Doryan Patzi";
+  }
+
+  // Asegurar que ningún otro trabajo en la lista tenga exactamente el mismo nombre
+  const used = new Set<string>();
+  if (jobs[0]) used.add(jobs[0].company);
+
+  for (let i = 1; i < jobs.length; i++) {
+    if (!jobs[i].company) {
+      jobs[i].company = `Usuario ${i + 1}`;
+    }
+    if (used.has(jobs[i].company)) {
+      // Reemplazar por una variante distinta usando nombres base disponibles
+      const alt = NOMBRES_COMPLETOS.find(n => n !== "Doryan Patzi" && !used.has(n));
+      if (alt) {
+        jobs[i].company = alt;
+      } else {
+        jobs[i].company = `${jobs[i].company} ${i}`;
+      }
+    }
+    used.add(jobs[i].company);
+  }
+
+  return jobs;
 };
 
 // Función para obtener el índice de un trabajo a partir de su ID
