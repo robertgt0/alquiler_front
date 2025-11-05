@@ -37,15 +37,14 @@ export default function HelpButton() {
         </div>
 
         <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#52abff] rounded-full border-2 border-white animate-pulse" />
-      </button >
+      </button>
 
-    { isHovered && (
-      <div className="sm:hidden absolute bottom-full right-0 mb-2 bg-[#0d1b3d] text-white text-xs px-3 py-2 rounded-lg shadow-lg whitespace-nowrap animate-fade-in">
-        ¿Necesitas ayuda?
-        <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-[#0d1b3d]" />
-      </div>
-    )
-}
-    </div >
+      {isHovered && (
+        <div className="sm:hidden absolute bottom-full right-0 mb-2 bg-[#0d1b3d] text-white text-xs px-3 py-2 rounded-lg shadow-lg whitespace-nowrap animate-fade-in">
+          ¿Necesitas ayuda?
+          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-[#0d1b3d]" />
+        </div>
+      )}
+    </div>
   );
 }
