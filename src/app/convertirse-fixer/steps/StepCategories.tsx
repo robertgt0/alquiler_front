@@ -26,24 +26,46 @@ export default function StepCategories({ fixerId, selected, onBack, onComplete }
   }
 
   async function handleNext() {
-    if (!categories.length) {
-      setError("Selecciona al menos un tipo de trabajo");
-      return;
-    }
-
-    try {
-      setError(null);
-      setLoading(true);
-      const ids = categories.map((category) => category.id);
-      await updateCategoriesApi(fixerId, ids);
-      saveToStorage(STORAGE_KEYS.categories, categories);
-      onComplete(categories);
-    } catch (err: any) {
-      setError(String(err?.message || "No se pudieron guardar las categorias"));
-    } finally {
-      setLoading(false);
-    }
+  if (!categories.length) {
+    setError("Selecciona al menos un tipo de trabajo");
+    return;
   }
+
+  try {
+    setError(null);
+    setLoading(true);
+    
+    // ⬇️ NUEVO: Guardar categorías con descripciones personalizadas
+    const categoriesWithDescriptions = categories.map((cat: any) => ({
+      jobId: cat.id,
+      jobName: cat.name,
+      generalDescription: cat.description || "",
+      customDescription: cat.customDescription || undefined,
+    }));
+    
+    // ⬇️ NUEVO: Usar el nuevo endpoint para guardar trabajos con descripciones
+    if (categoriesWithDescriptions.some((c: any) => c.customDescription)) {
+      // Si hay descripciones personalizadas, usar el nuevo endpoint
+      const { addFixerJob } = await import("@/lib/api/fixer");
+      for (const job of categoriesWithDescriptions) {
+        if (job.customDescription) {
+          await addFixerJob(fixerId, job);
+        }
+      }
+    }
+    
+    // Guardar también las categorías de forma tradicional (compatibilidad)
+    const ids = categories.map((category) => category.id);
+    await updateCategoriesApi(fixerId, ids);
+    
+    saveToStorage(STORAGE_KEYS.categories, categories);
+    onComplete(categories);
+  } catch (err: any) {
+    setError(String(err?.message || "No se pudieron guardar las categorias"));
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <section className="mx-auto flex max-w-4xl flex-col gap-6">
