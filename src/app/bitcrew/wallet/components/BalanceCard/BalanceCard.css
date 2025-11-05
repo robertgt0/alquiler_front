@@ -8,6 +8,7 @@
 }
 
 .card-header {
+  margin-left: 22px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -23,11 +24,13 @@
 }
 
 .balance-amount {
-  margin-top: 1px;
+  margin-left: 20px;
+  margin-top: -10px;
+
   font-size: 65px;
   font-weight: 800;
-  letter-spacing: -1px;
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: -1px;
 }
 
 /* Requerimiento: que el usuario no pueda seleccionar el monto */
@@ -38,11 +41,20 @@
 }
 
 .card-footer {
-  margin-top: 20px;
+  padding: 4px 10px;
+  border-radius: 20px;
+
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: rgba(255, 255, 255, 0.7);
+
+  margin-left: 25px;
+  margin-top: -5px;
+
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 14px;
 }
 
 .card-number {
@@ -50,9 +62,11 @@
 }
 
 .card-status {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(113, 225, 111, 0.53);
   padding: 4px 10px;
   border-radius: 20px;
-  font-size: 12px;
+
+  font-size: 14px;
   font-weight: 500;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
