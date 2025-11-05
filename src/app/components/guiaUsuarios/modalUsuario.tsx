@@ -37,28 +37,28 @@ export default function ModalGuiaUsuario({ isOpen, onClose }: ModalGuiaUsuarioPr
 
   return (
     <>
-      {/* Fondo/Overlay oscuro semi-transparente (lo mantenemos para el efecto) */}
+      {/* Fondo/Overlay oscuro semi-transparente */}
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" />
       
       {/* Contenedor del Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
         
-        {/* El modal en sí, ahora con fondo blanco y texto oscuro */}
-        <div className="bg-white text-black rounded-lg shadow-2xl max-w-md w-full">
+        {/* El modal en sí con nuevos colores y tipografía */}
+        <div className="bg-white text-gray-900 rounded-lg shadow-2xl max-w-md w-full">
           
           {/* Contenido */}
           <div className="p-6">
-            <h2 className="text-xl font-bold text-center mb-4">
+            <h2 className="text-xl font-semibold text-center mb-4">
               ¡Bienvenido a Servineo!
             </h2>
 
-            {/* Párrafo ahora centrado */}
+            {/* Párrafo centrado */}
             <p className="text-gray-700 text-sm mb-6 text-center">
               ¿Te gustaría ver una guía rápida sobre cómo funciona nuestra plataforma? 
               Te ayudaremos a conocer todas las funcionalidades disponibles.
             </p>
 
-            {/* Checkbox ahora centrado */}
+            {/* Checkbox centrado */}
             <div className="flex items-center justify-center mb-6">
               <input
                 type="checkbox"
@@ -72,17 +72,17 @@ export default function ModalGuiaUsuario({ isOpen, onClose }: ModalGuiaUsuarioPr
               </label>
             </div>
 
-            {/* Botones (estilo del mockup oscuro) */}
+            {/* Botones con nuevos estilos */}
             <div className="flex gap-3 justify-center">
               <button
                 onClick={handleRechazar}
-                className="px-6 py-2 bg-white text-black border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                className="px-6 py-2 bg-white text-gray-900 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors font-medium text-sm"
               >
                 Rechazar
               </button>
               <button
                 onClick={handleAceptar}
-                className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
               >
                 Aceptar
               </button>
