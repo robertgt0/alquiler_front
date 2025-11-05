@@ -39,32 +39,25 @@ export default function SimpleProfileMenu() {
   const toggleSubMenu = () => setShowSubMenu(prev => !prev);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
+    // Obtener usuario desde localStorage
+  const storedUser = sessionStorage.getItem("userData");
+  if (!storedUser) return;
 
-        const res = await fetch("/api/auth/current-user", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) return;
+  try {
+    const parsed = JSON.parse(storedUser);
 
-        const json = await res.json();
-        if (json.success) {
-          const userData = json.data;
-          setUser({
-            id: userData.id,
-            nombre: userData.nombre || `${userData.firstName || ""} ${userData.lastName || ""}`.trim() || "Usuario",
-            correo: userData.correo || userData.email || "correo@desconocido.com",
-            fotoPerfil: userData.fotoPerfil || "/images/default-profile.jpg",
-          });
-        }
-      } catch (error) {
-        console.error("Error al obtener el usuario:", error);
-      }
-    };
-
-    fetchUser();
+    setUser({
+      id: parsed._id || parsed.id,
+      nombre:
+        parsed.nombre ||
+        `${parsed.firstName ?? ""} ${parsed.lastName ?? ""}`.trim() ||
+        "Usuario",
+      correo: parsed.correo || parsed.email || "correo@desconocido.com",
+      fotoPerfil: parsed.fotoPerfil || "/images/default-profile.jpg",
+    });
+  } catch (error) {
+    console.error("Error al leer userData del localStorage:", error);
+  }
   }, []);
 
   return (
@@ -78,6 +71,11 @@ export default function SimpleProfileMenu() {
           width={50}
           height={50}
           className="rounded-full object-cover border border-gray-300"
+          unoptimized
+          onError={(e) => {
+            // fallback si la URL remota falla
+            (e.currentTarget).src = "/images/default-profile.jpg";
+          }}
         />
         <div className="ml-3 truncate">
           <p className="font-semibold text-gray-800 text-base sm:text-base">

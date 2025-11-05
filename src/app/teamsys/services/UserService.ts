@@ -35,11 +35,11 @@ export async function loginUsuario(correoElectronico: string, password: string) 
   return data;
 }
 
-export async function cambiarTelefono(telefono: string, id:string) {
-        return  await fetch(`${API_URL}/api/teamsys/usuario/telefono/${id}`, {
+export async function cambiarTelefono(telefono:string, id:string) {
+        const res= await fetch(`${API_URL}/api/teamsys/usuario/telefono/${id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(telefono)
+          body: `{"telefono":"${telefono}"}`
         });
-        
+        return res.json();
       }

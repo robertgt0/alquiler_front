@@ -84,10 +84,10 @@ export default function CambiarTelefono({ onClose, userId }: CambiarTelefonoProp
     if (errorTelActual || errorTelNuevo) return;
 
     try{
-    const resp= await cambiarTelefono(telefonoActual,userId)
+    const resp= await cambiarTelefono(telefonoNuevo,userId)
 
-    if (!resp.ok) {
-     setErrorActual("No se pudo cambiar el numero");
+    if (!resp.success) {
+     setErrorNuevo(resp.message);
         return;
         }
 
@@ -95,11 +95,11 @@ export default function CambiarTelefono({ onClose, userId }: CambiarTelefonoProp
    
 
     }catch(error){
-      setErrorActual("Error en el servidor");
+      setErrorNuevo("Error en el servidor");
 
     }
   
-
+  }
   
 
   return (
@@ -220,5 +220,4 @@ export default function CambiarTelefono({ onClose, userId }: CambiarTelefonoProp
       </div>
     </div>
   );
-}
 }
