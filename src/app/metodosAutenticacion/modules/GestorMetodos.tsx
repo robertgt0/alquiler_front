@@ -28,17 +28,6 @@ export default function GestorMetodos({
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ FUNCIÓN desactivarModos - FALTANTE
-  const desactivarModos = () => {
-    limpiarError();
-    setModos({
-      modoSeleccion: false,
-      modoEliminar: false,
-      metodosSeleccionados: [],
-      metodosAEliminar: []
-    });
-  };
-
   const limpiarError = () => setError(null);
 
   const activarModoSeleccion = () => {
@@ -61,8 +50,20 @@ export default function GestorMetodos({
     });
   };
 
+  const desactivarModos = () => {
+    limpiarError();
+    setModos({
+      modoSeleccion: false,
+      modoEliminar: false,
+      metodosSeleccionados: [],
+      metodosAEliminar: []
+    });
+  };
+
   const toggleSeleccionMetodo = (metodoId: string) => {
     limpiarError();
+    
+    if (!modos.modoSeleccion) return;
     
     if (modos.metodosSeleccionados.includes(metodoId)) {
       setModos(prev => ({ ...prev, metodosSeleccionados: [] }));
@@ -94,9 +95,11 @@ export default function GestorMetodos({
     }
   };
 
-  // ✅ ACTIVAR MÉTODOS
   const activarMetodosSeleccionados = async () => {
-    if (modos.metodosSeleccionados.length === 0) return;
+    if (modos.metodosSeleccionados.length === 0) {
+      setError("Por favor selecciona un método para activar");
+      return;
+    }
 
     const metodoId = modos.metodosSeleccionados[0];
     
@@ -106,7 +109,7 @@ export default function GestorMetodos({
       // Verificar si el método YA ESTÁ ACTIVO
       const metodo = metodos.find(m => m.id === metodoId);
       if (metodo?.activo) {
-        desactivarModos();
+        setError("Este método ya está activo");
         return;
       }
       
@@ -129,7 +132,6 @@ export default function GestorMetodos({
     }
   };
 
-  // ✅ ACTIVAR GOOGLE AUTH
   const activarMetodoGoogle = async () => {
     try {
       setCargandoGoogle(true);
@@ -137,7 +139,6 @@ export default function GestorMetodos({
       
       const { authUrl } = await apiService.initiateGoogleSetup();
       
-      // Redirigir a Google OAuth
       window.location.href = authUrl;
       
     } catch (err) {
@@ -147,14 +148,12 @@ export default function GestorMetodos({
     }
   };
 
-  // ✅ CONFIRMAR CONTRASEÑA
   const manejarConfirmacionContrasena = async (contrasena: string) => {
     try {
       limpiarError();
       
       await apiService.setupEmailPassword(contrasena);
       
-      // Activar el método
       if (metodoSeleccionadoParaContrasena) {
         await activarMetodo(metodoSeleccionadoParaContrasena);
       }
@@ -169,7 +168,6 @@ export default function GestorMetodos({
     }
   };
 
-  // ✅ ELIMINAR MÉTODOS
   const eliminarMetodosSeleccionados = async () => {
     try {
       limpiarError();
@@ -180,7 +178,6 @@ export default function GestorMetodos({
         return;
       }
 
-      // Eliminar cada método seleccionado
       for (const id of modos.metodosAEliminar) {
         await eliminarMetodo(id);
       }
@@ -192,7 +189,7 @@ export default function GestorMetodos({
     }
   };
 
-  // ✅ Métodos disponibles
+  // ✅ MÉTODOS DISPONIBLES - Correo/Contraseña SIEMPRE disponible
   const metodosDisponibles: MetodoAutenticacion[] = [
     {
       id: 'correo',
@@ -212,11 +209,13 @@ export default function GestorMetodos({
     },
   ];
 
-  const metodosDisponiblesFiltrados = metodosDisponibles.filter(m => !m.activo);
+  // ✅ CORREGIDO: Mostrar Correo/Contraseña aunque esté activo, pero Google solo si no está activo
+  const metodosDisponiblesFiltrados = metodosDisponibles.filter(m => 
+    m.id === 'correo' || !m.activo // ✅ Correo siempre visible, Google solo si no está activo
+  );
 
   return (
     <>
-      {/* Mostrar errores globales */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800 font-medium">{error}</p>
@@ -230,7 +229,6 @@ export default function GestorMetodos({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Panel Izquierdo - Métodos Activos */}
         <MetodoActivoPanel
           metodosActivos={metodosActivos}
           modos={modos}
@@ -241,22 +239,17 @@ export default function GestorMetodos({
           onDesactivarModos={desactivarModos}
           onEliminarMetodos={eliminarMetodosSeleccionados}
         />
-
-        {/* Panel Derecho - Métodos Disponibles (solo en modo selección) */}
-        {modos.modoSeleccion && (
-          <MetodosDisponiblesList
-            metodosDisponibles={metodosDisponiblesFiltrados}
-            metodosActivos={metodosActivos}
-            modos={modos}
-            cargandoGoogle={cargandoGoogle}
-            onToggleSeleccion={toggleSeleccionMetodo}
-            onDesactivarModos={desactivarModos}
-            onActivarMetodos={activarMetodosSeleccionados}
-          />
-        )}
+        <MetodosDisponiblesList
+          metodosDisponibles={metodosDisponiblesFiltrados}
+          metodosActivos={metodosActivos}
+          modos={modos}
+          cargandoGoogle={cargandoGoogle}
+          onToggleSeleccion={toggleSeleccionMetodo}
+          onDesactivarModos={desactivarModos}
+          onActivarMetodos={activarMetodosSeleccionados}
+        />
       </div>
 
-      {/* Modal para contraseña */}
       <ModalContrasena
         isOpen={modalContrasenaAbierto}
         onClose={() => {
