@@ -74,7 +74,7 @@ const RecargaQR: React.FC = () => {
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Monto</label>
             <input
               type="text"
-              className={`w-full border-b border-gray-400 focus:outline-none px-2 py-1 ${monto ? "text-black" : "text-[#7B7979]"}`}
+              className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
               value={monto ? `${monto} BS` : ""}
               onChange={handleMontoChange}
               placeholder="500 BS"
@@ -85,7 +85,7 @@ const RecargaQR: React.FC = () => {
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Nombre</label>
             <input
               type="text"
-              className={`w-full border-b border-gray-400 focus:outline-none px-2 py-1 ${nombre ? "text-black" : "text-[#7B7979]"}`}
+              className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
               value={nombre}
               onChange={(e) => {
                 const val = e.target.value;
@@ -100,7 +100,7 @@ const RecargaQR: React.FC = () => {
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
-                className={`flex-1 border-b border-gray-400 focus:outline-none px-2 py-1 ${nit ? "text-black" : "text-[#7B7979]"}`}
+                className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
                 value={nit}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -123,7 +123,7 @@ const RecargaQR: React.FC = () => {
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Nro. teléfono</label>
             <input
               type="text"
-              className={`w-full border-b border-gray-400 focus:outline-none px-2 py-1 ${telefono ? "text-black" : "text-[#7B7979]"}`}
+              className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
               value={telefono}
               onChange={(e) => {
                 const val = e.target.value;
@@ -137,7 +137,7 @@ const RecargaQR: React.FC = () => {
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Correo electrónico</label>
             <input
               type="email"
-              className={`w-full border-b border-gray-400 focus:outline-none px-2 py-1 ${correo ? "text-black" : "text-[#7B7979]"}`}
+              className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
               placeholder="Daniel@gmail.com"
@@ -147,7 +147,7 @@ const RecargaQR: React.FC = () => {
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Detalle de Recarga</label>
             <textarea
-              className={`w-full border-b border-gray-400 focus:outline-none resize-none px-2 py-1 ${detalle ? "text-black" : "text-[#7B7979]"}`}
+              className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
               rows={2}
               value={detalle}
               onChange={(e) => {
