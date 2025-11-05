@@ -7,7 +7,7 @@ import CarruselInspirador from "./components/CarruselInspirador/CarruselInspirad
 import Link from "next/link";
 import categorias, { type CategoriaBase } from "./components/data/categoriasData";
 import HelpButton from "./components/HelpButton/HelpButton";
-
+import GiaUsuariosNuevos from "./components/guiaUsuarios/GiaUsuariosNuevos";
 export default function Home() {
   return (
     <main>
@@ -28,15 +28,20 @@ export default function Home() {
         {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
         <HomeFixer categorias={categorias as CategoriaBase[]} />
       </section>
+       
 
       {/* Trabajos recientes */}
       <section id="trabajos-recientes" className="my-5 w-full">
         <CarruselOfertas />
       </section>
 
+      <section id="gia-usuarios-nuevos" className="my-5 w-full">
+        <GiaUsuariosNuevos />
+      </section>
+
       {/* Acciones rápidas (contenido que tenías en el segundo Home) */}
       <section className="my-10">
-        <div className="min-h-[0] flex items-center justify-center">
+        <div className="min-h-0 flex items-center justify-center">
           <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-2xl font-bold text-center mb-6">Acciones rápidas</h2>
 
@@ -72,6 +77,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+     
+
 
       <Footer />
     </main>
