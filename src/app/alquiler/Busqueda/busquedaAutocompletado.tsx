@@ -296,6 +296,8 @@ class BusquedaService {
     }
 }
 
+
+
 export default function BusquedaAutocompletado({
     onSearch,
     datos = [],
@@ -325,6 +327,8 @@ export default function BusquedaAutocompletado({
     const busquedaEnCurso = useRef(false);
 
     const caracteresValidos = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ´'" ,\s\-]*$/;
+
+
 
 
 
@@ -385,7 +389,7 @@ export default function BusquedaAutocompletado({
         const debeMostrarHistorial = Boolean(
             inputFocused &&
             texto.length === 0 &&
-            historial.length > 0 &&
+            //historial.length > 0 &&
             mostrarHistorial
         );
 
@@ -698,69 +702,68 @@ export default function BusquedaAutocompletado({
         inputRef.current?.focus();
     }, [datos, onSearch, setMostrarHistorialLocal]);
 
-    const manejarKeyDown = useCallback(async (e: React.KeyboardEvent) => {
-        // Determinar qué lista estamos navegando
-        const itemsList = mostrarHistorialLocal ? historial : sugerencias;
-        const totalItems = itemsList.length;
+ const manejarKeyDown = useCallback(async (e: React.KeyboardEvent) => {
+  const itemsList = mostrarHistorialLocal ? historial : sugerencias;
+  const totalItems = itemsList.length;
 
-        // Lógica de Navegación (Solo si hay una lista visible)
-        if (mostrarHistorialLocal || mostrarSugerencias) {
+  // 🔹 Evitar navegación si no hay elementos
+  if ((mostrarHistorialLocal || mostrarSugerencias) && totalItems === 0) return;
 
-            if (e.key === 'ArrowDown') {
-                e.preventDefault(); // Evita que el cursor se mueva en el input
-                setIndiceSeleccionado(prevIndice =>
-                    prevIndice < totalItems - 1 ? prevIndice + 1 : 0
-                );
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault(); // Evita que el cursor se mueva en el input
-                setIndiceSeleccionado(prevIndice =>
-                    prevIndice > 0 ? prevIndice - 1 : totalItems - 1
-                );
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
+  if (mostrarHistorialLocal || mostrarSugerencias) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setIndiceSeleccionado((prev) =>
+        prev < totalItems - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setIndiceSeleccionado((prev) =>
+        prev > 0 ? prev - 1 : totalItems - 1
+      );
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
 
-                if (indiceSeleccionado !== -1) {
-                    const terminoSeleccionado = itemsList[indiceSeleccionado];
+      if (indiceSeleccionado !== -1) {
+        const terminoSeleccionado = itemsList[indiceSeleccionado];
 
-                    if (mostrarHistorialLocal) {
-                        await manejarSeleccionHistorial(terminoSeleccionado);
-                    } else if (mostrarSugerencias) {
-                        await seleccionarSugerencia(terminoSeleccionado);
-                    }
-                } else {
-                    // Si Enter se presiona sin un elemento seleccionado, ejecuta la búsqueda normal
-                    ejecutarBusqueda();
-                }
-            } else if (e.key === 'Escape') {
-                setMostrarSugerencias(false);
-                setMostrarHistorialLocal(false);
-                setIndiceSeleccionado(-1); // Resetear el índice
-                setInputFocused(false);
-                inputRef.current?.blur();
-            } else {
-                // Si el usuario escribe, resetea la selección por índice
-                setIndiceSeleccionado(-1);
-            }
+        if (mostrarHistorialLocal) {
+          await manejarSeleccionHistorial(terminoSeleccionado);
+        } else if (mostrarSugerencias) {
+          await seleccionarSugerencia(terminoSeleccionado);
         }
-        // Comportamiento normal si no hay listas visibles
-        else {
-            if (e.key === 'Enter') {
-                ejecutarBusqueda();
-            } else if (e.key === 'Escape') {
-                limpiarBusqueda();
-            }
-        }
-    }, [ejecutarBusqueda,
-        limpiarBusqueda,
-        setMostrarHistorialLocal,
-        mostrarHistorialLocal,
-        mostrarSugerencias,
-        historial,
-        sugerencias,
-        indiceSeleccionado,
-        setIndiceSeleccionado,
-        manejarSeleccionHistorial,
-        seleccionarSugerencia]);
+      } else {
+        ejecutarBusqueda();
+      }
+    } else if (e.key === 'Escape') {
+      setMostrarSugerencias(false);
+      setMostrarHistorialLocal(false);
+      setIndiceSeleccionado(-1);
+      setInputFocused(false);
+      inputRef.current?.blur();
+    } else {
+      setIndiceSeleccionado(-1);
+    }
+  } else {
+    if (e.key === 'Enter') {
+      ejecutarBusqueda();
+    } else if (e.key === 'Escape') {
+      limpiarBusqueda();
+    }
+  }
+}, [
+  ejecutarBusqueda,
+  limpiarBusqueda,
+  setMostrarHistorialLocal,
+  mostrarHistorialLocal,
+  mostrarSugerencias,
+  historial,
+  sugerencias,
+  indiceSeleccionado,
+  setIndiceSeleccionado,
+  manejarSeleccionHistorial,
+  seleccionarSugerencia
+]);
+
 
     // EFECTO PARA SUGERENCIAS
     useEffect(() => {
@@ -941,42 +944,49 @@ export default function BusquedaAutocompletado({
                     </div>
                 )}
 
-                {/* HISTORIAL */}
-                {mostrarHistorialLocal && (
-                    <ul className="caja-sugerencias">
-                        <li className="sugerencias-header">
-                            Búsquedas recientes
-                            {cargandoHistorial && (
-                                <span className="cargando-indicador">Cargando...</span>
-                            )}
-                        </li>
+               {/* ✅ HISTORIAL ✅ */}
+            {mostrarHistorialLocal && (
+                <ul className="caja-sugerencias">
+                    <li className="sugerencias-header">
+                        Búsquedas recientes
+                        {cargandoHistorial && (
+                            <span className="cargando-indicador">Cargando...</span>
+                        )}
+                    </li>
 
-                        {historial.map((item, i) => (
+                    {/* ✅ AQUÍ LA CONDICIÓN PARA MOSTRAR EL MENSAJE */}
+                    {!cargandoHistorial && historial.length === 0 ? (
+                        <li className="mensaje-historial">
+                            No hay búsquedas recientes
+                        </li>
+                    ) : (
+                        historial.map((item, i) => (
                             <li
                                 key={i}
-                                // 🔑 AÑADE LA LÓGICA DE SELECCIÓN AQUÍ:
                                 className={`item-historial ${i === indiceSeleccionado ? 'seleccionado' : ''}`}
                                 onClick={() => manejarSeleccionHistorial(item)}
                             >
                                 <div className="contenedor-texto-historial">
                                     <Clock className="icono-historial" size={16} />
-
                                     <span className="texto-historial">{item}</span>
                                 </div>
 
-                                {/*Botón de borrar individualmente */}
                                 <button
                                     className="boton-eliminar-historial"
                                     onClick={(e) => {
-                                        e.stopPropagation(); eliminarDelHistorial(item);
+                                        e.stopPropagation();
+                                        eliminarDelHistorial(item);
                                     }}
                                     title="Eliminar elemento"
                                 >
                                     ✕
                                 </button>
                             </li>
-                        ))}
+                        ))
+                    )}
 
+                    {/* ✅ Solo mostrar limpiar si hay elementos */}
+                    {historial.length > 0 && (
                         <li
                             className="item-limpiar-todo"
                             onClick={limpiarHistorialBackend}
@@ -984,8 +994,9 @@ export default function BusquedaAutocompletado({
                             <Trash2 size={14} />
                             Limpiar historial
                         </li>
-                    </ul>
-                )}
+                    )}
+                </ul>
+            )}
 
 
                 {/* SUGERENCIAS */}
