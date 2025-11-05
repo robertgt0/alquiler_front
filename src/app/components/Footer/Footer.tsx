@@ -17,15 +17,20 @@ const modalContents = {
     title: 'Política de Privacidad',
     content: (
       <>
+        <div className="mb-6 p-3 bg-[#f8fafc] border-l-4 border-[#52abff] rounded-r">
+          <p className="text-sm font-medium text-[#11255a]">
+            <span className="text-[#52abff]">Última actualización:</span> 22/10/25
+          </p>
+        </div>
         <p>En <strong>Servineo</strong>, valoramos la privacidad de nuestros usuarios. Esta política explica cómo recopilamos, usamos y protegemos tu información personal:</p>
         <p><strong>Datos recopilados:</strong> nombre, correo electrónico, teléfono y datos necesarios para prestar el servicio.</p>
         <p><strong>Uso de la información:</strong> solo utilizamos tus datos para gestionar solicitudes, brindar soporte y mejorar nuestros servicios.</p>
         <p><strong>Protección:</strong> aplicamos medidas técnicas y organizativas para resguardar tu información.</p>
-        <p><strong>Derechos del usuario:</strong> puedes acceder, rectificar o eliminar tus datos personales escribiéndonos a <a href="mailto:servineo@gmail.com" className="text-blue-600 hover:underline">nuestro correo de contacto</a>.</p>
+        <p><strong>Derechos del usuario:</strong> puedes acceder, rectificar o eliminar tus datos personales escribiéndonos a <a href="mailto:servineobol@gmail.com" className="text-blue-600 hover:underline">nuestro correo de contacto</a>.</p>
         <p>Adicionalmente, almacenamos algunos registros de actividad (logs) para mejorar la seguridad y detectar patrones anómalos que puedan indicar fraudes o mal uso de la plataforma.</p>
         <p>Cuando compartes información en tu perfil o en mensajes con otros usuarios, recuerda que parte de esos datos pueden ser visibles a terceros según la configuración de privacidad que hayas seleccionado.</p>
         <p>Podemos compartir datos agregados y anonimizados con socios para análisis estadístico. Nunca compartiremos información personal identificable con terceros sin tu consentimiento explícito, salvo en los casos previstos por la ley.</p>
-        <p>Si tienes dudas sobre el tratamiento de tus datos, puedes solicitar un informe o ejercer tus derechos enviando una solicitud a <a href="mailto:servineo@gmail.com" className="text-blue-600 hover:underline">servineo@gmail.com</a>. Responderemos en los plazos legales correspondientes.</p>
+        <p>Si tienes dudas sobre el tratamiento de tus datos, puedes solicitar un informe o ejercer tus derechos enviando una solicitud a <a href="mailto:servineobol@gmail.com" className="text-blue-600 hover:underline">servineobol@gmail.com</a>. Responderemos en los plazos legales correspondientes.</p>
         <p>Esta política puede actualizarse periódicamente; te recomendamos revisarla con regularidad para estar al tanto de los cambios.</p>
       </>
     )
@@ -56,6 +61,11 @@ const modalContents = {
     title: 'Política de Cookies',
     content: (
       <>
+        <div className="mb-6 p-3 bg-[#f8fafc] border-l-4 border-[#52abff] rounded-r">
+          <p className="text-sm font-medium text-[#11255a]">
+            <span className="text-[#52abff]">Última actualización:</span> 22/10/25
+          </p>
+        </div>
         <p>Este sitio utiliza cookies para mejorar la experiencia del usuario:</p>
         <p><strong>Cookies esenciales:</strong> necesarias para el funcionamiento básico del sitio.</p>
         <p><strong>Cookies de análisis:</strong> nos ayudan a entender cómo interactúan los visitantes con la página para mejorarla.</p>
@@ -63,7 +73,7 @@ const modalContents = {
         <p>Puedes configurar o desactivar las cookies en la configuración de tu navegador.</p>
         <p>Algunas cookies son gestionadas por terceros (por ejemplo, proveedores de analítica). Te recomendamos revisar las políticas de estos servicios si te interesa un control más detallado.</p>
         <p>Si prefieres no aceptar cookies de análisis, puedes cambiar tu configuración en cualquier momento; sin embargo, esto puede limitar algunas funcionalidades o la personalización del contenido.</p>
-        <p>Para consultas sobre las cookies que utilizamos o para solicitar su eliminación, contacta a <a href="mailto:servineo@gmail.com" className="text-blue-600 hover:underline">servineo@gmail.com</a>.</p>
+        <p>Para consultas sobre las cookies que utilizamos o para solicitar su eliminación, contacta a <a href="mailto:servineobol@gmail.com" className="text-blue-600 hover:underline">servineobol@gmail.com</a>.</p>
         <p>En algunos casos, las cookies nos permiten recordar el estado de tu carrito o guardar progresos en formularios para que no pierdas tu trabajo si cierras la pestaña accidentalmente.</p>
         <p>También utilizamos cookies para experimentar mejoras en la interfaz (A/B testing). Estos experimentos nos ayudan a decidir qué cambios benefician más a los usuarios en términos de usabilidad y rendimiento.</p>
         <p>Si utilizas varios dispositivos, algunas preferencias pueden sincronizarse mediante cookies asociadas a tu cuenta para ofrecer una experiencia coherente entre dispositivos.</p>
@@ -113,34 +123,43 @@ const Footer = () => {
 
   return (
     <>
-  <footer className="bg-[#11255a] text-[#d8ecff]" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+  <footer className="bg-[#11255a] text-[#d8ecff] font-sans">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="border-t border-[#1140bc] mb-8"></div>
       {/* Grid: stack on small screens, three columns on md+ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 text-center md:text-left">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center md:text-left">
                 
         <div className="space-y-4">
           <div className="flex items-center justify-center md:justify-start">
             <div className="mr-3 flex-shrink-0">
               <Icono size={50} />
             </div>
-            <h3 className="text-2xl font-bold">Servineo</h3>
+            <h3 className="text-2xl font-bold font-heading">Servineo</h3>
           </div>
           <p className="text-[#b9ddff] text-sm sm:text-base">La plataforma líder que conecta clientes con proveedores de servicios profesionales. Encuentra el fixer perfecto para tu proyecto.</p>
         </div>
 
         <div className="space-y-4">
-          <h4 className="text-xl font-semibold">Enlaces Rápidos</h4>
-      <nav className="flex flex-col space-y-2 items-center md:items-start">
-      <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
-      <a href="#mapa" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
-      <a href="#servicios" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
-      <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-center md:text-left focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
-      </nav>
+            <h4 className="text-xl font-semibold font-heading">Enlaces Rápidos</h4>
+        <nav className="flex flex-col space-y-2 items-center md:items-start">
+        <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
+        <a href="#mapa" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
+        <a href="#servicios" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
+        </nav>
+          </div>
+        
+        <div className="space-y-4">
+          <h4 className="text-xl font-semibold font-heading">Funciones del Sistema</h4>
+          <nav className="flex flex-col space-y-2 items-center md:items-start">
+            <a href="/convertir-fixer" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Convertir en fixer</a>
+            <button type="button" onClick={() => setActiveModal('howItWorks')} className="text-left hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
+            <a href="/login" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Iniciar sesión</a>
+            <a href="/registro" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Registrarse</a>
+          </nav>
         </div>
                 
         <div className="space-y-4">
-          <h4 className="text-xl font-semibold">Soporte</h4>
+          <h4 className="text-xl font-semibold font-heading">Soporte</h4>
           <ul className="space-y-3">
             <li className="flex items-center justify-center md:justify-start">
               <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
@@ -149,9 +168,9 @@ const Footer = () => {
               </a>
             </li>
             <li className="flex items-center justify-center md:justify-start">
-              <a href="mailto:servineo@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+              <a href="mailto:servineobol@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
                 <FaEnvelope className="mr-3 text-[#52abff]" />
-                <span className="text-sm">servineo@gmail.com</span>
+                <span className="text-sm">servineobol@gmail.com</span>
               </a>
             </li>
             <li className="flex items-center justify-center md:justify-start">
@@ -166,10 +185,10 @@ const Footer = () => {
           
       <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
       <p className="text-sm text-[#89c9ff]">© {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
-      <div className="flex flex-wrap justify-center gap-4 w-full md:w-auto">
-        <button onClick={() => setActiveModal('privacy')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de privacidad</button>
-        <button onClick={() => setActiveModal('terms')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Términos de uso</button>
-        <button onClick={() => setActiveModal('cookies')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de cookies</button>
+        <div className="flex flex-wrap justify-center gap-4 w-full md:w-auto">
+        <button type="button" onClick={() => setActiveModal('privacy')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de privacidad</button>
+        <button type="button" onClick={() => setActiveModal('terms')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Términos de uso</button>
+        <button type="button" onClick={() => setActiveModal('cookies')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de cookies</button>
       </div>
       </div>
     </div>
