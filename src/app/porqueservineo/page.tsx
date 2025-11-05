@@ -18,11 +18,11 @@ const PorQueServineoPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center mb-12">
           <div>
             <Image
-              src="/images/beneficio1.png"
+              src="/beneficio1.png"
               alt="Primer beneficio"
               width={300}
               height={180}
-              className="rounded-xl shadow-md mx-auto"
+              className="rounded-xl shadow-md mx-auto object-cover"
             />
             <p className="mt-3 text-gray-700">
               Información acerca del banner primer beneficio
@@ -31,11 +31,11 @@ const PorQueServineoPage: React.FC = () => {
 
           <div>
             <Image
-              src="/images/beneficio2.png"
+              src="/beneficio2.png"
               alt="Segundo beneficio"
               width={300}
               height={180}
-              className="rounded-xl shadow-md mx-auto"
+              className="rounded-xl shadow-md mx-auto object-cover"
             />
             <p className="mt-3 text-gray-700">
               Información acerca del banner del segundo beneficio
@@ -44,11 +44,11 @@ const PorQueServineoPage: React.FC = () => {
 
           <div>
             <Image
-              src="/images/beneficio3.png"
+              src="/beneficio3.png"
               alt="Tercer beneficio"
               width={300}
               height={180}
-              className="rounded-xl shadow-md mx-auto"
+              className="rounded-xl shadow-md mx-auto object-cover"
             />
             <p className="mt-3 text-gray-700">
               Información acerca del banner del tercer beneficio
@@ -63,7 +63,7 @@ const PorQueServineoPage: React.FC = () => {
           <table className="w-full border-collapse border border-gray-300 text-center text-sm md:text-base">
             <thead className="bg-gray-100">
               <tr>
-                <th className="border border-gray-300 p-3"> </th>
+                <th className="border border-gray-300 p-3"></th>
                 <th className="border border-gray-300 p-3 text-blue-700 font-bold">
                   Servineo
                 </th>
