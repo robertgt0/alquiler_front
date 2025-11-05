@@ -127,7 +127,7 @@ const Footer = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="border-t border-[#1140bc] mb-8"></div>
       {/* Grid: stack on small screens, three columns on md+ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 text-center md:text-left">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center md:text-left">
                 
         <div className="space-y-4">
           <div className="flex items-center justify-center md:justify-start">
@@ -140,13 +140,22 @@ const Footer = () => {
         </div>
 
         <div className="space-y-4">
-          <h4 className="text-xl font-semibold font-heading">Enlaces Rápidos</h4>
-      <nav className="flex flex-col space-y-2 items-center md:items-start">
-      <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
-      <a href="#mapa" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
-      <a href="#servicios" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
-      <button onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors text-center md:text-left focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
-      </nav>
+            <h4 className="text-xl font-semibold font-heading">Enlaces Rápidos</h4>
+        <nav className="flex flex-col space-y-2 items-center md:items-start">
+        <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
+        <a href="#mapa" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
+        <a href="#servicios" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
+        </nav>
+          </div>
+        
+        <div className="space-y-4">
+          <h4 className="text-xl font-semibold font-heading">Funciones del Sistema</h4>
+          <nav className="flex flex-col space-y-2 items-center md:items-start">
+            <a href="/convertir-fixer" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Convertir en fixer</a>
+            <button type="button" onClick={() => setActiveModal('howItWorks')} className="text-left hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
+            <a href="/login" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Iniciar sesión</a>
+            <a href="/registro" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Registrarse</a>
+          </nav>
         </div>
                 
         <div className="space-y-4">
@@ -176,10 +185,10 @@ const Footer = () => {
           
       <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
       <p className="text-sm text-[#89c9ff]">© {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
-      <div className="flex flex-wrap justify-center gap-4 w-full md:w-auto">
-        <button onClick={() => setActiveModal('privacy')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de privacidad</button>
-        <button onClick={() => setActiveModal('terms')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Términos de uso</button>
-        <button onClick={() => setActiveModal('cookies')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de cookies</button>
+        <div className="flex flex-wrap justify-center gap-4 w-full md:w-auto">
+        <button type="button" onClick={() => setActiveModal('privacy')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de privacidad</button>
+        <button type="button" onClick={() => setActiveModal('terms')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Términos de uso</button>
+        <button type="button" onClick={() => setActiveModal('cookies')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de cookies</button>
       </div>
       </div>
     </div>

@@ -1,5 +1,7 @@
 // src/app/componentes/reutilizables/Modal.tsx
 
+"use client";
+
 import React, { useEffect, useRef } from 'react';
 import { IoClose } from 'react-icons/io5';
 
@@ -13,17 +15,23 @@ interface ModalProps {
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<Element | null>(null);
 
   useEffect(() => {
-    if (isOpen && closeBtnRef.current) {
-      closeBtnRef.current.focus();
-    }
-    // Bloquear scroll del fondo
     if (isOpen) {
+      // Guardar el elemento enfocado antes de abrir para restaurarlo luego
+      previouslyFocused.current = document.activeElement;
+      // Focar el botón de cerrar cuando se abre
+      if (closeBtnRef.current) closeBtnRef.current.focus();
       document.body.classList.add('overflow-hidden');
     } else {
       document.body.classList.remove('overflow-hidden');
+      // Restaurar foco al elemento previo si existe
+      if (previouslyFocused.current instanceof HTMLElement) {
+        (previouslyFocused.current as HTMLElement).focus();
+      }
     }
+
     // Limpieza al desmontar
     return () => {
       document.body.classList.remove('overflow-hidden');
@@ -57,16 +65,45 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
+  // Cerrar con Escape y evitar que la tecla Escape se propague fuera
+  useEffect(() => {
+    if (!isOpen) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+  }, [isOpen, onClose]);
+
   if (!isOpen) {
     return null;
   }
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // si el click fue fuera del contenido del modal, cerrar
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div ref={modalRef} className="relative w-full max-w-2xl bg-[#eef7ff] rounded-lg shadow-xl text-[#13378b]">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
+      onClick={handleBackdropClick}
+      aria-hidden={isOpen ? 'false' : 'true'}
+    >
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        className="relative w-full max-w-2xl bg-[#eef7ff] rounded-lg shadow-xl text-[#13378b]"
+      >
         <div className="max-h-[90vh] overflow-hidden rounded-lg">
           <div className="flex items-start justify-between p-6 pb-4 border-b border-[#b9ddff]">
-            <h3 className="text-xl font-semibold text-[#11255a] font-heading">{title}</h3>
+            <h3 id="modal-title" className="text-xl font-semibold text-[#11255a] font-heading">{title}</h3>
             <button
               ref={closeBtnRef}
               onClick={onClose}
