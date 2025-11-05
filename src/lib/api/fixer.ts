@@ -1,5 +1,5 @@
 import type { PaymentMethodKey } from "@/types/payment";
-
+import type { FixerJob } from "@/types/fixer";
 const RAW_API = process.env.NEXT_PUBLIC_API_URL || "";
 const API_BASE = RAW_API ? RAW_API.replace(/\/+$/, "") : "http://localhost:4000";
 const FIXER_BASE = `${API_BASE}/api/fixers`;
@@ -28,6 +28,7 @@ export type FixerDTO = {
   ci?: string;
   location?: { lat: number; lng: number; address?: string };
   categories?: string[];
+  fixerJobs?: FixerJob[];  // ⬇️ NUEVO: Array de trabajos con descripción personalizada
   paymentMethods?: ("card" | "qr" | "cash")[];
   paymentAccounts?: Record<string, { holder: string; accountNumber: string }>;
   termsAccepted?: boolean;
@@ -104,4 +105,47 @@ export async function acceptTerms(id: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ accepted: true }),
   });
+}
+
+// ⬇️⬇️⬇️ NUEVAS FUNCIONES PARA FIXERJOBS (HU03) ⬇️⬇️⬇️
+
+/**
+ * Agregar o actualizar un trabajo con descripción personalizada
+ */
+export async function addFixerJob(
+  fixerId: string,
+  job: FixerJob
+): Promise<ApiSuccess<FixerDTO>> {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${fixerId}/jobs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(job),
+  });
+}
+
+/**
+ * Actualizar todos los trabajos del fixer
+ */
+export async function updateFixerJobs(
+  fixerId: string,
+  fixerJobs: FixerJob[]
+): Promise<ApiSuccess<FixerDTO>> {
+  return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${fixerId}/jobs`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fixerJobs }),
+  });
+}
+
+/**
+ * Obtener descripción de un trabajo específico
+ */
+export async function getFixerJobDescription(
+  fixerId: string,
+  jobId: string
+): Promise<ApiSuccess<{ jobId: string; description: string }>> {
+  return request<ApiSuccess<{ jobId: string; description: string }>>(
+    `${FIXER_BASE}/${fixerId}/jobs/${jobId}`,
+    { cache: "no-store" }
+  );
 }

@@ -3,14 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { CategoryDTO, createCategory, getCategories } from "@/lib/api/categories";
 
+type CategoryWithCustomDescription = CategoryDTO & {
+  customDescription?: string;
+};
+
 type Props = {
   open: boolean;
   selectedIds: string[];
   onClose: () => void;
-  onSave: (selected: CategoryDTO[]) => void;
+  onSave: (selected: CategoryWithCustomDescription[]) => void;
 };
 
-const BAD_WORDS = ["xxx", "spam", "broma"]; // ajusta si quieres
+const BAD_WORDS = ["xxx", "spam", "broma"];
 
 function validateName(v: string) {
   const name = v.trim();
@@ -33,13 +37,21 @@ export default function CategoriesSelector({
   const [picked, setPicked] = useState<string[]>(selectedIds);
   const [query, setQuery] = useState("");
   const [newName, setNewName] = useState("");
+  const [newGeneralDescription, setNewGeneralDescription] = useState(""); // ⬇️ NUEVO
   const [adding, setAdding] = useState(false);
+  
+  // ⬇️ NUEVO: Estado para descripciones personalizadas por categoría
+  const [customDescriptions, setCustomDescriptions] = useState<Record<string, string>>({});
+  const [editingDescriptionFor, setEditingDescriptionFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setPicked(selectedIds);
     setQuery("");
     setNewName("");
+    setNewGeneralDescription(""); // ⬇️ NUEVO
+    setCustomDescriptions({}); // ⬇️ NUEVO: Reset descripciones personalizadas
+    setEditingDescriptionFor(null); // ⬇️ NUEVO
     (async () => {
       try {
         setLoading(true);
@@ -59,28 +71,66 @@ export default function CategoriesSelector({
     return all.filter((c) => c.name.toLowerCase().includes(q));
   }, [all, query]);
 
-  const selectedList = useMemo(
-    () => all.filter((c) => picked.includes(c.id)),
-    [all, picked]
-  );
+  const selectedList = useMemo(() => {
+    return all
+      .filter((c) => picked.includes(c.id))
+      .map((c) => ({
+        ...c,
+        customDescription: customDescriptions[c.id] || undefined,
+      }));
+  }, [all, picked, customDescriptions]);
 
   function toggle(id: string) {
-    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+    const isCurrentlySelected = picked.includes(id);
+    
+    if (isCurrentlySelected) {
+      // Deseleccionar
+      setPicked((p) => p.filter((x) => x !== id));
+      setCustomDescriptions((prev) => {
+        const newDesc = { ...prev };
+        delete newDesc[id];
+        return newDesc;
+      });
+      if (editingDescriptionFor === id) {
+        setEditingDescriptionFor(null);
+      }
+    } else {
+      // Seleccionar
+      setPicked((p) => [...p, id]);
+      // Mostrar campo de descripción personalizada
+      setEditingDescriptionFor(id);
+    }
   }
 
   async function handleAdd() {
     const err = validateName(newName);
     if (err) return alert(err);
+    
+    // ⬇️ NUEVO: Validar descripción general (opcional pero recomendada)
+    const generalDesc = newGeneralDescription.trim();
+    if (generalDesc && generalDesc.length > 500) {
+      return alert("La descripción general no puede exceder 500 caracteres");
+    }
+    
     try {
       setAdding(true);
       const created = await createCategory(newName.trim());
-      // Si se creó con éxito, agregar a la lista y marcarlo seleccionado
       setAll((prev) => [created, ...prev]);
       setPicked((p) => (p.includes(created.id) ? p : [created.id, ...p]));
+      
+      // ⬇️ NUEVO: Si agregó descripción general, guardarla
+      if (generalDesc) {
+        // Aquí deberías actualizar la descripción general en el backend si tu API lo permite
+        // Por ahora, solo mostramos el campo para UX
+      }
+      
       setNewName("");
+      setNewGeneralDescription(""); // ⬇️ NUEVO
       alert("Su tipo de trabajo fue registrado con éxito");
+      
+      // ⬇️ NUEVO: Abrir campo de descripción personalizada para la categoría recién creada
+      setEditingDescriptionFor(created.id);
     } catch (e: any) {
-      // Mensaje del backend (p.ej. "El tipo de trabajo ya existe")
       alert(String(e.message || "No se pudo registrar"));
     } finally {
       setAdding(false);
@@ -121,7 +171,7 @@ export default function CategoriesSelector({
         <div style={{ padding: 16, borderBottom: "1px solid #eee" }}>
           <h3 style={{ margin: 0 }}>Seleccionar tipo de trabajo</h3>
           <p style={{ margin: "6px 0 0", color: "#555" }}>
-            Marca uno o varios de la lista. Si no existe, agrégalo aquí mismo.
+            Marca uno o varios de la lista. Puedes agregar una descripción personalizada para cada trabajo.
           </p>
 
           {/* Buscador */}
@@ -143,43 +193,135 @@ export default function CategoriesSelector({
         {/* Lista */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 8,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
             padding: 16,
             overflow: "auto",
             minHeight: 260,
           }}
         >
           {loading ? (
-            <div style={{ gridColumn: "1 / -1", textAlign: "center" }}>
-              Cargando…
-            </div>
+            <div style={{ textAlign: "center" }}>Cargando…</div>
           ) : filtered.length === 0 ? (
-            <div style={{ gridColumn: "1 / -1", color: "#666" }}>
-              No hay resultados para “{query}”.
+            <div style={{ color: "#666" }}>
+              No hay resultados para "{query}".
             </div>
           ) : (
             filtered.map((c) => (
-              <label
+              <div
                 key={c.id}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: 8,
                   border: "1px solid #eee",
                   borderRadius: 10,
-                  cursor: "pointer",
+                  padding: 12,
+                  background: picked.includes(c.id) ? "#f0f9ff" : "#fff",
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={picked.includes(c.id)}
-                  onChange={() => toggle(c.id)}
-                />
-                {c.name}
-              </label>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={picked.includes(c.id)}
+                    onChange={() => toggle(c.id)}
+                  />
+                  <span style={{ fontWeight: 600 }}>{c.name}</span>
+                </label>
+
+                {/* ⬇️ NUEVO: Mostrar descripción general si existe */}
+                {c.description && (
+                  <p style={{ margin: "8px 0 0 30px", fontSize: "0.875rem", color: "#666" }}>
+                    {c.description}
+                  </p>
+                )}
+
+                {/* ⬇️ NUEVO: Campo de descripción personalizada */}
+                {picked.includes(c.id) && (
+                  <div style={{ marginTop: 12, marginLeft: 30 }}>
+                    {editingDescriptionFor === c.id ? (
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 600, marginBottom: 4, color: "#374151" }}>
+                          Descripción personalizada (opcional):
+                        </label>
+                        <textarea
+                          value={customDescriptions[c.id] || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value.length <= 500) {
+                              setCustomDescriptions((prev) => ({
+                                ...prev,
+                                [c.id]: value,
+                              }));
+                            }
+                          }}
+                          placeholder={`Ej: "Especializado en instalaciones eléctricas industriales con 10 años de experiencia..."`}
+                          rows={3}
+                          style={{
+                            width: "100%",
+                            padding: "8px 12px",
+                            borderRadius: 8,
+                            border: "1px solid #ddd",
+                            fontSize: "0.875rem",
+                            resize: "vertical",
+                          }}
+                        />
+                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                          <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
+                            {customDescriptions[c.id]?.length || 0}/500 caracteres
+                          </span>
+                          <button
+                            onClick={() => setEditingDescriptionFor(null)}
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "#2563eb",
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              textDecoration: "underline",
+                            }}
+                          >
+                            Cerrar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setEditingDescriptionFor(c.id)}
+                        style={{
+                          fontSize: "0.875rem",
+                          color: "#2563eb",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          padding: 0,
+                        }}
+                      >
+                        {customDescriptions[c.id] 
+                          ? "✏️ Editar descripción personalizada" 
+                          : "+ Agregar descripción personalizada"}
+                      </button>
+                    )}
+                    
+                    {customDescriptions[c.id] && editingDescriptionFor !== c.id && (
+                      <p style={{ 
+                        marginTop: 8, 
+                        fontSize: "0.875rem", 
+                        color: "#059669",
+                        fontStyle: "italic" 
+                      }}>
+                        "{customDescriptions[c.id]}"
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             ))
           )}
         </div>
@@ -190,24 +332,44 @@ export default function CategoriesSelector({
             padding: 16,
             borderTop: "1px solid #eee",
             display: "flex",
-            gap: 8,
-            alignItems: "center",
-            flexWrap: "wrap",
+            flexDirection: "column",
+            gap: 12,
           }}
         >
-          <span style={{ fontWeight: 600 }}>¿No está en la lista?</span>
+          <span style={{ fontWeight: 600 }}>¿No está en la lista? Agrégalo aquí:</span>
+          
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="Escribe un nuevo tipo de trabajo…"
+            placeholder="Nombre del trabajo (ej: Sastre, Plomero, etc.)"
             style={{
-              flex: 1,
-              minWidth: 220,
               padding: "10px 12px",
               borderRadius: 8,
               border: "1px solid #ddd",
             }}
           />
+          
+          {/* ⬇️ NUEVO: Campo de descripción general para trabajos nuevos */}
+          <textarea
+            value={newGeneralDescription}
+            onChange={(e) => {
+              if (e.target.value.length <= 500) {
+                setNewGeneralDescription(e.target.value);
+              }
+            }}
+            placeholder="Descripción general del trabajo (visible para todos los usuarios)"
+            rows={2}
+            style={{
+              padding: "10px 12px",
+              borderRadius: 8,
+              border: "1px solid #ddd",
+              resize: "vertical",
+            }}
+          />
+          <span style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: -8 }}>
+            {newGeneralDescription.length}/500 caracteres
+          </span>
+          
           <button
             onClick={handleAdd}
             disabled={adding}
@@ -221,7 +383,7 @@ export default function CategoriesSelector({
               cursor: adding ? "not-allowed" : "pointer",
             }}
           >
-            Registrar tipo de trabajo
+            {adding ? "Registrando..." : "Registrar tipo de trabajo"}
           </button>
         </div>
 
@@ -260,7 +422,7 @@ export default function CategoriesSelector({
               cursor: "pointer",
             }}
           >
-            Guardar selección
+            Guardar selección ({picked.length})
           </button>
         </div>
       </div>
