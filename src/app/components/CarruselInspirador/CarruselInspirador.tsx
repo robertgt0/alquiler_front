@@ -1,7 +1,7 @@
-
 "use client";
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 const slides = [
   {
@@ -24,17 +24,13 @@ const slides = [
   },
 ];
 
-import Image from 'next/image';
-
 export default function CarruselInspirador() {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     if (isPaused) return;
-    const interval = setInterval(() => {
-      nextSlide();
-    }, 4000);
+    const interval = setInterval(nextSlide, 4000);
     return () => clearInterval(interval);
   }, [current, isPaused]);
 
@@ -42,9 +38,39 @@ export default function CarruselInspirador() {
   const prevSlide = () =>
     setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
 
+  // Scroll animado manual más lento
+  const smoothScrollTo = (targetY: number, duration = 1400) => {
+    const startY = window.scrollY;
+    const distance = targetY - startY;
+    let startTime: number | null = null;
+
+    const easeInOutQuad = (t: number) =>
+      t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+    const animation = (currentTime: number) => {
+      if (startTime === null) startTime = currentTime;
+      const timeElapsed = currentTime - startTime;
+      const progress = Math.min(timeElapsed / duration, 1);
+      const ease = easeInOutQuad(progress);
+      window.scrollTo(0, startY + distance * ease);
+      if (progress < 1) requestAnimationFrame(animation);
+    };
+
+    requestAnimationFrame(animation);
+  };
+
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const target = document.querySelector("#trabajos-recientes");
+    if (target) {
+      const y = target.getBoundingClientRect().top + window.scrollY - 50;
+      smoothScrollTo(y, 1500); // scroll más suave (~1.5s)
+    }
+  };
+
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl shadow-2xl bg-gradient-to-r from-blue-50 to-white border border-blue-100 mx-auto scroll-smooth"
+      className="relative w-full overflow-hidden rounded-2xl shadow-2xl bg-white border border-blue-100 mx-auto"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -56,29 +82,32 @@ export default function CarruselInspirador() {
         {slides.map((slide, index) => (
           <div
             key={index}
-            className="flex flex-col md:flex-row items-center justify-center w-full flex-shrink-0 p-4"
+            className="flex flex-col md:flex-row items-center justify-center w-full flex-shrink-0"
           >
-            {/* Imagen a la izquierda */}
-            <div className="w-full md:w-1/2 flex justify-center items-center bg-blue-100 rounded-2xl md:rounded-none md:rounded-l-2xl overflow-hidden p-2 md:p-4">
-              <img
+            {/* Imagen a la izquierda sin espacio azul */}
+            <div className="w-full md:w-1/2 h-[360px] sm:h-[420px] md:h-[460px] relative">
+              <Image
                 src={slide.image}
                 alt={slide.title}
-                className="w-[95%] md:w-[90%] h-auto md:h-[460px] object-contain rounded-2xl shadow-md transition-transform duration-500 hover:scale-[1.03]"
+                fill
+                priority
+                className="object-cover"
               />
             </div>
 
             {/* Texto a la derecha */}
-            <div className="w-full md:w-1/2 p-4 sm:p-8 flex flex-col justify-center items-center md:items-start text-center md:text-left">
-              <h2 className="text-lg sm:text-2xl md:text-3xl font-bold mb-3 text-[#2a87ff]">
+            <div className="w-full md:w-1/2 p-6 sm:p-10 flex flex-col justify-center items-center md:items-start text-center md:text-left bg-white">
+              <h2 className="text-xl sm:text-3xl font-bold mb-3 text-[#2a87ff]">
                 {slide.title}
               </h2>
               <p className="text-gray-700 text-sm sm:text-base md:text-lg mb-4 max-w-[90%] md:max-w-none">
                 {slide.description}
               </p>
 
-             <a
-                href="#trabajos-recientes" // Cambiado de "#ofertas"
-                className="inline-block px-5 py-2 sm:px-6 sm:py-3 bg-[#2a87ff] text-white rounded-lg text-sm sm:text-base hover:bg-blue-600 transition"
+              <a
+                href="#trabajos-recientes"
+                onClick={handleScroll}
+                className="inline-block px-6 py-3 bg-[#2a87ff] text-white rounded-lg text-sm sm:text-base hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 Ver más
               </a>
@@ -90,7 +119,7 @@ export default function CarruselInspirador() {
       {/* Flechas de navegación */}
       <button
         onClick={prevSlide}
-        className="absolute top-1/2 left-3 -translate-y-1/2 bg-white/80 text-[#2a87ff] rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110 hover:bg-[#2a87ff] hover:text-white hover:shadow-lg focus:ring-2 focus:ring-[#2a87ff] focus:outline-none"
+        className="absolute top-1/2 left-3 -translate-y-1/2 bg-white/80 text-[#2a87ff] rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110 hover:bg-[#2a87ff] hover:text-white"
         aria-label="Anterior"
       >
         <ChevronLeft className="w-6 h-6" />
@@ -98,7 +127,7 @@ export default function CarruselInspirador() {
 
       <button
         onClick={nextSlide}
-        className="absolute top-1/2 right-3 -translate-y-1/2 bg-white/80 text-[#2a87ff] rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110 hover:bg-[#2a87ff] hover:text-white hover:shadow-lg focus:ring-2 focus:ring-[#2a87ff] focus:outline-none"
+        className="absolute top-1/2 right-3 -translate-y-1/2 bg-white/80 text-[#2a87ff] rounded-full p-2 shadow-md transition-all duration-200 hover:scale-110 hover:bg-[#2a87ff] hover:text-white"
         aria-label="Siguiente"
       >
         <ChevronRight className="w-6 h-6" />
@@ -118,6 +147,4 @@ export default function CarruselInspirador() {
       </div>
     </div>
   );
-};
-
-
+}
