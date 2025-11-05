@@ -1,17 +1,18 @@
-/* --- Estilos Base (Mobile First) --- */
-
+/* --- Contenedor Principal --- */
 .wallet-app-container {
-  max-width: 800; /* Ancho máximo para desktop */
+  /* Define un ancho máximo y centra el contenido en la pantalla */
+  max-width: 800px;
   margin: 0 auto;
   padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #ffffff;
 }
 
+/* --- Header (Título y Acciones) --- */
 .wallet-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: space-between; /* Texto a la izq., botón a la der. */
+  align-items: center; /* Centra verticalmente */
   margin-bottom: 20px;
 }
 
@@ -33,24 +34,14 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
 }
 
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-}
-
-.icon-action {
-  /* Estilo para los iconos de campana y settings */
-  color: #718096;
-}
-
-/* --- Botón Recargar Saldo --- */
+/* --- Botón Base (Molde) --- */
+/* Estilos comunes que se aplican a AMBOS botones (móvil y desktop) */
 .reload-button {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 10px 15px;
   border: none;
@@ -59,79 +50,60 @@
   cursor: pointer;
   font-size: 12px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Estilo Mobile (fondo gris) */
-.reload-button.mobile-only {
-  background-image: linear-gradient(120deg, #11255A, #5C83BE, #8DC0FF);
-  color: #ffffff;
-  width: 50%; /* Ocupa todo el ancho en mobile */
-  justify-content: center;
-  margin: 15px auto 0;
-  border-radius: 17px;
-  font-size: 14px; 
-}
-
-/* Estilo Desktop (fondo azul) */
-.reload-button.desktop-only {
-  background-image: linear-gradient(120deg, #11255A, #5C83BE, #8DC0FF);
   color: white;
-  width: 100%;
-  justify-content: center;
+  background-image: linear-gradient(120deg, #11255A, #5C83BE, #8DC0FF);
+  
+  /* Prepara la animación para el hover */
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-.reload-button.desktop-only:hover {
-  /* Eleva el botón 3px hacia arriba */
-  transform: translateY(-2px) scale(1.05); /* Y lo agranda un 5% (zoom) */
-  
-  /* (Opcional) Añade una sombra para un efecto 3D más pronunciado */
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+/* --- Estilo Específico de Botón Móvil --- */
+.reload-button.mobile-only {
+  width: 50%;
+  font-size: 14px;
+  border-radius: 17px;
+  /* Centra el botón en la pantalla móvil */
+  margin: 15px auto 0;
 }
 
-
-/* --- Lógica Responsiva (Requerimiento 6) --- */
-
-/* Ocultar el botón de desktop en mobile */
+/* --- Lógica Responsiva (Mobile First) --- */
+/* Por defecto (móvil), ocultamos el botón de desktop */
 .reload-button.desktop-only {
   display: none;
 }
 
-/* Ocultar iconos de campana/settings en mobile */
-.icon-action {
-  display: none;
-}
 
-
-/* --- Media Query para Desktop (a partir de 1024px) --- */
+/* --- Media Query para Desktop --- */
+/* Estilos que se aplican SÓLO en pantallas de 1024px o más */
 @media (min-width: 1024px) {
+
   .wallet-app-container {
     padding: 40px;
   }
 
   .header-title h1 {
-    font-size: 30px; /* Más grande en desktop */
+    font-size: 30px; /* Título más grande en desktop */
   }
 
-  /* Mostrar el botón de desktop */
-  .reload-button.desktop-only {
-    display: flex;
-  }
-  
-  /* Mostrar los iconos */
-  .icon-action {
-    display: block;
-  }
-
-  /* Ocultar el botón de mobile */
+  /* Ocultamos el botón móvil */
   .reload-button.mobile-only {
     display: none;
   }
+
+  /* Mostramos el botón de desktop */
+  .reload-button.desktop-only {
+    display: flex;
+    /* El ancho es automático, no 100% */
+  }
   
+  /* Efecto hover solo para el botón de desktop */
+  .reload-button.desktop-only:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+  }
+
   .wallet-main-content {
-    /* En desktop podríamos usar un layout de 2 columnas si quisiéramos,
-       pero tu mockup muestra 1 columna, así que lo mantenemos simple. */
-    max-width: 800px; /* Limitamos el ancho del contenido principal */
+    max-width: 800px;
   }
 
   .transactions-header h2 {

@@ -1,4 +1,5 @@
 import React from 'react';
+// Importamos componentes y tipos desde la carpeta 'components'
 import BalanceCard from './BalanceCard/BalanceCard'; 
 import TransactionList from './TransactionList/TransactionList';
 import type { Transaction } from './TransactionList/TransactionList';
@@ -17,29 +18,34 @@ const mockBalance = 12730.50;
 const Wallet: React.FC = () => {
   return (
     <div className="wallet-app-container">
+      
+      {/* --- Encabezado Principal --- */}
       <header className="wallet-header">
         <div className="header-title">
           <h1>Mi Billetera</h1>
           <p>Gestiona tus finanzas fácilmente</p>
         </div>
         
-        {/* --- AHORA SÓLO CONTIENE EL BOTÓN --- */}
+        {/* Contiene solo el botón de "Recargar Saldo" para Desktop */}
         <div className="header-actions">
           <button className="reload-button desktop-only">
             <span>Recargar Saldo</span>
           </button>
         </div>
-        {/* --- FIN DE LOS DIVs BASURA --- */}
-
       </header>
 
+      {/* --- Contenido Principal (Tarjeta y Lista) --- */}
       <main className="wallet-main-content">
+        
+        {/* Tarjeta de Balance Degradada */}
         <BalanceCard balance={mockBalance} />
         
+        {/* Botón de "Recargar Saldo" solo visible en Mobile */}
         <button className="reload-button mobile-only">
           <span>Recargar Saldo</span>
         </button>
 
+        {/* Lista de Transacciones Recientes */}
         <TransactionList transactions={mockTransactions} />
       </main>
     </div>
