@@ -255,7 +255,7 @@ export default function Header() {
       </footer>
 
       {/* Espacio para el header fijo */}
-      <div className="h-16 sm:h-20"></div>
+      <div className="h-16 sm:h-10"></div>
     </>
   );
 }
