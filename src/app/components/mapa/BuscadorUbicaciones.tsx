@@ -64,7 +64,7 @@ export default function BuscadorUbicaciones({
         <button
           onClick={handleBuscar}
           disabled={botonDeshabilitado} // ✅ Ahora siempre es boolean
-          className={`px-4 py-2 rounded-md font-medium text-sm transition duration-200 min-w-[100px] h-[40px] ${
+          className={`px-4 py-2 rounded-md font-medium text-sm transition duration-200 min-w-[100px] h-10 ${
             !botonDeshabilitado
               ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
               : "bg-gray-200 text-gray-500 cursor-not-allowed"

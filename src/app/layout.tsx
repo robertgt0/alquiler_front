@@ -6,6 +6,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import Header from "./components/Header/Header";
+// 👈 3. AGREGAR ESTAS 2 IMPORTACIONES
+import { useUsuarioNuevo } from "./hooks/useUsuarioNuevo";
+import ModalGuiaUsuario from "./components/guiaUsuarios/modalUsuario";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +27,9 @@ export default function RootLayout({
 }>) {
   // 3. Estado para rastrear la conexión
   const [isOnline, setIsOnline] = useState(true);
+
+  // 👈 4. AGREGAR ESTA LÍNEA - usar el hook
+  const { modalAbierto, cerrarModal } = useUsuarioNuevo();
 
   // 4. Efecto para escuchar eventos de conexión
   useEffect(() => {
@@ -72,6 +78,9 @@ export default function RootLayout({
           {/* Aumenté el padding-top */}
           {children}
         </div>
+
+        {/* 👈 6. AGREGAR ESTA LÍNEA - el componente modal */}
+        <ModalGuiaUsuario isOpen={modalAbierto} onClose={cerrarModal} />
       </body>
     </html>
   );

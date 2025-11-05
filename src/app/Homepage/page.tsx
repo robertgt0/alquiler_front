@@ -9,10 +9,9 @@
 import Mapa from "../components/mapa/MapaWrapper";
 import CarruselOfertas from "../components/CarruselOfertas/CarruselOfertas";
 import HomeFixer from "../components/ListaCategorias/HomeFixer";
-import type { Categoria } from "../components/ListaCategorias/tipos";
 import Footer from "../components/Footer/Footer";
 import CarruselInspirador from "../components/CarruselInspirador/CarruselInspirador";
-
+import GiaUsuariosNuevos from "../components/guiaUsuarios/GiaUsuariosNuevos";
 import categorias, { type CategoriaBase } from "../components/data/categoriasData";
 
 // Es buena práctica que la función se llame como la página
@@ -35,6 +34,11 @@ export default function Homepage() {
       <section id="trabajos-recientes" className="my-5 w-full">
         <CarruselOfertas />
       </section>
+
+     <section id="gia-usuarios-nuevos" className="my-5 w-full">
+        <GiaUsuariosNuevos />
+      </section>
+
 
       <Footer />
     </main>
