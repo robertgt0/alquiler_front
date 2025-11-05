@@ -82,13 +82,18 @@ const RecargaQR: React.FC = () => {
         <form className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Monto</label>
-            <input
-              type="text"
-              className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
-              value={monto ? `${monto} BS` : ""}
-              onChange={handleMontoChange}
-              placeholder="500 BS"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
+                value={monto}
+                onChange={handleMontoChange}
+                placeholder="ingresar monto"
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-700 font-semibold">
+                BS
+              </span>
+            </div>
             {montoError && <span className="text-red-500 text-sm">{montoError}</span>}
           </div>
 
