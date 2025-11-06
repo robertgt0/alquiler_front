@@ -43,8 +43,8 @@ function TrabajoCard({ trabajo }: { trabajo: ITrabajo }) {
         <li className="p-4 bg-blue-400 rounded-xl shadow-md flex justify-between items-center text-white">
             {/* Sección de detalles (izquierda) */}
             <div>
-                <p className="text-lg font-bold mb-1">Nombre del cliente: {trabajo.descripcion}</p>
-                <p className="text-sm text-gray-700">Tipo de servicio: {trabajo.monto_a_pagar.toFixed(2)}</p> {/* Usamos monto_a_pagar como ejemplo de "Tipo de servicio" */}
+                <p className="text-lg font-bold mb-1">Tipo de servicio: {trabajo.descripcion}</p>
+                <p className="text-sm text-gray-700">Precio: {trabajo.monto_a_pagar.toFixed(2)}</p> {/* Usamos monto_a_pagar como ejemplo de "Tipo de servicio" */}
                 <p className="text-sm text-gray-700">Fecha programada: {fecha}</p>
             </div>
 
@@ -220,7 +220,7 @@ export default function HomePage() {
           {/* El contenedor principal de los resultados ya tiene el padding y el fondo, no necesitamos form-container adicional */}
           <div className="form-container"> {/* Mantengo form-container para el fondo blanco, aunque no se ve en la imagen */}
             <h2 className="text-xl font-semibold mb-4 text-gray-900 text-center">
-              Resultados para "{usuario}"
+              Resultados
             </h2>
             <ul className="space-y-4">
               {trabajos.map(trabajo => (
