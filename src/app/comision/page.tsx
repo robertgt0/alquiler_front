@@ -84,10 +84,10 @@ interface ModalProps {
 
 function CompletadoModal({ onClose }: ModalProps) {
   return (
-    // --- CAMBIO AQUÍ: Se quita el fondo oscuro ---
+    // --- CAMBIO AQUÍ: Se quita el fondo oscuro Y el onClick ---
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center" // Se quitaron bg-black bg-opacity-60
-      onClick={onClose} // Cierra al hacer clic en el fondo
+      // onClick={onClose} // <-- ELIMINADO para que no se cierre al hacer clic fuera
     >
       {/* Contenedor del Modal */}
       <div 
@@ -96,7 +96,7 @@ function CompletadoModal({ onClose }: ModalProps) {
       >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-900">Método de Pago</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl font-light">&times;</button>
+          {/* <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl font-light">&times;</button> */} {/* <-- ELIMINADA la X */}
         </div>
         
         {/* Contenido del Modal con iconos y estilo de botón */}
