@@ -84,10 +84,10 @@ interface ModalProps {
 
 function CompletadoModal({ onClose }: ModalProps) {
   return (
-    // --- CAMBIO AQUÍ: Se quita el fondo oscuro Y el onClick ---
+    // --- CAMBIO AQUÍ: De fondo oscuro a "frosted glass" ---
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center" // Se quitaron bg-black bg-opacity-60
-      // onClick={onClose} // <-- ELIMINADO para que no se cierre al hacer clic fuera
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/30" // <-- CAMBIADO
+      // onClick={onClose} // <-- Sigue eliminado para que no se cierre al hacer clic fuera
     >
       {/* Contenedor del Modal */}
       <div 
