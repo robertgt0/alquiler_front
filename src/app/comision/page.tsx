@@ -45,7 +45,7 @@ function TrabajoCard({ trabajo, onClick }: TrabajoCardProps) {
     };
 
     return (
-        // --- CAMBIO AQUÍ: El cursor y hover vuelven a ser condicionales ---
+        // --- El cursor y hover vuelven a ser condicionales ---
         <li 
           className={`
             p-4 bg-blue-400 rounded-xl shadow-md flex justify-between items-center text-white
@@ -77,21 +77,16 @@ function TrabajoCard({ trabajo, onClick }: TrabajoCardProps) {
     );
 }
 
-// --- 5. COMPONENTE MODAL (MODIFICADO) ---
-// --- CAMBIO AQUÍ: Se eliminó la prop 'trabajo' y el contenido ---
+// --- 5. COMPONENTE MODAL (MODIFICADO para incluir iconos y estilo de botón) ---
 interface ModalProps {
   onClose: () => void;
 }
 
-// Renombramos el componente para más claridad, aunque mantenemos el nombre 'CompletadoModal'
-// para que coincida con tu código original.
 function CompletadoModal({ onClose }: ModalProps) {
-  // Ya no necesitamos la 'fecha' ni 'trabajo'
-
   return (
-    // --- CAMBIO AQUÍ: Se quita el fondo oscuro (bg-black bg-opacity-60) ---
+    // --- CAMBIO AQUÍ: Se quita el fondo oscuro ---
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center" // Se quitaron bg-black bg-opacity-60
       onClick={onClose} // Cierra al hacer clic en el fondo
     >
       {/* Contenedor del Modal */}
@@ -100,29 +95,31 @@ function CompletadoModal({ onClose }: ModalProps) {
         onClick={(e) => e.stopPropagation()} // Evita que se cierre al hacer clic en el modal
       >
         <div className="flex justify-between items-center mb-4">
-          {/* --- CAMBIO AQUÍ: Título del Modal --- */}
           <h2 className="text-2xl font-bold text-gray-900">Método de Pago</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl font-light">&times;</button>
         </div>
         
-        {/* --- CAMBIO AQUÍ: Contenido del Modal sin iconos --- */}
+        {/* Contenido del Modal con iconos y estilo de botón */}
         <div className="space-y-4 text-gray-700">
           
           {/* Opción 1: QR */}
-          {/* Se quitaron el <svg> y las clases flex/items-center/space-x-3 */}
-          <div className="p-2">
+          {/* Restauramos el estilo de botón con ícono */}
+          <button className="w-full flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 ease-in-out">
+            <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5h3v3H5V5zm0 8h3v3H5v-3zm8-8h3v3h-3V5zm0 8h3v3h-3v-3zm-4 4h.01M9 9h.01M15 9h.01M9 15h.01M15 15h.01"></path></svg>
             <span className="font-semibold text-lg">QR</span>
-          </div>
+          </button>
 
           {/* Opción 2: Tarjeta */}
-          <div className="p-2">
+          <button className="w-full flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 ease-in-out">
+            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7-4h12a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z"></path></svg>
             <span className="font-semibold text-lg">Tarjeta</span>
-          </div>
+          </button>
 
           {/* Opción 3: Efectivo */}
-          <div className="p-2">
+          <button className="w-full flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 ease-in-out">
+            <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             <span className="font-semibold text-lg">Efectivo</span>
-          </div>
+          </button>
           
         </div>
 
@@ -150,10 +147,7 @@ export default function HomePage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // --- CAMBIO AQUÍ: ESTADOS DEL MODAL SIMPLIFICADOS ---
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // Ya no necesitamos 'selectedTrabajo'
-  // const [selectedTrabajo, setSelectedTrabajo] = useState<ITrabajo | null>(null);
 
   // --- Manejador de cambio (simplificado) ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,7 +155,6 @@ export default function HomePage() {
       setUsuario(value);
       setMessage(""); // Limpia mensajes al escribir
       
-      // Limpia errores al escribir
       if (errors.usuario) {
           setErrors({});
       }
@@ -174,7 +167,6 @@ export default function HomePage() {
     setTrabajos([]); // Limpiar resultados anteriores
     let currentErrors: FormErrors = {};
 
-    // Validación (como en tu ejemplo)
     if (!usuario) {
       currentErrors.usuario = "Requerido";
     }
@@ -190,18 +182,16 @@ export default function HomePage() {
     setMessage("Procesando..."); // (Como en tu ejemplo)
 
     try {
-      // Usamos el endpoint del backend
       const response = await fetch(`http://localhost:5000/api/trabajos/${usuario}`);
       const data = await response.json();
 
       if (!response.ok) {
-        // Si el backend da un 404 o 500, usamos su mensaje
         throw new Error(data.message || "Error al buscar trabajos.");
       }
       
       if (data.length > 0) {
         setTrabajos(data);
-        setMessage(""); // Limpiamos "Procesando..."
+        setMessage(""); 
       } else {
         setMessage(`No se encontraron trabajos para el usuario "${usuario}".`);
       }
@@ -214,24 +204,16 @@ export default function HomePage() {
     }
   };
 
-  // Función de ayuda para clases (de tu ejemplo)
   const inputClass = (fieldName: keyof FormErrors) => `form-input ${errors[fieldName] ? 'input-error' : ''}`;
   
-  // --- CAMBIO AQUÍ: FUNCIONES DEL MODAL CON CONDICIÓN ---
   const handleTrabajoClick = (trabajo: ITrabajo) => {
-    // Volvemos a comprobar el estado
     if (trabajo.estado === 'completado') {
-      // Ya no guardamos el trabajo seleccionado
-      // setSelectedTrabajo(trabajo); 
       setIsModalOpen(true);
     }
-    // Si no es 'completado', no se hace nada
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
-    // Ya no limpiamos el trabajo seleccionado
-    // setSelectedTrabajo(null);
   };
 
   return (
@@ -316,7 +298,7 @@ export default function HomePage() {
                 <TrabajoCard 
                   key={trabajo._id} 
                   trabajo={trabajo} 
-                  onClick={handleTrabajoClick} // La función ahora abre el modal vacío
+                  onClick={handleTrabajoClick} 
                 />
               ))}
             </ul>
@@ -325,11 +307,9 @@ export default function HomePage() {
       )}
       
       {/* --- 8. RENDERIZADO DEL MODAL (Nuevo) --- */}
-      {/* --- CAMBIO AQUÍ: Renderizado simplificado --- */}
       {isModalOpen && (
         <CompletadoModal 
           onClose={closeModal} 
-          // Ya no pasamos la prop 'trabajo'
         />
       )}
       
