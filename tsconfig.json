@@ -27,18 +27,17 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "**/*.ts",
-    "**/*.tsx",
     ".next/types/**/*.ts",
+    "src/types/**/*.d.ts",
     ".next\\dev/types/**/*.ts",
-    ".next\\dev/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next\\dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -3,14 +3,11 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useGoogleAuth } from '../../../google/hooks/useGoogleAuth';
 
-// Evita prerender estático: esta ruta depende de query params
 export const dynamic = 'force-dynamic';
 
 function Inner() {
   const router = useRouter();
-  const { finalizeFromGoogleProfile } = useGoogleAuth();
   const searchParams = useSearchParams();
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -21,79 +18,126 @@ function Inner() {
       try {
         const code = searchParams.get('code');
         const error = searchParams.get('error');
+        const state = searchParams.get('state');
 
-        if (error) throw new Error(`Error de Google: ${error}`);
-        if (!code) throw new Error('No se recibió el código de autorización');
-
+        if (error) {
+          throw new Error(`Error de Google: ${error}`);
+        }
         
-        const backend = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
-        const response = await fetch(`${backend}/api/teamsys/google/callback`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code }),
-        });
+        if (!code) {
+          throw new Error('No se recibió código de autorización');
+        }
 
-        const data = await response.json();
-        console.log(code)
-        console.log(' Respuesta del backend:', data);
-
-        if (!response.ok) {
-          if (data.message === 'usuario ya registrado') {
-            document.body.innerHTML = `
-              <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#fff;">
-                <h1 style="font-family:sans-serif;color:#888;">Página Home</h1>
-              </div>
-            `;
-            return;
-          } else {
-            throw new Error(data.message || 'Error en la autenticación con Google');
+        // Determinar tipo de autenticación (registro o login)
+        let authType: 'register' | 'login' = 'register';
+        if (state) {
+          try {
+            const decodedState = JSON.parse(atob(state));
+            authType = decodedState.type || 'register';
+          } catch {
+            console.warn('No se pudo decodificar el state');
           }
         }
 
-        //Extraer datos correctamente desde data.data
-        const user = data.data.user;
-        const accessToken = data.data.accessToken;
-        const refreshToken = data.data.refreshToken;
+        console.log(`🔐 Procesando ${authType} con Google...`);
 
-        //  Guardar token y usuario
-        localStorage.setItem('userToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('userData', JSON.stringify(user));
+        const backend = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
+        
+        // ENVIAR authType al backend
+        const response = await fetch(`${backend}/api/teamsys/google/callback`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ 
+            code,
+            authType
+          }),
+        });
 
-        //  Guardar en sessionStorage para ImagenLocalizacion
-        sessionStorage.setItem('datosUsuarioParcial', JSON.stringify(user));
+        const responseText = await response.text();
+        const data = responseText ? JSON.parse(responseText) : {};
 
-        // (Si luego usas finalizeFromGoogleProfile, aquí lo puedes llamar)
-        // await finalizeFromGoogleProfile?.(user);
+        console.log('📊 Respuesta del backend:', { status: response.status, data });
 
-        // Redirigir a /ImagenLocalizacion
-        setTimeout(() => {
-          router.push('/ImagenLocalizacion');
-        }, 1500);
+        // ✅ FLUJO CORREGIDO
+        if (!response.ok) {
+          // CASO 1: Usuario ya registrado (durante REGISTRO) → Redirigir a LOGIN
+          if (response.status === 400 && data.message === 'usuario ya registrado' && authType === 'register') {
+            console.log('🔄 Usuario ya registrado durante registro - Redirigiendo a login');
+            setStatus('success');
+            setMessage('✅ Este correo ya está registrado. Redirigiendo al login...');
+            setTimeout(() => router.push('/login'), 2000);
+            return;
+          }
+          
+          // CASO 2: Usuario no encontrado (durante LOGIN) → Error
+          if (response.status === 400 && data.message === 'usuario no encontrado' && authType === 'login') {
+            throw new Error('No existe una cuenta con este correo. Regístrate primero.');
+          }
+
+          // CASO 3: Otros errores
+          throw new Error(data.message || `Error del servidor: ${response.status}`);
+        }
+
+        // ✅ AUTENTICACIÓN EXITOSA
+        if (data.success && data.data) {
+          const { user, accessToken, refreshToken } = data.data;
+
+          // Guardar datos de sesión
+          localStorage.setItem('authToken', accessToken);
+          if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+          localStorage.setItem('userData', JSON.stringify(user));
+
+          // Disparar evento de login exitoso
+          window.dispatchEvent(new CustomEvent("login-exitoso"));
+
+          setStatus('success');
+
+          if (authType === 'register') {
+            // REGISTRO exitoso → Guardar datos y redirigir a ImagenLocalizacion
+            sessionStorage.setItem('datosUsuarioParcial', JSON.stringify({
+              nombre: user.nombre || '',
+              correo: user.correo || '',
+              fotoPerfil: user.fotoPerfil || '',
+              terminosYCondiciones: true,
+            }));
+            setMessage('🎉 ¡Registro exitoso! Redirigiendo...');
+            setTimeout(() => router.push('/ImagenLocalizacion'), 2000);
+          } else {
+            // LOGIN exitoso → Redirigir a Homepage
+            setMessage('🎉 ¡Inicio de sesión exitoso! Redirigiendo a Homepage...');
+            setTimeout(() => router.push('/Homepage'), 2000);
+          }
+        } else {
+          throw new Error('Respuesta inválida del servidor');
+        }
 
       } catch (error) {
-        console.error('Error en callback:', error);
+        console.error('Error en autenticación:', error);
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Error desconocido');
-
+        
+        // Redirigir después de error
         setTimeout(() => {
-          router.push('/registro');
+          router.push('/login');
         }, 3000);
       }
     };
 
     handleCallback();
-  }, [router, searchParams, finalizeFromGoogleProfile]);
+  }, [router, searchParams]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
         <div className="text-center">
           {status === 'loading' && (
             <>
               <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <h2 className="text-xl font-semibold text-gray-700">Procesando...</h2>
-              <p className="text-gray-500 mt-2">Completando autenticación con Google</p>
+              <h2 className="text-xl font-semibold text-gray-700">Procesando autenticación...</h2>
+              <p className="text-gray-500 mt-2">Completando con Google</p>
             </>
           )}
 
@@ -117,8 +161,9 @@ function Inner() {
                 </svg>
               </div>
               <h2 className="text-xl font-semibold text-gray-700">Error</h2>
-              <p className="text-red-500 mt-2">{message}</p>
-              <p className="text-gray-500 text-sm mt-2">Redirigiendo al registro...</p>
+              {/* ✅ CORRECCIÓN: Cambiar break-words por break-all */}
+              <p className="text-red-500 mt-2 break-all">{message}</p>
+              <p className="text-gray-500 text-sm mt-2">Redirigiendo al login...</p>
             </>
           )}
         </div>
@@ -127,10 +172,16 @@ function Inner() {
   );
 }
 
-// La página (Server por defecto) solo envuelve en Suspense al componente cliente
 export default function GoogleCallbackPage() {
   return (
-    <Suspense fallback={<p>Redirigiendo…</p>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-700">Cargando...</p>
+        </div>
+      </div>
+    }>
       <Inner />
     </Suspense>
   );

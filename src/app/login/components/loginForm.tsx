@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { loginUsuario } from '@/app/teamsys/services/UserService';
 import { useGoogleAuth } from '../../google/hooks/useGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
+import Image from 'next/image';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -25,7 +26,8 @@ export const LoginForm: React.FC = () => {
   const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
-    await handleGoogleAuth();
+    // Para login, usar tipo "login" específicamente
+    await handleGoogleAuth('login');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,8 +61,8 @@ export const LoginForm: React.FC = () => {
       const eventLogin = new CustomEvent("login-exitoso");
       window.dispatchEvent(eventLogin);
       
-      // Redirigir a home
-      router.push('/');
+      // ✅ CAMBIO: Redirigir a Homepage en lugar de home
+      router.push('/Homepage');
     } catch (error: unknown) {
       console.error('Error completo al iniciar sesión:', error);
       
@@ -202,9 +204,12 @@ export const LoginForm: React.FC = () => {
               type="button"
               className="w-full max-w-xs sm:max-w-sm bg-white text-black py-2 sm:py-3 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3 text-xs sm:text-sm"
             >
-              <img
+              {/* ✅ CORRECCIÓN: Usar next/image */}
+              <Image
                 src={AppleIcon.src}
                 alt="Registrarse con Apple"
+                width={16}
+                height={16}
                 className="w-4 h-4 sm:w-5 sm:h-5"
               />
               Registrarse con Apple
