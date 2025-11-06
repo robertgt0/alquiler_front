@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation'; // Importación eliminada para evitar errores
 
 interface ModalGuiaUsuarioProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface ModalGuiaUsuarioProps {
 
 export default function ModalGuiaUsuario({ isOpen, onClose }: ModalGuiaUsuarioProps) {
   const [noMostrar, setNoMostrar] = useState(false);
-  const router = useRouter();
+  // const router = useRouter(); // Se elimina la importación y uso de useRouter
 
   useEffect(() => {
     if (isOpen) {
@@ -30,7 +30,8 @@ export default function ModalGuiaUsuario({ isOpen, onClose }: ModalGuiaUsuarioPr
     }
     onClose();
     // Navegar a la sección de guía de usuarios
-    router.push('/Homepage#gia-usuarios-nuevos');
+    // Se reemplaza router.push por window.location.href para una navegación estándar
+    window.location.href = '/Homepage#gia-usuarios-nuevos';
   };
 
   const handleRechazar = () => {
@@ -76,17 +77,21 @@ export default function ModalGuiaUsuario({ isOpen, onClose }: ModalGuiaUsuarioPr
               </label>
             </div>
 
-            {/* Botones con nuevos estilos */}
+            {/* Botones con nuevos estilos Y ANIMACIÓN DE ZOOM */}
             <div className="flex gap-3 justify-center">
               <button
                 onClick={handleRechazar}
-                className="px-6 py-2 bg-white text-gray-900 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors font-medium text-sm"
+                className="px-6 py-2 bg-white text-gray-900 border border-gray-300 rounded-md hover:bg-gray-100 
+                           font-medium text-sm 
+                           transform transition-transform duration-300 ease-in-out hover:scale-105"
               >
                 Rechazar
               </button>
               <button
                 onClick={handleAceptar}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm"
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 
+                           font-medium text-sm shadow-sm 
+                           transform transition-transform duration-300 ease-in-out hover:scale-105"
               >
                 Aceptar
               </button>
