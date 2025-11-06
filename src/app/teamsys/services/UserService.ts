@@ -45,7 +45,7 @@ export async function cambiarTelefono(telefono:string, id:string) {
         });
         return res.json();
       }
-}
+
 
 
 export async function solicitarEnlaceAcceso(email: string) {
