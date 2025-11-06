@@ -303,7 +303,7 @@ export default function ScheduleConfigurator() {
             };
         }else{
           payload = {
-          modo: "diario",
+          modo: "diaria",
           dias: Object.entries(dataToSave)
             .filter(([_, data]) => data.enabled && data.ranges.length > 0) // solo días activos con rangos
             .map(([nombreDia, data]) => ({
@@ -327,11 +327,11 @@ export default function ScheduleConfigurator() {
         const timeout = setTimeout(() => controller.abort(), 10000); // timeout 10s
     
         try {
-          const res = await fetch(endpoint, {
-            method: "POST",
+            const res = await fetch(endpoint, {
+            method: "PUT",  // ✅ CORRECTO
             headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
+                "Content-Type": "application/json",
+                Accept: "application/json",
             },
             body: JSON.stringify(payload),
             signal: controller.signal,
