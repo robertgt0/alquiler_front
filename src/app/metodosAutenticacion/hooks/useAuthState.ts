@@ -55,7 +55,8 @@ export function useAuthState() {
         {
           id: 'correo',
           nombre: 'Correo/Contraseña',
-          tipo: 'correo',
+          tipo:'local',
+          tipoProvider:"local",
           icono: '📧',
           color: 'blue',
           activo: false,
@@ -65,6 +66,7 @@ export function useAuthState() {
           id: 'google',
           nombre: 'Google', 
           tipo: 'google',
+          tipoProvider:"local",
           icono: '🔐',
           color: 'red',
           activo: false,

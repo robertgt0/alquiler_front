@@ -2,7 +2,8 @@
 export interface MetodoAutenticacion {
   id: string;
   nombre: string;
-  tipoProvider: 'local' | 'google' | 'otro';
+  tipo: string;
+  tipoProvider: string;
   icono: string;
   color: string;
   activo?: boolean; //  Agregar esta propiedad opcional

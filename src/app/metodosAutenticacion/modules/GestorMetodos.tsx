@@ -78,46 +78,6 @@ const obtenerUserDataDesdeSessionStorage = () => {
   }
 };
 
-/**
- * 🎯 Autentica con Google y compara el email con el de sessionStorage
- * Garantiza que el usuario esté autenticando con la misma cuenta
- */
-const autenticarConGoogleYComparar = async (emailDeSessionStorage: string): Promise<boolean> => {
-  try {
-    console.log('🔐 Iniciando autenticación con Google...');
-    
-    // 1. Autenticar con Google
-    const googleUser = await GoogleAuthService.signInWithGoogle();
-    const googleEmail = googleUser.email;
-    
-    console.log('🔍 Comparando emails:');
-    console.log('  - SessionStorage:', emailDeSessionStorage);
-    console.log('  - Google:', googleEmail);
-
-    // 2. Comparar emails (case-insensitive)
-    const emailsCoinciden = emailDeSessionStorage.toLowerCase() === googleEmail.toLowerCase();
-    
-    if (!emailsCoinciden) {
-      console.error('❌ Los emails no coinciden');
-      console.log('  - Email sessionStorage:', emailDeSessionStorage);
-      console.log('  - Email Google:', googleEmail);
-      return false;
-    }
-
-    console.log('✅ Los emails coinciden');
-    
-    // 3. Guardar datos de Google para uso futuro
-    sessionStorage.setItem('googleEmail', googleEmail);
-    sessionStorage.setItem('googleUser', JSON.stringify(googleUser));
-    
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Error en autenticación con Google:', error);
-    throw error;
-  }
-};
-
 // =============================================
 // 🎯 COMPONENTE PRINCIPAL - GESTOR MÉTODOS
 // =============================================
@@ -166,6 +126,58 @@ export default function GestorMetodos({
       console.log('📧 Email del usuario:', data.correo);
     }
   }, []);
+
+  /**
+   * 🎯 Verifica si hay un resultado de activación de Google pendiente
+   * Se ejecuta cuando el usuario regresa del callback de Google
+   */
+  useEffect(() => {
+    const verificarResultadoGoogle = () => {
+      const resultado = GoogleAuthService.getActivationResult();
+      
+      if (resultado) {
+        console.log('📬 Resultado de activación Google:', resultado);
+        
+        if (resultado.success) {
+          // Activación exitosa - actualizar estado local
+          console.log('✅ Google activado exitosamente');
+          
+          // Aquí puedes actualizar el estado de métodos activos
+          // Por ejemplo, llamar a recargarMetodos si existe
+          if (recargarMetodos) {
+            recargarMetodos();
+          }
+          
+          // Mostrar mensaje de éxito
+          setError(null);
+          
+        } else {
+          // Mostrar error
+          setError(resultado.message || 'Error al activar Google');
+        }
+        
+        // Limpiar el estado de carga de Google
+        setCargandoGoogle(false);
+        
+        // Limpiar el resultado
+        GoogleAuthService.clearPendingActivation();
+      }
+    };
+
+    // Verificar cuando el componente se monta
+    verificarResultadoGoogle();
+    
+    // También verificar cuando la página gana foco (por si acaso)
+    const handleFocus = () => {
+      verificarResultadoGoogle();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [recargarMetodos]);
 
   // =============================================
   // 🎯 FUNCIONES DE GESTIÓN DE ESTADOS
@@ -328,12 +340,15 @@ export default function GestorMetodos({
 
   /**
    * 🎯 Lógica específica para activar Google Auth
-   * Incluye autenticación y verificación de email
+   * Redirige a Google y la comparación se hace después del callback
    */
-  const activarMetodoGoogle = async () => {
+  const activarMetodoGoogle = async (): Promise<void> => {
     try {
       setCargandoGoogle(true);
       limpiarError();
+      
+      // Limpiar cualquier resultado previo
+      GoogleAuthService.clearPendingActivation();
       
       // Obtener email desde sessionStorage
       const userEmail = userData?.correo;
@@ -344,24 +359,12 @@ export default function GestorMetodos({
       
       console.log('📧 Activando Google con email:', userEmail);
       
-      // Autenticar con Google y comparar emails
-      const autenticacionExitosa = await autenticarConGoogleYComparar(userEmail);
+      // Guardar el email actual para comparar después en el callback
+      sessionStorage.setItem('emailParaValidarGoogle', userEmail);
+      sessionStorage.setItem('accionGoogle', 'activar-metodo');
       
-      if (!autenticacionExitosa) {
-        throw new Error("El email no coincide con la cuenta de Google");
-      }
-      
-      // Configurar Google Auth en el backend
-      await apiService.setupGoogleAuth(userEmail);
-      await activarMetodo('google');
-      
-      setCargandoGoogle(false);
-      desactivarModos();
-      
-      // Recargar métodos si existe la función
-      if (recargarMetodos) {
-        recargarMetodos();
-      }
+      // Redirigir a Google - flujo normal de autenticación
+      GoogleAuthService.signInWithGoogle('login');
       
     } catch (err) {
       console.error('❌ Error en activarMetodoGoogle:', err);
@@ -462,6 +465,7 @@ export default function GestorMetodos({
     {
       id: 'local',
       nombre: 'Correo/Contraseña',
+      tipo:"local",
       tipoProvider: 'local',
       icono: '📧',
       color: 'blue',
@@ -471,6 +475,7 @@ export default function GestorMetodos({
     {
       id: 'google',
       nombre: 'Google',
+      tipo:"google",
       tipoProvider: 'google',
       icono: '🔐',
       color: 'red',
@@ -534,15 +539,14 @@ export default function GestorMetodos({
         </div>
       )}
 
-    {/*} 🔍 Panel de diagnóstico (solo desarrollo)
-
-  //    {userData && (
-  //      <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-  //        <p><strong>👤 Usuario:</strong> {userData.correo}</p>
-  //        <p><strong>🔐 AuthProvider:</strong> {userData.authProvider}</p>
-  //        <p><strong>✅ Métodos activos:</strong> {metodosActivosActualizados.map(m => m.nombre).join(', ')}</p>
-  //      </div>
-  //    )}
+      {/* 🔍 Panel de diagnóstico (solo desarrollo) */}
+      {/* {userData && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+          <p><strong>👤 Usuario:</strong> {userData.correo}</p>
+          <p><strong>🔐 AuthProvider:</strong> {userData.authProvider}</p>
+          <p><strong>✅ Métodos activos:</strong> {metodosActivosActualizados.map(m => m.nombre).join(', ')}</p>
+        </div>
+      )} */}
 
       {/* 🎯 Layout principal con dos paneles */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
