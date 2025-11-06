@@ -8,6 +8,7 @@ import FixersHeader from "./FixersHeader";
 import { Ubicacion, Fixer, UserLocation, UbicacionFromAPI } from "../../types";
 import { UbicacionManager } from "./UbicacionManager";
 import { ubicacionesRespaldo, fixersRespaldo, fixersDefinidos } from "../data/fixersData";
+import { useResetGuia } from "../../hooks/useResetGuia"; // 👈 Agregar esta línea
 
 const Mapa = dynamic(() => import("./mapa"), { ssr: false });
 
@@ -32,6 +33,7 @@ export default function MapaWrapper() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const ubicacionManager = UbicacionManager.getInstancia();
+  const { resetearGuia } = useResetGuia(); // 👈 Agregar esta línea
 
   // ✅ 2. FUNCIÓN DE UBICACIÓN (envuelta en useCallback)
   const obtenerUbicacion = useCallback(() => {
@@ -198,6 +200,14 @@ export default function MapaWrapper() {
           {/* Mensaje de respaldo si es necesario */}
         </div>
       )}
+
+      {/* 👈 Agregar botón aquí - sin cambiar nada más */}
+      <button 
+        onClick={resetearGuia}
+        className="fixed top-20 right-4 bg-blue-500 text-white px-3 py-2 rounded text-sm z-10 shadow-lg"
+      >
+        Ver Guía
+      </button>
 
       <BuscadorUbicaciones
         ubicaciones={ubicaciones}
