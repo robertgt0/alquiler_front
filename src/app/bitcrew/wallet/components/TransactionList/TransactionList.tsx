@@ -22,6 +22,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ transactions }) => {
         <a href="#" className="view-all-link">Ver todas</a>
       </div>
 
+      {/* Este 'div' es el que vamos a estilizar en el CSS */}
       <div className="transactions-list">
         {/* Requerimiento: Manejo de lista vacía */}
         {transactions.length === 0 ? (

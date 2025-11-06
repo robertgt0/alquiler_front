@@ -33,3 +33,22 @@
   color: #888;
   font-size: 16px;
 }
+
+/* --- INICIO DE LÍNEAS NUEVAS --- */
+
+/* Estilo base (móvil) para la lista escroleable */
+.transactions-list {
+  max-height: 300px; /* Altura máxima en celular */
+  overflow-y: auto;  /* Muestra la barra de scroll si se excede */
+  padding-right: 10px; /* Espacio para que el scroll no tape el contenido */
+}
+
+/* --- ESTILOS RESPONSIVOS (PARA DESKTOP) --- */
+@media (min-width: 768px) {
+  
+  /* Sobrescribe la altura máxima para desktop */
+  .transactions-list {
+    max-height: 500px; /* Altura máxima en escritorio */
+  }
+}
+/* --- FIN DE LÍNEAS NUEVAS --- */
