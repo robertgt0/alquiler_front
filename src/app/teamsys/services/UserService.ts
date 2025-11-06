@@ -14,6 +14,8 @@ export async function crearUsuario(usuario: UsuarioDocument) {
   return res.json();
 }
 
+
+
 export async function loginUsuario(correoElectronico: string, password: string) {
   const res = await fetch(`${API_URL}/api/teamsys/auth/login`, {
     method: "POST",
@@ -33,4 +35,32 @@ export async function loginUsuario(correoElectronico: string, password: string) 
   }
   
   return data;
+}
+
+/**
+ * Solicita al backend que verifique el correo en BD y envíe el enlace mágico.
+ * Respuestas esperadas:
+ *  - 200 -> éxito (correo enviado)
+ *  - 404 -> correo NO registrado (mostrar mensaje debajo del input)
+ *  - otros -> error (banner rojo)
+ */
+export async function solicitarEnlaceAcceso(email: string) {
+  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const res = await fetch(`${API_URL}/api/teamsys/magic-link/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  if (res.status === 404) {
+    return { ok:false, notFoundEmail:true,
+      message:"No existe este correo en nuestro sistema. Por favor, ingresa un correo electrónico registrado" };
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || "No se pudo enviar el enlace");
+
+  return { ok:true,
+    message: data?.message || "Te enviamos un enlace de acceso a tu correo electrónico. Válido solo por 5 minutos.",
+    data // puede traer magicLink para debug
+  };
 }

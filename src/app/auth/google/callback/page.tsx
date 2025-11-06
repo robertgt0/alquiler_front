@@ -39,11 +39,9 @@ function Inner() {
 
         if (!response.ok) {
           if (data.message === 'usuario ya registrado') {
-            document.body.innerHTML = `
-              <div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#fff;">
-                <h1 style="font-family:sans-serif;color:#888;">Página Home</h1>
-              </div>
-            `;
+            setTimeout(() => {
+          router.push('/');
+        }, 1500);
             return;
           } else {
             throw new Error(data.message || 'Error en la autenticación con Google');
