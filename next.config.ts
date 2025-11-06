@@ -1,13 +1,21 @@
 import type { NextConfig } from "next";
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'flagcdn.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
   experimental: {
     turbo: {
-      // Especificar el directorio raíz para evitar el warning
-      root: process.cwd(),
+      root: __dirname,
     },
   },
-}
+};
 
 export default nextConfig;

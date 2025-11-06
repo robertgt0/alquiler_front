@@ -3,7 +3,9 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 // ELIMINADO: Ya no se usa Image
 // import Image from 'next/image';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
@@ -114,8 +116,57 @@ const modalContents = {
   }
 };
 
+const languageOptions = [
+  {
+    code: 'es',
+    label: 'Español',
+    flagSrc: '/flags/es.svg',
+    flagAlt: 'Bandera de España'
+  },
+  {
+    code: 'en',
+    label: 'English',
+    flagSrc: '/flags/us.svg',
+    flagAlt: 'United States flag'
+  }
+] as const;
+
+type LanguageCode = typeof languageOptions[number]['code'];
+
 const Footer = () => {
   const [activeModal, setActiveModal] = useState<keyof typeof modalContents | null>(null);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('es');
+  const languageMenuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLanguageMenuOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (languageMenuRef.current && !languageMenuRef.current.contains(event.target as Node)) {
+        setIsLanguageMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsLanguageMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isLanguageMenuOpen]);
+
+  const selectedLanguage = languageOptions.find((option) => option.code === currentLanguage) ?? languageOptions[0];
 
   const handleCloseModal = () => {
     setActiveModal(null);
@@ -123,76 +174,135 @@ const Footer = () => {
 
   return (
     <>
-  <footer className="bg-[#11255a] text-[#d8ecff] font-sans">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="border-t border-[#1140bc] mb-8"></div>
-      {/* Grid: stack on small screens, three columns on md+ */}
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center md:text-left">
-                
-        <div className="space-y-4">
-          <div className="flex items-center justify-center md:justify-start">
-            <div className="mr-3 flex-shrink-0">
-              <Icono size={50} />
+      <footer className="bg-[#11255a] text-[#d8ecff] font-sans">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="border-t border-[#1140bc] mb-8"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center md:text-left">
+            <div className="space-y-4">
+              <div className="flex items-center justify-center md:justify-start">
+                <div className="mr-3 flex-shrink-0">
+                  <Icono size={50} />
+                </div>
+                <h3 className="text-2xl font-bold font-heading">Servineo</h3>
+              </div>
+              <p className="text-[#b9ddff] text-sm sm:text-base">
+                La plataforma líder que conecta clientes con proveedores de servicios profesionales. Encuentra el fixer perfecto para tu proyecto.
+              </p>
             </div>
-            <h3 className="text-2xl font-bold font-heading">Servineo</h3>
-          </div>
-          <p className="text-[#b9ddff] text-sm sm:text-base">La plataforma líder que conecta clientes con proveedores de servicios profesionales. Encuentra el fixer perfecto para tu proyecto.</p>
-        </div>
 
-        <div className="space-y-4">
-            <h4 className="text-xl font-semibold font-heading">Enlaces Rápidos</h4>
-        <nav className="flex flex-col space-y-2 items-center md:items-start">
-        <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
-        <a href="#mapa" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
-        <a href="#servicios" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
-        </nav>
+            <div className="space-y-4">
+              <h4 className="text-xl font-semibold font-heading">Enlaces Rápidos</h4>
+              <nav className="flex flex-col space-y-2 items-center md:items-start">
+                <a href="#trabajos-recientes" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
+                <a href="#mapa" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
+                <a href="#servicios" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
+              </nav>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-xl font-semibold font-heading">Funciones del Sistema</h4>
+              <nav className="flex flex-col space-y-2 items-center md:items-start">
+                <a href="/convertir-fixer" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Convertir en fixer</a>
+                <button type="button" onClick={() => setActiveModal('howItWorks')} className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
+                <a href="/login" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Iniciar sesión</a>
+                <a href="/registro" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Registrarse</a>
+              </nav>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-xl font-semibold font-heading">Soporte</h4>
+              <ul className="space-y-3">
+                <li className="flex items-center justify-center md:justify-start">
+                  <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                    <FaPhone className="mr-3 text-[#52abff]" />
+                    <span className="text-sm">+591 73782241</span>
+                  </a>
+                </li>
+                <li className="flex items-center justify-center md:justify-start">
+                  <a href="mailto:servineobol@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                    <FaEnvelope className="mr-3 text-[#52abff]" />
+                    <span className="text-sm">servineobol@gmail.com</span>
+                  </a>
+                </li>
+                <li className="flex items-center justify-center md:justify-start">
+                  <a href="https://www.google.com/maps/search/?api=1&query=Cochabamba,Cercado" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                    <FaMapMarkerAlt className="mr-3 text-[#52abff]" />
+                    <span className="text-sm">Cochabamba, Cercado</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
-        
-        <div className="space-y-4">
-          <h4 className="text-xl font-semibold font-heading">Funciones del Sistema</h4>
-          <nav className="flex flex-col space-y-2 items-center md:items-start">
-            <a href="/convertir-fixer" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Convertir en fixer</a>
-            <button type="button" onClick={() => setActiveModal('howItWorks')} className="text-left hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">¿Cómo funciona?</button>
-            <a href="/login" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Iniciar sesión</a>
-            <a href="/registro" className="hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Registrarse</a>
-          </nav>
+
+          <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <p className="text-sm text-[#89c9ff]">© {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
+            <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+              <div className="relative" ref={languageMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsLanguageMenuOpen((prev) => !prev)}
+                  className="flex items-center gap-2 text-sm border border-[#1140bc] px-4 py-2 rounded-md hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] focus:ring-offset-2 focus:ring-offset-[#11255a]"
+                  aria-haspopup="listbox"
+                  aria-expanded={isLanguageMenuOpen}
+                >
+                  <Image
+                    src={selectedLanguage.flagSrc}
+                    alt={selectedLanguage.flagAlt}
+                    width={24}
+                    height={18}
+                    className="h-4 w-6 rounded-sm object-cover"
+                  />
+                  <span>{selectedLanguage.label}</span>
+                  <span className="text-xs" aria-hidden>▾</span>
+                </button>
+                {isLanguageMenuOpen && (
+                  <div className="absolute left-0 bottom-full mb-2 w-40 rounded-md border border-[#1140bc] bg-[#0e2358] shadow-lg">
+                    <ul role="listbox" aria-label="Seleccionar idioma">
+                      {languageOptions.map((option) => (
+                        <li key={option.code}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (option.code === 'en') {
+                                setIsLanguageMenuOpen(false);
+                                router.push('/404');
+                                return;
+                              }
+                              setCurrentLanguage(option.code);
+                              setIsLanguageMenuOpen(false);
+                            }}
+                            className={`flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                              option.code === currentLanguage
+                                ? 'bg-[#1140bc] text-[#d8ecff]'
+                                : 'text-[#d8ecff] hover:bg-[#173a87]'
+                            }`}
+                            role="option"
+                            aria-selected={option.code === currentLanguage}
+                          >
+                            <Image
+                              src={option.flagSrc}
+                              alt={option.flagAlt}
+                              width={24}
+                              height={18}
+                              className="h-4 w-6 rounded-sm object-cover"
+                            />
+                            <span>{option.label}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap justify-center gap-4 w-full md:w-auto">
+                <button type="button" onClick={() => setActiveModal('privacy')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de privacidad</button>
+                <button type="button" onClick={() => setActiveModal('terms')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Términos de uso</button>
+                <button type="button" onClick={() => setActiveModal('cookies')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de cookies</button>
+              </div>
+            </div>
+          </div>
         </div>
-                
-        <div className="space-y-4">
-          <h4 className="text-xl font-semibold font-heading">Soporte</h4>
-          <ul className="space-y-3">
-            <li className="flex items-center justify-center md:justify-start">
-              <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
-                <FaPhone className="mr-3 text-[#52abff]" />
-                <span className="text-sm">+591 73782241</span>
-              </a>
-            </li>
-            <li className="flex items-center justify-center md:justify-start">
-              <a href="mailto:servineobol@gmail.com" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
-                <FaEnvelope className="mr-3 text-[#52abff]" />
-                <span className="text-sm">servineobol@gmail.com</span>
-              </a>
-            </li>
-            <li className="flex items-center justify-center md:justify-start">
-              <a href="https://www.google.com/maps/search/?api=1&query=Cochabamba,Cercado" target="_blank" rel="noopener noreferrer" className="flex items-center hover:text-[#52abff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
-                <FaMapMarkerAlt className="mr-3 text-[#52abff]" />
-                <span className="text-sm">Cochabamba, Cercado</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-          
-      <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-      <p className="text-sm text-[#89c9ff]">© {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
-        <div className="flex flex-wrap justify-center gap-4 w-full md:w-auto">
-        <button type="button" onClick={() => setActiveModal('privacy')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de privacidad</button>
-        <button type="button" onClick={() => setActiveModal('terms')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Términos de uso</button>
-        <button type="button" onClick={() => setActiveModal('cookies')} className="w-full md:w-auto text-sm hover:text-[#52abff] transition-colors border border-[#1140bc] px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#52abff]">Política de cookies</button>
-      </div>
-      </div>
-    </div>
-    </footer>
+      </footer>
 
       {activeModal && (
         <Modal
