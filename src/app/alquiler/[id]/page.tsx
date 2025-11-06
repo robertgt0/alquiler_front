@@ -6,21 +6,7 @@ import ServicesList from './components/ServicesList';
 import PortfolioGrid from './components/PortfolioGrid';
 import ReviewsList from './components/ReviewsList';
 
-type UsuarioAPI = {
-  _id?: string;
-  id_usuario?: number;
-  nombre?: string;
-  email?: string;
-  telefono?: string;
-  activo?: boolean;
-  fecha_registro?: string;
-  ciudad?: any;
-  especialidades?: Array<any>;
-  servicios?: Array<any>;
-  calificaciones?: Array<any>;
-  portfolio?: Array<any>;
-  descripcion?: string;
-};
+import { Usuario } from './types/usuario.types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000/api';
 
@@ -83,6 +69,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
     
     const res = await fetch(endpoint, { 
       cache: 'no-store',
+      next: { revalidate: 0 },
       signal: controller.signal,
       headers: {
         'Accept': 'application/json'
@@ -109,7 +96,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
     }
 
     const json = await res.json();
-    const usuario: UsuarioAPI = json.data;
+    const usuario: Usuario = json.data;
 
     if (!usuario) return <div className="p-6">Usuario sin datos.</div>;
 
@@ -123,7 +110,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
       ? (usuario.calificaciones.reduce((acc:any, c:any) => acc + (c.puntuacion || 0), 0) / usuario.calificaciones.length)
       : undefined;
 
-  const avatar = (usuario as any).avatar || (usuario as any).foto || (usuario.portfolio && usuario.portfolio[0] && (usuario.portfolio[0].url || usuario.portfolio[0].path)) || undefined;
+  const avatar = usuario.portfolio?.[0]?.imagen;
 
     return (
       <div className="min-h-screen w-full" style={{ background: 'linear-gradient(135deg, #e5e7eb 0%, #bfc5d2 100%)' }}>
@@ -140,7 +127,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
             servicios={usuario.servicios}
             activo={usuario.activo}
             fecha_registro={usuario.fecha_registro}
-            avatarUrl={avatar && String(avatar).startsWith('http') ? String(avatar) : (avatar ? `${SERVER_ORIGIN}${avatar}` : undefined)}
+            avatarUrl={avatar && String(avatar).startsWith('http') ? String(avatar) : (avatar ? `${SERVER_ORIGIN}${avatar}` : '/images/portfolio/placeholder.jpg')}
             rating={promedio ? Number(promedio.toFixed(1)) : undefined}
           />
 
@@ -156,7 +143,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
 
               <PortfolioGrid portfolio={usuario.portfolio} serverOrigin={SERVER_ORIGIN} />
 
-              <ReviewsList calificaciones={usuario.calificaciones} />
+              <ReviewsList calificaciones={usuario.calificaciones} nombreUsuario={usuario.nombre} />
             </div>
 
             <div className="space-y-6">
@@ -172,7 +159,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
 
               <div className="bg-white rounded-lg shadow p-6 border" style={{ borderColor: '#1769ff' }}>
                 <h4 className="text-sm text-gray-500">Ubicación</h4>
-                <div className="mt-2 font-medium">{usuario.ciudad?.nombre || usuario.ciudad || 'Sin ubicación'}</div>
+                <div className="mt-2 font-medium">{usuario.ciudad?.nombre || 'Sin ubicación'}</div>
                 <div className="mt-4 text-sm text-gray-500">Registrado desde {postedDate}</div>
               </div>
             </div>

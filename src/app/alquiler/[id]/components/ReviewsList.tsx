@@ -1,35 +1,42 @@
 import React from 'react';
 
-const defaultReviews = [
+type Review = {
+  nombre_cliente: string;
+  puntuacion: number;
+  comentario: string;
+  fecha_calificacion: string;
+};
+
+const defaultReviews: Review[] = [
   {
-    nombre_cliente: "María Fernanda R.",
+    nombre_cliente: "Andrea S.",
     puntuacion: 5,
-    comentario: "Excelente trabajo, la decoración fue exactamente como la imaginé. Muy puntuales y detallistas. ¡Recomendadísimos!",
-    fecha_calificacion: "2023-11-15"
+    comentario: "Excelente trabajo, mandé a hacer unas repisas y quedaron perfectas. La madera es de buena calidad y entregaron antes del plazo. ¡Muy recomendados!",
+    fecha_calificacion: "2023-10-25"
   },
   {
-    nombre_cliente: "Carlos A.",
+    nombre_cliente: "Luis F.",
     puntuacion: 4,
-    comentario: "Contraté el servicio para un cumpleaños y todo quedó hermoso. Solo faltó un poco más de iluminación, pero en general, muy bueno.",
-    fecha_calificacion: "2023-11-10"
+    comentario: "Mandé a reparar una mesa antigua y quedó como nueva. Solo tardaron un día más de lo acordado, pero valió la pena por el resultado.",
+    fecha_calificacion: "2023-10-18"
   },
   {
-    nombre_cliente: "Lucía G.",
+    nombre_cliente: "Camila T.",
     puntuacion: 5,
-    comentario: "Súper profesionales, se encargaron de todo el montaje y los colores quedaron perfectos. Definitivamente volvería a contratar.",
-    fecha_calificacion: "2023-11-08"
+    comentario: "Encargué un ropero a medida y me encantó. Muy buena atención, escucharon todas mis ideas y el acabado quedó profesional.",
+    fecha_calificacion: "2023-10-10"
   },
   {
-    nombre_cliente: "José M.",
-    puntuacion: 5,
-    comentario: "La decoración de mi boda fue espectacular. Cumplieron con todo lo acordado y superaron mis expectativas.",
-    fecha_calificacion: "2023-11-05"
-  },
-  {
-    nombre_cliente: "Valentina P.",
+    nombre_cliente: "Rodrigo M.",
     puntuacion: 4,
-    comentario: "Buen servicio, rápido y con materiales de calidad. Muy buena atención al cliente.",
-    fecha_calificacion: "2023-11-01"
+    comentario: "Buen servicio y precios razonables. Me hicieron una puerta de madera muy resistente, aunque el color final fue un poco más claro que el que pedí.",
+    fecha_calificacion: "2023-10-05"
+  },
+  {
+    nombre_cliente: "Doryan P.",
+    puntuacion: 5,
+    comentario: "Súper cumplidos y detallistas. Me fabricaron un mueble para TV hermoso, todo encaja perfecto. ¡Sin duda volvería a contratarlos!",
+    fecha_calificacion: "2023-09-28"
   }
 ];
 
@@ -48,8 +55,14 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
   </div>
 );
 
-const ReviewsList: React.FC<{ calificaciones?: any[] }> = ({ calificaciones }) => {
-  const items = calificaciones?.length ? calificaciones : defaultReviews;
+interface ReviewsListProps {
+  calificaciones?: any[];
+  nombreUsuario?: string;
+}
+
+const ReviewsList: React.FC<ReviewsListProps> = ({ calificaciones, nombreUsuario }) => {
+  // Solo mostrar las reseñas por defecto si es Ana María Flores
+  const items = nombreUsuario === "Ana María Flores" ? defaultReviews : (calificaciones ?? []);
   
   return (
     <div className="mt-6 bg-white rounded-xl shadow-lg p-6 border border-blue-100">

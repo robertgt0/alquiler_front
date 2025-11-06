@@ -4,7 +4,10 @@ import { Search, Clock, X } from "lucide-react";
 import { Job } from "../paginacion/types/job";
 import "./busqueda.css";
 import { Trash2 } from "lucide-react";
+
 import { normalizarGoogle, normalizarQueryBusqueda, analizarCaracteresQuery, tieneCaracteresProblema, generarHashTexto } from "./normalizacion";
+
+import { useSearchHistory } from './hooks/useHistorialBusqueda';
 
 type EstadoSugerencias = "idle" | "loading" | "error" | "success";
 type EstadoBusqueda = "idle" | "loading" | "success" | "error" | "sinResultados";
@@ -55,8 +58,7 @@ class BackendService {
         try {
             console.log('🚀 [BACKEND-INICIO] Buscando por inicio de palabra:', query);
 
-            // ✅ EL QUERY YA DEBERÍA ESTAR NORMALIZADO AQUÍ
-            const queryNormalizado = query; // Ya viene normalizado del BusquedaService
+            const queryNormalizado = query;
             const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
 
             if (tokens.length === 0) {
@@ -199,42 +201,6 @@ class BackendService {
 
         } catch (error) {
             console.log('❌ [SUGERENCIAS-BACKEND-INICIO] Error:', error);
-            throw error;
-        }
-    }
-
-    static async getHistorialBackend(endpoint?: string): Promise<string[]> {
-        try {
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
-            const response = await fetch(apiEndpoint);
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    return data.data || data.historial || [];
-                }
-            }
-            return [];
-        } catch (error) {
-            console.error('❌ [BACKEND] Error obteniendo historial:', error);
-            throw error;
-        }
-    }
-
-    static async clearHistorialBackend(endpoint?: string): Promise<boolean> {
-        try {
-            const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
-            const response = await fetch(apiEndpoint, {
-                method: 'DELETE',
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                return data.success || false;
-            }
-            return false;
-        } catch (error) {
-            console.error('❌ [BACKEND] Error limpiando historial:', error);
             throw error;
         }
     }
@@ -542,7 +508,7 @@ class BusquedaService {
             }
 
             // ✅ EL QUERY YA VIENE NORMALIZADO DESDE EL COMPONENTE
-            const queryNormalizado = query; // Ya normalizado
+            const queryNormalizado = query;
             console.log('✅ [SERVICE] Query ya normalizado desde componente:', queryNormalizado);
 
             const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
@@ -611,40 +577,6 @@ class BusquedaService {
             return LocalService.getSugerencias(query, jobsReales);
         }
     }
-
-    static async getHistorial(endpoint?: string): Promise<string[]> {
-        try {
-            return await BackendService.getHistorialBackend(endpoint);
-        } catch (error) {
-            console.error('❌ [SERVICE] Error obteniendo historial del backend, usando localStorage:', error);
-            try {
-                const stored = localStorage.getItem("historialBusquedas");
-                return stored ? JSON.parse(stored) : [];
-            } catch (localError) {
-                console.error('❌ [SERVICE] Error con localStorage:', localError);
-                return [];
-            }
-        }
-    }
-
-    static async clearHistorial(endpoint?: string): Promise<boolean> {
-        try {
-            const success = await BackendService.clearHistorialBackend(endpoint);
-            if (success) {
-                localStorage.removeItem("historialBusquedas");
-            }
-            return success;
-        } catch (error) {
-            console.error('❌ [SERVICE] Error limpiando historial del backend:', error);
-            try {
-                localStorage.removeItem("historialBusquedas");
-                return true;
-            } catch (localError) {
-                console.error('❌ [SERVICE] Error limpiando localStorage:', localError);
-                return false;
-            }
-        }
-    }
 }
 
 // ============================================================================
@@ -667,13 +599,10 @@ export default function BusquedaAutocompletado({
     const [estadoBusqueda, setEstadoBusqueda] = useState<EstadoBusqueda>("idle");
     const [mensaje, setMensaje] = useState("");
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
-    const [mostrarHistorialLocal, setMostrarHistorialLocal] = useState(false);
     const [resultados, setResultados] = useState<Job[]>([]);
-    const [historial, setHistorial] = useState<string[]>([]);
-    const [cargandoHistorial, setCargandoHistorial] = useState(false);
-    const [inputFocused, setInputFocused] = useState(false);
     const [loadingResultados, setLoadingResultados] = useState(false);
     const [mensajeNoResultados, setMensajeNoResultados] = useState("");
+    const [inputFocused, setInputFocused] = useState(false);
 
     // 🔥 REFERENCIAS SEPARADAS PARA COMPORTAMIENTO AMAZON
     const debounceSugerenciasRef = useRef<NodeJS.Timeout | null>(null);
@@ -682,42 +611,26 @@ export default function BusquedaAutocompletado({
     const containerRef = useRef<HTMLDivElement>(null);
     const terminoBusquedaAnteriorSugerencias = useRef("");
     const terminoBusquedaAnteriorResultados = useRef("");
-    const historialCargado = useRef(false);
     const busquedaEnCurso = useRef(false);
     const desactivarBusquedaAutomatica = useRef(false);
 
-    // 🔥 MEJORADO: Guardar en historial sin duplicados
-    const guardarEnHistorial = useCallback((texto: string) => {
-        if (!mostrarHistorial) return;
-
-        const textoNormalizado = texto.trim();
-
-        if (!textoNormalizado ||
-            textoNormalizado.length < 2 ||
-            textoNormalizado.length > 50) {
-            return;
-        }
-
-        console.log('💾 [HISTORIAL] Guardando búsqueda:', textoNormalizado);
-
-        const historialLimpio = historial
-            .map(item => item.trim())
-            .filter(item => item.length > 0);
-
-        const nuevoHistorial = [
-            textoNormalizado,
-            ...historialLimpio.filter(item =>
-                item.toLowerCase() !== textoNormalizado.toLowerCase()
-            )
-        ].slice(0, 10);
-
-        setHistorial(nuevoHistorial);
-        try {
-            localStorage.setItem("historialBusquedas", JSON.stringify(nuevoHistorial));
-        } catch (error) {
-            console.error("❌ [HISTORIAL] Error guardando en localStorage:", error);
-        }
-    }, [historial, mostrarHistorial]);
+    // USAR HOOK DE HISTORIAL
+    const {
+        historial,
+        cargandoHistorial,
+        mostrarHistorialLocal,
+        setMostrarHistorialLocal,
+        guardarEnHistorial,
+        limpiarHistorialBackend,
+        eliminarDelHistorial,
+        seleccionarDelHistorial,
+        indiceSeleccionado,
+        setIndiceSeleccionado,
+        seleccionarPorIndice
+    } = useSearchHistory({
+        mostrarHistorial,
+        apiConfig
+    });
 
     // 🔥 MODIFICADO: Flujo exacto solicitado - Primero analizarCaracteresQuery, luego normalizarGoogle
     const ejecutarBusquedaCompleta = useCallback(async (
@@ -1202,91 +1115,71 @@ export default function BusquedaAutocompletado({
     }, [onSearch]);
 
     const manejarKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            setMostrarSugerencias(false);
-            setMostrarHistorialLocal(false);
-            // 🔥 PIERDE FOCUS AL PRESIONAR ENTER
-            inputRef.current?.blur();
-            setInputFocused(false);
+        const itemsList = mostrarHistorialLocal ? historial : sugerencias;
+        const totalItems = itemsList.length;
 
-            ejecutarBusqueda();
-        } else if (e.key === 'Escape') {
-            setMostrarSugerencias(false);
-            setMostrarHistorialLocal(false);
-            setInputFocused(false);
-            inputRef.current?.blur();
-        }
-    }, [ejecutarBusqueda]);
+        // 🔹 Evitar navegación si no hay elementos
+        if ((mostrarHistorialLocal || mostrarSugerencias) && totalItems === 0) return;
 
-    // Efecto para cargar historial
-    useEffect(() => {
-        if (!mostrarHistorial || historialCargado.current) return;
+        if (mostrarHistorialLocal || mostrarSugerencias) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setIndiceSeleccionado((prev) =>
+                    prev < totalItems - 1 ? prev + 1 : 0
+                );
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setIndiceSeleccionado((prev) =>
+                    prev > 0 ? prev - 1 : totalItems - 1
+                );
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
 
-        const cargarHistorial = async () => {
-            try {
-                setCargandoHistorial(true);
-                const terminos = await BusquedaService.getHistorial(apiConfig?.endpoint);
+                if (indiceSeleccionado !== -1) {
+                    const terminoSeleccionado = itemsList[indiceSeleccionado];
 
-                if (terminos.length > 0) {
-                    const historialUnico: string[] = Array.from(
-                        new Set(
-                            terminos
-                                .map((term: string) => term.trim())
-                                .filter((term: string) => term.length > 0)
-                        )
-                    ).slice(0, 10) as string[];
-
-                    setHistorial(historialUnico);
-                    console.log('📚 [HISTORIAL] Historial cargado:', historialUnico);
-                } else {
-                    try {
-                        const stored = localStorage.getItem("historialBusquedas");
-                        if (stored) {
-                            const historialLocal: string[] = JSON.parse(stored);
-                            const historialUnico: string[] = Array.from(
-                                new Set(
-                                    historialLocal
-                                        .map((term: string) => term.trim())
-                                        .filter((term: string) => term.length > 0)
-                                )
-                            ).slice(0, 10);
-                            setHistorial(historialUnico);
-                            console.log('📚 [HISTORIAL] Historial cargado desde localStorage:', historialUnico);
+                    if (mostrarHistorialLocal) {
+                        const textoSeleccionado = seleccionarPorIndice(indiceSeleccionado);
+                        if (textoSeleccionado) {
+                            setQuery(textoSeleccionado);
+                            setMostrarHistorialLocal(false);
+                            ejecutarBusquedaCompleta(textoSeleccionado, true, false, true);
                         }
-                    } catch (localError) {
-                        console.error('Error con localStorage:', localError);
+                    } else if (mostrarSugerencias) {
+                        seleccionarSugerencia(terminoSeleccionado);
                     }
+                } else {
+                    ejecutarBusqueda();
                 }
-
-                historialCargado.current = true;
-            } catch (error) {
-                console.error('❌ Error cargando historial:', error);
-                try {
-                    const stored = localStorage.getItem("historialBusquedas");
-                    if (stored) {
-                        const historialLocal: string[] = JSON.parse(stored);
-                        const historialUnico: string[] = Array.from(
-                            new Set(
-                                historialLocal
-                                    .map((term: string) => term.trim())
-                                    .filter((term: string) => term.length > 0)
-                            )
-                        ).slice(0, 10);
-                        setHistorial(historialUnico);
-                        console.log('📚 [HISTORIAL] Historial cargado desde localStorage (fallback):', historialUnico);
-                    }
-                } catch (localError) {
-                    console.error('Error con localStorage:', localError);
-                } finally {
-                    historialCargado.current = true;
-                }
-            } finally {
-                setCargandoHistorial(false);
+            } else if (e.key === 'Escape') {
+                setMostrarSugerencias(false);
+                setMostrarHistorialLocal(false);
+                setIndiceSeleccionado(-1);
+                setInputFocused(false);
+                inputRef.current?.blur();
+            } else {
+                setIndiceSeleccionado(-1);
             }
-        };
-
-        cargarHistorial();
-    }, [mostrarHistorial, apiConfig?.endpoint]);
+        } else {
+            if (e.key === 'Enter') {
+                ejecutarBusqueda();
+            } else if (e.key === 'Escape') {
+                limpiarBusqueda();
+            }
+        }
+    }, [
+        ejecutarBusqueda,
+        limpiarBusqueda,
+        mostrarHistorialLocal,
+        mostrarSugerencias,
+        historial,
+        sugerencias,
+        indiceSeleccionado,
+        setIndiceSeleccionado,
+        seleccionarPorIndice,
+        seleccionarSugerencia,
+        ejecutarBusquedaCompleta
+    ]);
 
     // Efecto para controlar la visibilidad del historial y sugerencias
     useEffect(() => {
@@ -1297,7 +1190,6 @@ export default function BusquedaAutocompletado({
             inputFocused &&
             !esSoloEspacios &&
             texto.length === 0 &&
-            historial.length > 0 &&
             mostrarHistorial
         );
 
@@ -1311,26 +1203,7 @@ export default function BusquedaAutocompletado({
         setMostrarHistorialLocal(debeMostrarHistorial);
         setMostrarSugerencias(debeMostrarSugerencias);
 
-    }, [query, inputFocused, historial, mostrarHistorial, estadoSugerencias, sugerencias, mensajeNoResultados]);
-
-    const limpiarHistorialBackend = useCallback(async () => {
-        try {
-            const success = await BusquedaService.clearHistorial(apiConfig?.endpoint);
-            if (success) {
-                setHistorial([]);
-                setMostrarHistorialLocal(false);
-                localStorage.removeItem("historialBusquedas");
-                historialCargado.current = true;
-                console.log('✅ [HISTORIAL] Historial limpiado correctamente por el usuario');
-            } else {
-                console.error('❌ [HISTORIAL] Error al limpiar historial en el backend');
-                setMensaje("Error al limpiar el historial");
-            }
-        } catch (error) {
-            console.error('❌ [HISTORIAL] Error limpiando historial:', error);
-            setMensaje("Error de conexión al limpiar historial");
-        }
-    }, [apiConfig?.endpoint]);
+    }, [query, inputFocused, historial, mostrarHistorial, estadoSugerencias, sugerencias, mensajeNoResultados, setMostrarHistorialLocal]);
 
     // Efecto para cerrar sugerencias al hacer click fuera
     useEffect(() => {
@@ -1346,7 +1219,22 @@ export default function BusquedaAutocompletado({
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, []);
+    }, [setMostrarHistorialLocal]);
+
+    // Manejar selección del historial
+    const manejarSeleccionHistorial = useCallback(async (texto: string) => {
+        const textoSeleccionado = seleccionarDelHistorial(texto) || "";
+        setQuery(textoSeleccionado);
+        setSugerencias([]);
+        setMensaje("");
+        setMostrarSugerencias(false);
+        setMensajeNoResultados("");
+        setIndiceSeleccionado(-1);
+
+        if (textoSeleccionado) {
+            await ejecutarBusquedaCompleta(textoSeleccionado, true, false, true);
+        }
+    }, [seleccionarDelHistorial, ejecutarBusquedaCompleta, setIndiceSeleccionado]);
 
     return (
         <div className="busqueda-container" ref={containerRef}>
@@ -1381,7 +1269,6 @@ export default function BusquedaAutocompletado({
                             <X size={16} />
                         </button>
                     )}
-                   
                 </div>
 
                 <div className={`contador-caracteres ${query.length > 70 ? 'alerta' : ''}`}>
@@ -1397,7 +1284,7 @@ export default function BusquedaAutocompletado({
                     </div>
                 )}
 
-                {/* HISTORIAL */}
+                {/* ✅ HISTORIAL ✅ */}
                 {mostrarHistorialLocal && (
                     <ul className="caja-sugerencias">
                         <li className="sugerencias-header">
@@ -1407,24 +1294,47 @@ export default function BusquedaAutocompletado({
                             )}
                         </li>
 
-                        {historial.map((item, i) => (
-                            <li
-                                key={i}
-                                className="item-historial"
-                                onClick={() => seleccionarSugerencia(item)}
-                            >
-                                <Clock className="icono-historial" size={16} />
-                                {item}
+                        {/* ✅ AQUÍ LA CONDICIÓN PARA MOSTRAR EL MENSAJE */}
+                        {!cargandoHistorial && historial.length === 0 ? (
+                            <li className="mensaje-historial">
+                                No hay búsquedas recientes
                             </li>
-                        ))}
+                        ) : (
+                            historial.map((item, i) => (
+                                <li
+                                    key={i}
+                                    className={`item-historial ${i === indiceSeleccionado ? 'seleccionado' : ''}`}
+                                    onClick={() => manejarSeleccionHistorial(item)}
+                                >
+                                    <div className="contenedor-texto-historial">
+                                        <Clock className="icono-historial" size={16} />
+                                        <span className="texto-historial">{item}</span>
+                                    </div>
 
-                        <li
-                            className="item-limpiar-todo"
-                            onClick={limpiarHistorialBackend}
-                        >
-                            <Trash2 size={14} />
-                            Limpiar historial
-                        </li>
+                                    <button
+                                        className="boton-eliminar-historial"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            eliminarDelHistorial(item);
+                                        }}
+                                        title="Eliminar elemento"
+                                    >
+                                        ✕
+                                    </button>
+                                </li>
+                            ))
+                        )}
+
+                        {/* ✅ Solo mostrar limpiar si hay elementos */}
+                        {historial.length > 0 && (
+                            <li
+                                className="item-limpiar-todo"
+                                onClick={limpiarHistorialBackend}
+                            >
+                                <Trash2 size={14} />
+                                Limpiar historial
+                            </li>
+                        )}
                     </ul>
                 )}
 
@@ -1444,7 +1354,11 @@ export default function BusquedaAutocompletado({
                                     Sugerencias
                                 </li>
                                 {sugerencias.map((s, i) => (
-                                    <li key={i} onClick={() => seleccionarSugerencia(s)}>
+                                    <li
+                                        key={i}
+                                        onClick={() => seleccionarSugerencia(s)}
+                                        className={i === indiceSeleccionado ? 'seleccionado' : ''}
+                                    >
                                         <Search className="icono-sugerencia" size={16} />
                                         {s}
                                     </li>

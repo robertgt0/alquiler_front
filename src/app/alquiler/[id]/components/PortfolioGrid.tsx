@@ -1,41 +1,47 @@
 import React from 'react';
 
-const resolveImage = (url: string | undefined, serverOrigin: string) => {
-  if (!url) return '/images/portfolio/placeholder.jpg';
-  // si es URL absoluta
-  if (/^https?:\/\//i.test(url)) return url;
-  // si es relativa (empieza con /), unir con el origen del servidor (sin /api)
-  if (url.startsWith('/')) return `${serverOrigin}${url}`;
-  // por defecto devolver placeholder
-  return url;
+const resolveImage = (imagen: string | undefined) => {
+  if (!imagen) return '/images/portfolio/placeholder.jpg';
+  // Si la imagen ya comienza con http o https, usarla directamente
+  if (imagen.startsWith('http')) return imagen;
+  // Si la imagen comienza con / es una ruta desde public
+  if (imagen.startsWith('/')) return imagen;
+  // Si no, asumimos que está en la carpeta de carpinteria
+  return `/images/portfolio/carpinteria/${imagen}`;
 };
 
 import Image from 'next/image';
 
 const defaultImages = [
   {
-    url: '/portfolio-boda.jpg',
-    titulo: 'Decoración con flores y luces LED',
-    descripcion: 'Ideal para bodas, quinceañeros o aniversarios'
+    id: 1,
+    imagen: '/images/portfolio/carpinteria/restauracion-silla.jpg',
+    titulo: 'Restauración de Silla Clásica',
+    descripcion: 'Trabajo detallado de restauración completa, incluyendo lijado, refuerzo de estructura y acabado barnizado.'
   },
   {
-    url: '/portfolio-babyshower.jpg',
-    titulo: 'Decoración temática para baby shower',
-    descripcion: 'Incluye fondo decorativo, guirnaldas y carteles personalizados'
+    id: 2,
+    imagen: '/images/portfolio/carpinteria/mueble-modular.jpg',
+    titulo: 'Mueble Modular en Proceso',
+    descripcion: 'Construcción de mueble modular personalizado mostrando la calidad del trabajo interno y estructural.'
   },
   {
-    url: '/portfolio-basico.jpg',
-    titulo: 'Decoración básica de evento pequeño',
-    descripcion: 'Incluye mantel, centro de mesa y algunos globos'
+    id: 3,
+    imagen: '/images/portfolio/carpinteria/mesa-comedor.jpg',
+    titulo: 'Mesa de Comedor de Madera Maciza',
+    descripcion: 'Fabricación de mesa robusta en madera noble con acabado premium y barniz protector.'
   },
   {
-    url: '/portfolio-premium.jpg',
-    titulo: 'Decoración completa premium',
-    descripcion: 'Incluye todo: fondo temático, iluminación, mesa decorada, flores y cartel personalizado'
+    id: 4,
+    imagen: '/images/portfolio/carpinteria/set-sillas.jpg',
+    titulo: 'Set de Sillas de Madera',
+    descripcion: 'Conjunto de sillas a medida con diseño elegante y acabado en barniz brillante.'
   }
 ];
 
-const PortfolioGrid = ({ portfolio, serverOrigin }: { portfolio?: any[]; serverOrigin: string }) => {
+import { Portfolio } from '../types/usuario.types';
+
+const PortfolioGrid = ({ portfolio, serverOrigin }: { portfolio?: Portfolio[]; serverOrigin: string }) => {
   // Usar las imágenes proporcionadas o las predeterminadas
   const items = portfolio?.length ? portfolio : defaultImages;
   
@@ -47,7 +53,7 @@ const PortfolioGrid = ({ portfolio, serverOrigin }: { portfolio?: any[]; serverO
           <div key={idx} className="group relative rounded-lg overflow-hidden bg-gray-100 border border-gray-200 aspect-video hover:shadow-xl transition-all duration-300">
             <div className="relative w-full h-full">
               <Image 
-                src={p.url}
+                src={resolveImage(p.imagen)}
                 alt={p.titulo || `Proyecto de decoración ${idx + 1}`}
                 fill
                 style={{ objectFit: 'cover' }}

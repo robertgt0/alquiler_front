@@ -1,6 +1,8 @@
 import React from 'react';
 
-const ServicesList = ({ servicios }: { servicios?: any[] }) => {
+import { Servicio } from '../types/usuario.types';
+
+const ServicesList = ({ servicios }: { servicios?: Servicio[] }) => {
   return (
     <div className="mt-6 bg-white rounded-xl shadow p-6 border" style={{ borderColor: '#1769ff' }}>
       <h3 className="text-blue-600 font-semibold mb-4">Servicios Ofrecidos y Precios</h3>
@@ -14,18 +16,10 @@ const ServicesList = ({ servicios }: { servicios?: any[] }) => {
                 </span>
                 <div className="flex flex-col">
                   <span className="font-semibold text-gray-900 text-lg">
-                    {s.nombre === "Decoración - Servicio 1" ? "Decoración con flores y luces LED" :
-                     s.nombre === "Decoración - Servicio 2" ? "Decoración temática" :
-                     s.nombre === "Decoración - Servicio 3" ? "Decoración básica de evento pequeño" :
-                     s.nombre === "Decoración - Servicio 4" ? "Decoración completa premium" :
-                     s.nombre}
+                    {s.nombre}
                   </span>
                   <span className="text-gray-600 text-sm mt-2">
-                    {s.nombre === "Decoración - Servicio 1" ? "Ideal para bodas, quinceañeros o aniversarios" :
-                     s.nombre === "Decoración - Servicio 2" ? "Incluye fondo decorativo, guirnaldas y carteles personalizados" :
-                     s.nombre === "Decoración - Servicio 3" ? "Incluye mantel, centro de mesa y algunos globos" :
-                     s.nombre === "Decoración - Servicio 4" ? "Incluye todo: fondo temático, iluminación, mesa decorada, flores y cartel personalizado" :
-                     ""}
+                    {s.descripcion}
                   </span>
                 </div>
               </div>
