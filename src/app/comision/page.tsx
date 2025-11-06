@@ -45,11 +45,14 @@ function TrabajoCard({ trabajo, onClick }: TrabajoCardProps) {
     };
 
     return (
-        // --- CAMBIO AQUÍ: Ahora todas las tarjetas son cliqueables ---
+        // --- CAMBIO AQUÍ: El cursor y hover vuelven a ser condicionales ---
         <li 
           className={`
             p-4 bg-blue-400 rounded-xl shadow-md flex justify-between items-center text-white
-            cursor-pointer transition duration-300 hover:bg-blue-500
+            ${trabajo.estado === 'completado' 
+              ? 'cursor-pointer transition duration-300 hover:bg-blue-500' 
+              : 'cursor-default'
+            }
           `}
           onClick={() => onClick(trabajo)} // Llama a la función del padre
         >
@@ -198,14 +201,15 @@ export default function HomePage() {
   // Función de ayuda para clases (de tu ejemplo)
   const inputClass = (fieldName: keyof FormErrors) => `form-input ${errors[fieldName] ? 'input-error' : ''}`;
   
-  // --- CAMBIO AQUÍ: FUNCIONES DEL MODAL SIMPLIFICADAS ---
+  // --- CAMBIO AQUÍ: FUNCIONES DEL MODAL CON CONDICIÓN ---
   const handleTrabajoClick = (trabajo: ITrabajo) => {
-    // Ya no comprobamos el estado, siempre abrimos el modal
-    // if (trabajo.estado === 'completado') {
+    // Volvemos a comprobar el estado
+    if (trabajo.estado === 'completado') {
       // Ya no guardamos el trabajo seleccionado
       // setSelectedTrabajo(trabajo); 
       setIsModalOpen(true);
-    // }
+    }
+    // Si no es 'completado', no se hace nada
   };
 
   const closeModal = () => {
