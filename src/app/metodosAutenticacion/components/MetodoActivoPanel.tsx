@@ -11,6 +11,8 @@ interface MetodoActivoPanelProps {
   onActivarModoEliminar: () => void;
   onDesactivarModos: () => void;
   onEliminarMetodos: () => void;
+  // Nueva prop para controlar métodos que están mostrando error
+  metodosConError?: string[]; // Array de IDs de métodos con error
 }
 
 export default function MetodoActivoPanel({
@@ -21,7 +23,8 @@ export default function MetodoActivoPanel({
   onActivarModoSeleccion,
   onActivarModoEliminar,
   onDesactivarModos,
-  onEliminarMetodos
+  onEliminarMetodos,
+  metodosConError = [] // Valor por defecto array vacío
 }: MetodoActivoPanelProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
@@ -54,7 +57,8 @@ export default function MetodoActivoPanel({
           metodosActivos.map((metodo) => {
             const estaSeleccionadoParaEliminar = modos.metodosAEliminar.includes(metodo.id);
             const esMetodoRegistro = metodo.esMetodoRegistro;
-            const puedeEliminar = !esMetodoRegistro && metodosActivos.length > 1;
+            const tieneError = metodosConError.includes(metodo.id);
+            const puedeEliminar = !esMetodoRegistro && metodosActivos.length > 1 && !tieneError;
 
             return (
               <div key={metodo.id} className="flex items-center space-x-3">
@@ -77,9 +81,11 @@ export default function MetodoActivoPanel({
                 )}
 
                 {/* Cuadro del método activo */}
-                <div className={`border-2 rounded-lg p-4 w-full transition-all ${
+                <div className={`rounded-lg p-4 w-full transition-all ${
                   modos.modoEliminar && estaSeleccionadoParaEliminar 
                     ? 'border-blue-500 bg-blue-50 shadow-md' 
+                    : tieneError
+                    ? 'border-red-200 bg-red-50 shadow-sm'
                     : 'border-gray-200 bg-white'
                 }`}>
                   <div className="flex items-center space-x-3">
@@ -88,7 +94,7 @@ export default function MetodoActivoPanel({
                       metodo.color === 'blue' ? 'bg-blue-100' :
                       metodo.color === 'red' ? 'bg-red-100' :
                       metodo.color === 'green' ? 'bg-green-100' : 'bg-gray-100'
-                    }`}>
+                    } ${tieneError ? 'opacity-70' : ''}`}>
                       <span className="text-xl">{metodo.icono}</span>
                     </div>
 
@@ -96,26 +102,30 @@ export default function MetodoActivoPanel({
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <h3 className="text-base font-semibold text-gray-800">
+                          <h3 className={`text-base font-semibold ${
+                            tieneError ? 'text-red-700' : 'text-gray-800'
+                          }`}>
                             {metodo.nombre}
                           </h3>
-                          {/* ✅ INDICADOR DE MÉTODO DE REGISTRO */}
-                          {esMetodoRegistro && (
-                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full ml-2">
-                              Registro
+                          {tieneError && (
+                            <span className="ml-2 px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full font-medium">
+                              Error
                             </span>
                           )}
                         </div>
-                        {/* Indicador de estado activo */}
-                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          Activo
-                        </span>
                       </div>
                       
                       {/* Mensaje informativo para método de registro */}
                       {esMetodoRegistro && modos.modoEliminar && (
                         <p className="text-red-500 text-xs mt-1 font-medium">
                           No se puede eliminar el método de registro
+                        </p>
+                      )}
+                      
+                      {/* Mensaje de error para método con problema */}
+                      {tieneError && modos.modoEliminar && (
+                        <p className="text-red-500 text-xs mt-1 font-medium">
+                          No se puede eliminar un método con error
                         </p>
                       )}
                     </div>

@@ -9,8 +9,14 @@ import ModalContrasena from '../components/ModalContrasena';
 import { apiService } from '../services/api';
 import { GoogleAuthService } from '../services/googleAuthService';
 
+// =============================================
+// 🔍 FUNCIONES AUXILIARES - DIAGNÓSTICO Y DATOS
+// =============================================
 
-// Función de diagnóstico para ver qué hay en sessionStorage
+/**
+ * 🎯 Función de diagnóstico para verificar sessionStorage
+ * Ayuda a debuggear qué datos están disponibles
+ */
 const diagnosticarSessionStorage = () => {
   console.log('🔍 DIAGNÓSTICO SESSIONSTORAGE:');
   
@@ -18,6 +24,7 @@ const diagnosticarSessionStorage = () => {
     console.log('  - No estamos en el cliente');
     return;
   }
+  
   // Ver todas las keys en sessionStorage
   for (let i = 0; i < sessionStorage.length; i++) {
     const key = sessionStorage.key(i);
@@ -34,6 +41,7 @@ const diagnosticarSessionStorage = () => {
       const userData = JSON.parse(userDataString);
       console.log('  - userData parseado:', userData);
       console.log('  - email en userData:', userData.email);
+      console.log('  - authProvider en userData:', userData.authProvider);
     } catch (error) {
       console.log('  - Error parseando userData:', error);
     }
@@ -42,8 +50,11 @@ const diagnosticarSessionStorage = () => {
   console.log('🔍 FIN DIAGNÓSTICO');
 };
 
-// Función para obtener solo el email desde sessionStorage
-const obtenerEmailDesdeSessionStorage = (): string | null => {
+/**
+ * 🎯 Obtiene todos los datos del usuario desde sessionStorage
+ * Incluye email, authProvider, y cualquier otra información
+ */
+const obtenerUserDataDesdeSessionStorage = () => {
   try {
     if (typeof window === 'undefined') {
       return null;
@@ -52,28 +63,25 @@ const obtenerEmailDesdeSessionStorage = (): string | null => {
     const userDataString = sessionStorage.getItem('userData');
     
     if (!userDataString) {
-      console.warn('No se encontró userData en sessionStorage');
+      console.warn('⚠️ No se encontró userData en sessionStorage');
       return null;
     }
 
     const userData = JSON.parse(userDataString);
-    const userEmail = userData.correo;
+    console.log('📧 UserData obtenido:', userData);
     
-    if (!userEmail || typeof userEmail !== 'string') {
-      console.error('Email no encontrado o inválido en userData');
-      return null;
-    }
-
-    console.log('📧 Email obtenido:', userEmail);
-    return userEmail;
+    return userData;
     
   } catch (error) {
-    console.error('Error al obtener email desde sessionStorage:', error);
+    console.error('❌ Error al obtener userData desde sessionStorage:', error);
     return null;
   }
 };
 
-// Función para autenticar con Google y obtener el email
+/**
+ * 🎯 Autentica con Google y compara el email con el de sessionStorage
+ * Garantiza que el usuario esté autenticando con la misma cuenta
+ */
 const autenticarConGoogleYComparar = async (emailDeSessionStorage: string): Promise<boolean> => {
   try {
     console.log('🔐 Iniciando autenticación con Google...');
@@ -86,7 +94,7 @@ const autenticarConGoogleYComparar = async (emailDeSessionStorage: string): Prom
     console.log('  - SessionStorage:', emailDeSessionStorage);
     console.log('  - Google:', googleEmail);
 
-    // 2. Comparar emails
+    // 2. Comparar emails (case-insensitive)
     const emailsCoinciden = emailDeSessionStorage.toLowerCase() === googleEmail.toLowerCase();
     
     if (!emailsCoinciden) {
@@ -98,17 +106,21 @@ const autenticarConGoogleYComparar = async (emailDeSessionStorage: string): Prom
 
     console.log('✅ Los emails coinciden');
     
-    // 3. Guardar el email de Google en sessionStorage para uso futuro
+    // 3. Guardar datos de Google para uso futuro
     sessionStorage.setItem('googleEmail', googleEmail);
     sessionStorage.setItem('googleUser', JSON.stringify(googleUser));
     
     return true;
     
   } catch (error) {
-    console.error('Error en autenticación con Google:', error);
+    console.error('❌ Error en autenticación con Google:', error);
     throw error;
   }
 };
+
+// =============================================
+// 🎯 COMPONENTE PRINCIPAL - GESTOR MÉTODOS
+// =============================================
 
 export default function GestorMetodos({
   metodos,
@@ -118,27 +130,52 @@ export default function GestorMetodos({
   eliminarMetodo,
   recargarMetodos
 }: GestorMetodosProps & { recargarMetodos?: () => void }) {
+  
+  // =============================================
+  // 🎯 ESTADOS DEL COMPONENTE
+  // =============================================
+  
   const [modos, setModos] = useState<ModosInterfaz>({
-    modoSeleccion: false,
-    modoEliminar: false,
-    metodosSeleccionados: [],
-    metodosAEliminar: []
+    modoSeleccion: false,      // Modo para seleccionar métodos a activar
+    modoEliminar: false,       // Modo para seleccionar métodos a eliminar
+    metodosSeleccionados: [],  // IDs de métodos seleccionados para activar
+    metodosAEliminar: []       // IDs de métodos seleccionados para eliminar
   });
 
   const [modalContrasenaAbierto, setModalContrasenaAbierto] = useState(false);
   const [metodoSeleccionadoParaContrasena, setMetodoSeleccionadoParaContrasena] = useState<string | null>(null);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userData, setUserData] = useState<any>(null);
 
-  // Obtener el email al cargar el componente
+  // =============================================
+  // 🔄 EFFECTS - INICIALIZACIÓN
+  // =============================================
+
+  /**
+   * 🎯 Obtener datos del usuario al cargar el componente
+   * Esto nos da el authProvider para determinar el método de registro
+   */
   useEffect(() => {
-    const email = obtenerEmailDesdeSessionStorage();
-    setUserEmail(email);
+    const data = obtenerUserDataDesdeSessionStorage();
+    setUserData(data);
+    
+    // Diagnóstico del authProvider para debuggear
+    if (data) {
+      console.log('🔐 AuthProvider del usuario:', data.authProvider);
+      console.log('📧 Email del usuario:', data.correo);
+    }
   }, []);
+
+  // =============================================
+  // 🎯 FUNCIONES DE GESTIÓN DE ESTADOS
+  // =============================================
 
   const limpiarError = () => setError(null);
 
+  /**
+   * 🎯 Activa el modo selección para agregar nuevos métodos
+   */
   const activarModoSeleccion = () => {
     limpiarError();
     setModos({
@@ -149,6 +186,9 @@ export default function GestorMetodos({
     });
   };
 
+  /**
+   * 🎯 Activa el modo eliminación para quitar métodos
+   */
   const activarModoEliminar = () => {
     limpiarError();
     setModos({
@@ -159,6 +199,9 @@ export default function GestorMetodos({
     });
   };
 
+  /**
+   * 🎯 Desactiva todos los modos especiales
+   */
   const desactivarModos = () => {
     limpiarError();
     setModos({
@@ -169,6 +212,13 @@ export default function GestorMetodos({
     });
   };
 
+  // =============================================
+  // 🎯 FUNCIONES DE SELECCIÓN DE MÉTODOS
+  // =============================================
+
+  /**
+   * 🎯 Maneja la selección/deselección de métodos para activar
+   */
   const toggleSeleccionMetodo = (metodoId: string) => {
     limpiarError();
     
@@ -180,6 +230,7 @@ export default function GestorMetodos({
       return;
     }
     
+    // Solo permite seleccionar UN método a la vez
     if (modos.metodosSeleccionados.includes(metodoId)) {
       setModos(prev => ({ ...prev, metodosSeleccionados: [] }));
     } else {
@@ -187,22 +238,28 @@ export default function GestorMetodos({
     }
   };
 
+  /**
+   * 🎯 Maneja la selección/deselección de métodos para eliminar
+   */
   const toggleSeleccionEliminar = (metodoId: string) => {
     limpiarError();
     
     const metodo = metodos.find(m => m.id === metodoId);
+    
+    // Validación: No se puede eliminar método de registro
     if (metodo?.esMetodoRegistro) {
       setError("No se puede eliminar el método de autenticación con el que te registraste");
       return;
     }
     
+    // Validación: No se puede eliminar el único método activo
     const esUnicoMetodoActivo = metodosActivos.length === 1;
-    
     if (esUnicoMetodoActivo) {
       setError("No se puede eliminar el único método activo");
       return;
     }
 
+    // Toggle de selección (puede seleccionar múltiples)
     if (modos.metodosAEliminar.includes(metodoId)) {
       setModos(prev => ({ 
         ...prev, 
@@ -216,13 +273,21 @@ export default function GestorMetodos({
     }
   };
 
+  // =============================================
+  // 🎯 FUNCIONES DE ACTIVACIÓN DE MÉTODOS
+  // =============================================
+
+  /**
+   * 🎯 Activa los métodos seleccionados
+   * Maneja lógica específica por tipo de método
+   */
   const activarMetodosSeleccionados = async () => {
     if (modos.metodosSeleccionados.length === 0) {
       setError("Por favor selecciona un método para activar");
       return;
     }
 
-    const metodoId = modos.metodosSeleccionados[0];
+    const metodoId = modos.metodosSeleccionados[0]; // Solo un método
     
     try {
       limpiarError();
@@ -233,20 +298,25 @@ export default function GestorMetodos({
         return;
       }
       
-      if (metodoId === 'correo') {
+      // 📧 Lógica específica para Correo/Contraseña
+      if (metodoId === 'local') {
         const googleEstaActivo = metodosActivos.some(m => m.id === 'google');
         
+        // Validación: Requiere Google activo primero
         if (!googleEstaActivo) {
-          setError("Primero debe activar Google para tener el correo electrónico");
+          setError("Este metodo ya esta activo ");
           return;
         }
         
+        // Abre modal para configurar contraseña
         setMetodoSeleccionadoParaContrasena(metodoId);
         setModalContrasenaAbierto(true);
       } 
+      // 🔐 Lógica específica para Google
       else if (metodoId === 'google') {
         await activarMetodoGoogle();
       } 
+      // ⚡ Métodos normales
       else {
         await activarMetodo(metodoId);
         desactivarModos();
@@ -256,28 +326,32 @@ export default function GestorMetodos({
     }
   };
 
+  /**
+   * 🎯 Lógica específica para activar Google Auth
+   * Incluye autenticación y verificación de email
+   */
   const activarMetodoGoogle = async () => {
     try {
       setCargandoGoogle(true);
       limpiarError();
       
       // Obtener email desde sessionStorage
-      const userEmail = obtenerEmailDesdeSessionStorage();
+      const userEmail = userData?.correo;
       
       if (!userEmail) {
-        throw new Error("No se pudo obtener el correo del usuario desde sessionStorage");
+        throw new Error("No se pudo obtener el correo del usuario");
       }
       
       console.log('📧 Activando Google con email:', userEmail);
       
-      // AUTENTICAR CON GOOGLE Y COMPARAR
+      // Autenticar con Google y comparar emails
       const autenticacionExitosa = await autenticarConGoogleYComparar(userEmail);
       
       if (!autenticacionExitosa) {
-        throw new Error("El email de sessionStorage no coincide con la cuenta de Google");
+        throw new Error("El email no coincide con la cuenta de Google");
       }
       
-      // Si la autenticación fue exitosa, configurar Google Auth en el backend
+      // Configurar Google Auth en el backend
       await apiService.setupGoogleAuth(userEmail);
       await activarMetodo('google');
       
@@ -290,25 +364,28 @@ export default function GestorMetodos({
       }
       
     } catch (err) {
-      console.error('Error en activarMetodoGoogle:', err);
+      console.error('❌ Error en activarMetodoGoogle:', err);
       setError(`Error al configurar Google: ${err instanceof Error ? err.message : 'Error desconocido'}`);
       setCargandoGoogle(false);
     }
   };
 
+  /**
+   * 🎯 Maneja la confirmación de contraseña para método local
+   */
   const manejarConfirmacionContrasena = async (contrasena: string) => {
     try {
       limpiarError();
       
-      // Obtener email desde sessionStorage
-      const userEmail = obtenerEmailDesdeSessionStorage();
+      const userEmail = userData?.correo;
       
       if (!userEmail) {
-        throw new Error("No se pudo obtener el correo del usuario desde sessionStorage");
+        throw new Error("No se pudo obtener el correo del usuario");
       }
       
       console.log('🔐 Configurando Correo/Contraseña para:', userEmail);
       
+      // Configurar email/contraseña en el backend
       await apiService.setupEmailPassword(userEmail, contrasena);
       
       if (metodoSeleccionadoParaContrasena) {
@@ -319,16 +396,20 @@ export default function GestorMetodos({
       setMetodoSeleccionadoParaContrasena(null);
       desactivarModos();
       
-      // Recargar métodos si existe la función
+      // Recargar métodos
       if (recargarMetodos) {
         recargarMetodos();
       }
       
     } catch (err) {
-      console.error('Error en manejarConfirmacionContrasena:', err);
+      console.error('❌ Error en manejarConfirmacionContrasena:', err);
       setError(`Error al configurar contraseña: ${err instanceof Error ? err.message : 'Error desconocido'}`);
     }
   };
+
+  // =============================================
+  // 🎯 FUNCIONES DE ELIMINACIÓN DE MÉTODOS
+  // =============================================
 
   const eliminarMetodosSeleccionados = async () => {
     try {
@@ -338,25 +419,28 @@ export default function GestorMetodos({
         metodos.find(m => m.id === id)
       ).filter(Boolean) as MetodoAutenticacion[];
       
+      // Validación: No eliminar método de registro
       const contieneMetodoRegistro = metodosAEliminarConInfo.some(m => m.esMetodoRegistro);
       if (contieneMetodoRegistro) {
         setError("No se puede eliminar el método de autenticación con el que te registraste");
         return;
       }
 
+      // Validación: Debe quedar al menos un método activo
       const metodosRestantes = metodosActivos.length - modos.metodosAEliminar.length;
       if (metodosRestantes < 1) {
         setError("Debe quedar al menos un método de autenticación activo");
         return;
       }
 
+      // Eliminar cada método seleccionado
       for (const id of modos.metodosAEliminar) {
         await eliminarMetodo(id);
       }
       
       desactivarModos();
       
-      // Recargar métodos si existe la función
+      // Recargar métodos
       if (recargarMetodos) {
         recargarMetodos();
       }
@@ -366,20 +450,28 @@ export default function GestorMetodos({
     }
   };
 
+  // =============================================
+  // 🎯 LÓGICA DE MÉTODOS DISPONIBLES Y ACTIVOS
+  // =============================================
+
+  /**
+   * 🎯 Define los métodos de autenticación disponibles
+   * Incluye Correo/Contraseña (local) y Google
+   */
   const metodosDisponibles: MetodoAutenticacion[] = [
     {
-      id: 'correo',
+      id: 'local',
       nombre: 'Correo/Contraseña',
-      tipo: 'correo',
+      tipoProvider: 'local',
       icono: '📧',
       color: 'blue',
-      activo: metodos.some(m => m.id === 'correo' && m.activo),
-      esMetodoRegistro: metodos.find(m => m.id === 'correo')?.esMetodoRegistro || false
+      activo: metodos.some(m => m.id === 'local' && m.activo),
+      esMetodoRegistro: metodos.find(m => m.id === 'local')?.esMetodoRegistro || false
     },
     {
       id: 'google',
       nombre: 'Google',
-      tipo: 'google',
+      tipoProvider: 'google',
       icono: '🔐',
       color: 'red',
       activo: metodos.some(m => m.id === 'google' && m.activo),
@@ -387,9 +479,40 @@ export default function GestorMetodos({
     },
   ];
 
-  const metodosDisponiblesFiltrados = metodosDisponibles.filter(m => 
-    m.id === 'correo' || !m.activo 
+  /**
+   * 🎯 Determina el estado activo basado en el authProvider del usuario
+   * Esta es la CLAVE para mostrar correctamente los métodos activos
+   */
+  const determinarMetodoActivoPorAuthProvider = () => {
+    if (!userData) return metodosDisponibles;
+
+    const authProvider = userData.authProvider;
+    console.log(`🎯 Determinando método activo basado en authProvider: ${authProvider}`);
+
+    return metodosDisponibles.map(metodo => ({
+      ...metodo,
+      // 📌 REGLA PRINCIPAL: 
+      // - Si el authProvider del usuario coincide con el tipoProvider, está ACTIVO
+      // - Y es el MÉTODO DE REGISTRO
+      activo: metodo.tipoProvider === authProvider || metodo.activo,
+      esMetodoRegistro: metodo.tipoProvider === authProvider
+    }));
+  };
+
+  // 🎯 Aplicar la lógica de determinación de métodos activos
+  const metodosConEstadoActualizado = determinarMetodoActivoPorAuthProvider();
+  
+  // 🎯 Filtrar métodos disponibles (mostrar local solo si no está activo)
+  const metodosDisponiblesFiltrados = metodosConEstadoActualizado.filter(m => 
+    m.id === 'local' || !m.activo 
   );
+
+  // 🎯 Obtener lista de métodos activos actualizada
+  const metodosActivosActualizados = metodosConEstadoActualizado.filter(m => m.activo);
+
+  // =============================================
+  // 🎯 RENDERIZADO DEL COMPONENTE
+  // =============================================
 
   if (cargando) {
     return (
@@ -404,32 +527,41 @@ export default function GestorMetodos({
 
   return (
     <>
+      {/* 🚨 Mostrar errores */}
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800 font-medium">{error}</p>
-          <button 
-            onClick={limpiarError}
-            className="mt-2 text-red-600 hover:text-red-800 text-sm"
-          >
-            Cerrar
-          </button>
         </div>
       )}
 
+    {/*} 🔍 Panel de diagnóstico (solo desarrollo)
+
+  //    {userData && (
+  //      <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+  //        <p><strong>👤 Usuario:</strong> {userData.correo}</p>
+  //        <p><strong>🔐 AuthProvider:</strong> {userData.authProvider}</p>
+  //        <p><strong>✅ Métodos activos:</strong> {metodosActivosActualizados.map(m => m.nombre).join(', ')}</p>
+  //      </div>
+  //    )}
+
+      {/* 🎯 Layout principal con dos paneles */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* 📌 Panel de Métodos Activos */}
         <MetodoActivoPanel
-          metodosActivos={metodosActivos}
+          metodosActivos={metodosActivosActualizados}
           modos={modos}
-          metodos={metodos}
+          metodos={metodosConEstadoActualizado}
           onToggleEliminar={toggleSeleccionEliminar}
           onActivarModoSeleccion={activarModoSeleccion}
           onActivarModoEliminar={activarModoEliminar}
           onDesactivarModos={desactivarModos}
           onEliminarMetodos={eliminarMetodosSeleccionados}
         />
+
+        {/* 📌 Panel de Métodos Disponibles */}
         <MetodosDisponiblesList
           metodosDisponibles={metodosDisponiblesFiltrados}
-          metodosActivos={metodosActivos}
+          metodosActivos={metodosActivosActualizados}
           modos={modos}
           cargandoGoogle={cargandoGoogle}
           onToggleSeleccion={toggleSeleccionMetodo}
@@ -438,6 +570,7 @@ export default function GestorMetodos({
         />
       </div>
 
+      {/* 🔐 Modal para configurar contraseña */}
       <ModalContrasena
         isOpen={modalContrasenaAbierto}
         onClose={() => {
