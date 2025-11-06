@@ -17,6 +17,7 @@ export default function SimpleProfileMenu() {
     id: string;
     nombre: string;
     correo: string;
+    
     fotoPerfil: string;
     telefono: string;
   } | null>(null)
