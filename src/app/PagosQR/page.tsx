@@ -152,11 +152,17 @@ const RecargaQR: React.FC = () => {
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Correo electrónico</label>
             <input
-              type="email"
+              type="text"
               className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
               value={correo}
-              onChange={(e) => setCorreo(e.target.value)}
-              placeholder="Daniel@gmail.com"
+              onChange={(e) => {
+                const val = e.target.value;
+                // Solo permite letras, números, arroba, punto y guion bajo
+                if (/^[a-zA-Z0-9@._]*$/.test(val)) {
+                  setCorreo(val);
+                }
+              }}
+              placeholder="ingrese correo"
             />
           </div>
 
