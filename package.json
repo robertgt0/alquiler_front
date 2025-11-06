@@ -49,6 +49,7 @@
     "react-hook-form": "^7.65.0",
     "react-map-gl": "^7.1.9",
     "react-router-dom": "^7.9.4",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
