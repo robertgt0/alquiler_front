@@ -1,4 +1,3 @@
-
 "use client";
 // 1. Importa useState y useEffect
 import { useState, useEffect } from "react";
@@ -133,9 +132,11 @@ export default function HomePage() {
 
   return (
     <div className="page-container">
-      {/* Columna 1: Título (Modificado) */}
+      {/* Columna 1: Título (Centrado y más grande) */}
       <div>
-        <h1 className="hero-title">BUSCADOR DE TRABAJOS</h1>
+        <h1 className="hero-title text-center text-5xl font-bold my-8">
+            BUSCADOR DE TRABAJOS
+        </h1>
       </div>
 
       {/* Columna 2: Formulario (Modificado) */}
@@ -147,16 +148,22 @@ export default function HomePage() {
           <form onSubmit={handleSubmit} noValidate style={{ width: '100%' }}>
             
             {/* Layout simplificado. Usamos 'form-layout-internal' 
-              pero con una sola columna para el buscador.
+                pero con una sola columna para el buscador.
             */}
             <div className="form-layout-internal"> 
 
               {/* Columna ÚNICA */}
               <div className="form-column" style={{ width: '100%' }}>
-                <div className="form-group">
-                  <label htmlFor="usuario" className="form-label-styled">
+                
+                {/* Input de Usuario */}
+                <div className="form-group flex flex-col">
+                  <label 
+                    htmlFor="usuario" 
+                    className="form-label-styled text-xl text-center"
+                  >
                     Usuario del Fixer
                   </label>
+                  {/* --- CAMBIO AQUÍ: Ancho fijo --- */}
                   <input 
                     id="usuario" 
                     name="usuario" 
@@ -164,16 +171,26 @@ export default function HomePage() {
                     value={usuario} 
                     onChange={handleChange} 
                     required 
-                    className={inputClass('usuario')} 
+                    className={inputClass('usuario') + " mx-auto w-64"} 
                   />
-                  <p className="form-error">{errors.usuario || " "}</p>
+                  <p className="form-error text-center">{errors.usuario || " "}</p>
                 </div>
 
-                {/* Contenedor de botón (simplificado) */}
-                <div className="button-container">
+
+                {/* Contenedor de botón (Centrado) */}
+                <div className="button-container flex justify-center">
                   <button 
                     type="submit" 
-                    className="submit-button"
+                    // --- CAMBIO AQUÍ: Ancho fijo (removido px-6) ---
+                    className="
+                      py-3 w-64 rounded-lg font-semibold text-white 
+                      bg-[#2A87FF] 
+                      hover:bg-blue-700 
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+                      shadow-md hover:shadow-lg transition duration-300 ease-in-out
+                      disabled:opacity-50 disabled:cursor-not-allowed
+                    "
+                    // --- FIN CLASES ---
                     disabled={loading}
                   >
                     {loading ? "Buscando..." : "BUSCAR"}
@@ -213,4 +230,3 @@ export default function HomePage() {
     </div> 
   );
 }
-
