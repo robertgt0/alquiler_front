@@ -269,7 +269,7 @@ export default function CategoriesSelector({ open, selectedIds, onClose, onSave 
               cursor: adding ? "not-allowed" : "pointer",
             }}
           >
-            {adding ? "Registrando..." : "Registrar oficio"}
+            {adding ? "Registrando..." : "Registrar tipo de trabajo"}
           </button>
         </div>
 
