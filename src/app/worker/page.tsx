@@ -85,7 +85,7 @@ export default function GestionCitas() {
         <h1 className="text-2xl font-bold text-blue-700">Servineo</h1>
         <nav className="flex gap-6 text-blue-700 font-medium">
           <a href="#" className="hover:underline">Mis Citas</a>
-          <a href="#" className="hover:underline">Horarios Laborales</a>
+          <a href="worker/registrarHorarios" className="hover:underline">Horarios Laborales</a>
         </nav>
       </header>
 
