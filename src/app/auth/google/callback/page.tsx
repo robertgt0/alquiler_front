@@ -39,9 +39,18 @@ function Inner() {
 
         if (!response.ok) {
           if (data.message === 'usuario ya registrado') {
-            setTimeout(() => {
+            if (data) {
+      const token = data.token ?? data.data.token; 
+
+      if (token) sessionStorage.setItem('authToken', token);
+
+      sessionStorage.setItem('userData', JSON.stringify(data));
+    }
+      
+      // Disparar evento de login exitoso para que el Header se actualice
+          const eventLogin = new CustomEvent("login-exitoso");
+          window.dispatchEvent(eventLogin);
           router.push('/');
-        }, 1500);
             return;
           } else {
             throw new Error(data.message || 'Error en la autenticación con Google');
