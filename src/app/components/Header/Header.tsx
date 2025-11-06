@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import Icono from './Icono';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function Header() {
   const [isClient, setIsClient] = useState(false);
@@ -11,15 +11,13 @@ export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const lastScrollY = useRef(0);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsClient(true);
 
-    // Verificar si hay un token de sesión al cargar el componente
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    if (token) {
-      setIsLoggedIn(true);
-    }
+    if (token) setIsLoggedIn(true);
 
     const handleScroll = () => {
       if (window.innerWidth < 640) {
@@ -28,15 +26,8 @@ export default function Header() {
       }
     };
 
-    // Escuchar evento de login exitoso
-    const handleLoginExitoso = () => {
-      setIsLoggedIn(true);
-    };
-
-    // Escuchar evento de logout
-    const handleLogoutEvent = () => {
-      setIsLoggedIn(false);
-    };
+    const handleLoginExitoso = () => setIsLoggedIn(true);
+    const handleLogoutEvent = () => setIsLoggedIn(false);
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('login-exitoso', handleLoginExitoso);
@@ -57,30 +48,27 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    // Limpiar almacenamiento local
     localStorage.removeItem('authToken');
     sessionStorage.removeItem('authToken');
     localStorage.removeItem('userData');
     sessionStorage.removeItem('userData');
-    
-    // Actualizar estado
+
     setIsLoggedIn(false);
-    
-    // Disparar evento de logout
-    const eventLogout = new CustomEvent("logout-exitoso");
-    window.dispatchEvent(eventLogout);
-    
-    // Redirigir a home
+
+    const logoutEvent = new CustomEvent('logout-exitoso');
+    window.dispatchEvent(logoutEvent);
+
     router.push('/');
   };
 
   if (!isClient) return null;
 
+  const hideAuthButtons = pathname?.startsWith('/convertirse-fixer');
+
   return (
     <>
       {/* HEADER DESKTOP / TABLET */}
       <header className="hidden sm:flex items-center justify-between p-4 bg-[#EEF7FF] shadow-md fixed top-0 left-0 w-full z-50">
-        {/* LOGO */}
         <div className="flex items-center">
           <Link href="/">
             <Icono size={40} />
@@ -88,7 +76,6 @@ export default function Header() {
           <span className="ml-2 text-xl font-bold text-[#11255A]">Servineo</span>
         </div>
 
-        {/* BARRA DE BÚSQUEDA */}
         <div className="grow mx-8">
           <div className="relative">
             <input
@@ -114,61 +101,80 @@ export default function Header() {
           </div>
         </div>
 
-        {/* ELEMENTOS DEL HEADER */}
         <div className="flex items-center space-x-4">
-          {!isLoggedIn ? (
-            <>
-              <Link href="/ser-fixer">
-                <button className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a] transition-colors">
-                  Ser Fixer
-                </button>
-              </Link>
-
-              <Link href="/login">
-                <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
-                  Iniciar Sesión
-                </button>
-              </Link>
-
-              <Link href="/registro">
-                <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF] transition-colors">
-                  Registrarse
-                </button>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/ser-fixer">
-                <button className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a] transition-colors">
-                  Ser Fixer
-                </button>
-              </Link>
-              <div className="flex items-center space-x-2">
-                <span className="font-semibold text-[#11255A]">Usuario</span>
-                <div className="relative group">
-                  <svg
-                    className="w-8 h-8 text-[#2a87ff] cursor-pointer"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                  </svg>
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          {hideAuthButtons ? null : (
+            !isLoggedIn ? (
+              <>
+                <Link href="/convertirse-fixer">
+                  <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a] transition-colors">
+                    Ser Fixer
+                  </button>
+                </Link>
+                <Link href="/offers">
+                  <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
+                    Ofertas de Trabajo
+                  </button>
+                </Link>
+                <Link href="/addNewJobOffer">
+                  <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
+                    Añadir nueva oferta
+                  </button>
+                </Link>
+                <Link href="/login">
+                  <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
+                    Iniciar Sesion
+                  </button>
+                </Link>
+                <Link href="/registro">
+                  <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF] transition-colors">
+                    Registrarse
+                  </button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/convertirse-fixer">
+                  <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a] transition-colors">
+                    Ser Fixer
+                  </button>
+                </Link>
+                <Link href="/offers">
+                  <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
+                    Ofertas de Trabajo
+                  </button>
+                </Link>
+                <Link href="/addNewJobOffer">
+                  <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
+                    Añadir nueva oferta
+                  </button>
+                </Link>
+                <div className="flex items-center space-x-2">
+                  <span className="font-semibold text-[#11255A]">Usuario</span>
+                  <div className="relative group">
+                    <svg
+                      className="w-8 h-8 text-[#2a87ff] cursor-pointer"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      Cerrar Sesión
-                    </button>
+                      <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                    </svg>
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Cerrar Sesion
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </>
+              </>
+            )
           )}
         </div>
       </header>
 
-      {/* HEADER MÓVIL SUPERIOR */}
+      {/* HEADER MOVIL SUPERIOR */}
       <header className="sm:hidden fixed top-0 left-0 w-full p-2 bg-[#EEF7FF] shadow-md z-50">
         <div className="flex items-center space-x-2 w-full">
           <Link href="/">
@@ -199,63 +205,81 @@ export default function Header() {
         </div>
       </header>
 
-      {/* FOOTER MÓVIL INFERIOR */}
+      {/* FOOTER MOVIL INFERIOR */}
       <footer
-        className={`sm:hidden fixed bottom-0 left-0 w-full px-3 py-2 bg-[#EEF7FF] shadow-md z-50 
-        transform transition-transform duration-300 ease-in-out
-        ${areButtonsVisible ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`sm:hidden fixed bottom-0 left-0 w-full px-3 py-2 bg-[#EEF7FF] shadow-md z-50 transform transition-transform duration-300 ease-in-out ${areButtonsVisible ? 'translate-y-0' : 'translate-y-full'}`}
       >
         <div className="flex flex-col items-center space-y-1">
           <span className="text-[#11255A] font-bold text-sm">Servineo</span>
 
-          {!isLoggedIn ? (
-            <div className="flex w-full space-x-1">
-              <Link href="/login" className="flex-1">
-                <button className="w-full px-2 py-1.5 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] text-xs">
-                  Iniciar Sesión
-                </button>
-              </Link>
-
-              <Link href="/registro" className="flex-1">
-                <button className="w-full px-2 py-1.5 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF] text-xs">
-                  Registrarse
-                </button>
-              </Link>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center space-x-2 w-full">
-              <Link href="/ser-fixer" className="flex-1">
-                <button className="w-full px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
-                  Ser Fixer
-                </button>
-              </Link>
-              <div className="flex items-center space-x-1 flex-1 justify-end">
-                <span className="text-[#11255A] text-xs font-semibold truncate">Usuario</span>
-                <div className="relative group">
-                  <svg
-                    className="w-5 h-5 text-[#2a87ff] cursor-pointer"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                  </svg>
-                  <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    <button
-                      onClick={handleLogout}
-                      className="block w-full text-left px-3 py-1 text-xs text-gray-700 hover:bg-gray-100"
+          {hideAuthButtons ? null : (
+            !isLoggedIn ? (
+              <div className="flex w-full space-x-1">
+                <Link href="/offers" className="flex-1">
+                  <button className="w-full px-2 py-1.5 font-semibold text-white bg-[#1f7ae5] rounded-md hover:bg-[#1353a8] text-xs">
+                    Ofertas
+                  </button>
+                </Link>
+                <Link href="/addNewJobOffer" className="flex-1">
+                  <button className="w-full px-2 py-1.5 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] text-xs">
+                    Añadir oferta
+                  </button>
+                </Link>
+                <Link href="/login" className="flex-1">
+                  <button className="w-full px-2 py-1.5 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] text-xs">
+                    Iniciar Sesion
+                  </button>
+                </Link>
+                <Link href="/registro" className="flex-1">
+                  <button className="w-full px-2 py-1.5 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF] text-xs">
+                    Registrarse
+                  </button>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center space-x-2 w-full">
+                <Link href="/offers" className="flex-1">
+                  <button className="w-full px-2 py-1 text-xs font-semibold text-white bg-[#1f7ae5] rounded-md hover:bg-[#1353a8]">
+                    Ofertas
+                  </button>
+                </Link>
+                <Link href="/addNewJobOffer" className="flex-1">
+                  <button className="w-full px-2 py-1 text-xs font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF]">
+                    Añadir oferta
+                  </button>
+                </Link>
+                <Link href="/convertirse-fixer" className="flex-1">
+                  <button className="w-full px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
+                    Ser Fixer
+                  </button>
+                </Link>
+                <div className="flex items-center space-x-1 flex-1 justify-end">
+                  <span className="text-[#11255A] text-xs font-semibold truncate">Usuario</span>
+                  <div className="relative group">
+                    <svg
+                      className="w-5 h-5 text-[#2a87ff] cursor-pointer"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      Cerrar Sesión
-                    </button>
+                      <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                    </svg>
+                    <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-3 py-1 text-xs text-gray-700 hover:bg-gray-100"
+                      >
+                        Cerrar Sesion
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )
           )}
         </div>
       </footer>
 
-      {/* Espacio para el header fijo */}
-      <div className="h-16 sm:h-20"></div>
+      <div className="h-16 sm:h-20" />
     </>
   );
 }
