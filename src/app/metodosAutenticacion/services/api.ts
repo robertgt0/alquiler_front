@@ -29,7 +29,36 @@ class ApiService {
   // ✅ MÉTODOS DE AUTENTICACIÓN - CORREGIDOS
 
   async getAuthMethods(): Promise<MetodoAutenticacion[]> {
-    return this.request<MetodoAutenticacion[]>('/auth/methods');
+    // Simulamos la respuesta con solo 2 métodos
+    const metodos: MetodoAutenticacion[] = [
+      {
+        id: 'correo',
+        nombre: 'Correo Electrónico',
+        tipo: 'correo',
+        icono: '📧',
+        color: 'blue',
+        activo: false,
+        fechaActivacion: new Date('2024-01-15'),
+        configurado: true,
+        esMetodoRegistro: false
+      },
+      {
+        id: 'google',
+        nombre: 'Google Account', 
+        tipo: 'google',
+        icono: '🔐',
+        color: 'red',
+        activo: true,
+        fechaActivacion: new Date('2024-01-10'),
+        configurado: true,
+        esMetodoRegistro: true
+      }
+    ];
+    
+    return metodos;
+    
+    // Si quieres mantener la llamada real al backend, descomenta esta línea:
+    // return this.request<MetodoAutenticacion[]>('/auth/methods');
   }
 
   // ✅ CORREGIDO: Método para configurar Google con email
@@ -88,8 +117,23 @@ class ApiService {
   }
 
 async getCurrentUser(): Promise<any> {
-  return this.request<any>('/auth/me');
-}
+    try {
+      const userDataString = sessionStorage.getItem("userData");
+      
+      if (!userDataString) {
+        throw new Error("No se encontraron datos de usuario en sessionStorage");
+      }
+      
+      const userData = JSON.parse(userDataString);
+      
+      // Devuelve el objeto completo de sessionStorage
+      return userData;
+      
+    } catch (error) {
+      console.error('Error al obtener usuario de sessionStorage:', error);
+      throw new Error("Error al cargar datos del usuario");
+    }
+  }
 }
 
 // ✅ EXPORTAR LA INSTANCIA

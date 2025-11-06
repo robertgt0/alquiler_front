@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { MetodoAutenticacion } from '../interfaces/types';
 import { apiService } from '../services/api';
+import { obtenerMetodoAutenticacion } from '@/app/teamsys/services/UserService';
 
 export function useAuthState() {
   const [metodos, setMetodos] = useState<MetodoAutenticacion[]>([]);
@@ -17,29 +18,52 @@ export function useAuthState() {
       // Obtener métodos del backend y datos del usuario
       const [metodosBackend, userData] = await Promise.all([
         apiService.getAuthMethods(),
-        apiService.getCurrentUser().catch(() => null) // Manejar error silenciosamente
+        apiService.getCurrentUser().catch(() => null)
       ]);
       
-      // Determinar método de registro del usuario
-      let metodoRegistro = '';
-      if (userData) {
-        // Si el usuario tiene googleId, se registró con Google
-        if (userData.googleId) {
-          metodoRegistro = 'google';
-        } 
-        // Si no tiene googleId pero tiene email, se registró con correo
-        else if (userData.email && !userData.googleId) {
-          metodoRegistro = 'correo';
+      // OBTENER EL ARRAY DE MÉTODOS ACTIVOS DESDE TU API
+      let metodosActivosArray: string[] = [];
+      let metodoRegistroOriginal: string | null = null;
+      
+      try {
+        const userDataString = sessionStorage.getItem('userData');
+        if (userDataString) {
+          const userDataObj = JSON.parse(userDataString);
+          const userId = userDataObj._id;
+          if (userId) {
+            // ✅ Obtiene el JSON completo y extrae authProvider
+            const respuesta = await obtenerMetodoAutenticacion(userId);
+            metodosActivosArray = respuesta.data.authProvider || [];
+            console.log('Métodos activos desde API:', metodosActivosArray);
+            
+            // ✅ DETERMINAR MÉTODO DE REGISTRO ORIGINAL
+            // Si el usuario tiene googleId, se registró con Google
+            if (userDataObj.googleId) {
+              metodoRegistroOriginal = 'google';
+            } 
+            // Si no tiene googleId, se registró con correo local
+            else if (userDataObj.email && !userDataObj.googleId) {
+              metodoRegistroOriginal = 'local';
+            }
+            console.log('Método de registro original:', metodoRegistroOriginal);
+          }
         }
+      } catch (err) {
+        console.error('Error al obtener métodos activos:', err);
       }
 
       const metodosConActivo = metodosBackend.map(metodo => {
-        // Si es el método con el que se registró, forzar a activo
-        const esMetodoRegistro = metodo.id === metodoRegistro;
+        // ✅ VERIFICAR SI EL MÉTODO ESTÁ EN EL ARRAY DE ACTIVOS
+        const metodoIdEnBackend = metodo.id === 'correo' ? 'local' : metodo.id;
+        const estaActivoEnArray = metodosActivosArray.includes(metodoIdEnBackend);
+        
+        // ✅ SOLO ES MÉTODO DE REGISTRO SI ES EL ORIGINAL
+        const esMetodoRegistro = metodoIdEnBackend === metodoRegistroOriginal;
+        
         return {
           ...metodo,
-          activo: esMetodoRegistro || (metodo.activo || false),
-          esMetodoRegistro // Nueva propiedad para identificar
+          activo: estaActivoEnArray,
+          esMetodoRegistro
         };
       });
       
@@ -55,8 +79,7 @@ export function useAuthState() {
         {
           id: 'correo',
           nombre: 'Correo/Contraseña',
-          tipo:'local',
-          tipoProvider:"local",
+          tipo: 'correo',
           icono: '📧',
           color: 'blue',
           activo: false,
@@ -66,7 +89,6 @@ export function useAuthState() {
           id: 'google',
           nombre: 'Google', 
           tipo: 'google',
-          tipoProvider:"local",
           icono: '🔐',
           color: 'red',
           activo: false,

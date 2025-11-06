@@ -3,12 +3,14 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { GoogleAuthService } from '../../../metodosAutenticacion/services/googleAuthService';
+import { useGoogleAuth } from '../../../google/hooks/useGoogleAuth';
 
+// Evita prerender estático: esta ruta depende de query params
 export const dynamic = 'force-dynamic';
 
 function Inner() {
   const router = useRouter();
+  const { finalizeFromGoogleProfile } = useGoogleAuth();
   const searchParams = useSearchParams();
 
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -23,62 +25,55 @@ function Inner() {
         if (error) throw new Error(`Error de Google: ${error}`);
         if (!code) throw new Error('No se recibió el código de autorización');
 
-        console.log('Código recibido:', code);
         
-        // 1. Verificar si hay un email guardado para comparar (activación de método)
-        const emailParaValidar = sessionStorage.getItem('emailParaValidarGoogle');
-        const accionGoogle = sessionStorage.getItem('accionGoogle');
-        
-        // 2. Procesar el callback de Google normalmente
-        const data = await GoogleAuthService.handleGoogleCallback(code);
-        console.log('Respuesta del backend:', data);
+        const backend = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
+        const response = await fetch(`${backend}/api/teamsys/google/callback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
 
-        // 3. Si es una activación de método, comparar emails y activar método
-        if (emailParaValidar && accionGoogle === 'activar-metodo') {
-          console.log('🔍 Comparando emails para activación de método:');
-          console.log('  - Email local:', emailParaValidar);
-          
-          // Obtener el email de Google desde la respuesta del backend
-          const googleEmail = data.data?.user?.email || data.data?.user?.correo;
-          console.log('  - Email Google:', googleEmail);
+        const data = await response.json();
+        console.log(code)
+        console.log(' Respuesta del backend:', data);
 
-          if (!googleEmail) {
-            throw new Error('No se pudo obtener el email de Google');
-          }
+        if (!response.ok) {
+          if (data.message === 'usuario ya registrado') {
+            if (data) {
+      const token = data.token ?? data.data.token; 
 
-          // Comparar emails (case-insensitive)
-          const emailsCoinciden = emailParaValidar.toLowerCase() === googleEmail.toLowerCase();
-          
-          if (!emailsCoinciden) {
-            console.error(' Los emails no coinciden');
-            // Guardar resultado de error
-            GoogleAuthService.saveActivationResult(false, 'El email de Google no coincide con tu cuenta actual');
-            
-          
-          }
-          
-          // Configurar Google Auth en el backend
-          await GoogleAuthService.setupGoogleAuth(emailParaValidar);
-          
-          // Guardar resultado exitoso
-          GoogleAuthService.saveActivationResult(true, 'Google Auth activado correctamente');
-          
-          // Limpiar datos temporales
-          GoogleAuthService.clearPendingActivation();
-        
-        }
+      if (token) sessionStorage.setItem('authToken', token);
 
-        // 4. Flujo normal de login/registro (NO es activación de método)
-        if (data.message === 'usuario ya registrado') {
-          GoogleAuthService.handleExistingUser(data);
+      sessionStorage.setItem('userData', JSON.stringify(data));
+    }
+      
+      // Disparar evento de login exitoso para que el Header se actualice
+          const eventLogin = new CustomEvent("login-exitoso");
+          window.dispatchEvent(eventLogin);
           router.push('/');
-          return;
+            return;
+          } else {
+            throw new Error(data.message || 'Error en la autenticación con Google');
+          }
         }
 
-        // Guardar datos de autenticación (para registro normal)
-        GoogleAuthService.saveAuthData(data);
+        //Extraer datos correctamente desde data.data
+        const user = data.data.user;
+        const accessToken = data.data.accessToken;
+        const refreshToken = data.data.refreshToken;
 
-        // SOLO para registro normal: Redirigir a /ImagenLocalizacion
+        //  Guardar token y usuario
+        localStorage.setItem('userToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('userData', JSON.stringify(user));
+
+        //  Guardar en sessionStorage para ImagenLocalizacion
+        sessionStorage.setItem('datosUsuarioParcial', JSON.stringify(user));
+
+        // (Si luego usas finalizeFromGoogleProfile, aquí lo puedes llamar)
+        // await finalizeFromGoogleProfile?.(user);
+
+        // Redirigir a /ImagenLocalizacion
         setTimeout(() => {
           router.push('/ImagenLocalizacion');
         }, 1500);
@@ -88,73 +83,58 @@ function Inner() {
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Error desconocido');
 
-        // Si era una activación, guardar error y redirigir al gestor de métodos
-        const emailParaValidar = sessionStorage.getItem('emailParaValidarGoogle');
-        if (emailParaValidar) {
-          GoogleAuthService.saveActivationResult(false, error instanceof Error ? error.message : 'Error desconocido');
-          GoogleAuthService.clearPendingActivation();
-          
-        } 
+        setTimeout(() => {
+          router.push('/registro');
+        }, 3000);
       }
     };
 
     handleCallback();
-  }, [router, searchParams]);
+  }, [router, searchParams, finalizeFromGoogleProfile]);
 
   return (
-  <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-    <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-      <div className="text-center">
-        {status === 'loading' && (
-          <>
-            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-gray-700">Procesando...</h2>
-            <p className="text-gray-500 mt-2">
-              {sessionStorage.getItem('emailParaValidarGoogle') 
-                ? 'Activando método Google...' 
-                : 'Completando autenticación con Google'
-              }
-            </p>
-          </>
-        )}
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
+        <div className="text-center">
+          {status === 'loading' && (
+            <>
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <h2 className="text-xl font-semibold text-gray-700">Procesando...</h2>
+              <p className="text-gray-500 mt-2">Completando autenticación con Google</p>
+            </>
+          )}
 
-        {status === 'error' && (
-          // Overlay que cubre toda la pantalla y permite click para volver
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 cursor-pointer"
-            onClick={() => router.push("/")}
-          >
-            <div 
-              className="max-w-md w-full bg-white rounded-lg shadow-md p-6 mx-4 cursor-default"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-center">
-                <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </div>
-                <h2 className="text-xl font-semibold text-gray-700">Error</h2>
-                <p className="text-red-500 mt-2">{message}</p>
-                <p className="text-gray-500 text-sm mt-2">
-                  {sessionStorage.getItem('emailParaValidarGoogle') 
-                    ? '' 
-                    : 'Los correos no son iguales'
-                  }
-                </p>
-                <p className="text-gray-400 text-xs mt-4">
-                  Haz click fuera de este mensaje para volver atrás
-                </p>
+          {status === 'success' && (
+            <>
+              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
               </div>
-            </div>
-          </div>
-        )}
+              <h2 className="text-xl font-semibold text-gray-700">¡Éxito!</h2>
+              <p className="text-gray-500 mt-2">{message}</p>
+            </>
+          )}
+
+          {status === 'error' && (
+            <>
+              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-700">Error</h2>
+              <p className="text-red-500 mt-2">{message}</p>
+              <p className="text-gray-500 text-sm mt-2">Redirigiendo al registro...</p>
+            </>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 }
 
+// La página (Server por defecto) solo envuelve en Suspense al componente cliente
 export default function GoogleCallbackPage() {
   return (
     <Suspense fallback={<p>Redirigiendo…</p>}>

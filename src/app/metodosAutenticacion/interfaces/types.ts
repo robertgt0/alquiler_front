@@ -2,8 +2,7 @@
 export interface MetodoAutenticacion {
   id: string;
   nombre: string;
-  tipo: string;
-  tipoProvider: string;
+  tipo: 'correo' | 'google' | 'otro';
   icono: string;
   color: string;
   activo?: boolean; //  Agregar esta propiedad opcional
