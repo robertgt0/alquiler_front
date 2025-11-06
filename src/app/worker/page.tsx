@@ -1,44 +1,86 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarDays, AlertTriangle } from "lucide-react";
 
+const PROVEEDOR_ID = "690c29d00c736bec44e473e4";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+interface Cita {
+  fecha: string;
+  id: string;
+}
+
 export default function GestionCitas() {
-  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [citas, setCitas] = useState<Cita[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
 
-  const citas = [
-    { fecha: "Sábado 4 de octubre", cantidad: 1 },
-    { fecha: "Domingo 5 de octubre", cantidad: 1 },
-    { fecha: "Lunes 27 de octubre", cantidad: 1 },
-  ];
+  useEffect(() => {
+    const fetchCitas = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/devcode/citas/proveedor/${PROVEEDOR_ID}`);
+        const data = await res.json();
 
-  const toggleDate = (fecha: string) => {
-    setSelectedDates((prev) =>
-      prev.includes(fecha)
-        ? prev.filter((f) => f !== fecha)
-        : [...prev, fecha]
+        if (!data.success) throw new Error(data.error || "Error al cargar citas");
+
+        // Cada cita es independiente
+        setCitas(
+          data.data.map((cita: any) => ({
+            fecha: cita.fecha,
+            id: cita._id,
+          }))
+        );
+      } catch (err) {
+        console.error("Error cargando citas:", err);
+      }
+    };
+
+    fetchCitas();
+  }, []);
+
+  const toggleCita = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
   const handleCancelar = () => {
-    if (selectedDates.length === 0) {
-      alert("Selecciona al menos un día para cancelar las citas.");
+    if (selectedIds.length === 0) {
+      alert("Selecciona al menos una cita para cancelar.");
       return;
     }
     setShowModal(true);
   };
 
-  const confirmarCancelacion = () => {
-    // aqui lo pones la api para cancela citas 
-    alert(`Citas canceladas correctamente`);
-    setShowModal(false);
-    setSelectedDates([]);
+  const confirmarCancelacion = async () => {
+    try {
+      const citasAEliminar = citas.filter((c) => selectedIds.includes(c.id));
+
+      for (const cita of citasAEliminar) {
+        const res = await fetch(`${API_URL}/api/devcode/citas/${cita.id}/proveedor`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ proveedorId: PROVEEDOR_ID }),
+        });
+
+        const result = await res.json();
+        if (!result.success) throw new Error(result.error || "Error al eliminar cita");
+      }
+
+      alert("Citas canceladas correctamente");
+
+      setCitas((prev) => prev.filter((c) => !selectedIds.includes(c.id)));
+      setSelectedIds([]);
+      setShowModal(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error al cancelar las citas");
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
-      {/* HEADER */}
       <header className="flex justify-between items-center px-6 py-4 border-b shadow-sm bg-white">
         <h1 className="text-2xl font-bold text-blue-700">Servineo</h1>
         <nav className="flex gap-6 text-blue-700 font-medium">
@@ -47,7 +89,6 @@ export default function GestionCitas() {
         </nav>
       </header>
 
-      {/* CONTENIDO */}
       <main className="flex flex-col items-center py-8 px-4 flex-1">
         <div className="w-full max-w-4xl bg-white rounded-2xl shadow-md p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-1">
@@ -57,7 +98,6 @@ export default function GestionCitas() {
             Administra tus citas recibidas en función de tu horario laboral establecido.
           </p>
 
-          {/* Tabs simuladas */}
           <div className="flex w-full mb-6 border-b">
             <button className="flex-1 text-center py-3 font-medium text-gray-900 border-b-2 border-blue-700">
               Citas Programadas
@@ -67,54 +107,41 @@ export default function GestionCitas() {
             </button>
           </div>
 
-          {/* Mensaje de advertencia */}
           <div className="flex items-center gap-2 mb-4 text-yellow-600 bg-yellow-50 border border-yellow-100 rounded-md p-3">
             <AlertTriangle className="w-5 h-5" />
             <span>
-              Puedes seleccionar hasta 5 días para cancelar todas las citas programadas.
+              Puedes seleccionar varias citas para cancelar individualmente.
             </span>
           </div>
 
-          {/* FILTRO */}
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <label className="text-gray-700 font-medium">Filtrar por fecha:</label>
-            <select className="border rounded-md p-2 text-gray-700">
-              <option>Octubre 2025</option>
-              <option>Noviembre 2025</option>
-            </select>
-          </div>
-
-          {/* LISTA DE CITAS */}
           <div className="flex flex-col gap-4">
-            {citas.map((cita) => (
-              <div
-                key={cita.fecha}
-                className="flex flex-col sm:flex-row justify-between items-center border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <CalendarDays className="text-blue-600 w-5 h-5" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{cita.fecha}</h3>
-                    <p className="text-gray-600 text-sm">
-                      {cita.cantidad} cita programada para este día
-                    </p>
-                    <a href="#" className="text-blue-600 text-sm hover:underline">
-                      Ver citas agendadas
-                    </a>
+            {citas.length === 0 ? (
+              <p className="text-gray-500 text-center">No hay citas registradas.</p>
+            ) : (
+              citas.map((cita) => (
+                <div
+                  key={cita.id}
+                  className="flex flex-col sm:flex-row justify-between items-center border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <CalendarDays className="text-blue-600 w-5 h-5" />
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{cita.fecha}</h3>
+                      <p className="text-gray-600 text-sm">1 cita programada</p>
+                    </div>
                   </div>
-                </div>
 
-                <input
-                  type="checkbox"
-                  checked={selectedDates.includes(cita.fecha)}
-                  onChange={() => toggleDate(cita.fecha)}
-                  className="w-5 h-5 accent-blue-600 mt-3 sm:mt-0 cursor-pointer"
-                />
-              </div>
-            ))}
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(cita.id)}
+                    onChange={() => toggleCita(cita.id)}
+                    className="w-5 h-5 accent-blue-600 mt-3 sm:mt-0 cursor-pointer"
+                  />
+                </div>
+              ))
+            )}
           </div>
 
-          {/* BOTÓN CANCELAR */}
           <div className="flex justify-center mt-8">
             <button
               onClick={handleCancelar}
@@ -126,7 +153,6 @@ export default function GestionCitas() {
         </div>
       </main>
 
-      {/* MODAL DE CONFIRMACIÓN */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 text-center">
@@ -136,22 +162,14 @@ export default function GestionCitas() {
               <strong>Consecuencias irreversibles:</strong>
             </p>
             <ul className="text-gray-600 text-sm text-left mb-4 list-disc list-inside space-y-1">
-              <li>Se cancelarán todas las citas de los días seleccionados</li>
+              <li>Se cancelarán todas las citas seleccionadas</li>
               <li>Se enviarán notificaciones automáticas a los clientes</li>
               <li>Las citas canceladas no podrán ser editadas posteriormente</li>
               <li>Los clientes recibirán el aviso de cancelación inmediatamente</li>
             </ul>
 
             <p className="text-gray-800 text-sm mb-2">
-              <strong>Días seleccionados:</strong> {selectedDates.length}
-            </p>
-            <p className="text-gray-800 text-sm mb-6">
-              <strong>Citas a cancelar:</strong>{" "}
-              {
-                citas
-                  .filter((c) => selectedDates.includes(c.fecha))
-                  .reduce((acc, c) => acc + c.cantidad, 0)
-              }
+              <strong>Citas seleccionadas:</strong> {selectedIds.length}
             </p>
 
             <div className="flex justify-center gap-4">

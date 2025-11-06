@@ -32,24 +32,28 @@ const CitasAgendadas = () => {
   const [error, setError] = useState<string | null>(null);
 
   // cliente fijo en tu código original
-  const clienteId = "68fb93e079308369b5a0f264";
+  const clienteId = "690c2c510c736bec44e473e9";
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-  // fetchCitas disponible en todo el componente
   const fetchCitas = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/devcode/citas/cliente/${clienteId}`);
       if (!res.ok) throw new Error("Error al obtener citas");
-      const data: Cita[] = await res.json();
-      setCitas(data);
+
+      const json = await res.json();
+
+      if (!json.success) throw new Error(json.error || "Error al obtener citas");
+
+      setCitas(json.data); // ✅ aquí citas es un array
     } catch (err: any) {
       setError(err.message || "Error desconocido");
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchCitas();

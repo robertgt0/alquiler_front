@@ -66,6 +66,8 @@ export default function AgendarCitaModal({ onClose }: { onClose: () => void }) {
           `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=${apiKey}&country=DO&limit=5`
         );
         const data = await response.json();
+        console.log('Citas recibidas:', data);
+
         setSearchResults(data.features || []);
         setShowResults(true);
       } catch (error) {
@@ -111,6 +113,8 @@ export default function AgendarCitaModal({ onClose }: { onClose: () => void }) {
         `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${apiKey}`
       );
       const data = await response.json();
+      console.log('Citas recibidas:', data);
+
       if (data.features && data.features.length > 0) {
         const address = data.features[0].place_name;
         setData(prev => ({ ...prev, direccion: address }));
