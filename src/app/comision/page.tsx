@@ -89,9 +89,9 @@ function CompletadoModal({ onClose }: ModalProps) {
   // Ya no necesitamos la 'fecha' ni 'trabajo'
 
   return (
-    // Fondo oscuro
+    // --- CAMBIO AQUÍ: Se quita el fondo oscuro (bg-black bg-opacity-60) ---
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
+      className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={onClose} // Cierra al hacer clic en el fondo
     >
       {/* Contenedor del Modal */}
@@ -100,14 +100,30 @@ function CompletadoModal({ onClose }: ModalProps) {
         onClick={(e) => e.stopPropagation()} // Evita que se cierre al hacer clic en el modal
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Modal</h2>
+          {/* --- CAMBIO AQUÍ: Título del Modal --- */}
+          <h2 className="text-2xl font-bold text-gray-900">Método de Pago</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl font-light">&times;</button>
         </div>
         
-        {/* --- CAMBIO AQUÍ: Contenido del Modal ahora vacío --- */}
-        <div className="space-y-3 text-gray-700" style={{ minHeight: '150px' }}>
-          {/* El contenido está vacío, como solicitaste */}
-          <p className="text-center text-gray-400 pt-8">Contenido del modal...</p>
+        {/* --- CAMBIO AQUÍ: Contenido del Modal sin iconos --- */}
+        <div className="space-y-4 text-gray-700">
+          
+          {/* Opción 1: QR */}
+          {/* Se quitaron el <svg> y las clases flex/items-center/space-x-3 */}
+          <div className="p-2">
+            <span className="font-semibold text-lg">QR</span>
+          </div>
+
+          {/* Opción 2: Tarjeta */}
+          <div className="p-2">
+            <span className="font-semibold text-lg">Tarjeta</span>
+          </div>
+
+          {/* Opción 3: Efectivo */}
+          <div className="p-2">
+            <span className="font-semibold text-lg">Efectivo</span>
+          </div>
+          
         </div>
 
         {/* Botón de Cerrar */}
