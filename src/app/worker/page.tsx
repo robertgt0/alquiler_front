@@ -15,6 +15,7 @@ export default function GestionCitas() {
   const [citas, setCitas] = useState<Cita[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<"programadas" | "cancelar">("programadas");
 
   useEffect(() => {
     const fetchCitas = async () => {
@@ -24,7 +25,6 @@ export default function GestionCitas() {
 
         if (!data.success) throw new Error(data.error || "Error al cargar citas");
 
-        // Cada cita es independiente
         setCitas(
           data.data.map((cita: any) => ({
             fecha: cita.fecha,
@@ -98,61 +98,115 @@ export default function GestionCitas() {
             Administra tus citas recibidas en función de tu horario laboral establecido.
           </p>
 
-          <div className="flex w-full mb-6 border-b">
-            <button className="flex-1 text-center py-3 font-medium text-gray-900 border-b-2 border-blue-700">
+          {/* BOTONES DE PESTAÑAS */}
+          <div className="flex w-full mb-8 justify-center gap-4">
+            <button
+              onClick={() => setActiveTab("programadas")}
+              className={`flex-1 py-3 font-semibold rounded-lg border transition-all ${
+                activeTab === "programadas"
+                  ? "bg-blue-900 text-white border-blue-900"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+              }`}
+            >
               Citas Programadas
             </button>
-            <button className="flex-1 text-center py-3 font-medium text-gray-500 hover:text-gray-700">
+            <button
+              onClick={() => setActiveTab("cancelar")}
+              className={`flex-1 py-3 font-semibold rounded-lg border transition-all ${
+                activeTab === "cancelar"
+                  ? "bg-blue-900 text-white border-blue-900"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+              }`}
+            >
               Cancelar Varias Citas
             </button>
           </div>
 
-          <div className="flex items-center gap-2 mb-4 text-yellow-600 bg-yellow-50 border border-yellow-100 rounded-md p-3">
-            <AlertTriangle className="w-5 h-5" />
-            <span>
-              Puedes seleccionar varias citas para cancelar individualmente.
-            </span>
-          </div>
+          {/* VISTA: CITAS PROGRAMADAS */}
+          {activeTab === "programadas" && (
+            <div className="flex flex-col gap-4">
+              {citas.length === 0 ? (
+                <p className="text-gray-500 text-center">No hay citas programadas.</p>
+              ) : (
+                citas.map((cita) => (
+                  <div
+                    key={cita.id}
+                    className="flex flex-col sm:flex-row justify-between items-center border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <CalendarDays className="text-blue-600 w-5 h-5" />
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{cita.fecha}</h3>
+                        <p className="text-gray-600 text-sm">1 cita programada</p>
+                      </div>
+                    </div>
 
-          <div className="flex flex-col gap-4">
-            {citas.length === 0 ? (
-              <p className="text-gray-500 text-center">No hay citas registradas.</p>
-            ) : (
-              citas.map((cita) => (
-                <div
-                  key={cita.id}
-                  className="flex flex-col sm:flex-row justify-between items-center border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <CalendarDays className="text-blue-600 w-5 h-5" />
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{cita.fecha}</h3>
-                      <p className="text-gray-600 text-sm">1 cita programada</p>
+                    <div className="flex gap-3 mt-3 sm:mt-0">
+                      <button className="text-sm font-medium text-blue-600 hover:underline">
+                        Reprogramar
+                      </button>
+                      <button className="text-sm font-medium text-red-600 hover:underline">
+                        Cancelar
+                      </button>
                     </div>
                   </div>
+                ))
+              )}
+            </div>
+          )}
 
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(cita.id)}
-                    onChange={() => toggleCita(cita.id)}
-                    className="w-5 h-5 accent-blue-600 mt-3 sm:mt-0 cursor-pointer"
-                  />
-                </div>
-              ))
-            )}
-          </div>
+          {/* VISTA: CANCELAR VARIAS CITAS */}
+          {activeTab === "cancelar" && (
+            <>
+              <div className="flex items-center gap-2 mb-4 text-yellow-600 bg-yellow-50 border border-yellow-100 rounded-md p-3">
+                <AlertTriangle className="w-5 h-5" />
+                <span>
+                  Puedes seleccionar varias citas para cancelar individualmente.
+                </span>
+              </div>
 
-          <div className="flex justify-center mt-8">
-            <button
-              onClick={handleCancelar}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-8 rounded-lg shadow-md transition-all w-full sm:w-auto"
-            >
-              Cancelar citas
-            </button>
-          </div>
+              <div className="flex flex-col gap-4">
+                {citas.length === 0 ? (
+                  <p className="text-gray-500 text-center">No hay citas registradas.</p>
+                ) : (
+                  citas.map((cita) => (
+                    <div
+                      key={cita.id}
+                      className="flex flex-col sm:flex-row justify-between items-center border rounded-xl p-4 bg-gray-50 hover:bg-gray-100 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <CalendarDays className="text-blue-600 w-5 h-5" />
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{cita.fecha}</h3>
+                          <p className="text-gray-600 text-sm">1 cita programada</p>
+                        </div>
+                      </div>
+
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(cita.id)}
+                        onChange={() => toggleCita(cita.id)}
+                        className="w-5 h-5 accent-blue-600 mt-3 sm:mt-0 cursor-pointer"
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={handleCancelar}
+                  className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-8 rounded-lg shadow-md transition-all w-full sm:w-auto"
+                >
+                  Cancelar citas
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </main>
 
+      {/* MODAL DE CONFIRMACIÓN */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 text-center">
