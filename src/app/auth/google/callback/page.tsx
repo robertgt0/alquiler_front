@@ -18,14 +18,29 @@ function Inner() {
       try {
         const code = searchParams.get('code');
         const error = searchParams.get('error');
+        const errorDescription = searchParams.get('error_description');
         const state = searchParams.get('state');
 
+        console.log('📋 Parámetros recibidos:', { code, error, errorDescription, state });
+
+        // ✅ CORRECCIÓN: Mejor manejo de errores de Google
         if (error) {
-          throw new Error(`Error de Google: ${error}`);
+          const detailedError = errorDescription 
+            ? `${error}: ${decodeURIComponent(errorDescription)}`
+            : `Error de Google: ${error}`;
+          
+          console.error('❌ Error de OAuth:', detailedError);
+          
+          // Manejo específico de access_denied
+          if (error === 'access_denied') {
+            throw new Error('Acceso denegado por el usuario o configuración incorrecta de OAuth. Verifica las URIs de redirección en Google Cloud Console.');
+          }
+          
+          throw new Error(detailedError);
         }
         
         if (!code) {
-          throw new Error('No se recibió código de autorización');
+          throw new Error('No se recibió código de autorización de Google');
         }
 
         // Determinar tipo de autenticación (registro o login)
@@ -35,7 +50,7 @@ function Inner() {
             const decodedState = JSON.parse(atob(state));
             authType = decodedState.type || 'register';
           } catch {
-            console.warn('No se pudo decodificar el state');
+            console.warn('No se pudo decodificar el state, usando registro por defecto');
           }
         }
 
@@ -52,7 +67,9 @@ function Inner() {
           },
           body: JSON.stringify({ 
             code,
-            authType
+            authType,
+            // ✅ CORRECCIÓN: Enviar redirect_uri para verificación en backend
+            redirect_uri: `${window.location.origin}/auth/google/callback`
           }),
         });
 
@@ -115,14 +132,14 @@ function Inner() {
         }
 
       } catch (error) {
-        console.error('Error en autenticación:', error);
+        console.error('❌ Error en autenticación:', error);
         setStatus('error');
         setMessage(error instanceof Error ? error.message : 'Error desconocido');
         
         // Redirigir después de error
         setTimeout(() => {
           router.push('/login');
-        }, 3000);
+        }, 5000); // ✅ Aumentado a 5 segundos para leer el error
       }
     };
 
@@ -160,10 +177,16 @@ function Inner() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-700">Error</h2>
-              {/* ✅ CORRECCIÓN: Cambiar break-words por break-all */}
-              <p className="text-red-500 mt-2 break-all">{message}</p>
-              <p className="text-gray-500 text-sm mt-2">Redirigiendo al login...</p>
+              <h2 className="text-xl font-semibold text-gray-700">Error de Autenticación</h2>
+              <p className="text-red-500 mt-2 break-all whitespace-pre-wrap">{message}</p>
+              <p className="text-gray-500 text-sm mt-4">
+                <strong>Solución:</strong> Verifica que las URIs de redirección en Google Cloud Console coincidan con:
+                <br />
+                <code className="bg-gray-100 p-1 rounded text-xs">
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/auth/google/callback
+                </code>
+              </p>
+              <p className="text-gray-500 text-sm mt-2">Redirigiendo al login en 5 segundos...</p>
             </>
           )}
         </div>
