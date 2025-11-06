@@ -9,9 +9,12 @@ const RecargaQR: React.FC = () => {
   const [tipoDoc, setTipoDoc] = useState<string>("CI");
   const [nit, setNit] = useState<string>("");
   const [telefono, setTelefono] = useState<string>("");
-  const [correo, setCorreo] = useState<string>("");
+  //const [correo, setCorreo] = useState<string>("");
   const [detalle, setDetalle] = useState<string>("");
   const [isFormValid, setIsFormValid] = useState(false);
+  const [correo, setCorreo] = useState("");
+  const [correoError, setCorreoError] = useState("");
+
 
   useEffect(() => {
     let valid = true;
@@ -160,10 +163,25 @@ const RecargaQR: React.FC = () => {
                 // Solo permite letras, números, arroba, punto y guion bajo
                 if (/^[a-zA-Z0-9@._]*$/.test(val)) {
                   setCorreo(val);
+
+                  if (/@{2,}/.test(val)) {
+                    setCorreoError("Correo no válido: demasiadas arrobas (@).");
+                   } else if (
+                     val.length > 0 &&
+                     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
+                   ) {
+                     setCorreoError("Correo no válido: formato incorrecto.");
+                   } else {
+                     setCorreoError("");
+                   }
+
                 }
               }}
               placeholder="ingrese correo"
             />
+            {correoError && (
+              <p className="text-red-500 text-sm mt-1">{correoError}</p>
+            )}
           </div>
 
           <div className="sm:col-span-2">
