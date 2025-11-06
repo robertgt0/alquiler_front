@@ -37,6 +37,9 @@ function BusquedaContent() {
 
   const [buscando, setBuscando] = useState(false);
   const [estadoBusqueda, setEstadoBusqueda] = useState<"idle" | "success" | "error">("idle");
+  
+  // 🔥 NUEVO ESTADO: Para manejar errores de caracteres no aceptados
+  const [errorCaracteres, setErrorCaracteres] = useState<string>("");
 
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
@@ -141,7 +144,6 @@ function BusquedaContent() {
     [sortBy, usuariosFiltrados]
   );
 
-
   // ---------------- Hook de paginación ----------------
   const {
     currentPage,
@@ -213,6 +215,7 @@ function BusquedaContent() {
       setSearchResults(allJobs);
       setFiltrosAplicados(false);
       setSortBy("Fecha (Reciente)");
+      setErrorCaracteres(""); // 🔥 Limpiar error al limpiar búsqueda
     }
   }, [searchTerm, allJobs]);
 
@@ -230,6 +233,7 @@ function BusquedaContent() {
 
     setBuscando(true);
     setEstadoBusqueda("idle");
+    setErrorCaracteres(""); // 🔥 Limpiar error anterior
 
     try {
       let actualizarUrl = true;
@@ -239,8 +243,22 @@ function BusquedaContent() {
         actualizarUrl = maybeIdOrActualizar;
       }
 
-      // 🔥 ELIMINAR la lógica que cancela resultados
-      // Siempre aceptar los resultados que llegan
+      // 🔥 CORREGIDO: Expresión regular CONSISTENTE con normalizacion.ts
+      // SOLO caracteres realmente problemáticos: @ # $ % & * _ + [ ] { } | \ < >
+      const tieneCaracteresProblema = /[@#$%^&*_+=[\]{}|\\<>]/.test(termino);
+
+      console.log('🔍 [PADRE] Análisis caracteres:', {
+        termino,
+        tieneCaracteresProblema,
+        caracteresDetectados: termino.match(/[@#$%^&*_+=[\]{}|\\<>]/g) || []
+      });
+
+      if (resultados.length === 0 && tieneCaracteresProblema) {
+        setErrorCaracteres(`No se pueden realizar búsquedas con caracteres especiales como @, #, $, etc. en "${termino}"`);
+        setEstadoBusqueda("error");
+      } else {
+        setErrorCaracteres(""); // Limpiar error si no hay caracteres problema
+      }
 
       setSearchTerm(termino);
       setSearchResults(resultados);
@@ -265,6 +283,7 @@ function BusquedaContent() {
     setSearchTerm("");
     setSearchResults(allJobs);
     setFiltrosAplicados(false);
+    setErrorCaracteres(""); // 🔥 Limpiar error al limpiar
     actualizarURL("");
     setTimeout(() => setSortBy("Fecha (Reciente)"), 0);
   };
@@ -276,6 +295,7 @@ function BusquedaContent() {
     setUsuariosFiltrados([]);
     setModoVista("jobs");
     setSearchResults(allJobs);
+    setErrorCaracteres(""); // 🔥 Limpiar error al limpiar filtros
     setSortBy("Fecha (Reciente)");  // Asegurar que se muestren todos los jobs
   };
 
@@ -294,6 +314,9 @@ function BusquedaContent() {
     modoVista === "jobs" &&
     usuariosFiltrados.length === 0 &&
     filtersNoResults; // Agregar esta condición
+
+  // 🔥 NUEVA LÓGICA: Determinar si mostrar error de caracteres
+  const mostrarErrorCaracteres = errorCaracteres && !buscando;
 
   // ---------------- Render ----------------
   return (
@@ -319,6 +342,7 @@ function BusquedaContent() {
               setUsuariosFiltrados(usuarios);
               setModoVista(usuarios.length > 0 ? "usuarios" : "jobs");
               setFiltrosAplicados(true);
+              setErrorCaracteres(""); // 🔥 Limpiar error al aplicar filtros
             }}
             onFilterNoResults={(noResults: boolean) => {
               console.log("🚫 Actualizando estado de sin resultados:", noResults);
@@ -391,6 +415,32 @@ function BusquedaContent() {
                     <div className="text-center py-8">
                       <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
                       <p className="mt-2 text-lg text-gray-600">Buscando resultados para &quot;{searchTerm}&quot;...</p>
+                    </div>
+                  ) : mostrarErrorCaracteres ? (
+                    // 🔥 NUEVO CASO: Error por caracteres no aceptados
+                    <div className="text-center py-8">
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
+                        <div className="flex items-center justify-center mb-3">
+                          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                            <span className="text-red-600 text-xl">⚠️</span>
+                          </div>
+                        </div>
+                        <p className="text-lg text-red-700 font-medium mb-2">
+                          Caracteres especiales no permitidos
+                        </p>
+                        <p className="text-gray-600 mb-4">
+                          {errorCaracteres}
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">
+                          Por favor, usa solo letras, números y espacios para tu búsqueda.
+                        </p>
+                        <button
+                          onClick={handleClearSearch}
+                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Limpiar búsqueda
+                        </button>
+                      </div>
                     </div>
                   ) : mostrarSinResultadosFiltros ? (
                     // CASO 1: Filtros aplicados sin resultados - NO MOSTRAR TARJETAS

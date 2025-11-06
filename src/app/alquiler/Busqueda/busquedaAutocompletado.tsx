@@ -4,9 +4,10 @@ import { Search, Clock, X } from "lucide-react";
 import { Job } from "../paginacion/types/job";
 import "./busqueda.css";
 import { Trash2 } from "lucide-react";
+import { normalizarGoogle, normalizarQueryBusqueda, analizarCaracteresQuery, tieneCaracteresProblema, generarHashTexto } from "./normalizacion";
 
 type EstadoSugerencias = "idle" | "loading" | "error" | "success";
-type EstadoBusqueda = "idle" | "loading" | "success" | "error";
+type EstadoBusqueda = "idle" | "loading" | "success" | "error" | "sinResultados";
 
 interface BusquedaAutocompletadoProps {
     onSearch: (searchTerm: string, resultados: Job[], actualizarUrl?: boolean) => void;
@@ -54,7 +55,8 @@ class BackendService {
         try {
             console.log('🚀 [BACKEND-INICIO] Buscando por inicio de palabra:', query);
 
-            const queryNormalizado = this.normalizarQueryGoogle(query);
+            // ✅ EL QUERY YA DEBERÍA ESTAR NORMALIZADO AQUÍ
+            const queryNormalizado = query; // Ya viene normalizado del BusquedaService
             const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
 
             if (tokens.length === 0) {
@@ -62,7 +64,6 @@ class BackendService {
             }
 
             console.log('🔄 [BACKEND-INICIO] Tokens para búsqueda:', tokens);
-
             const payload = {
                 queryOriginal: query,
                 queryNormalizado: queryNormalizado,
@@ -121,7 +122,7 @@ class BackendService {
         console.log('🎯 [ESPECIALIDAD-BACKEND-INICIO] Buscando por especialidad:', especialidad);
 
         try {
-            const especialidadNormalizada = this.normalizarQueryGoogle(especialidad);
+            const especialidadNormalizada = normalizarQueryBusqueda(especialidad);
             const tokens = especialidadNormalizada.split(' ').filter(token => token.length > 0);
 
             const apiEndpoint = `${this.API_BASE}/borbotones/search/especialidad`;
@@ -166,7 +167,7 @@ class BackendService {
         try {
             console.log('🔍 [SUGERENCIAS-BACKEND-INICIO] Buscando sugerencias para:', query);
 
-            const queryNormalizado = this.normalizarQueryGoogle(query);
+            const queryNormalizado = normalizarQueryBusqueda(query);
 
             const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/autocomplete`;
             const controller = new AbortController();
@@ -237,25 +238,6 @@ class BackendService {
             throw error;
         }
     }
-
-    private static normalizarQueryGoogle(texto: string): string {
-        if (!texto) return "";
-
-        const textoConEspacios = texto.replace(/[@#$%^&*()_+=[\]{}|\\:;"'<>?/]/g, ' ');
-        const textoSinTildes = textoConEspacios
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[´`]/g, '');
-        const textoMinusculas = textoSinTildes.toLowerCase();
-        const textoLimpio = textoMinusculas.replace(/\s+/g, ' ').trim();
-
-        console.log('🔍 [BACKEND-NORMALIZACIÓN]', {
-            original: texto,
-            final: textoLimpio
-        });
-
-        return textoLimpio;
-    }
 }
 
 // ============================================================================
@@ -268,7 +250,7 @@ class LocalService {
 
         if (!query.trim()) return [];
 
-        const queryNormalizado = this.normalizarQueryGoogle(query);
+        const queryNormalizado = normalizarQueryBusqueda(query);
         const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
 
         if (tokens.length === 0) return [];
@@ -312,7 +294,7 @@ class LocalService {
             return [];
         }
 
-        const queryNormalizado = this.normalizarQueryGoogle(query);
+        const queryNormalizado = normalizarQueryBusqueda(query);
         const sugerencias = new Set<string>();
 
         jobs.forEach(job => {
@@ -395,18 +377,6 @@ class LocalService {
             .trim()
             .toLowerCase();
     }
-
-    private static normalizarQueryGoogle(texto: string): string {
-        if (!texto) return "";
-        const textoConEspacios = texto.replace(/[@#$%^&*()_+=[\]{}|\\:;"'<>?/]/g, ' ');
-        const textoSinTildes = textoConEspacios
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[´`]/g, '');
-        const textoMinusculas = textoSinTildes.toLowerCase();
-        const textoLimpio = textoMinusculas.replace(/\s+/g, ' ').trim();
-        return textoLimpio;
-    }
 }
 
 // ============================================================================
@@ -418,7 +388,7 @@ class BusquedaService {
 
     // 🔥 FUNCIÓN: Calcular puntaje de relevancia DESDE FRONTEND
     private static calcularRelevancia(job: Job, query: string): number {
-        const queryNormalizado = this.normalizarQueryGoogle(query);
+        const queryNormalizado = normalizarQueryBusqueda(query);
         const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
 
         let puntaje = 0;
@@ -551,7 +521,6 @@ class BusquedaService {
         return resultadosOrdenados;
     }
 
-    // Métodos de normalización existentes...
     private static normalizarTexto(texto: string): string {
         if (!texto) return "";
         return texto
@@ -563,19 +532,7 @@ class BusquedaService {
             .toLowerCase();
     }
 
-    private static normalizarQueryGoogle(texto: string): string {
-        if (!texto) return "";
-        const textoConEspacios = texto.replace(/[@#$%^&*()_+=[\]{}|\\:;"'<>?/]/g, ' ');
-        const textoSinTildes = textoConEspacios
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[´`]/g, '');
-        const textoMinusculas = textoSinTildes.toLowerCase();
-        const textoLimpio = textoMinusculas.replace(/\s+/g, ' ').trim();
-        return textoLimpio;
-    }
-
-    // 🔥 MODIFICADO: Ordenar resultados del backend por relevancia DESDE FRONTEND
+    // 🔥 MODIFICADO: El query ya viene normalizado desde el componente
     static async searchJobsOptimized(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
         try {
             console.log('🔍 [SERVICE-BACKEND-PRIORITY] Buscando primero en backend:', query);
@@ -584,16 +541,22 @@ class BusquedaService {
                 return [];
             }
 
-            // 1. INTENTAR BACKEND PRIMERO SIEMPRE
-            const resultadosBackend = await BackendService.searchJobsBackend(query, endpoint);
+            // ✅ EL QUERY YA VIENE NORMALIZADO DESDE EL COMPONENTE
+            const queryNormalizado = query; // Ya normalizado
+            console.log('✅ [SERVICE] Query ya normalizado desde componente:', queryNormalizado);
+
+            const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
+
+            if (tokens.length === 0) {
+                return [];
+            }
+
+            // 1. INTENTAR BACKEND PRIMERO - ✅ ENVIAR queryNormalizado (sin comas)
+            const resultadosBackend = await BackendService.searchJobsBackend(queryNormalizado, endpoint);
 
             if (resultadosBackend && resultadosBackend.length > 0) {
                 console.log(`✅ [BACKEND-PRIORITY] ${resultadosBackend.length} resultados del backend`);
-
-                // 🔥 ORDENAR POR RELEVANCIA DESDE FRONTEND
                 const resultadosOrdenados = this.ordenarPorRelevancia(resultadosBackend, query);
-                console.log('📊 [RELEVANCIA] Resultados ordenados por relevancia desde frontend');
-
                 return resultadosOrdenados;
             }
 
@@ -603,8 +566,6 @@ class BusquedaService {
 
         } catch (error) {
             console.log('🔄 [BACKEND-PRIORITY] Backend falló, usando local como fallback:', error);
-
-            // 3. SOLO EN CASO DE ERROR, usar búsqueda local Y TAMBIÉN ORDENAR
             const resultadosLocales = LocalService.buscarTrabajos(query, jobsReales);
             return this.ordenarPorRelevancia(resultadosLocales, query);
         }
@@ -687,7 +648,7 @@ class BusquedaService {
 }
 
 // ============================================================================
-// COMPONENTE PRINCIPAL - SOLO BACKEND, FALLBACK LOCAL
+// COMPONENTE PRINCIPAL
 // ============================================================================
 
 export default function BusquedaAutocompletado({
@@ -714,41 +675,16 @@ export default function BusquedaAutocompletado({
     const [loadingResultados, setLoadingResultados] = useState(false);
     const [mensajeNoResultados, setMensajeNoResultados] = useState("");
 
+    // 🔥 REFERENCIAS SEPARADAS PARA COMPORTAMIENTO AMAZON
     const debounceSugerenciasRef = useRef<NodeJS.Timeout | null>(null);
-    const debounceBusquedaRef = useRef<NodeJS.Timeout | null>(null);
+    const debounceResultadosRef = useRef<NodeJS.Timeout | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const terminoBusquedaAnterior = useRef("");
+    const terminoBusquedaAnteriorSugerencias = useRef("");
+    const terminoBusquedaAnteriorResultados = useRef("");
     const historialCargado = useRef(false);
     const busquedaEnCurso = useRef(false);
     const desactivarBusquedaAutomatica = useRef(false);
-
-    // Normaliza texto: primera letra en mayúscula, mantiene el resto
-    const capitalizarPrimera = (texto: string) => {
-        const t = texto ? String(texto).trim() : "";
-        if (!t) return "";
-        return t.charAt(0).toUpperCase() + t.slice(1);
-    };
-
-    // 🔥 FUNCIÓN: Normalización estilo Google
-    const normalizarQueryGoogle = useCallback((texto: string): string => {
-        if (!texto) return "";
-
-        const textoConEspacios = texto.replace(/[@#$%^&*()_+=[\]{}|\\:;"'<>?/]/g, ' ');
-        const textoSinTildes = textoConEspacios
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[´`]/g, '');
-        const textoMinusculas = textoSinTildes.toLowerCase();
-        const textoLimpio = textoMinusculas.replace(/\s+/g, ' ').trim();
-
-        return textoLimpio;
-    }, []);
-
-    // 🔥 FUNCIÓN: Detectar si hay caracteres especiales
-    const tieneCaracteresEspeciales = useCallback((texto: string): boolean => {
-        return /[@#$%^&*()_+=[\]{}|\\:;"'<>?/]/.test(texto);
-    }, []);
 
     // 🔥 MEJORADO: Guardar en historial sin duplicados
     const guardarEnHistorial = useCallback((texto: string) => {
@@ -783,12 +719,12 @@ export default function BusquedaAutocompletado({
         }
     }, [historial, mostrarHistorial]);
 
-    // 🔥 MODIFICADO: Ahora acepta actualizarUrl como parámetro
+    // 🔥 MODIFICADO: Flujo exacto solicitado - Primero analizarCaracteresQuery, luego normalizarGoogle
     const ejecutarBusquedaCompleta = useCallback(async (
         texto: string,
         guardarEnHistorialFlag: boolean = true,
         esEspecialidad: boolean = false,
-        actualizarUrl: boolean = true  // 🔥 NUEVO PARÁMETRO
+        actualizarUrl: boolean = true
     ) => {
         if (busquedaEnCurso.current) {
             console.log('⏸️ [BÚSQUEDA] Ya hay una búsqueda en curso, omitiendo...');
@@ -798,6 +734,42 @@ export default function BusquedaAutocompletado({
         const textoLimpio = texto.trim();
         console.log('🚀 [BÚSQUEDA-COMPLETA] Iniciando búsqueda para:', textoLimpio, 'actualizarUrl:', actualizarUrl);
 
+        // 🔥 PASO 1: ANALIZAR CARACTERES PROBLEMA
+        const analisis = analizarCaracteresQuery(textoLimpio);
+
+        if (analisis.tieneProblema) {
+            console.log('🚫 [BÚSQUEDA] Caracteres problema detectados - Mostrando mensaje de no resultados');
+
+            // 🔥 MOSTRAR MENSAJE COMO SI FUERA BÚSQUEDA SIN RESULTADOS
+            setMensajeNoResultados(`No se encontraron resultados para "${textoLimpio}"`);
+            setEstadoBusqueda("sinResultados");
+            setLoadingResultados(false);
+            setResultados([]);
+
+            // Informar al padre con array vacío
+            onSearch(textoLimpio, [], actualizarUrl);
+            return; // 🔥 SALIR - NO PASA A NORMALIZACIÓN
+        }
+
+        // 🔥 PASO 2: SI NO HAY CARACTERES PROBLEMA, ENTONCES NORMALIZAR
+        let queryParaBuscar: string;
+
+        try {
+            // 🔥 ESTO ES LO QUE QUERÍAS - Primero analizar, luego normalizar si pasa
+            queryParaBuscar = normalizarQueryBusqueda(textoLimpio);
+            console.log('✅ [BÚSQUEDA] Query normalizado:', queryParaBuscar, '← Original:', textoLimpio);
+        } catch (error) {
+            // 🔥 POR SEGURIDAD - aunque analizarCaracteresQuery ya filtró, por si acaso
+            console.log('🚫 [BÚSQUEDA] Error en normalización:', error);
+            setMensajeNoResultados(`No se encontraron resultados para "${textoLimpio}"`);
+            setEstadoBusqueda("sinResultados");
+            setLoadingResultados(false);
+            setResultados([]);
+            onSearch(textoLimpio, [], actualizarUrl);
+            return;
+        }
+
+        // 🔥 CONTINUAR CON VALIDACIONES NORMALES (longitud, etc.)
         if (textoLimpio.length > 80) {
             setMensaje("La búsqueda no puede exceder 80 caracteres");
             setEstadoBusqueda("error");
@@ -822,27 +794,27 @@ export default function BusquedaAutocompletado({
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
 
-        if (tieneCaracteresEspeciales(textoLimpio)) {
-            setMensajeNoResultados("Los caracteres especiales se ignoran en la búsqueda");
-        } else {
-            setMensajeNoResultados("");
+        // Mostrar mensaje informativo para separadores
+        if (analisis.tieneSeparadores) {
+            setMensajeNoResultados(analisis.mensaje || "Búsqueda con separadores");
         }
 
-        terminoBusquedaAnterior.current = textoLimpio;
+        terminoBusquedaAnteriorResultados.current = textoLimpio;
 
         if (guardarEnHistorialFlag && mostrarHistorial) {
             guardarEnHistorial(textoLimpio);
         }
 
         try {
-            console.log('🔍 [BÚSQUEDA] Buscando trabajos...');
+            console.log('🔍 [BÚSQUEDA] Buscando trabajos con query normalizado:', queryParaBuscar);
 
             let resultadosFinales: Job[] = [];
 
             if (esEspecialidad) {
                 resultadosFinales = await BusquedaService.searchByEspecialidad(textoLimpio, datos);
             } else {
-                resultadosFinales = await BusquedaService.searchJobsOptimized(textoLimpio, datos, apiConfig?.endpoint);
+                // 🔥 ENVIAR EL QUERY NORMALIZADO AL SERVICIO
+                resultadosFinales = await BusquedaService.searchJobsOptimized(queryParaBuscar, datos, apiConfig?.endpoint);
             }
 
             console.log('📊 [BÚSQUEDA] Resultados encontrados:', resultadosFinales.length);
@@ -868,7 +840,7 @@ export default function BusquedaAutocompletado({
             setLoadingResultados(false);
             busquedaEnCurso.current = false;
         }
-    }, [datos, onSearch, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint, tieneCaracteresEspeciales]);
+    }, [datos, onSearch, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint]);
 
     // 🔥 CORREGIDO: Selección de sugerencia AHORA actualiza URL
     const seleccionarSugerencia = useCallback(async (texto: string) => {
@@ -876,9 +848,14 @@ export default function BusquedaAutocompletado({
 
         desactivarBusquedaAutomatica.current = true;
 
-        if (debounceBusquedaRef.current) {
-            clearTimeout(debounceBusquedaRef.current);
-            debounceBusquedaRef.current = null;
+        // Limpiar todos los timeouts
+        if (debounceSugerenciasRef.current) {
+            clearTimeout(debounceSugerenciasRef.current);
+            debounceSugerenciasRef.current = null;
+        }
+        if (debounceResultadosRef.current) {
+            clearTimeout(debounceResultadosRef.current);
+            debounceResultadosRef.current = null;
         }
 
         setQuery(texto);
@@ -886,25 +863,31 @@ export default function BusquedaAutocompletado({
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
 
-        inputRef.current?.focus();
+        // 🔥 PIERDE EL FOCUS DESPUÉS DE SELECCIONAR
+        inputRef.current?.blur();
+        setInputFocused(false);
 
-        console.log('🚀 [SUGERENCIA] Ejecutando búsqueda automática...');
-        // 🔥 CORRECCIÓN: actualizarUrl = true para sugerencias
+        console.log('🚀 [SUGERENCIA] Ejecutando búsqueda desde sugerencia...');
         await ejecutarBusquedaCompleta(texto, true, false, true);
 
         setTimeout(() => {
             desactivarBusquedaAutomatica.current = false;
-            console.log('🔄 [AUTO] Reactivado después de selección');
-        }, 4000);
+            console.log('🔄 [AMAZON] Búsqueda dinámica reactivada después de selección');
+        }, 3000);
 
     }, [ejecutarBusquedaCompleta]);
 
-    // 🔥 MODIFICADO: Manejar cambio en el input
+    // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
     const manejarCambioInput = useCallback((nuevoValor: string) => {
         setQuery(nuevoValor);
 
-        if (tieneCaracteresEspeciales(nuevoValor) && nuevoValor.trim().length > 0) {
-            setMensajeNoResultados("Los caracteres especiales se ignoran en la búsqueda");
+        const textoLimpio = nuevoValor.trim();
+
+        // 🔥 SOLO MOSTRAR MENSAJE INFORMATIVO, NO BLOQUEAR
+        const analisis = analizarCaracteresQuery(textoLimpio);
+
+        if (analisis.tieneSeparadores && !analisis.tieneProblema) {
+            setMensajeNoResultados(analisis.mensaje || "Búsqueda con separadores");
         } else {
             setMensajeNoResultados("");
         }
@@ -913,101 +896,150 @@ export default function BusquedaAutocompletado({
             setEstadoBusqueda("idle");
             setLoadingResultados(false);
             setMensajeNoResultados("");
-            onSearch("", [], true); // 🔥 Limpiar también actualiza URL
-            terminoBusquedaAnterior.current = "";
+            onSearch("", [], true);
+            terminoBusquedaAnteriorSugerencias.current = "";
+            terminoBusquedaAnteriorResultados.current = "";
             busquedaEnCurso.current = false;
         }
-    }, [tieneCaracteresEspeciales, onSearch]);
+    }, [onSearch]);
 
     // 🔥 MODIFICADO: buscarSugerencias - SOLO BACKEND, FALLBACK LOCAL
-    const buscarSugerencias = useCallback(async (texto: string): Promise<string[]> => {
+    const buscarSugerencias = useCallback(async (textoNormalizado: string): Promise<string[]> => {
         try {
-            console.log('🔍 [SUGERENCIAS] Buscando sugerencias para:', texto);
+            console.log('🔍 [AMAZON-SUGERENCIAS] Buscando para texto normalizado:', JSON.stringify(textoNormalizado));
 
-            if (texto.trim().length < 1) {
-                console.log('⏸️ [SUGERENCIAS] Texto muy corto, omitiendo búsqueda');
+            if (textoNormalizado.length < 1) {
+                console.log('⏸️ [AMAZON-SUGERENCIAS] Texto muy corto');
                 return [];
             }
 
-            // 🔥 PRIORIDAD ABSOLUTA AL BACKEND
+            console.log('🔄 [AMAZON-SUGERENCIAS] Llamando al servicio...');
             const sugerenciasOptimizadas = await BusquedaService.getAutocompleteSuggestions(
-                texto,
+                textoNormalizado,
                 datos,
                 apiConfig?.endpoint
             );
 
-            console.log('📥 [SUGERENCIAS] Sugerencias recibidas:', sugerenciasOptimizadas);
+            console.log('✅ [AMAZON-SUGERENCIAS] Respuesta recibida:', sugerenciasOptimizadas.length, 'sugerencias');
 
-            // 🔥 FILTRAR SUGERENCIAS POR INICIO (tanto backend como fallback)
+            // 🔥 FILTRADO AMAZON: Coincidencia por inicio
             const sugerenciasFiltradas = sugerenciasOptimizadas.filter(sugerencia => {
                 if (!sugerencia || !sugerencia.trim()) return false;
 
-                const sugerenciaNormalizada = normalizarQueryGoogle(sugerencia);
-                const textoNormalizado = normalizarQueryGoogle(texto);
+                const sugerenciaNormalizada = normalizarQueryBusqueda(sugerencia);
 
-                if (sugerenciaNormalizada.startsWith(textoNormalizado)) {
-                    return true;
-                }
-
-                const palabrasSugerencia = sugerenciaNormalizada.split(' ');
-                return palabrasSugerencia.some(palabra =>
-                    palabra.startsWith(textoNormalizado)
-                );
+                return sugerenciaNormalizada.startsWith(textoNormalizado) ||
+                    sugerenciaNormalizada.split(' ').some(palabra =>
+                        palabra.startsWith(textoNormalizado)
+                    );
             });
 
-            console.log('🎯 [SUGERENCIAS] Sugerencias filtradas por inicio:', sugerenciasFiltradas);
-
-            // 🔥 ORDENAR POR RELEVANCIA
+            // 🔥 ORDENAMIENTO AMAZON: Priorizar coincidencias exactas al inicio
             const sugerenciasOrdenadas = sugerenciasFiltradas.sort((a, b) => {
-                const aNormalizado = normalizarQueryGoogle(a);
-                const bNormalizado = normalizarQueryGoogle(b);
-                const textoNormalizado = normalizarQueryGoogle(texto);
+                const aNorm = normalizarQueryBusqueda(a);
+                const bNorm = normalizarQueryBusqueda(b);
 
-                const aEmpiezaExacto = aNormalizado.startsWith(textoNormalizado);
-                const bEmpiezaExacto = bNormalizado.startsWith(textoNormalizado);
+                const aEmpiezaExacto = aNorm.startsWith(textoNormalizado);
+                const bEmpiezaExacto = bNorm.startsWith(textoNormalizado);
 
                 if (aEmpiezaExacto && !bEmpiezaExacto) return -1;
                 if (!aEmpiezaExacto && bEmpiezaExacto) return 1;
 
-                if (a.length !== b.length) return a.length - b.length;
-
-                return aNormalizado.localeCompare(bNormalizado);
+                return aNorm.localeCompare(bNorm);
             });
 
             return sugerenciasOrdenadas.slice(0, 6);
 
         } catch (error) {
-            console.error('❌ [SUGERENCIAS] Error:', error);
+            console.error('❌ [AMAZON-SUGERENCIAS] Error:', error);
             return [];
         }
-    }, [datos, apiConfig?.endpoint, normalizarQueryGoogle]);
+    }, [datos, apiConfig?.endpoint]);
 
-    // 🔥 MODIFICADO: Efecto para sugerencias - SOLO BACKEND
+    // 🔥 COMPORTAMIENTO AMAZON: SUGERENCIAS desde 1ª letra (300ms)
     useEffect(() => {
         if (debounceSugerenciasRef.current) {
             clearTimeout(debounceSugerenciasRef.current);
         }
 
-        const texto = query.trim();
+        const texto = query;
 
-        if (texto.length >= 1 && inputFocused) {
+        // 🔥 PRIMERO: Comparación rápida con texto ORIGINAL (sin normalizar)
+        const textoNoCambioOriginal = texto === terminoBusquedaAnteriorSugerencias.current;
+
+        if (textoNoCambioOriginal) {
+            console.log('⚡ [SUGERENCIAS] Texto ORIGINAL no cambió - Evitando procesamiento');
+            return;
+        }
+
+        // 🔍 SEGUNDO: Detección de caracteres problema (solo si el texto cambió)
+        const analisis = analizarCaracteresQuery(texto);
+        const tieneCaracteresProblema = analisis.tieneProblema;
+
+        if (tieneCaracteresProblema) {
+            console.log('🚫 [SUGERENCIAS] Caracteres problema - NO búsqueda');
+            setSugerencias([]);
+            setEstadoSugerencias("idle");
+            setMostrarSugerencias(false);
+            terminoBusquedaAnteriorSugerencias.current = texto;
+            return;
+        }
+
+        // 📝 TERCERO: Normalización de AMBOS textos
+        const textoNormalizado = normalizarGoogle(texto, "sugerencias");
+        const textoAnteriorNormalizado = normalizarGoogle(terminoBusquedaAnteriorSugerencias.current, "sugerencias");
+
+        // 🔥 CUARTO: Comparación con textos NORMALIZADOS
+        const textoNoCambioNormalizado = textoNormalizado === textoAnteriorNormalizado;
+
+        if (textoNoCambioNormalizado) {
+            console.log('⚡ [SUGERENCIAS] Texto NORMALIZADO no cambió - Evitando búsqueda');
+            terminoBusquedaAnteriorSugerencias.current = texto;
+            return;
+        }
+
+        // ⚖️ Verificación de espacios
+        const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
+
+        // 🎯 CONDICIÓN AMAZON: Sugerencias desde 1 CARÁCTER
+        const tieneTextoParaSugerencias = textoNormalizado.length >= 1;
+
+        console.log('🔍 [SUGERENCIAS] Comparación CORREGIDA:', {
+            textoOriginal: JSON.stringify(texto),
+            textoAnteriorOriginal: JSON.stringify(terminoBusquedaAnteriorSugerencias.current),
+            textoNormalizado: JSON.stringify(textoNormalizado),
+            textoAnteriorNormalizado: JSON.stringify(textoAnteriorNormalizado),
+            textoNoCambioOriginal,
+            textoNoCambioNormalizado,
+            textoSoloEspacios,
+            tieneTextoParaSugerencias
+        });
+
+        if (textoSoloEspacios) {
+            setSugerencias([]);
+            setEstadoSugerencias("idle");
+            setMostrarSugerencias(false);
+            terminoBusquedaAnteriorSugerencias.current = texto;
+        } else if (tieneTextoParaSugerencias && inputFocused) {
+            // 🔥 Si llegamos aquí, es porque AMBOS textos cambiaron (original y normalizado)
+            console.log('🚀 [SUGERENCIAS] Buscando sugerencias para:', textoNormalizado);
+
             setEstadoSugerencias("loading");
             setMostrarSugerencias(true);
+            terminoBusquedaAnteriorSugerencias.current = texto; // Guardar ORIGINAL
 
             debounceSugerenciasRef.current = setTimeout(async () => {
                 try {
-                    console.log('🔍 [SUGERENCIAS] Buscando para:', texto);
-                    const sugerenciasBackend = await buscarSugerencias(texto);
+                    const sugerenciasBackend = await buscarSugerencias(textoNormalizado);
 
-                    if (query.trim() === texto) {
+                    // Verificar que el query no haya cambiado (comparar ORIGINALES)
+                    if (query === texto) {
                         setSugerencias(sugerenciasBackend);
-                        setEstadoSugerencias(sugerenciasBackend.length > 0 ? "success" : "success");
+                        setEstadoSugerencias("success");
                         setMostrarSugerencias(true);
 
-                        if (sugerenciasBackend.length === 0) {
-                            setMensajeNoResultados(`No se encontraron sugerencias para "${texto}"`);
-                        } else {
-                            setMensajeNoResultados("");
+                        if (sugerenciasBackend.length === 0 && textoNormalizado.length >= 2) {
+                            setMensajeNoResultados(`No se encontraron sugerencias para "${textoNormalizado}"`);
                         }
                     }
                 } catch (error) {
@@ -1015,11 +1047,9 @@ export default function BusquedaAutocompletado({
                     setEstadoSugerencias("error");
                     setSugerencias([]);
                 }
-            }, 400);
+            }, 300);
         } else {
-            setSugerencias([]);
-            setEstadoSugerencias("idle");
-            setMostrarSugerencias(false);
+            terminoBusquedaAnteriorSugerencias.current = texto;
         }
 
         return () => {
@@ -1029,38 +1059,80 @@ export default function BusquedaAutocompletado({
         };
     }, [query, inputFocused, buscarSugerencias]);
 
-    // 🔥 MODIFICADO: Efecto para búsqueda automática - SOLO BACKEND
+    // 🔥 MODIFICADO: Búsqueda automática - permite caracteres problema (serán manejados en ejecutarBusquedaCompleta)
     useEffect(() => {
-        if (debounceBusquedaRef.current) {
-            clearTimeout(debounceBusquedaRef.current);
+        if (debounceResultadosRef.current) {
+            clearTimeout(debounceResultadosRef.current);
         }
 
         const texto = query.trim();
 
         if (desactivarBusquedaAutomatica.current) {
-            console.log('⏸️ [BÚSQUEDA-AUTO] Desactivada temporalmente');
+            console.log('⏸️ [RESULTADOS] Desactivada temporalmente');
             return;
         }
 
-        if (texto.length >= 2 && inputFocused && texto !== terminoBusquedaAnterior.current &&
+        // 🔥 PRIMERO: Comparación rápida con texto ORIGINAL
+        const textoNoCambioOriginal = texto === terminoBusquedaAnteriorResultados.current;
+
+        if (textoNoCambioOriginal) {
+            console.log('⚡ [RESULTADOS] Texto ORIGINAL no cambió - Evitando procesamiento');
+            return;
+        }
+
+        // 📝 SEGUNDO: Normalización de AMBOS textos
+        const textoNormalizado = normalizarGoogle(texto, "sugerencias");
+        const textoAnteriorNormalizado = normalizarGoogle(terminoBusquedaAnteriorResultados.current, "sugerencias");
+
+        // 🔥 TERCERO: Comparación con textos NORMALIZADOS
+        const textoNoCambioNormalizado = textoNormalizado === textoAnteriorNormalizado;
+
+        if (textoNoCambioNormalizado) {
+            console.log('⚡ [RESULTADOS] Texto NORMALIZADO no cambió - Evitando búsqueda');
+            terminoBusquedaAnteriorResultados.current = texto;
+            return;
+        }
+
+        // ⚖️ Verificación de espacios
+        const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
+
+        // 🎯 CONDICIÓN AMAZON: Resultados desde 2 CARACTERES
+        const tieneTextoParaResultados = textoNormalizado.length >= 2;
+
+        console.log('🔍 [RESULTADOS] Comparación CORREGIDA:', {
+            textoOriginal: JSON.stringify(texto),
+            textoAnteriorOriginal: JSON.stringify(terminoBusquedaAnteriorResultados.current),
+            textoNormalizado: JSON.stringify(textoNormalizado),
+            textoAnteriorNormalizado: JSON.stringify(textoAnteriorNormalizado),
+            textoNoCambioOriginal,
+            textoNoCambioNormalizado,
+            textoSoloEspacios,
+            tieneTextoParaResultados
+        });
+
+        // 🔥 PERMITIR BÚSQUEDA INCLUSO CON CARACTERES PROBLEMA
+        if (!textoSoloEspacios &&
+            tieneTextoParaResultados &&
+            inputFocused &&
             !busquedaEnCurso.current) {
 
-            console.log('🚀 [BÚSQUEDA-AUTO] Programando búsqueda para:', texto);
+            console.log('🚀 [RESULTADOS] Programando búsqueda para:', texto);
 
-            debounceBusquedaRef.current = setTimeout(() => {
+            debounceResultadosRef.current = setTimeout(() => {
                 if (query.trim() === texto && !desactivarBusquedaAutomatica.current) {
-                    console.log('📊 [BÚSQUEDA-AUTO] Ejecutando búsqueda automática SIN actualizar URL');
-                    terminoBusquedaAnterior.current = texto;
+                    console.log('📊 [RESULTADOS] Ejecutando búsqueda automática');
+                    terminoBusquedaAnteriorResultados.current = texto; // Guardar ORIGINAL
                     setLoadingResultados(true);
-                    // 🔥 Búsqueda automática NO actualiza URL
-                    ejecutarBusquedaCompleta(texto, false, false, false);
+                    ejecutarBusquedaCompleta(texto, false, false, true);
                 }
-            }, 500);
+            }, 600);
+        } else {
+            terminoBusquedaAnteriorResultados.current = texto;
         }
 
         return () => {
-            if (debounceBusquedaRef.current) {
-                clearTimeout(debounceBusquedaRef.current);
+            if (debounceResultadosRef.current) {
+                clearTimeout(debounceResultadosRef.current);
             }
         };
     }, [query, inputFocused, ejecutarBusquedaCompleta]);
@@ -1091,8 +1163,16 @@ export default function BusquedaAutocompletado({
         }
     }, [query, buscarSugerencias]);
 
-    // 🔥 MODIFICADO: Búsqueda manual SÍ actualiza URL
+    // 🔥 MODIFICADO: Búsqueda manual - pierde focus
     const ejecutarBusqueda = useCallback(async () => {
+        console.log('🎯 [BÚSQUEDA-MANUAL] Ejecutando búsqueda manual');
+
+        // 🔥 PIERDE EL FOCUS AL EJECUTAR BÚSQUEDA
+        inputRef.current?.blur();
+        setInputFocused(false);
+        setMostrarSugerencias(false);
+        setMostrarHistorialLocal(false);
+
         await ejecutarBusquedaCompleta(query, true, false, true);
     }, [query, ejecutarBusquedaCompleta]);
 
@@ -1105,10 +1185,11 @@ export default function BusquedaAutocompletado({
         setEstadoBusqueda("idle");
         setResultados([]);
         setMostrarSugerencias(false);
-        setMostrarHistorialLocal(false);
+        setMostrarHistorialLocal(true);
         setLoadingResultados(false);
         setMensajeNoResultados("");
-        terminoBusquedaAnterior.current = "";
+        terminoBusquedaAnteriorSugerencias.current = "";
+        terminoBusquedaAnteriorResultados.current = "";
         busquedaEnCurso.current = false;
 
         desactivarBusquedaAutomatica.current = false;
@@ -1117,13 +1198,17 @@ export default function BusquedaAutocompletado({
         onSearch("", [], true);
         inputRef.current?.focus();
 
-        console.log('🧹 [LIMPIAR] Búsqueda limpiada y automática reactivada');
+        console.log('🧹 [AMAZON] Búsqueda limpiada');
     }, [onSearch]);
 
     const manejarKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             setMostrarSugerencias(false);
             setMostrarHistorialLocal(false);
+            // 🔥 PIERDE FOCUS AL PRESIONAR ENTER
+            inputRef.current?.blur();
+            setInputFocused(false);
+
             ejecutarBusqueda();
         } else if (e.key === 'Escape') {
             setMostrarSugerencias(false);
@@ -1296,19 +1381,12 @@ export default function BusquedaAutocompletado({
                             <X size={16} />
                         </button>
                     )}
-                    <button
-                        className="btn-buscar"
-                        onClick={ejecutarBusqueda}
-                        disabled={!query.trim() || query.trim().length < 2 || busquedaEnCurso.current}
-                        type="button"
-                    >
-                        Buscar
-                    </button>
+                   
                 </div>
 
                 <div className={`contador-caracteres ${query.length > 70 ? 'alerta' : ''}`}>
                     {query.length}/80 caracteres
-                    {tieneCaracteresEspeciales(query) && <span className="caracteres-invalidos"> - Caracteres especiales se ignoran</span>}
+                    {tieneCaracteresProblema(query) && <span className="caracteres-invalidos"> - Caracteres especiales se ignoran</span>}
                 </div>
 
                 {/* Mostrar loading en área de resultados */}
