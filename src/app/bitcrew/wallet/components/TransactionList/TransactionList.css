@@ -34,21 +34,16 @@
   font-size: 16px;
 }
 
-/* --- INICIO DE LÍNEAS NUEVAS --- */
-
 /* Estilo base (móvil) para la lista escroleable */
 .transactions-list {
-  max-height: 300px; /* Altura máxima en celular */
-  overflow-y: auto;  /* Muestra la barra de scroll si se excede */
-  padding-right: 10px; /* Espacio para que el scroll no tape el contenido */
+  max-height: 300px; 
+  overflow-y: auto;
+  padding-right: 10px;
 }
 
 /* --- ESTILOS RESPONSIVOS (PARA DESKTOP) --- */
 @media (min-width: 768px) {
-  
-  /* Sobrescribe la altura máxima para desktop */
   .transactions-list {
-    max-height: 500px; /* Altura máxima en escritorio */
+    max-height: 500px;
   }
 }
-/* --- FIN DE LÍNEAS NUEVAS --- */
