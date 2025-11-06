@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react"; // 👈 2. Importar hooks
 import "leaflet/dist/leaflet.css";
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import Header from "./components/Header/Header";
+import { useUsuarioNuevo } from "./hooks/useUsuarioNuevo";
+import ModalGuiaUsuario from "./components/guiaUsuarios/modalUsuario";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +26,7 @@ export default function RootLayout({
 }>) {
   // 3. Estado para rastrear la conexión
   const [isOnline, setIsOnline] = useState(true);
+  const { modalAbierto, cerrarModal } = useUsuarioNuevo();
 
   // 4. Efecto para escuchar eventos de conexión
   useEffect(() => {
@@ -73,6 +75,7 @@ export default function RootLayout({
           {/* Aumenté el padding-top */}
           {children}
         </div>
+         <ModalGuiaUsuario isOpen={modalAbierto} onClose={cerrarModal} />
       </body>
     </html>
   );
