@@ -1,6 +1,4 @@
-/* --- Contenedor Principal --- */
 .wallet-app-container {
-  /* Define un ancho máximo y centra el contenido en la pantalla */
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
@@ -8,11 +6,10 @@
   background-color: #ffffff;
 }
 
-/* --- Header (Título y Acciones) --- */
 .wallet-header {
   display: flex;
-  justify-content: space-between; /* Texto a la izq., botón a la der. */
-  align-items: center; /* Centra verticalmente */
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
 }
 
@@ -36,8 +33,6 @@
   align-items: center;
 }
 
-/* --- Botón Base (Molde) --- */
-/* Estilos comunes que se aplican a AMBOS botones (móvil y desktop) */
 .reload-button {
   display: flex;
   align-items: center;
@@ -53,28 +48,21 @@
   color: white;
   background-image: linear-gradient(120deg, #11255A, #5C83BE, #8DC0FF);
   
-  /* Prepara la animación para el hover */
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-/* --- Estilo Específico de Botón Móvil --- */
+
 .reload-button.mobile-only {
   width: 50%;
   font-size: 14px;
   border-radius: 17px;
-  /* Centra el botón en la pantalla móvil */
   margin: 15px auto 0;
 }
 
-/* --- Lógica Responsiva (Mobile First) --- */
-/* Por defecto (móvil), ocultamos el botón de desktop */
 .reload-button.desktop-only {
   display: none;
 }
 
-
-/* --- Media Query para Desktop --- */
-/* Estilos que se aplican SÓLO en pantallas de 1024px o más */
 @media (min-width: 1024px) {
 
   .wallet-app-container {
@@ -82,21 +70,17 @@
   }
 
   .header-title h1 {
-    font-size: 30px; /* Título más grande en desktop */
+    font-size: 30px;
   }
 
-  /* Ocultamos el botón móvil */
   .reload-button.mobile-only {
     display: none;
   }
 
-  /* Mostramos el botón de desktop */
   .reload-button.desktop-only {
     display: flex;
-    /* El ancho es automático, no 100% */
   }
   
-  /* Efecto hover solo para el botón de desktop */
   .reload-button.desktop-only:hover {
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);

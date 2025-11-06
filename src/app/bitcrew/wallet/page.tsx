@@ -1,11 +1,9 @@
-// src/app/bitcrew/wallet/page.tsx
-'use client'; // Necesario si tus componentes usan hooks o estado
+'use client';
 
-import Wallet from './components/Wallet'; // Importamos el componente que hicimos
-import './components/Wallet.css';     // Importamos los estilos globales
+import Wallet from './components/Wallet'; 
+import './components/Wallet.css';
 
 export default function WalletPage() {
-  // Esta es la página real que Next.js mostrará
   return (
     <main>
       <Wallet />

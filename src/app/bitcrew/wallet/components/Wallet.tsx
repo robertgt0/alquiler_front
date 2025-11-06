@@ -13,7 +13,6 @@ const mockTransactions: Transaction[] = [
 ];
 
 const mockBalance = 12730.50;
-// ---------------------------------
 
 const Wallet: React.FC = () => {
   return (
