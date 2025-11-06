@@ -1,7 +1,7 @@
 
 
 import { UsuarioDocument } from "../../registro/interfaces/types";
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL!  ;
 
 export async function crearUsuario(usuario: UsuarioDocument) {
   const res = await fetch(`${API_URL}/api/teamsys/usuario`, {
@@ -37,30 +37,71 @@ export async function loginUsuario(correoElectronico: string, password: string) 
   return data;
 }
 
-/**
- * Solicita al backend que verifique el correo en BD y envíe el enlace mágico.
- * Respuestas esperadas:
- *  - 200 -> éxito (correo enviado)
- *  - 404 -> correo NO registrado (mostrar mensaje debajo del input)
- *  - otros -> error (banner rojo)
- */
+
 export async function solicitarEnlaceAcceso(email: string) {
-  const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const res = await fetch(`${API_URL}/api/teamsys/magic-link/request`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
 
+  // Si el correo no está registrado:
   if (res.status === 404) {
-    return { ok:false, notFoundEmail:true,
-      message:"No existe este correo en nuestro sistema. Por favor, ingresa un correo electrónico registrado" };
+    return {
+      ok: false,
+      notFoundEmail: true,
+      message:
+        "No existe este correo en nuestro sistema. Por favor, ingresa un correo electrónico registrado",
+    };
   }
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || "No se pudo enviar el enlace");
 
-  return { ok:true,
-    message: data?.message || "Te enviamos un enlace de acceso a tu correo electrónico. Válido solo por 5 minutos.",
-    data // puede traer magicLink para debug
+  // Intentamos parsear JSON
+  let data: any = {};
+  try {
+    data = await res.json();
+  } catch {}
+
+  if (!res.ok) {
+    throw new Error(
+      `HTTP ${res.status}: ${data?.message || "No se pudo enviar el enlace"}`
+    );
+  }
+
+  return {
+    ok: true,
+    message:
+      data?.message ||
+      "Te enviamos un enlace de acceso a tu correo electrónico. Válido solo por 5 minutos.",
+    data, // puede incluir { magicLink } para pruebas
   };
 }
+/** 
+ * Obtiene el perfil del usuario autenticado (usa Bearer accessToken).
+ * Se usa después del verify para extraer correo y authProvider desde /me.
+ */
+export async function obtenerPerfilActual(accessToken: string) {
+  const res = await fetch(`${API_URL}/api/teamsys/me`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok || json?.success === false) {
+    throw new Error(json?.message || `Error /me (${res.status})`);
+  }
+
+  return json as {
+    success: true;
+    data: {
+      correo: string;
+      authProvider?: string;
+      password?: string; // ⚠️ si el back la manda, no la guardes ni muestres
+      [k: string]: any;
+    };
+  };
+}
+

@@ -14,7 +14,7 @@ export default function IniLinkPage() {
   const [fieldError, setFieldError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [banner, setBanner] = React.useState<{ type: "ok" | "err" | null; text: string }>({ type: null, text: "" });
-  const [magicLink, setMagicLink] = React.useState<string | null>(null); // opcional QA
+  const [showModal, setShowModal] = React.useState(false);
 
   const validate = () => {
     if (!isValidEmail(email)) {
@@ -25,14 +25,28 @@ export default function IniLinkPage() {
     return true;
   };
 
+  const closeOrHide = () => {
+    try {
+      // intenta cerrar la ventana si fue abierta por window.open
+      window.close();
+    } catch {
+      // no hace nada si falla
+    }
+    // fallback: limpiar y ocultar modal
+    setShowModal(false);
+    setEmail("");
+    setFieldError(null);
+    setBanner({ type: null, text: "" });
+  };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;       // evita doble click
+    if (loading) return; // evita doble click
     if (!validate()) return;
 
     setLoading(true);
     setBanner({ type: null, text: "" });
-    setMagicLink(null);
+    setShowModal(false);
 
     try {
       const r = await solicitarEnlaceAcceso(email.trim());
@@ -43,8 +57,21 @@ export default function IniLinkPage() {
       }
       if (!r.ok) throw new Error(r.message);
 
-      setBanner({ type: "ok", text: r.message }); // “Válido solo por 5 minutos.”
-      if (r.data?.magicLink) setMagicLink(r.data.magicLink); // opcional QA
+      // mostrar modal de éxito (sin enseñar el link)
+      setBanner({ type: "ok", text: r.message });
+      setShowModal(true);
+
+      // auto-cerrar modal / pestaña después de 3.5s (intento)
+      setTimeout(() => {
+        // primero intenta cerrar la pestaña (funciona si fue abierta con window.open)
+        try {
+          window.close();
+        } catch {
+          // si no se puede, simplemente ocultamos el modal y limpiamos
+          setShowModal(false);
+          setEmail("");
+        }
+      }, 3500);
     } catch (err: any) {
       setBanner({ type: "err", text: err?.message || "Error inesperado" });
     } finally {
@@ -57,8 +84,7 @@ export default function IniLinkPage() {
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow">
         <h1 className="mb-2 text-center text-2xl font-semibold text-gray-800">Acceso rápido por enlace</h1>
         <p className="mb-6 text-center text-sm text-gray-600">
-          Ingresa tu correo y te enviaremos un enlace para ingresar a <strong>Servineo</strong>.
-          Es de <strong>un solo uso</strong> y dura <strong>5 minutos</strong>.
+          Ingresa tu correo y te enviaremos un enlace para ingresar a servineo
         </p>
 
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -77,7 +103,7 @@ export default function IniLinkPage() {
               aria-describedby={fieldError ? "email-error" : undefined}
               required
             />
-            <p className="mt-1 text-xs text-gray-500">Máx. 30 caracteres</p>
+            <p className="mt-1 text-xs text-gray-500"></p>
             {fieldError && <p id="email-error" className="mt-1 text-xs text-red-600">{fieldError}</p>}
           </div>
 
@@ -90,25 +116,30 @@ export default function IniLinkPage() {
           </button>
         </form>
 
-        {banner.type === "ok" && (
-          <div className="mt-4 rounded-xl border border-green-300 bg-green-50 p-3 text-sm text-green-800 whitespace-pre-line">
-            {banner.text}
-          </div>
-        )}
         {banner.type === "err" && (
           <div className="mt-4 rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-800">
             {banner.text}
           </div>
         )}
-
-        {/* Opcional: mostrar el enlace que retorna el back para pruebas */}
-        {magicLink && (
-          <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm">
-            <div className="font-medium mb-1">Enlace generado (QA):</div>
-            <div className="break-all text-gray-800">{magicLink}</div>
-          </div>
-        )}
       </div>
+
+      {/* Modal emergente de éxito */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg">
+            <h3 className="text-lg font-semibold text-green-700 mb-2">¡Listo!</h3>
+            <p className="text-sm text-gray-700 mb-4">{banner.text}</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={closeOrHide}
+                className="rounded px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
