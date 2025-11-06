@@ -7,9 +7,9 @@ interface ITrabajo {
   _id: string;
   descripcion: string;
   estado: string;
-  monto_a_pagar: number;
-  fecha_creacion: string;
-  fixer_id: string;
+  monto_a_pagar: number; // Usaremos esto como "Tipo de servicio" o similar
+  fecha_creacion: string; // Usaremos esto como "Fecha programada"
+  fixer_id: string; // Este campo no se muestra en la tarjeta, pero es parte de la interfaz
 }
 
 // --- 3. INTERFAZ DE ERRORES (simplificada) ---
@@ -24,33 +24,41 @@ function TrabajoCard({ trabajo }: { trabajo: ITrabajo }) {
         year: 'numeric', month: 'long', day: 'numeric'
     });
 
-    // Clases de Tailwind para los estados
-    const getEstadoClass = (estado: string) => {
+    // Función para obtener clases de color para el botón de estado
+    const getEstadoButtonClass = (estado: string) => {
         switch (estado) {
             case 'completado':
-                return 'bg-green-100 text-green-800';
+                return 'bg-[#2A87FF] hover:bg-blue-600'; // Azul
             case 'pagado':
-                return 'bg-blue-100 text-blue-800';
+                return 'bg-green-500 hover:bg-green-600'; // Verde
             case 'pendiente':
-                return 'bg-yellow-100 text-yellow-800';
+                return 'bg-yellow-500 hover:bg-yellow-600'; // Amarillo
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-gray-500 hover:bg-gray-600'; // Gris
         }
     };
 
     return (
-        <li className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-            <div className="flex justify-between items-center mb-2">
-                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${getEstadoClass(trabajo.estado)}`}>
-                    {trabajo.estado.toUpperCase()}
-                </span>
-                <span className="text-sm font-medium text-gray-900">
-                    Bs {trabajo.monto_a_pagar.toFixed(2)}
-                </span>
+        // --- CAMBIOS AQUÍ: Contenedor de la tarjeta ---
+        <li className="p-4 bg-blue-400 rounded-xl shadow-md flex justify-between items-center text-white">
+            {/* Sección de detalles (izquierda) */}
+            <div>
+                <p className="text-lg font-bold mb-1">Nombre del cliente: {trabajo.descripcion}</p>
+                <p className="text-sm text-gray-700">Tipo de servicio: {trabajo.monto_a_pagar.toFixed(2)}</p> {/* Usamos monto_a_pagar como ejemplo de "Tipo de servicio" */}
+                <p className="text-sm text-gray-700">Fecha programada: {fecha}</p>
             </div>
-            <p className="text-lg font-semibold text-gray-800 mb-1">{trabajo.descripcion}</p>
-            <p className="text-sm text-gray-500">Creado: {fecha}</p>
+
+            {/* Botón de estado (derecha) */}
+            <button className={`
+                py-2 px-4 rounded-lg font-semibold text-white
+                ${getEstadoButtonClass(trabajo.estado)}
+                shadow-sm transition duration-200 ease-in-out
+                self-center
+            `}>
+                {trabajo.estado.toUpperCase()}
+            </button>
         </li>
+        // --- FIN CAMBIOS ---
     );
 }
 
@@ -135,7 +143,7 @@ export default function HomePage() {
       {/* Columna 1: Título (Centrado y más grande) */}
       <div>
         <h1 className="hero-title text-center text-5xl font-bold my-8">
-            BUSCADOR DE TRABAJOS
+            BUSCAR TRABAJOS
         </h1>
       </div>
 
@@ -163,11 +171,10 @@ export default function HomePage() {
                   >
                     Usuario del Fixer
                   </label>
-                  {/* --- CAMBIO AQUÍ: Ancho fijo --- */}
                   <input 
                     id="usuario" 
                     name="usuario" 
-                    placeholder="Escribe el usuario (ej: tmolina, alopez)" 
+                    placeholder="Escribe el usuario" 
                     value={usuario} 
                     onChange={handleChange} 
                     required 
@@ -181,7 +188,6 @@ export default function HomePage() {
                 <div className="button-container flex justify-center">
                   <button 
                     type="submit" 
-                    // --- CAMBIO AQUÍ: Ancho fijo (removido px-6) ---
                     className="
                       py-3 w-64 rounded-lg font-semibold text-white 
                       bg-[#2A87FF] 
@@ -190,7 +196,6 @@ export default function HomePage() {
                       shadow-md hover:shadow-lg transition duration-300 ease-in-out
                       disabled:opacity-50 disabled:cursor-not-allowed
                     "
-                    // --- FIN CLASES ---
                     disabled={loading}
                   >
                     {loading ? "Buscando..." : "BUSCAR"}
@@ -212,8 +217,9 @@ export default function HomePage() {
       */}
       {trabajos.length > 0 && (
         <div className="form-wrapper" style={{ marginTop: '2rem' }}>
-          <div className="form-container">
-            <h2 className="text-xl font-semibold mb-4 text-gray-900">
+          {/* El contenedor principal de los resultados ya tiene el padding y el fondo, no necesitamos form-container adicional */}
+          <div className="form-container"> {/* Mantengo form-container para el fondo blanco, aunque no se ve en la imagen */}
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 text-center">
               Resultados para "{usuario}"
             </h2>
             <ul className="space-y-4">
