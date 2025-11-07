@@ -103,16 +103,11 @@ export function useAuthState() {
     }
   };
 
-  const activarMetodo = async (metodoId: string, datosAdicionales?: any) => {
-    try {
-      setError(null);
-      await apiService.activateAuthMethod(metodoId, datosAdicionales);
-      await cargarMetodos(); // Recargar para obtener estado actualizado
-    } catch (err) {
-      setError(`Error al activar método ${metodoId}: ${err}`);
-      throw err;
-    }
-  };
+  const activarMetodo = async (metodoId: string) => {
+  setError(null);
+  await cargarMetodos(); // actualiza visualmente
+};
+
 
   const eliminarMetodo = async (metodoId: string) => {
     try {
@@ -128,7 +123,7 @@ export function useAuthState() {
         throw new Error("No se puede eliminar el único método de autenticación");
       }
 
-      await apiService.deactivateAuthMethod(metodoId);
+      //await apiService.deactivateAuthMethod(metodoId);
       await cargarMetodos(); // Recargar para obtener estado actualizado
     } catch (err) {
       setError(`Error al eliminar método ${metodoId}: ${err}`);

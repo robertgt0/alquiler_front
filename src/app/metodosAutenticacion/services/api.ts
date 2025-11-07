@@ -4,7 +4,7 @@ import { MetodoAutenticacion } from '../interfaces/types';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 class ApiService {
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  /*private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem('authToken');
     
     const config: RequestInit = {
@@ -24,7 +24,7 @@ class ApiService {
     }
     
     return response.json();
-  }
+  }*/
 
   // ✅ MÉTODOS DE AUTENTICACIÓN - CORREGIDOS
 
@@ -60,7 +60,7 @@ class ApiService {
     // Si quieres mantener la llamada real al backend, descomenta esta línea:
     // return this.request<MetodoAutenticacion[]>('/auth/methods');
   }
-
+/*
   // ✅ CORREGIDO: Método para configurar Google con email
   async setupGoogleAuth(email: string): Promise<void> {
     return this.request<void>('/auth/setup-google', {
@@ -77,18 +77,6 @@ class ApiService {
     });
   }
 
-  async activateAuthMethod(methodId: string, data?: any): Promise<void> {
-    return this.request<void>(`/auth/methods/${methodId}/activate`, {
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  async deactivateAuthMethod(methodId: string): Promise<void> {
-    return this.request<void>(`/auth/methods/${methodId}/deactivate`, {
-      method: 'POST',
-    });
-  }
 
   // ✅ CORREGIDO: Renombrar este método para evitar conflicto
   async initiateGoogleOAuth(): Promise<{ authUrl: string }> {
@@ -115,7 +103,7 @@ class ApiService {
       body: JSON.stringify(credentials),
     });
   }
-
+*/
 async getCurrentUser(): Promise<any> {
     try {
       const userDataString = sessionStorage.getItem("userData");

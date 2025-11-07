@@ -6,7 +6,7 @@ import { GestorMetodosProps, ModosInterfaz, MetodoAutenticacion } from '../inter
 import MetodoActivoPanel from '../components/MetodoActivoPanel';
 import MetodosDisponiblesList from '../components/MetodosDisponiblesList';
 import ModalContrasena from '../components/ModalContrasena';
-import { apiService } from '../services/api';
+//import { apiService } from '../services/api';
 import { eliminarAutenticacion,agregarAutenticacion } from '@/app/teamsys/services/UserService';
 
 export default function GestorMetodos({
@@ -178,8 +178,8 @@ export default function GestorMetodos({
       console.log('📧 Activando Google con email:', userEmail);
       
       // 📌 ENVIAR SOLO EL EMAIL AL BACKEND
-      await apiService.setupGoogleAuth(userEmail);
-      await activarMetodo('google');
+      /*await apiService.setupGoogleAuth(userEmail);
+      await activarMetodo('google');*/
       
       setCargandoGoogle(false);
       desactivarModos();
@@ -214,12 +214,12 @@ export default function GestorMetodos({
       
       // 📌 ENVIAR EMAIL + CONTRASEÑA AL BACKEND
       const resp=await agregarAutenticacion(userEmail,"local",contrasena)
-      if(!resp.success) throw new Error("no se pudo")
+      if(!resp.success) throw new Error(resp.message)
 
-      if (metodoSeleccionadoParaContrasena) {
-        await activarMetodo(metodoSeleccionadoParaContrasena);
-      }
-      
+      //if (metodoSeleccionadoParaContrasena) {
+        //await activarMetodo(metodoSeleccionadoParaContrasena);
+      //}
+      if (recargarMetodos) await recargarMetodos();
       setModalContrasenaAbierto(false);
       setMetodoSeleccionadoParaContrasena(null);
       desactivarModos();
@@ -265,9 +265,11 @@ export default function GestorMetodos({
       }
       for (let id of modos.metodosAEliminar) {
         if(id==="correo")id="local";
+        console.log(id);
         const resp=await eliminarAutenticacion(userEmail,id)
+        console.log(resp);
       }
-      
+      if (recargarMetodos) await recargarMetodos();
       desactivarModos();
       
     } catch (err) {

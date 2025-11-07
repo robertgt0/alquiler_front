@@ -108,7 +108,9 @@ export default function SimpleProfileMenu() {
       {showSubMenu && (
   <div className="flex flex-col space-y-3 pl-4 mt-3 border-l-2 border-gray-200
                   max-h-[60vh] sm:max-h-[50vh] md:max-h-[40vh] overflow-y-auto">
-    <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
+    <button 
+    
+    className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
       Cambiar contraseña
     </button>
     <button
