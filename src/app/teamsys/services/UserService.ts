@@ -45,6 +45,33 @@ export async function cambiarTelefono(telefono:string, id:string) {
         });
         return res.json();
       }
+export async function agregarAutenticacion(usuario:string,provider:string,password:string) {
+  const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: `{"provider":"${provider}","password":"${password}"}`
+  });
+  //console.log("Respuesta del servidor:", res.body);
+  return res.json();
+}
+
+export async function eliminarAutenticacion(usuario:string,provider:string) {
+  const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: `{"provider":"${provider}"}`
+  });
+  //console.log("Respuesta del servidor:", res.body);
+  return res.json();
+}
+export async function obtenerMetodoAutenticacion(usuario: string) {
+    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
+    method: "GET"
+  });
+  console.log("Respuesta del servidor:", res.body);
+  if (!res.ok) throw new Error("datos Incorrectos");
+  return res.json();
+}
 
 
 
