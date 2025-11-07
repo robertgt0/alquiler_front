@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, AlertCircle, CheckCircle, X } from 'lucide-react';
 
 type Appointment = {
   id: string;
@@ -60,8 +60,8 @@ export default function CancelReprogramModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogTitle className="text-xl font-bold flex items-center gap-2">
+      <DialogContent className="max-w-md bg-white rounded-2xl p-8 shadow-2xl">
+        <DialogTitle className="text-2xl font-bold flex items-center gap-2 mb-6">
           {activeTab === 'cancel' ? (
             <>
               <AlertCircle className="text-red-500" /> Cancelar Cita
@@ -74,7 +74,7 @@ export default function CancelReprogramModal({
         </DialogTitle>
         
         {/* Pestañas */}
-        <div className="flex border-b">
+        <div className="flex border-b mb-6">
           <button
             className={`flex-1 py-2 font-medium ${activeTab === 'cancel' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('cancel')}
@@ -90,7 +90,7 @@ export default function CancelReprogramModal({
         </div>
         
         {/* Información de la cita */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-4">
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
           <h4 className="font-semibold mb-2">{appointment.servicio}</h4>
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
             <Calendar className="w-4 h-4" />

@@ -8,7 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
-} from "@radix-ui/react-dropdown-menu";
+} from '@radix-ui/react-dropdown-menu';
 import CancelReprogramModal from './CancelReprogramModal';
 
 type Appointment = {
@@ -34,34 +34,27 @@ export default function AppointmentActions({
   const [actionType, setActionType] = useState<'cancel' | 'reprogram'>('cancel');
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="w-4 h-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem 
-            onClick={() => {
-              setActionType('cancel');
-              setIsModalOpen(true);
-            }}
-            className="text-red-600"
-          >
-            <X className="w-4 h-4 mr-2" /> Cancelar
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={() => {
-              setActionType('reprogram');
-              setIsModalOpen(true);
-            }}
-            className="text-blue-600"
-          >
-            <Calendar className="w-4 h-4 mr-2" /> Reprogramar
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className="flex gap-3">
+      <Button 
+        variant="outline" 
+        onClick={() => {
+          setActionType('cancel');
+          setIsModalOpen(true);
+        }}
+        className="px-5 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all font-medium"
+      >
+        Cancelar
+      </Button>
+      
+      <Button 
+        onClick={() => {
+          setActionType('reprogram');
+          setIsModalOpen(true);
+        }}
+        className="px-5 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-all font-medium shadow-md"
+      >
+        Reprogramar
+      </Button>
 
       <CancelReprogramModal
         appointment={appointment}
@@ -70,6 +63,6 @@ export default function AppointmentActions({
         onCancel={onCancel}
         onReprogram={onReprogram}
       />
-    </>
+    </div>
   );
 }
