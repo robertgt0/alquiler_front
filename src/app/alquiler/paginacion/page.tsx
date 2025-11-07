@@ -26,7 +26,7 @@ function LoadingFallback() {
 function BusquedaContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Obtener parámetros de URL
   const urlQuery = searchParams.get("q") || "";
   const urlPage = searchParams.get("page");
@@ -41,11 +41,14 @@ function BusquedaContent() {
   const [buscando, setBuscando] = useState(false);
   const [estadoBusqueda, setEstadoBusqueda] = useState<"idle" | "success" | "error">("idle");
 
+  // 🔥 NUEVO ESTADO: Para manejar errores de caracteres no aceptados
+  const [errorCaracteres, setErrorCaracteres] = useState<string>("");
+
   // Efecto para sincronizar estados con URL y mantener la persistencia
   useEffect(() => {
     // Preservar los parámetros actuales de la URL
     const currentParams = new URLSearchParams(window.location.search);
-    
+
     // Validar y mantener la página actual
     if (urlPage) {
       const pageNum = parseInt(urlPage, 10);
@@ -69,8 +72,8 @@ function BusquedaContent() {
 
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
-    type ModoVista = "jobs" | "usuarios";
-    const [modoVista, setModoVista] = useState<ModoVista>("jobs");
+  type ModoVista = "jobs" | "usuarios";
+  const [modoVista, setModoVista] = useState<ModoVista>("jobs");
   const [filtersNoResults, setFiltersNoResults] = useState(false);
   const [filtrosAplicados, setFiltrosAplicados] = useState(false);
 
@@ -88,37 +91,37 @@ function BusquedaContent() {
     }
   }, [allJobs]);
 
- // ---------------- Opciones de ordenamiento ----------------
-const opcionesOrdenamiento = [
-  "Fecha (Reciente)",
-  "Nombre A-Z",
-  "Nombre Z-A",
-  "Mayor Calificación (⭐)",
-];
+  // ---------------- Opciones de ordenamiento ----------------
+  const opcionesOrdenamiento = [
+    "Fecha (Reciente)",
+    "Nombre A-Z",
+    "Nombre Z-A",
+    "Mayor Calificación (⭐)",
+  ];
 
-// ---------------- Funciones de ordenamiento ----------------
-const ordenarItems = (opcion: string, lista: Job[]) => {
-  const sorted = [...lista];
-  switch (opcion) {
-    case "Nombre A-Z":
-      // Cambiar de title a company para ordenar por nombre de persona
-      sorted.sort((a, b) => (a.company || "").localeCompare(b.company || ""));
-      break;
-    case "Nombre Z-A":
-      // Cambiar de title a company para ordenar por nombre de persona
-      sorted.sort((a, b) => (b.company || "").localeCompare(a.company || ""));
-      break;
-    case "Fecha (Reciente)":
-      sorted.sort(
-        (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
-      );
-      break;
-    case "Mayor Calificación (⭐)":
-      sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      break;
-  }
-  return sorted;
-};
+  // ---------------- Funciones de ordenamiento ----------------
+  const ordenarItems = (opcion: string, lista: Job[]) => {
+    const sorted = [...lista];
+    switch (opcion) {
+      case "Nombre A-Z":
+        // Cambiar de title a company para ordenar por nombre de persona
+        sorted.sort((a, b) => (a.company || "").localeCompare(b.company || ""));
+        break;
+      case "Nombre Z-A":
+        // Cambiar de title a company para ordenar por nombre de persona
+        sorted.sort((a, b) => (b.company || "").localeCompare(a.company || ""));
+        break;
+      case "Fecha (Reciente)":
+        sorted.sort(
+          (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
+        );
+        break;
+      case "Mayor Calificación (⭐)":
+        sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+    }
+    return sorted;
+  };
 
   const ordenarUsuarios = (opcion: string, lista: UsuarioResumen[]) => {
     const sorted = [...lista];
@@ -146,12 +149,12 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
   const jobsToDisplay = useMemo(() => {
     // Usar siempre allJobs como fuente de datos principal
     let data = allJobs;
-    
+
     // Si hay resultados de búsqueda, usar esos en su lugar
     if (searchResults.length > 0) {
       data = searchResults;
     }
-    
+
     // Log para debug
     console.log('Total trabajos disponibles:', data.length);
     const normalizar = (texto: string) =>
@@ -179,7 +182,6 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     [sortBy, usuariosFiltrados]
   );
 
-  
   // ---------------- Hook de paginación ----------------
   const {
     currentPage,
@@ -190,7 +192,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     handlePrevPage,
     totalItems,
   } = usePagination(jobsToDisplay, itemsPerPage);
-   const sinResultados = currentItems.length === 0;
+  const sinResultados = currentItems.length === 0;
 
   const handleViewDetails = (id: string | number) => {
     router.push(`/alquiler/${id}`);
@@ -251,6 +253,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
       setSearchResults(allJobs);
       setFiltrosAplicados(false);
       setSortBy("Fecha (Reciente)");
+      setErrorCaracteres(""); // 🔥 Limpiar error al limpiar búsqueda
     }
   }, [searchTerm, allJobs]);
 
@@ -260,34 +263,52 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     resultados: Job[],
     maybeIdOrActualizar?: number | boolean
   ) => {
+    console.log('🎯 [PADRE] handleSearchResults llamado:', {
+      termino,
+      resultadosCount: resultados.length,
+      parametroExtra: maybeIdOrActualizar
+    });
+
     setBuscando(true);
     setEstadoBusqueda("idle");
+    setErrorCaracteres(""); // 🔥 Limpiar error anterior
 
     try {
-      let searchId: number | undefined;
       let actualizarUrl = true;
 
-      if (typeof maybeIdOrActualizar === "number") {
-        searchId = maybeIdOrActualizar;
-      } else if (typeof maybeIdOrActualizar === "boolean") {
+      // 🔥 SIMPLIFICAR: Solo manejar el caso de actualizar URL
+      if (typeof maybeIdOrActualizar === "boolean") {
         actualizarUrl = maybeIdOrActualizar;
       }
 
-      if (typeof searchId === "number") {
-        if (searchId < latestSearchIdRef.current) {
-          setBuscando(false);
-          return;
-        }
-        latestSearchIdRef.current = searchId;
+      // 🔥 CORREGIDO: Expresión regular CONSISTENTE con normalizacion.ts
+      // SOLO caracteres realmente problemáticos: @ # $ % & * _ + [ ] { } | \ < >
+      const tieneCaracteresProblema = /[@#$%^&*_+=[\]{}|\\<>]/.test(termino);
+
+      console.log('🔍 [PADRE] Análisis caracteres:', {
+        termino,
+        tieneCaracteresProblema,
+        caracteresDetectados: termino.match(/[@#$%^&*_+=[\]{}|\\<>]/g) || []
+      });
+
+      if (resultados.length === 0 && tieneCaracteresProblema) {
+        setErrorCaracteres(`No se pueden realizar búsquedas con caracteres especiales como @, #, $, etc. en "${termino}"`);
+        setEstadoBusqueda("error");
       } else {
-        latestSearchIdRef.current += 1;
+        setErrorCaracteres(""); // Limpiar error si no hay caracteres problema
       }
 
       setSearchTerm(termino);
       setSearchResults(resultados);
-      if (actualizarUrl) actualizarURL(termino);
+
+      if (actualizarUrl) {
+        actualizarURL(termino);
+      }
 
       setEstadoBusqueda("success");
+
+      console.log('✅ [PADRE] Resultados actualizados correctamente:', resultados.length);
+
     } catch (error) {
       console.error("Error en búsqueda:", error);
       setEstadoBusqueda("error");
@@ -295,13 +316,14 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
       setBuscando(false);
     }
   };
-  
+
   const handleClearSearch = () => {
     setSearchTerm("");
     setSearchResults(allJobs);
     setFiltrosAplicados(false);
+    setErrorCaracteres(""); // 🔥 Limpiar error al limpiar
     actualizarURL("");
-     setTimeout(() => setSortBy("Fecha (Reciente)"), 0);
+    setTimeout(() => setSortBy("Fecha (Reciente)"), 0);
   };
 
   // NUEVO HANDLER PARA LIMPIAR FILTROS
@@ -311,6 +333,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
     setUsuariosFiltrados([]);
     setModoVista("jobs");
     setSearchResults(allJobs);
+    setErrorCaracteres(""); // 🔥 Limpiar error al limpiar filtros
     setSortBy("Fecha (Reciente)");  // Asegurar que se muestren todos los jobs
   };
 
@@ -325,10 +348,13 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
 
   // ---------------- Lógica para determinar qué mostrar ----------------
   // SOLUCIÓN: Cambiar la condición para que solo muestre "sin resultados" cuando realmente hay filtros activos
-  const mostrarSinResultadosFiltros = filtrosAplicados && 
-                                    modoVista === "jobs" && 
-                                    usuariosFiltrados.length === 0 &&
-                                    filtersNoResults; // Agregar esta condición
+  const mostrarSinResultadosFiltros = filtrosAplicados &&
+    modoVista === "jobs" &&
+    usuariosFiltrados.length === 0 &&
+    filtersNoResults; // Agregar esta condición
+
+  // 🔥 NUEVA LÓGICA: Determinar si mostrar error de caracteres
+  const mostrarErrorCaracteres = errorCaracteres && !buscando;
 
   // ---------------- Render ----------------
   return (
@@ -354,6 +380,7 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
               setUsuariosFiltrados(usuarios);
               setModoVista(usuarios.length > 0 ? "usuarios" : "jobs");
               setFiltrosAplicados(true);
+              setErrorCaracteres(""); // 🔥 Limpiar error al aplicar filtros
             }}
             onFilterNoResults={(noResults: boolean) => {
               console.log("🚫 Actualizando estado de sin resultados:", noResults);
@@ -381,16 +408,16 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
             {usuariosFiltrados.length > 0 ? (
               <>
                 <div className="UserProfilesContainer space-y-6">
-                    {usuariosFiltrados.map((usuario) => (
-                      <UserProfileCard
-                        key={usuario.id_usuario}
-                        usuario={usuario}
-                        onContactClick={() => {
-                          console.log('Navegando a usuario:', usuario);
-                          router.push(`/alquiler/${usuario.id_usuario}`);
-                        }}
-                      />
-                    ))}
+                  {usuariosFiltrados.map((usuario) => (
+                    <UserProfileCard
+                      key={usuario.id_usuario}
+                      usuario={usuario}
+                      onContactClick={() => {
+                        console.log('Navegando a usuario:', usuario);
+                        router.push(`/alquiler/${usuario.id_usuario}`);
+                      }}
+                    />
+                  ))}
                 </div>
                 <p className="text-sm text-gray-600 mt-4">
                   Se encontraron {usuariosFiltrados.length} profesionales
@@ -420,8 +447,8 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
             ) : (
               <>
                 <div className="text-xl text-blue-700 font-semibold mb-6">
-                  {mostrarSinResultadosFiltros 
-                    ? "No se encontraron ofertas" 
+                  {mostrarSinResultadosFiltros
+                    ? "No se encontraron ofertas"
                     : `Mostrando ${currentItems.length} de ${totalItems} Ofertas Disponibles`}
                 </div>
 
@@ -431,13 +458,39 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
                       <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
                       <p className="mt-2 text-lg text-gray-600">Buscando resultados para &quot;{searchTerm}&quot;...</p>
                     </div>
+                  ) : mostrarErrorCaracteres ? (
+                    // 🔥 NUEVO CASO: Error por caracteres no aceptados
+                    <div className="text-center py-8">
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
+                        <div className="flex items-center justify-center mb-3">
+                          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                            <span className="text-red-600 text-xl">⚠️</span>
+                          </div>
+                        </div>
+                        <p className="text-lg text-red-700 font-medium mb-2">
+                          Caracteres especiales no permitidos
+                        </p>
+                        <p className="text-gray-600 mb-4">
+                          {errorCaracteres}
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">
+                          Por favor, usa solo letras, números y espacios para tu búsqueda.
+                        </p>
+                        <button
+                          onClick={handleClearSearch}
+                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Limpiar búsqueda
+                        </button>
+                      </div>
+                    </div>
                   ) : mostrarSinResultadosFiltros ? (
                     // CASO 1: Filtros aplicados sin resultados - NO MOSTRAR TARJETAS
                     <div className="text-center py-8">
                       <p className="text-xl text-gray-600 mb-4">
                         No se encontraron ofertas con los filtros seleccionados
                       </p>
-                      <button 
+                      <button
                         onClick={handleClearFilters}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                       >
@@ -453,8 +506,8 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
                           : "No hay ofertas de trabajo disponibles en este momento."}
                       </p>
                       {searchTerm && (
-                        <button 
-                          onClick={handleClearSearch} 
+                        <button
+                          onClick={handleClearSearch}
                           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                           Ver todas las ofertas
