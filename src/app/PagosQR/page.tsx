@@ -125,7 +125,7 @@ const RecargaQR: React.FC = () => {
                   const val = e.target.value;
                   if (/^\d*$/.test(val) && val.length <= 8) setNit(val);
                 }}
-                placeholder="12345678"
+                placeholder="ingresar numero"
               />
               <select
                 value={tipoDoc}
@@ -139,18 +139,31 @@ const RecargaQR: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Nro. teléfono</label>
-            <input
-              type="text"
-              className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
-              value={telefono}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (/^\d*$/.test(val) && val.length <= 8) setTelefono(val);
-              }}
-              placeholder="78667764"
-            />
+            <label
+              className="block text-sm font-medium mb-1"
+              style={{ color: "#11255A" }}
+            >
+              Nro. teléfono
+            </label>
+
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 font-semibold">
+                +591
+              </span>
+              <input
+                type="text"
+                className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 pl-16 pr-3 py-2 text-black placeholder-gray-400`}
+                value={telefono}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // Solo números y máximo 8 dígitos
+                  if (/^\d*$/.test(val) && val.length <= 8) setTelefono(val);
+                }}
+                placeholder="ingresar nro telf."
+              />
+            </div>
           </div>
+
 
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Correo electrónico</label>
@@ -177,7 +190,7 @@ const RecargaQR: React.FC = () => {
 
                 }
               }}
-              placeholder="ingrese correo"
+              placeholder="ingresar correo"
             />
             {correoError && (
               <p className="text-red-500 text-sm mt-1">{correoError}</p>
