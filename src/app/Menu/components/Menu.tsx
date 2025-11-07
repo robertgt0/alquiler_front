@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { CerrarSesiones } from "./cerrarSesiones";
 import CambiarTelefono from "./cambiarTelefono";
+import PaginaMetodosAutenticacion from "../../metodosAutenticacion/metodosAuten/pagina";
+
 
 export default function SimpleProfileMenu() {
   const [showCerrarSesionMessage, setShowCerrarSesionMessage] = useState(false);
   const [showCambiarTelefono, setShowCambiarTelefono] = useState(false);
+  const [showMetodosAutenticacion, setShowMetodosAutenticacion] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [user, setUser] = useState<{
     id: string;
@@ -37,15 +40,17 @@ export default function SimpleProfileMenu() {
   const handleCerrarSesionesClick = () => setShowCerrarSesionMessage(true);
   const handleCambiarTelefonoClick = () => setShowCambiarTelefono(true);
   const handleCerrarCambiarTelefono = () => setShowCambiarTelefono(false);
+  const handleMetodosAutenticacionClick = () => setShowMetodosAutenticacion(true);
+  const handleCerrarMetodosAutenticacion = () => setShowMetodosAutenticacion(false);
   const toggleSubMenu = () => setShowSubMenu(prev => !prev);
 
   useEffect(() => {
     // Obtener usuario desde localStorage
-  const storedUser = sessionStorage.getItem("userData");
-  if (!storedUser) return;
+    const storedUser = sessionStorage.getItem("userData");
+    if (!storedUser) return;
 
-  try {
-    const parsed = JSON.parse(storedUser);
+    try {
+      const parsed = JSON.parse(storedUser);
 
     setUser({
       id: parsed._id || parsed.id,
@@ -144,6 +149,39 @@ export default function SimpleProfileMenu() {
         <CambiarTelefono onClose={handleCerrarCambiarTelefono} 
         userId={user?.id || ""}
         telefonoActual={user?.telefono || ""} />
+      )}
+      {showMetodosAutenticacion && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Métodos de Autenticación
+              </h2>
+              <button
+                onClick={handleCerrarMetodosAutenticacion}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-semibold"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content - Usando directamente el componente de página */}
+            <div className="p-4">
+              <PaginaMetodosAutenticacion />
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end p-6 border-t border-gray-200">
+              <button
+                onClick={handleCerrarMetodosAutenticacion}
+                className="px-6 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition duration-200 font-semibold"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
