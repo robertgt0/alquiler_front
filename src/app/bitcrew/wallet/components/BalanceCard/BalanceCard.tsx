@@ -1,6 +1,6 @@
 // src/app/bitcrew/wallet/components/BalanceCard.tsx
 import React, { useState } from 'react';
-import './BalanceCard';
+import './BalanceCard.css';
 
 // Importa los iconos de la librería react-icons
 import { FiRefreshCw, FiEye, FiEyeOff } from 'react-icons/fi'; 
