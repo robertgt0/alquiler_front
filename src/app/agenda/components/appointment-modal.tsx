@@ -7,6 +7,7 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
 import { cn } from "@/lib/utils";
 import { createAndNotify } from "@/lib/appointments";
+import { updateAndNotify } from "@/lib/appointments";
 import LocationForm from "./LocationForms";
 import ModalConfirmacion from "./ModalConfirmacion";
 
@@ -320,6 +321,7 @@ export function AppointmentModal({
       let url = `${API_URL}/api/devcode/citas`;
       let method = "POST";
 
+      
       if (isEditing && appointmentId) {
         url = `${API_URL}/api/devcode/citas/${appointmentId}`;
         method = "PUT";
@@ -340,43 +342,49 @@ export function AppointmentModal({
       }
       */
      
-     // 💡 Si es edición, actualizamos SIN enviar notificación.
-      if (isEditing && appointmentId) {
-        const res = await fetch(`${API_URL}/api/devcode/citas/${appointmentId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+     //Si es edición, actualizamos SIN enviar notificación.
+      const url = isEditing && appointmentId
+        ? `${API_URL}/api/devcode/citas/${appointmentId}`
+        : `${API_URL}/api/devcode/citas`;
 
-        const body = await res.json().catch(() => ({}));
+      const method = isEditing ? "PUT" : "POST";
 
-        if (!res.ok) {
-          if (res.status === 409) return alert(body?.message || "Horario no disponible.");
-          return alert(body?.message || `Error HTTP ${res.status}`);
-        }
+      // Llamada principal al backend (crea o actualiza la cita)
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-        setShowConfirmationModal(true);
-        onOpenChange(false);
-        return;
+      const body = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (res.status === 409) return alert(body?.message || "Horario no disponible.");
+        return alert(body?.message || `Error HTTP ${res.status}`);
       }
 
-      // 🧠 En caso de creación nueva → crea y notifica
-      const resultNotify = await createAndNotify(payload);
-
-      if (!resultNotify.ok) {
-        console.error("❌ Error al crear o notificar:", resultNotify.error);
-        alert("No se pudo crear la cita ni enviar la notificación.");
-        return;
-      }
-
-      if (!resultNotify.notified) {
-        alert("La cita se creó correctamente, pero no se pudo enviar la notificación.");
+      // Enviar notificación según el caso
+      let resultNotify;
+      if (isEditing) {
+        console.log("📨 Enviando notificación de actualización...");
+        resultNotify = await updateAndNotify(payload);
       } else {
-        console.log("✅ Cita creada y notificación enviada:", resultNotify);
+        console.log("📨 Enviando notificación de creación...");
+        resultNotify = await createAndNotify(payload);
       }
 
+      // Validar resultado de notificación
+      if (!resultNotify.ok) {
+        console.warn("⚠️ La cita fue procesada, pero falló la notificación.");
+        alert("La cita fue registrada correctamente, pero no se pudo enviar la notificación.");
+      } else if (!resultNotify.notified) {
+        console.warn("⚠️ Notificación no confirmada, pero cita guardada.");
+        alert("Cita registrada, pero la notificación no se confirmó.");
+      } else {
+        console.log("✅ Notificación enviada exitosamente:", resultNotify);
+      }
 
-      // Mostramos modal de confirmación y cerramos el modal principal
+      // Mostrar modal de confirmación y limpiar estado
       setShowConfirmationModal(true);
       onOpenChange(false);
       setSelectedTime(null);
@@ -384,7 +392,7 @@ export function AppointmentModal({
 
     } catch (err) {
       console.error(err);
-      alert("No se pudo crear la cita");
+      alert("No se pudo crear o actualizar la cita");
     } finally {
       setSaving(false);
     }
