@@ -19,17 +19,20 @@ type Appointment = {
   proveedor: {
     nombre: string;
   };
-  estado: 'programado' | 'pendiente' | 'cancelado';
+  estado: 'agendado' | 'pendiente' | 'cancelado' | 'concluido' | 'reprogramar';
   solicitud?: string;
   ubicacion?: string;
+  solicitudId?: string;
+  solicitudFecha?: string;
 };
 
 export default function CitasPage() {
-  const [activeTab, setActiveTab] = useState<'citas' | 'horarios'>('citas');
   const [activeSubTab, setActiveSubTab] = useState<'programadas' | 'cancelar'>('programadas');
   const [citas, setCitas] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filterValue, setFilterValue] = useState('Todos');
   const { notify } = useNotifications();
+  const [userRole, setUserRole] = useState<'requester' | 'fixer'>('requester'); // 'requester' por defecto
 
   useEffect(() => {
     // Datos de ejemplo con la estructura ampliada
@@ -37,23 +40,51 @@ export default function CitasPage() {
       setCitas([
         {
           id: '1',
-          fecha: '2025-11-10',
+          fecha: '2025-11-05',
           horario: { inicio: '14:00', fin: '15:00' },
-          servicio: { nombre: 'Reparación de tuberías' },
-          proveedor: { nombre: 'Juan Pérez' },
-          estado: 'programado',
-          solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente',
-          ubicacion: 'Calle siempre viva 123'
+          servicio: { nombre: 'Servicio plomería' },
+          proveedor: { nombre: 'Jose Gutierrez' },
+          estado: 'reprogramar',
+          solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
+          ubicacion: 'Calle siempre viva',
+          solicitudId: '28/10/2025',
+          solicitudFecha: '9:38:39'
         },
         {
           id: '2',
-          fecha: '2025-11-12',
-          horario: { inicio: '10:00', fin: '11:30' },
-          servicio: { nombre: 'Instalación eléctrica' },
-          proveedor: { nombre: 'María López' },
+          fecha: '2025-11-09',
+          horario: { inicio: '14:00', fin: '15:00' },
+          servicio: { nombre: 'Servicio plomería' },
+          proveedor: { nombre: 'Jose Gutierrez' },
+          estado: 'cancelado',
+          solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
+          ubicacion: 'Calle siempre viva',
+          solicitudId: '28/10/2025',
+          solicitudFecha: '9:38:39'
+        },
+        {
+          id: '3',
+          fecha: '2025-11-05',
+          horario: { inicio: '14:00', fin: '15:00' },
+          servicio: { nombre: 'Servicio plomería' },
+          proveedor: { nombre: 'Jose Gutierrez' },
           estado: 'pendiente',
-          solicitud: 'Necesito revisar la instalación eléctrica de mi cocina',
-          ubicacion: 'Avenida Central 456'
+          solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
+          ubicacion: 'Calle siempre viva',
+          solicitudId: '28/10/2025',
+          solicitudFecha: '9:38:39'
+        },
+        {
+          id: '4',
+          fecha: '2025-11-05',
+          horario: { inicio: '14:00', fin: '15:00' },
+          servicio: { nombre: 'Servicio plomería' },
+          proveedor: { nombre: 'Jose Gutierrez' },
+          estado: 'concluido',
+          solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
+          ubicacion: 'Calle siempre viva',
+          solicitudId: '28/10/2025',
+          solicitudFecha: '9:38:39'
         }
       ]);
       setIsLoading(false);
@@ -61,11 +92,42 @@ export default function CitasPage() {
   }, []);
 
   const handleCancel = async (id: string, reason: string) => {
-    // ... (lógica de cancelación existente)
+    try {
+      // Aquí iría la llamada al endpoint: PUT /api/citas/{id}/cancelar
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setCitas(citas.map(cita => 
+        cita.id === id 
+          ? { ...cita, estado: 'cancelado' } 
+          : cita
+      ));
+      
+      notify('Cita cancelada exitosamente', 'success');
+    } catch (error) {
+      notify('Error al cancelar cita', 'error');
+    }
   };
 
   const handleReprogram = async (id: string, newDate: string, newTime: string) => {
-    // ... (lógica de reprogramación existente)
+    try {
+      // Aquí iría la llamada al endpoint: PUT /api/citas/{id}/reprogramar
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setCitas(citas.map(cita => 
+        cita.id === id 
+          ? { 
+              ...cita, 
+              fecha: newDate,
+              horario: { inicio: newTime, fin: cita.horario.fin },
+              estado: 'reprogramar'
+            } 
+          : cita
+      ));
+      
+      notify('Cita reprogramada exitosamente', 'success');
+    } catch (error) {
+      notify('Error al reprogramar cita', 'error');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -78,61 +140,83 @@ export default function CitasPage() {
     return new Date(dateString).toLocaleDateString('es-ES', options);
   };
 
+  const getEstadoConfig = (estado: string) => {
+    switch (estado) {
+      case 'agendado':
+        return { color: 'bg-green-500', text: 'Agendado', textColor: 'text-green-600' };
+      case 'cancelado':
+        return { color: 'bg-red-500', text: 'Cancelado', textColor: 'text-red-600' };
+      case 'pendiente':
+        return { color: 'bg-yellow-500', text: 'Pendiente', textColor: 'text-yellow-600' };
+      case 'concluido':
+        return { color: 'bg-green-600', text: 'Concluido', textColor: 'text-green-700' };
+      case 'reprogramar':
+        return { color: 'bg-orange-500', text: 'Reprogramar Cita', textColor: 'text-orange-600' };
+      default:
+        return { color: 'bg-gray-500', text: estado, textColor: 'text-gray-600' };
+    }
+  };
+
   return (
-    <div className="min-h-full bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Navbar */}
-      <nav className="bg-white shadow-lg border-b-4 border-blue-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex-shrink-0">
-              <h1 className="text-2xl font-bold text-blue-900">Mi Consultorio</h1>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-8">
-                <button 
-                  onClick={() => setActiveTab('citas')}
-                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'citas' ? 'text-blue-900 border-b-2 border-blue-900' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300 border-transparent'} transition-all duration-200`}
-                >
-                  Mis Citas
-                </button>
-                <button 
-                  onClick={() => setActiveTab('horarios')}
-                  className={`px-3 py-2 text-sm font-medium ${activeTab === 'horarios' ? 'text-blue-900 border-b-2 border-blue-900' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300 border-transparent'} transition-all duration-200`}
-                >
-                  Horarios Laborales
-                </button>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-100 p-8">
+      <main className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg p-8 shadow-sm">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">Gestiona tus citas programadas</h2>
+          
+          {/* Pestañas */}
+          <div className="flex gap-4 mb-6">
+            <button 
+              onClick={() => setActiveSubTab('programadas')}
+              className={`flex-1 px-6 py-3 text-base font-semibold rounded-lg transition-all ${activeSubTab === 'programadas' ? 'bg-blue-900 text-white' : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50'}`}
+            >
+              Citas programadas
+            </button>
+            <button 
+              onClick={() => setActiveSubTab('cancelar')}
+              className={`flex-1 px-6 py-3 text-base font-semibold rounded-lg transition-all ${activeSubTab === 'cancelar' ? 'bg-blue-900 text-white' : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50'}`}
+            >
+              Cancelar varias citas
+            </button>
           </div>
-        </div>
-      </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'citas' && (
-          <section className="bg-white rounded-2xl p-8 shadow-2xl">
-            <h2 className="text-3xl font-bold mb-2 text-gray-800">Gestiona tus citas programadas</h2>
-            <p className="text-gray-600 mb-6 text-sm">Gestión de Citas: Administra tus citas recibidas</p>
-            
-            {/* Pestañas */}
-            <div className="mb-6">
-              <div className="flex space-x-1 bg-gray-100 p-1 rounded-xl">
-                <button 
-                  onClick={() => setActiveSubTab('programadas')}
-                  className={`flex-1 px-6 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${activeSubTab === 'programadas' ? 'bg-blue-900 text-white shadow-sm' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'}`}
-                >
-                  Citas Programadas
-                </button>
-                <button 
-                  onClick={() => setActiveSubTab('cancelar')}
-                  className={`flex-1 px-6 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${activeSubTab === 'cancelar' ? 'bg-blue-900 text-white shadow-sm' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'}`}
-                >
-                  Cancelar Varias Citas
-                </button>
+          <div className="flex items-center gap-2 ml-4">
+            <span className="text-sm font-medium">Vista:</span>
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => setUserRole(userRole === 'requester' ? 'fixer' : 'requester')}
+              className="px-3 py-1 text-sm"
+            >
+              {userRole === 'requester' ? 'Solicitante' : 'Reparador'}
+            </Button>
+          </div>
+
+          {activeSubTab === 'programadas' && (
+            <div>
+              <p className="text-sm text-gray-600 mb-4"><span className="font-semibold">Gestión de Citas:</span> Administra tus citas recibidas en función de tu horario laboral establecido.</p>
+              
+              {/* Filtro */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Filtrar por:</span>
+                  <div className="relative">
+                    <select 
+                      value={filterValue}
+                      onChange={(e) => setFilterValue(e.target.value)}
+                      className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option>Todos</option>
+                      <option>Agendado</option>
+                      <option>Cancelado</option>
+                      <option>Pendiente</option>
+                      <option>Concluido</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-900 pointer-events-none" />
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {activeSubTab === 'programadas' && (
-              <div className="bg-gray-50 rounded-xl p-6 border-4 border-gray-200 shadow-inner">
+              <div className="space-y-4">
                 {isLoading ? (
                   <div className="flex justify-center items-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -142,95 +226,89 @@ export default function CitasPage() {
                     <p className="text-gray-500">No tienes citas programadas</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {citas.map((cita) => (
-                      <div key={cita.id} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 hover:border-indigo-200">
-                        <h3 className="text-xl font-bold text-gray-800 mb-5 border-b border-gray-100 pb-3">{cita.servicio.nombre}</h3>
-                        
-                        <div className="mb-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Columna Izquierda */}
-                          <div className="space-y-3">
-                            <div className="flex items-center text-gray-700">
-                              <User className="w-5 h-5 mr-3 text-indigo-500" />
-                              <span className="font-medium">{cita.proveedor.nombre}</span>
-                            </div>
-                            <div className="flex items-center text-gray-700">
-                              <Wrench className="w-5 h-5 mr-3 text-indigo-500" />
-                              <span>{cita.ubicacion}</span>
-                            </div>
-                          </div>
-                          
-                          {/* Columna Derecha */}
-                          <div className="space-y-3">
-                            <div className="flex items-center text-gray-700">
-                              <CalendarDays className="w-5 h-5 mr-3 text-indigo-500" />
-                              <span>{formatDate(cita.fecha)}</span>
-                            </div>
-                            <div className="flex items-center text-gray-700">
-                              <Clock className="w-5 h-5 mr-3 text-indigo-500" />
-                              <span className="font-medium">{cita.horario.inicio} - {cita.horario.fin}</span>
-                            </div>
-                          </div>
+                  citas.map((cita) => {
+                    const estadoConfig = getEstadoConfig(cita.estado);
+                    return (
+                      <div key={cita.id} className="border border-gray-200 rounded-lg overflow-hidden mb-4">
+                        {/* Header azul */}
+                        <div className="bg-blue-900 text-white px-6 py-3">
+                          <h3 className="font-semibold text-base">{cita.servicio.nombre}</h3>
+                          <p className="text-xs text-blue-200">Solicitado: {cita.solicitudId}, {cita.solicitudFecha}</p>
                         </div>
                         
-                        {cita.solicitud && (
-                          <div className="mb-5 bg-gray-50 rounded-lg p-4">
-                            <div className="flex items-start">
-                              <AlertCircle className="w-5 h-5 mr-3 text-indigo-500 mt-0.5 flex-shrink-0" />
-                              <p className="text-gray-600 text-sm italic leading-relaxed">"{cita.solicitud}"</p>
+                        {/* Contenido */}
+                        <div className="bg-white px-6 py-4">
+                          <div className="grid grid-cols-3 gap-4 mb-4">
+                            {/* Columna 1 */}
+                            <div className="space-y-2">
+                              <div className="flex items-start gap-2">
+                                <CalendarDays className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">
+                                  {new Date(cita.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                </span>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <Clock className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">{cita.horario.inicio} - {cita.horario.fin}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Columna 2 */}
+                            <div className="space-y-2">
+                              <div className="flex items-start gap-2">
+                                <User className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">{cita.proveedor.nombre}</span>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <Wrench className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">{cita.ubicacion}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Columna 3 */}
+                            <div>
+                              <div className="flex items-start gap-2">
+                                <AlertCircle className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">{cita.solicitud}</span>
+                              </div>
                             </div>
                           </div>
-                        )}
-                        
-                        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                          <div className="flex gap-2">
-                            <span className={`px-4 py-2 text-sm rounded-full font-medium ${
-                              cita.estado === 'programado' ? 'bg-green-100 text-green-800' :
-                              cita.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {cita.estado === 'programado' ? 'Programado' :
-                               cita.estado === 'pendiente' ? 'Pendiente' : 'Cancelado'}
-                            </span>
-                          </div>
                           
-                          <AppointmentActions 
-                            appointment={{
-                              id: cita.id,
-                              fecha: cita.fecha,
-                              horario: `${cita.horario.inicio} - ${cita.horario.fin}`,
-                              servicio: cita.servicio.nombre,
-                              proveedor: cita.proveedor.nombre
-                            }}
-                            onCancel={handleCancel}
-                            onReprogram={handleReprogram}
-                          />
+                          {/* Estado y botones */}
+                          <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full ${estadoConfig.color}`}></div>
+                              <span className={`text-sm font-medium ${estadoConfig.textColor}`}>{estadoConfig.text}</span>
+                            </div>
+                            
+                            <AppointmentActions 
+                              appointment={{
+                                id: cita.id,
+                                fecha: cita.fecha,
+                                horario: `${cita.horario.inicio} - ${cita.horario.fin}`,
+                                servicio: cita.servicio.nombre,
+                                proveedor: cita.proveedor.nombre
+                              }}
+                              onCancel={handleCancel}
+                              onReprogram={handleReprogram}
+                              isFixer={userRole === 'fixer'}
+                            />
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })
                 )}
               </div>
-            )}
-            
-            {activeSubTab === 'cancelar' && (
-              <div className="bg-gray-50 rounded-xl p-6 border-4 border-gray-200 shadow-inner">
-                {/* Implementar lógica de cancelación múltiple */}
-                <p className="text-center py-12 text-gray-500">Selecciona citas para cancelar</p>
-              </div>
-            )}
-          </section>
-        )}
-        
-        {activeTab === 'horarios' && (
-          <section className="bg-white rounded-2xl p-8 shadow-2xl border-4 border-dashed border-gray-300">
-            <div className="text-center">
-              <CalendarDays className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-600 mb-2">Horarios Laborales</h2>
-              <p className="text-gray-500">Configura tu disponibilidad de horarios</p>
             </div>
-          </section>
-        )}
+          )}
+          
+          {activeSubTab === 'cancelar' && (
+            <div>
+              <p className="text-center py-12 text-gray-500">Selecciona citas para cancelar</p>
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

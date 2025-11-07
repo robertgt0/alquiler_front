@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Calendar, Clock, AlertCircle, Mail, MessageSquare } from 'lucide-react';
 
 type Appointment = {
   id: string;
@@ -19,6 +19,8 @@ interface CancelReprogramModalProps {
   onClose: () => void;
   onCancel: (id: string, reason: string) => Promise<void>;
   onReprogram: (id: string, newDate: string, newTime: string) => Promise<void>;
+  actionType: 'cancel' | 'reprogram';
+  isFixer?: boolean;
 }
 
 export default function CancelReprogramModal({
@@ -26,13 +28,15 @@ export default function CancelReprogramModal({
   isOpen,
   onClose,
   onCancel,
-  onReprogram
+  onReprogram,
+  actionType,
+  isFixer = false
 }: CancelReprogramModalProps) {
-  const [activeTab, setActiveTab] = useState<'cancel' | 'reprogram'>('cancel');
   const [reason, setReason] = useState('');
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWithinLimit, setIsWithinLimit] = useState(false);
   
   const isWithin3Hours = () => {
     const now = new Date();
@@ -58,122 +62,135 @@ export default function CancelReprogramModal({
     setIsSubmitting(false);
   };
 
+  useEffect(() => {
+    setIsWithinLimit(isWithin3Hours());
+  }, [appointment]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white rounded-2xl p-8 shadow-2xl">
-        <DialogTitle className="text-2xl font-bold flex items-center gap-2 mb-6">
-          {activeTab === 'cancel' ? (
+      <DialogContent className="max-w-md bg-white rounded-2xl p-8 shadow-2xl border-0">
+        <DialogTitle className="text-2xl font-bold flex items-center gap-2 mb-6 text-gray-800">
+          {isFixer ? (
             <>
-              <AlertCircle className="text-red-500" /> Cancelar Cita
+              <AlertCircle className="text-red-500 w-6 h-6" />
+              <span>Cancelar Cita como Reparador</span>
             </>
           ) : (
-            <>
-              <Calendar className="text-blue-500" /> Reprogramar Cita
-            </>
+            actionType === 'cancel' ? (
+              <>
+                <AlertCircle className="text-red-500 w-6 h-6" />
+                <span>Cancelar Cita</span>
+              </>
+            ) : (
+              <>
+                <Calendar className="text-blue-500 w-6 h-6" />
+                <span>Reprogramar Cita</span>
+              </>
+            )
           )}
         </DialogTitle>
-        
-        {/* Pestañas */}
-        <div className="flex border-b mb-6">
-          <button
-            className={`flex-1 py-2 font-medium ${activeTab === 'cancel' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('cancel')}
-          >
-            Cancelar
-          </button>
-          <button
-            className={`flex-1 py-2 font-medium ${activeTab === 'reprogram' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('reprogram')}
-          >
-            Reprogramar
-          </button>
-        </div>
-        
-        {/* Información de la cita */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h4 className="font-semibold mb-2">{appointment.servicio}</h4>
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-            <Calendar className="w-4 h-4" />
-            <span>{new Date(appointment.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Clock className="w-4 h-4" />
-            <span>{appointment.horario}</span>
-          </div>
-        </div>
-        
-        {isWithin3Hours() && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-            <span>No puedes cancelar ni reprogramar con menos de 3 horas de anticipación.</span>
-          </div>
-        )}
-        
-        {/* Contenido según pestaña */}
-        {activeTab === 'cancel' ? (
-          <div>
-            <label className="block text-sm font-medium mb-2">Motivo de cancelación</label>
-            <textarea
-              className="w-full border rounded-lg p-3 text-sm min-h-[100px]"
-              placeholder="Explique el motivo de cancelación..."
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              disabled={isWithin3Hours()}
-            />
-            
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Volver
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={handleCancel}
-                disabled={isWithin3Hours() || !reason.trim() || isSubmitting}
-              >
-                {isSubmitting ? 'Cancelando...' : 'Confirmar Cancelación'}
-              </Button>
+
+        {/* Contenido del modal con estilos exactos */}
+        <div className="space-y-4">
+          {/* Sección de información de la cita */}
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <h4 className="font-semibold text-gray-800">{appointment.servicio}</h4>
+            <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+              <Calendar className="w-4 h-4" />
+              <span>{new Date(appointment.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Clock className="w-4 h-4" />
+              <span>{appointment.horario}</span>
             </div>
           </div>
-        ) : (
-          <div>
-            <div className="space-y-4">
+
+          {isWithin3Hours() && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-4 flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+              <span>No puedes cancelar ni reprogramar con menos de 3 horas de anticipación.</span>
+            </div>
+          )}
+          
+          {/* Campos específicos según acción */}
+          {isFixer ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de cancelación *</label>
+              <textarea
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Explique el motivo de cancelación..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                required
+              />
+              <div className="mt-4 bg-blue-50 p-3 rounded-lg text-sm flex items-start gap-2">
+                <Mail className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <span>Se enviará notificación al usuario con este motivo</span>
+              </div>
+            </div>
+          ) : (
+            actionType === 'cancel' ? (
               <div>
-                <label className="block text-sm font-medium mb-1">Nueva fecha</label>
-                <input
-                  type="date"
-                  className="w-full border rounded-lg p-2 text-sm"
-                  min={new Date().toISOString().split('T')[0]}
-                  value={newDate}
-                  onChange={(e) => setNewDate(e.target.value)}
+                <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de cancelación</label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-lg p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Explique el motivo de cancelación..."
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
                   disabled={isWithin3Hours()}
                 />
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Nuevo horario</label>
-                <input
-                  type="time"
-                  className="w-full border rounded-lg p-2 text-sm"
-                  value={newTime}
-                  onChange={(e) => setNewTime(e.target.value)}
-                  disabled={isWithin3Hours()}
-                />
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nueva fecha</label>
+                  <input
+                    type="date"
+                    className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    min={new Date().toISOString().split('T')[0]}
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    disabled={isWithin3Hours()}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nuevo horario</label>
+                  <input
+                    type="time"
+                    className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={newTime}
+                    onChange={(e) => setNewTime(e.target.value)}
+                    disabled={isWithin3Hours()}
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Volver
-              </Button>
-              <Button 
-                onClick={handleReprogram}
-                disabled={isWithin3Hours() || !newDate || !newTime || isSubmitting}
-              >
-                {isSubmitting ? 'Reprogramando...' : 'Confirmar Reprogramación'}
-              </Button>
-            </div>
+            )
+          )}
+
+          {/* Botones del modal - Estilo IDÉNTICO a imágenes */}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button 
+              variant="outline"
+              onClick={onClose}
+              className="px-5 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all font-medium"
+              disabled={isSubmitting}
+            >
+              Volver
+            </Button>
+            <Button 
+              onClick={isFixer ? handleCancel : actionType === 'cancel' ? handleCancel : handleReprogram}
+              className={`px-5 py-2 rounded-lg transition-all font-medium shadow-md ${
+                isFixer || actionType === 'cancel' 
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-blue-900 text-white hover:bg-blue-800'
+              }`}
+              disabled={isSubmitting || (isFixer || actionType === 'cancel') && !reason.trim() || (actionType === 'reprogram' && (!newDate || !newTime))}
+            >
+              {isSubmitting ? 'Procesando...' : isFixer || actionType === 'cancel' ? 'Confirmar Cancelación' : 'Confirmar Reprogramación'}
+            </Button>
           </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );
