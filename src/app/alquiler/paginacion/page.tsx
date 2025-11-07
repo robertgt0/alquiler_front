@@ -147,34 +147,57 @@ function BusquedaContent() {
 
   // ---------------- Filtrado y ordenamiento ----------------
   const jobsToDisplay = useMemo(() => {
-    // Usar siempre allJobs como fuente de datos principal
+    console.log('🔍 [PADRE-JOBS-TO-DISPLAY] Iniciando procesamiento:', {
+      searchResultsCount: searchResults.length,
+      allJobsCount: allJobs.length,
+      searchTerm,
+      sortBy
+    });
+
     let data = allJobs;
 
-    // Si hay resultados de búsqueda, usar esos en su lugar
+    // 🔥 PRIORIDAD 1: Si hay resultados de búsqueda del componente hijo, usarlos
     if (searchResults.length > 0) {
       data = searchResults;
+      console.log('✅ [PADRE] Usando resultados de búsqueda del componente hijo:', data.length);
     }
+    // 🔥 PRIORIDAD 2: Si hay término de búsqueda en el estado pero NO resultados del hijo, aplicar filtro local
+    else if (searchTerm && searchTerm.trim()) {
+      console.log('🔄 [PADRE] Aplicando filtro local para:', searchTerm);
+      const normalizar = (texto: string) =>
+        texto
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
 
-    // Log para debug
-    console.log('Total trabajos disponibles:', data.length);
-    const normalizar = (texto: string) =>
-      texto
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-
-    const termino = (searchTerm || "").trim();
-    if (termino) {
-      const palabras = normalizar(termino).split(/\s+/).filter(Boolean);
+      const terminoNormalizado = normalizar(searchTerm);
+      const palabras = terminoNormalizado.split(/\s+/).filter(Boolean);
 
       data = data.filter((job) => {
         const title = normalizar(job.title || "");
         const company = normalizar(job.company || "");
-        return palabras.some((palabra) => title.includes(palabra) || company.includes(palabra));
+        const servicio = normalizar(job.service || "");
+
+        // Búsqueda más amplia: título, empresa y servicio
+        return palabras.some((palabra) =>
+          title.includes(palabra) ||
+          company.includes(palabra) ||
+          servicio.includes(palabra)
+        );
       });
     }
+    // 🔥 PRIORIDAD 3: Si no hay búsqueda, usar todos los trabajos
 
-    return ordenarItems(sortBy, data);
+    // 🔥 SIEMPRE aplicar ordenamiento (esto se mantiene igual)
+    const datosOrdenados = ordenarItems(sortBy, data);
+
+    console.log('📊 [PADRE] Resultados finales:', {
+      datosAntesOrdenar: data.length,
+      datosDespuesOrdenar: datosOrdenados.length,
+      sortBy
+    });
+
+    return datosOrdenados;
   }, [searchResults, allJobs, sortBy, searchTerm]);
 
   const usuariosOrdenados = useMemo(
