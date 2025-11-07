@@ -110,7 +110,7 @@ const RecargaQR: React.FC = () => {
                 const val = e.target.value;
                 if (/^[a-zA-Z\s]*$/.test(val) && val.length <= 40) setNombre(val);
               }}
-              placeholder="Cesar"
+              placeholder="ingresar nombre"
             />
           </div>
 
@@ -206,7 +206,7 @@ const RecargaQR: React.FC = () => {
               onChange={(e) => {
                 if (e.target.value.length <= 40) setDetalle(e.target.value);
               }}
-              placeholder="Detalle de Recarga..."
+              placeholder="ingresar detalle de recarga..."
             ></textarea>
           </div>
         </form>
