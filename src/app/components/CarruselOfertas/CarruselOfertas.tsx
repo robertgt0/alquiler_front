@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AccesoRestringido from './accesoRestringido'; 
 
 export default function CarruselOfertas() {
@@ -60,14 +60,10 @@ export default function CarruselOfertas() {
 
   const maxIndex = 7;
 
-  // Lógica para avanzar al siguiente slide
-  const nextSlide = () => {
-    if (currentIndex >= maxIndex) {
-      setCurrentIndex(0);
-    } else {
-      setCurrentIndex(current => current + 1);
-    }
-  };
+  // ✅ CORRECCIÓN: Lógica para avanzar al siguiente slide (usando useCallback)
+  const nextSlide = useCallback(() => {
+    setCurrentIndex(current => current >= maxIndex ? 0 : current + 1);
+  }, [maxIndex]);
 
   // Lógica para retroceder al slide anterior
   const prevSlide = () => {
@@ -79,7 +75,7 @@ export default function CarruselOfertas() {
     setCurrentIndex(index);
   };
 
-  // Funcionalidad de autoplay
+  // ✅ CORRECCIÓN: Funcionalidad de autoplay (con dependencias corregidas)
   useEffect(() => {
     if (!isAutoPlaying) return;
 
@@ -88,7 +84,7 @@ export default function CarruselOfertas() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying, currentIndex]); // Agregar currentIndex como dependencia
+  }, [isAutoPlaying, nextSlide]); // ✅ nextSlide ahora es estable por useCallback
 
   return (
     <>
@@ -140,7 +136,7 @@ export default function CarruselOfertas() {
                 {servicios.map((servicio) => (
                   <div
                     key={servicio.id}
-                    className={`flex-shrink-0 px-3 transition-all duration-300 ${
+                    className={`shrink-0 px-3 transition-all duration-300 ${
                       visibleCards === 1 ? 'w-full' :
                       visibleCards === 2 ? 'w-1/2' : 'w-1/3'
                     }`}
@@ -158,7 +154,7 @@ export default function CarruselOfertas() {
                           className="object-cover group-hover:scale-110 transition-transform duration-500"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
                       
                       {/* Content */}

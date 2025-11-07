@@ -1,5 +1,4 @@
-//src/app/HomePage/page.tsx
-
+//src/app/Homepage/page.tsx
 import Mapa from "../components/mapa/MapaWrapper";
 import CarruselOfertas from "../components/CarruselOfertas/CarruselOfertas";
 import HomeFixer from "../components/ListaCategorias/HomeFixer";
@@ -9,7 +8,7 @@ import CarruselInspirador from "../components/CarruselInspirador/CarruselInspira
 import Link from "next/link";
 import categorias, { type CategoriaBase } from "../components/data/categoriasData";
 import HelpButton from "../components/HelpButton/HelpButton";
-
+import GiaUsuariosNuevos from "../components/guiaUsuarios/GiaUsuariosNuevos";
 export default function Home() {
   return (
     <main>
@@ -30,6 +29,7 @@ export default function Home() {
         {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
         <HomeFixer categorias={categorias as CategoriaBase[]} />
       </section>
+       
 
       {/* Trabajos recientes */}
       <section id="trabajos-recientes" className="my-5 w-full">
@@ -74,6 +74,10 @@ export default function Home() {
           </div>
         </div>
       </section>
+     
+   <section id="gia-usuarios-nuevos" className="my-5 w-full">
+        <GiaUsuariosNuevos />
+      </section>
 
       <Footer />
     </main>

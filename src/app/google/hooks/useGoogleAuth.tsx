@@ -17,32 +17,53 @@ export const useGoogleAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // 1) Inicia OAuth con Google
   const handleGoogleAuth = useCallback(async (type: AuthType = 'register') => {
     setIsLoading(true);
     setError(null);
 
     try {
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://alquiler-front-nine.vercel.app';
-      if (!clientId) throw new Error('Google Client ID no configurado');
+      
+      // ✅ CORRECCIÓN: Usar exactamente la misma URI que está en el backend
+      const redirectUri = 'http://localhost:3000/auth/google/callback';
+      
+      console.log('🔐 Configuración OAuth:', { 
+        clientId: clientId ? '✅ Configurado' : '❌ Faltante',
+        redirectUri,
+        type 
+      });
+
+      if (!clientId) {
+        throw new Error('Google Client ID no configurado');
+      }
+
+      const state = btoa(JSON.stringify({ 
+        type: type,
+        timestamp: Date.now(),
+        nonce: Math.random().toString(36).substring(2, 15)
+      }));
 
       const authParams = new URLSearchParams({
         client_id: clientId,
-        redirect_uri: `${baseUrl}/auth/google/callback`,
+        redirect_uri: redirectUri, // ✅ URI exacta
         response_type: 'code',
         scope: 'openid email profile',
         access_type: 'offline',
         prompt: 'consent',
-        state: btoa(JSON.stringify({ timestamp: Date.now().toString(), type })),
+        state: state,
+        nonce: Math.random().toString(36).substring(2, 15)
       });
 
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${authParams.toString()}`;
+      
+      console.log(`🔗 Iniciando OAuth para: ${type}`);
+      
+      // Redirección directa
       window.location.href = googleAuthUrl;
 
       return { success: true };
     } catch (err) {
-      console.error('Error en autenticación con Google:', err);
+      console.error('❌ Error en autenticación con Google:', err);
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
       setError(errorMessage);
       return { success: false, error: errorMessage };
@@ -51,20 +72,15 @@ export const useGoogleAuth = () => {
     }
   }, []);
 
-  // 2) Finaliza el flujo: guarda y redirige
   const finalizeFromGoogleProfile = useCallback((profile: GoogleProfile) => {
-    // Construimos el objeto que quieres
     const datosFormularioGoogle = {
       nombre: profile?.name ?? '',
       correo: profile?.email ?? '',
-      fotoPerfil: profile?.picture, // si luego lo quieres usar en otro paso
+      fotoPerfil: profile?.picture,
       terminosYCondiciones: true,
     };
 
-    // Guardar en sessionStorage con la clave que ya usa tu página siguiente
     sessionStorage.setItem('datosUsuarioParcial', JSON.stringify(datosFormularioGoogle));
-
-    // Redirigir al paso de imagen + ubicación
     router.push('/ImagenLocalizacion');
   }, [router]);
 
@@ -72,6 +88,6 @@ export const useGoogleAuth = () => {
     isLoading,
     error,
     handleGoogleAuth,
-    finalizeFromGoogleProfile, // <-- expuesto para usarlo en el callback
+    finalizeFromGoogleProfile,
   };
 };
