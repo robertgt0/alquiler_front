@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getOfferById, createOffer, updateOffer } from '@/app/offers/services/offersService';
@@ -22,7 +22,7 @@ function fileToDataURL(file: File): Promise<string> {
   });
 }
 
-export default function AddOrEditOfferPage() {
+function AddOrEditOfferPageContent() {
   const router = useRouter();
   const search = useSearchParams();
   const editId = search.get('edit');
@@ -612,5 +612,13 @@ export default function AddOrEditOfferPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function AddOrEditOfferPage() {
+  return (
+    <Suspense fallback={null}>
+      <AddOrEditOfferPageContent />
+    </Suspense>
   );
 }
