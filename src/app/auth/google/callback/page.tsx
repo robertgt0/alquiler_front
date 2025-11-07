@@ -37,14 +37,14 @@ function Inner() {
         console.log(code)
         console.log(' Respuesta del backend:', data);
 
-        if (!response.ok) {
+        if (!data.success) {
           if (data.message === 'usuario ya registrado') {
             if (data) {
-      const token = data.token ?? data.data.token; 
+      const token = data.data.accessToken ?? data.data.token; 
 
       if (token) sessionStorage.setItem('authToken', token);
 
-      sessionStorage.setItem('userData', JSON.stringify(data));
+      sessionStorage.setItem('userData', JSON.stringify(data.data.user));
     }
       
       // Disparar evento de login exitoso para que el Header se actualice

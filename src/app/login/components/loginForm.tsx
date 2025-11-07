@@ -49,11 +49,11 @@ export const LoginForm: React.FC = () => {
       console.log('Login exitoso:', res);
       
       if (res.data) {
-      const token = res.token ?? res.data.token; 
+      const token = res.data.accessToken ?? res.data.token; 
 
       if (token) sessionStorage.setItem('authToken', token);
 
-      sessionStorage.setItem('userData', JSON.stringify(res.data));
+      sessionStorage.setItem('userData', JSON.stringify(res.data.user));
     }
       
       // Disparar evento de login exitoso para que el Header se actualice
