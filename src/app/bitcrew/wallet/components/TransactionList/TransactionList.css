@@ -1,0 +1,49 @@
+.transactions-container {
+  margin-top: 24px;
+  width: 100%;
+}
+
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.transactions-header h2 {
+  font-size: 24px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 700;
+  color: #11255A;
+  margin: 0;
+}
+
+.view-all-link {
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #8DC0FF;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* Requerimiento: Estilo para el estado vacío */
+.empty-state {
+  text-align: center;
+  margin-top: 40px;
+  color: #888;
+  font-size: 16px;
+}
+
+/* Estilo base (móvil) para la lista escroleable */
+.transactions-list {
+  max-height: 300px; 
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* --- ESTILOS RESPONSIVOS (PARA DESKTOP) --- */
+@media (min-width: 768px) {
+  .transactions-list {
+    max-height: 500px;
+  }
+}
