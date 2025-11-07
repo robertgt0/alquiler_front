@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock, User, MapPin, FileText } from "lucide-react";
 import Sidebar from "@/app/agenda/components/Sidebar";
 import EditAppointmentModal from "@/app/worker/citas/components/EditAppointmentModal";
-import ConfirmationModal from "@/app/worker/citas/components/ConfirmationModal";
+import ConfirmationModal from "@/app/worker/citas/components/confirmationModal";
 
 interface Cita {
   _id: string;
