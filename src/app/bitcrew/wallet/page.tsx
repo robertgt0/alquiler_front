@@ -3,6 +3,10 @@
 import Wallet from './components/Wallet'; 
 import './components/Wallet.css';
 
+import BalanceCard from "./components/BalanceCard/BalanceCard";
+import TransactionList from "./components/TransactionList/TransactionList";
+//import "./Wallet.css";
+
 /*export default function WalletPage() {
   return (
     <main>
@@ -10,11 +14,6 @@ import './components/Wallet.css';
     </main>
   );
 }*/
-
-// Importa tus componentes (tus "piezas" de la interfaz)
-import BalanceCard from "./components/BalanceCard/BalanceCard";
-import TransactionList from "./components/TransactionList/TransactionList";
-import "./Wallet.css";
 
 // --- 1. FUNCIÓN PARA OBTENER EL SALDO ---
 // Esta función llama a tu endpoint: /api/devcode/billetera
