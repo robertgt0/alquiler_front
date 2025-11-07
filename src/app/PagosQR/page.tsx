@@ -2,6 +2,11 @@
 import React, { useState, useEffect } from "react";
 
 const RecargaQR: React.FC = () => {
+  //para selector CI/NIT
+  const [tipoDocumento, setTipoDocumento] = useState("CI");
+  const [numeroDocumento, setNumeroDocumento] = useState("");
+  const [mensajeError, setMensajeError] = useState("");
+
   const [saldo] = useState<number>(12730.5);
   const [monto, setMonto] = useState<number | string>("");
   const [montoError, setMontoError] = useState<string>(""); //estado para manejar el error
@@ -50,6 +55,29 @@ const RecargaQR: React.FC = () => {
     if (!isFormValid) return;
     alert("Recarga realizada con éxito!");
   };
+
+  const validarDocumento = (valor: string) => {
+    // Solo permitir números
+    if (!/^\d*$/.test(valor)) return;
+
+    // Validar longitud según tipo
+    if (tipoDocumento === "CI") {
+      if (valor.length <= 7) {
+        setNumeroDocumento(valor);
+        setMensajeError("");
+      } else {
+        setMensajeError("El CI debe tener 7 dígitos");
+      }
+    } else if (tipoDocumento === "NIT") {
+      if (valor.length <= 12) {
+        setNumeroDocumento(valor);
+        setMensajeError("");
+      } else {
+        setMensajeError("El NIT debe tener 12 dígitos");
+      }
+    }
+  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-6">
@@ -114,28 +142,35 @@ const RecargaQR: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>NIT/CI Factura</label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
-                value={nit}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (/^\d*$/.test(val) && val.length <= 8) setNit(val);
-                }}
-                placeholder="ingresar numero"
-              />
-              <select
-                value={tipoDoc}
-                onChange={(e) => setTipoDoc(e.target.value)}
-                className="px-3 py-1 bg-blue-800 text-white rounded-md focus:outline-none"
-              >
-                <option value="CI">CI</option>
-                <option value="NIT">NIT</option>
-              </select>
-            </div>
+          <div className="space-y-2 mt-4">
+            <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>
+              Tipo de documento
+            </label>
+
+            <select
+              value={tipoDocumento}
+              onChange={(e) => {
+                setTipoDocumento(e.target.value);
+                setNumeroDocumento("");
+                setMensajeError("");
+              }}
+              className="w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black"
+            >
+              <option value="CI">CI</option>
+              <option value="NIT">NIT</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder={`Ingrese su ${tipoDocumento}`}
+              value={numeroDocumento}
+              onChange={(e) => validarDocumento(e.target.value)}
+              className="w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400"
+            />
+
+            {mensajeError && (
+              <p className="text-red-500 text-sm mt-1">{mensajeError}</p>
+            )}
           </div>
 
           <div>
