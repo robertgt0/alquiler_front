@@ -64,16 +64,6 @@ export async function eliminarAutenticacion(usuario:string,provider:string) {
   //console.log("Respuesta del servidor:", res.body);
   return res.json();
 }
-export async function obtenerMetodoAutenticacion(usuario: string) {
-    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
-    method: "GET"
-  });
-  console.log("Respuesta del servidor:", res.body);
-  if (!res.ok) throw new Error("datos Incorrectos");
-  return res.json();
-}
-
-
 
 export async function solicitarEnlaceAcceso(email: string) {
   const res = await fetch(`${API_URL}/api/teamsys/magic-link/request`, {
@@ -93,11 +83,8 @@ export async function solicitarEnlaceAcceso(email: string) {
   }
 
   // Intentamos parsear JSON
-  let data: any = {};
-  try {
-    data = await res.json();
-  } catch {}
-
+  const data = await res.json();
+  
   if (!res.ok) {
     throw new Error(
       `HTTP ${res.status}: ${data?.message || "No se pudo enviar el enlace"}`
@@ -131,7 +118,7 @@ export async function obtenerPerfilActual(accessToken: string) {
     throw new Error(json?.message || `Error /me (${res.status})`);
   }
 
-  return json as {
+  return json /*as {
     success: true;
     data: {
       correo: string;
@@ -139,7 +126,7 @@ export async function obtenerPerfilActual(accessToken: string) {
       password?: string; // ⚠️ si el back la manda, no la guardes ni muestres
       [k: string]: any;
     };
-  };
+  };*/
 }
 
 export async function obtenerMetodoAutenticacion(usuario: string) {

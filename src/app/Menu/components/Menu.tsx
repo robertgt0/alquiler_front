@@ -117,8 +117,10 @@ export default function SimpleProfileMenu() {
     >
       Cambiar teléfono
     </button>
-    <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
-      Métodos de autenticación
+    <button
+      onClick={handleMetodosAutenticacionClick}
+      className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
+        Métodos de autenticación
     </button>
     <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
       Seguridad
