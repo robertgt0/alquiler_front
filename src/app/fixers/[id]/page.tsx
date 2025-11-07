@@ -1,5 +1,7 @@
 import { getFixer } from "@/lib/api/fixer";
 import Link from "next/link";
+import FixerOwnerActions from "../components/FixerOwnerActions";
+import FixerSkillsList from "../components/FixerSkillsList";
 
 type PageProps = { params: Promise<{ id: string }> };
 
@@ -60,12 +62,13 @@ export default async function FixerDetailPage({ params }: PageProps) {
   const categoriesInfo = Array.isArray(data?.categoriesInfo) ? data.categoriesInfo : [];
   const rawCategories = Array.isArray(data?.categories) && data.categories.length ? data.categories : defaultSkills;
 
-  type SkillDisplay = {
-    id: string;
-    name: string;
-    description: string;
-    source: "personal" | "general";
-  };
+type SkillDisplay = {
+  id: string;
+  name: string;
+  general: string;
+  personal?: string;
+  source: "personal" | "general";
+};
 
   const skillsDetails: SkillDisplay[] = skillsInfo.length
     ? skillsInfo.map((skill: any) => {
@@ -73,7 +76,8 @@ export default async function FixerDetailPage({ params }: PageProps) {
         return {
           id: skill?.category?.id ?? skill?.categoryId ?? skill?.id ?? "",
           name: skill?.category?.name ?? skill?.name ?? "Oficio",
-          description: personal || skill?.description || "Sin descripcion disponible.",
+          general: (skill?.description ?? "").trim() || "Sin descripcion disponible.",
+          personal: personal || undefined,
           source: personal ? "personal" : "general",
         };
       })
@@ -81,13 +85,15 @@ export default async function FixerDetailPage({ params }: PageProps) {
     ? categoriesInfo.map((category: any) => ({
         id: category?.id ?? "",
         name: category?.name ?? "Oficio",
-        description: (category?.description ?? "").trim() || "Sin descripcion disponible.",
+        general: (category?.description ?? "").trim() || "Sin descripcion disponible.",
+        personal: undefined,
         source: "general" as const,
       }))
     : rawCategories.map((name: string, index: number) => ({
         id: `${index}`,
         name,
-        description: "Descripcion no disponible.",
+        general: "Descripcion no disponible.",
+        personal: undefined,
         source: "general" as const,
       }));
 
@@ -167,30 +173,7 @@ export default async function FixerDetailPage({ params }: PageProps) {
 
           <div className="rounded-xl border border-slate-200 p-4 md:col-span-3">
             <div className="mb-2 text-sm text-slate-500">Mis habilidades</div>
-            {skillsDetails.length ? (
-              <div className="space-y-3">
-                {skillsDetails.map((skill) => {
-                  const badgeLabel = skill.source === "personal" ? "Descripcion personalizada" : "Descripcion general";
-                  const badgeClass =
-                    skill.source === "personal"
-                      ? "bg-purple-100 text-purple-700 border border-purple-200"
-                      : "bg-slate-200 text-slate-700 border border-slate-300";
-                  return (
-                    <div key={`${skill.id}-${skill.name}`} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">{skill.name}</p>
-                          <p className="mt-2 text-sm text-slate-600">{skill.description}</p>
-                        </div>
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass}`}>{badgeLabel}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">Sin habilidades registradas.</div>
-            )}
+            <FixerSkillsList initialSkills={skillsDetails} />
           </div>
         </div>
       </div>
@@ -211,6 +194,16 @@ export default async function FixerDetailPage({ params }: PageProps) {
           </button>
         )}
       </div>
+
+      <FixerOwnerActions
+        fixerId={id}
+        skills={skillsDetails.map((skill) => ({
+          id: skill.id,
+          name: skill.name,
+          general: skill.general,
+          personal: skill.personal,
+        }))}
+      />
     </div>
   );
 }

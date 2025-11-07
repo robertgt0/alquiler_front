@@ -5,6 +5,8 @@ import OfferCard from './OfferCard';
 import { listOffers } from '../services/offersService';
 import type { Offer } from '../services/offersService';
 import { useRouter } from 'next/navigation';
+import OffersToolbar from './OffersToolbar';
+import { useClientSession } from '@/lib/auth/useSession';
 
 const PAGE_SIZE = 10;
 
@@ -16,11 +18,15 @@ export default function OffersList() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [includeInactive] = React.useState(false);
+  const [filter, setFilter] = React.useState<'all' | 'mine'>('all');
 
   const router = useRouter();
 
   const [offline, setOffline] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const { user, ready } = useClientSession();
+  const fixerId = user?.fixerId ?? null;
+  const effectiveFilter: 'all' | 'mine' = fixerId ? filter : 'all';
 
   React.useEffect(() => {
     setMounted(true);
@@ -35,10 +41,17 @@ export default function OffersList() {
   }, []);
 
   const fetchData = React.useCallback(async () => {
+    if (effectiveFilter === 'mine' && !fixerId) return;
     try {
       setLoading(true);
       setError(null);
-      const res = await listOffers({ query, page, pageSize: PAGE_SIZE, includeInactive });
+      const res = await listOffers({
+        query,
+        page,
+        pageSize: PAGE_SIZE,
+        includeInactive,
+        ownerId: effectiveFilter === 'mine' ? fixerId ?? undefined : undefined,
+      });
       setTotal(res.total);
       setItems(res.items);
     } catch {
@@ -46,11 +59,13 @@ export default function OffersList() {
     } finally {
       setLoading(false);
     }
-  }, [query, page, includeInactive]);
+  }, [query, page, includeInactive, effectiveFilter, fixerId]);
 
   React.useEffect(() => {
-    if (mounted) fetchData();
-  }, [fetchData, mounted]);
+    if (mounted && (effectiveFilter === 'all' || fixerId || ready)) {
+      fetchData();
+    }
+  }, [fetchData, mounted, fixerId, ready, effectiveFilter]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -66,6 +81,15 @@ export default function OffersList() {
         </h2>
         <span style={{ color: '#616E8A' }}>Total: {total}</span>
       </div>
+
+      <OffersToolbar
+        filter={effectiveFilter}
+        onChangeFilter={(value) => {
+          if (!fixerId && value === 'mine') return;
+          setFilter(value);
+          setPage(1);
+        }}
+      />
 
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
         <input

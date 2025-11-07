@@ -1,9 +1,9 @@
 export interface DatosLogin {
   email: string;
-  contraseña: string;
+  password: string;
 }
 
 export interface ErroresLogin {
   email?: string;
-  contraseña?: string;
+  password?: string;
 }

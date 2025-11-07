@@ -1,23 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Icono from './Icono';
 import { useRouter, usePathname } from 'next/navigation';
+import { clearSession, getStoredUser, getToken, SESSION_EVENTS, type StoredUser } from '@/lib/auth/session';
+import { STORAGE_KEYS, removeFromStorage } from '@/app/convertirse-fixer/storage';
 
 export default function Header() {
   const [isClient, setIsClient] = useState(false);
   const [areButtonsVisible, setAreButtonsVisible] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState<StoredUser | null>(null);
   const lastScrollY = useRef(0);
   const router = useRouter();
   const pathname = usePathname();
 
+  const syncSession = useCallback(() => {
+    setIsLoggedIn(Boolean(getToken()));
+    setCurrentUser(getStoredUser());
+  }, []);
+
   useEffect(() => {
     setIsClient(true);
-
-    const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-    if (token) setIsLoggedIn(true);
+    syncSession();
 
     const handleScroll = () => {
       if (window.innerWidth < 640) {
@@ -26,19 +32,22 @@ export default function Header() {
       }
     };
 
-    const handleLoginExitoso = () => setIsLoggedIn(true);
-    const handleLogoutEvent = () => setIsLoggedIn(false);
+    const handleSessionChange = () => {
+      syncSession();
+    };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('login-exitoso', handleLoginExitoso);
-    window.addEventListener('logout-exitoso', handleLogoutEvent);
+    window.addEventListener(SESSION_EVENTS.login, handleSessionChange);
+    window.addEventListener(SESSION_EVENTS.logout, handleSessionChange);
+    window.addEventListener(SESSION_EVENTS.updated, handleSessionChange);
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('login-exitoso', handleLoginExitoso);
-      window.removeEventListener('logout-exitoso', handleLogoutEvent);
+      window.removeEventListener(SESSION_EVENTS.login, handleSessionChange);
+      window.removeEventListener(SESSION_EVENTS.logout, handleSessionChange);
+      window.removeEventListener(SESSION_EVENTS.updated, handleSessionChange);
     };
-  }, []);
+  }, [syncSession]);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -48,22 +57,29 @@ export default function Header() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    sessionStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    sessionStorage.removeItem('userData');
-
+    clearSession();
+    Object.values(STORAGE_KEYS).forEach((key) => removeFromStorage(key));
     setIsLoggedIn(false);
+    setCurrentUser(null);
 
-    const logoutEvent = new CustomEvent('logout-exitoso');
-    window.dispatchEvent(logoutEvent);
+    window.dispatchEvent(new CustomEvent(SESSION_EVENTS.logout));
+    window.dispatchEvent(new CustomEvent(SESSION_EVENTS.updated));
 
     router.push('/');
   };
 
+  const fixerId = currentUser?.fixerId ?? null;
+  const fixerCtaHref = fixerId ? `/fixers/${fixerId}` : '/convertirse-fixer';
+  const fixerCtaLabel = fixerId ? 'Mi perfil Fixer' : 'Ser Fixer';
+  const rawName = currentUser?.nombre?.trim();
+  const displayName = rawName && rawName.length > 0 ? rawName.split(/\s+/)[0] : currentUser?.correo ?? 'Usuario';
+
   if (!isClient) return null;
 
   const hideAuthButtons = pathname?.startsWith('/convertirse-fixer');
+  const loginFixerRedirect = '/login?next=/convertirse-fixer';
+  const fixerEntryHref = isLoggedIn ? fixerCtaHref : loginFixerRedirect;
+  const fixerEntryLabel = isLoggedIn ? fixerCtaLabel : 'Ser Fixer';
 
   return (
     <>
@@ -105,19 +121,14 @@ export default function Header() {
           {hideAuthButtons ? null : (
             !isLoggedIn ? (
               <>
-                <Link href="/convertirse-fixer">
+                <Link href={fixerEntryHref}>
                   <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a] transition-colors">
-                    Ser Fixer
+                    {fixerEntryLabel}
                   </button>
                 </Link>
                 <Link href="/offers">
                   <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
                     Ofertas de Trabajo
-                  </button>
-                </Link>
-                <Link href="/addNewJobOffer">
-                  <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
-                    Añadir nueva oferta
                   </button>
                 </Link>
                 <Link href="/login">
@@ -133,9 +144,9 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Link href="/convertirse-fixer">
+                <Link href={fixerCtaHref}>
                   <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a] transition-colors">
-                    Ser Fixer
+                    {fixerCtaLabel}
                   </button>
                 </Link>
                 <Link href="/offers">
@@ -143,13 +154,8 @@ export default function Header() {
                     Ofertas de Trabajo
                   </button>
                 </Link>
-                <Link href="/addNewJobOffer">
-                  <button className="px-4 py-2 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] transition-colors">
-                    Añadir nueva oferta
-                  </button>
-                </Link>
                 <div className="flex items-center space-x-2">
-                  <span className="font-semibold text-[#11255A]">Usuario</span>
+                  <span className="font-semibold text-[#11255A]">{displayName}</span>
                   <div className="relative group">
                     <svg
                       className="w-8 h-8 text-[#2a87ff] cursor-pointer"
@@ -220,11 +226,6 @@ export default function Header() {
                     Ofertas
                   </button>
                 </Link>
-                <Link href="/addNewJobOffer" className="flex-1">
-                  <button className="w-full px-2 py-1.5 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] text-xs">
-                    Añadir oferta
-                  </button>
-                </Link>
                 <Link href="/login" className="flex-1">
                   <button className="w-full px-2 py-1.5 font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF] text-xs">
                     Iniciar Sesion
@@ -243,18 +244,13 @@ export default function Header() {
                     Ofertas
                   </button>
                 </Link>
-                <Link href="/addNewJobOffer" className="flex-1">
-                  <button className="w-full px-2 py-1 text-xs font-semibold text-[#2a87ff] border border-[#2a87ff] rounded-md hover:bg-[#EEF7FF]">
-                    Añadir oferta
-                  </button>
-                </Link>
-                <Link href="/convertirse-fixer" className="flex-1">
+                <Link href={fixerCtaHref} className="flex-1">
                   <button className="w-full px-2 py-1 text-xs font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#1a347a]">
-                    Ser Fixer
+                    {fixerCtaLabel}
                   </button>
                 </Link>
                 <div className="flex items-center space-x-1 flex-1 justify-end">
-                  <span className="text-[#11255A] text-xs font-semibold truncate">Usuario</span>
+                  <span className="text-[#11255A] text-xs font-semibold truncate">{displayName}</span>
                   <div className="relative group">
                     <svg
                       className="w-5 h-5 text-[#2a87ff] cursor-pointer"

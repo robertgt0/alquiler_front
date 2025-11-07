@@ -21,7 +21,8 @@ function validateName(value: string) {
   if (!name) return "El nombre es obligatorio";
   if (name.length < NAME_MIN) return `Minimo ${NAME_MIN} caracteres`;
   if (name.length > NAME_MAX) return `Maximo ${NAME_MAX} caracteres`;
-  if (!/^[A-Za-z0-9\s.,-]+$/.test(name)) return "Solo letras, numeros, espacios, punto y guion";
+  const allowed = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s.,-]+$/;
+  if (!allowed.test(name)) return "Solo letras, numeros, espacios, punto y guion";
   if (BAD_WORDS.some((word) => name.toLowerCase().includes(word))) return "Contiene palabras no permitidas";
   return null;
 }

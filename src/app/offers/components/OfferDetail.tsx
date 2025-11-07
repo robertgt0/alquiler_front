@@ -3,8 +3,7 @@
 import React from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { getOfferById, canEditOffer, deleteOffer, type Offer } from '../services/offersService';
-
-const CURRENT_USER_ID = 'fixer-1';
+import { useClientSession } from '@/lib/auth/useSession';
 
 const shellStyles: React.CSSProperties = {
   maxWidth: 960,
@@ -48,12 +47,13 @@ export default function OfferDetail() {
   const [offer, setOffer] = React.useState<Offer | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [isOwner, setIsOwner] = React.useState(false);
   const [index, setIndex] = React.useState(0);
   const [banner, setBanner] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = React.useState(false);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const statusParam = searchParams.get('status');
+  const { user } = useClientSession();
+  const currentFixerId = user?.fixerId ?? null;
 
   React.useEffect(() => {
     let mounted = true;
@@ -68,7 +68,6 @@ export default function OfferDetail() {
           return;
         }
         setOffer(data);
-        setIsOwner(await canEditOffer(data, CURRENT_USER_ID));
         setLoading(false);
       } catch {
         if (!mounted) return;
@@ -121,22 +120,28 @@ export default function OfferDetail() {
 
   if (!offer) return null;
 
+  const isOwner = canEditOffer(offer, currentFixerId);
+
   const images = offer.images ?? [];
   const hasImages = images.length > 0;
   const isInactive = offer.status === 'inactive';
   const goPrev = () => setIndex((value) => (value - 1 + images.length) % images.length);
   const goNext = () => setIndex((value) => (value + 1) % images.length);
 
-  const handleDelete = async () => {
-    if (!offer || !isOwner) return;
+  const handleDelete = () => {
+    if (!offer) return;
+    if (!isOwner) {
+      setBanner({ type: 'error', message: 'Solo el fixer propietario puede eliminar esta oferta.' });
+      return;
+    }
     setDeleteModalOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (!offer || !isOwner) return;
+    if (!offer || !isOwner || !currentFixerId) return;
     try {
       setDeleteLoading(true);
-      await deleteOffer(offer.id);
+      await deleteOffer(offer.id, currentFixerId);
       setDeleteModalOpen(false);
       setBanner({ type: 'success', message: 'Oferta eliminada con exito' });
       setTimeout(() => {

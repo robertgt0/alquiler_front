@@ -42,7 +42,7 @@ const validarCampo = (nombre: string, valor: string): string => {
 
       break;
     };
-    case 'contraseña': {
+    case 'password': {
       if (valorLimpio.length < 6) {
         return "contraseña incorrecta";
       }
@@ -60,13 +60,13 @@ export const useLoginForm = () => {
 
   const [datosFormulario, setDatosFormulario] = useState<DatosLogin>({
     email: '',
-    contraseña: '',
+    password: '',
   });
 
   const [errores, setErrores] = useState<ErroresLogin>({});
   const [tocados, setTocados] = useState<Record<string, boolean>>({
     email: false,
-    contraseña: false,
+    password: false,
   });
 
   const manejarCambio = (nombre: keyof DatosLogin, valor: string) => {
@@ -105,7 +105,7 @@ export const useLoginForm = () => {
     const nuevosErrores: ErroresLogin = {};
     const nuevosTocados: Record<string, boolean> = {};
 
-    const camposAValidar = ['email', 'contraseña'] as const;
+    const camposAValidar = ['email', 'password'] as const;
 
     camposAValidar.forEach(campo => {
       nuevosTocados[campo] = true;
@@ -113,7 +113,7 @@ export const useLoginForm = () => {
       if (error) nuevosErrores[campo] = error;
     });
 
-    setTocados({ email: true, contraseña: true });
+    setTocados({ email: true, password: true });
     setErrores(nuevosErrores);
 
     return Object.keys(nuevosErrores).length === 0;

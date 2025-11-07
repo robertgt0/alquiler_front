@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { updateCategories as updateCategoriesApi } from "@/lib/api/fixer";
 import type { CategoryDTO } from "@/lib/api/categories";
@@ -10,52 +10,24 @@ import type { SelectedCategory, StepCategoriesProps } from "./types";
 
 const CategoriesSelector = dynamic(() => import("@/app/components/categories/CategoriesSelector"), { ssr: false });
 
-const CUSTOM_MIN = 10;
-const CUSTOM_MAX = 800;
-
-function trimValue(value: string | undefined) {
-  return (value ?? "").trim();
-}
-
 export default function StepCategories({ fixerId, selected, onBack, onComplete }: StepCategoriesProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [categories, setCategories] = useState<SelectedCategory[]>(selected);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   function handleSave(list: CategoryDTO[]) {
-    setCategories((prev) => {
-      const prevMap = new Map(prev.map((item) => [item.id, item.customDescription ?? ""]));
-      return list.map((item) => ({
+    setCategories(
+      list.map((item) => ({
         ...item,
-        customDescription: prevMap.get(item.id) ?? "",
-      }));
-    });
-    setFieldErrors({});
+        customDescription: undefined,
+      }))
+    );
     setModalOpen(false);
   }
 
   function handleRemove(id: string) {
     setCategories((prev) => prev.filter((item) => item.id !== id));
-    setFieldErrors((prev) => {
-      if (!prev[id]) return prev;
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
-  }
-
-  function handleCustomChange(id: string, value: string) {
-    setCategories((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, customDescription: value } : item))
-    );
-    setFieldErrors((prev) => {
-      if (!prev[id]) return prev;
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
   }
 
   async function handleNext() {
@@ -64,42 +36,16 @@ export default function StepCategories({ fixerId, selected, onBack, onComplete }
       return;
     }
 
-    const validation: Record<string, string | null> = {};
-    categories.forEach((category) => {
-      const text = trimValue(category.customDescription);
-      if (!text) return;
-      if (text.length < CUSTOM_MIN) {
-        validation[category.id] = `Minimo ${CUSTOM_MIN} caracteres`;
-      } else if (text.length > CUSTOM_MAX) {
-        validation[category.id] = `Maximo ${CUSTOM_MAX} caracteres`;
-      }
-    });
-
-    if (Object.keys(validation).length) {
-      setFieldErrors(validation);
-      setError("Corrige las descripciones marcadas antes de continuar");
-      return;
-    }
-
     try {
       setLoading(true);
       setError(null);
 
       const ids = categories.map((category) => category.id);
-      const skills = categories
-        .map((category) => {
-          const text = trimValue(category.customDescription);
-          return text ? { categoryId: category.id, customDescription: text } : null;
-        })
-        .filter(
-          (entry): entry is { categoryId: string; customDescription: string } => entry !== null
-        );
-
-      await updateCategoriesApi(fixerId, { categories: ids, skills });
+      await updateCategoriesApi(fixerId, { categories: ids });
 
       const stored = categories.map((category) => ({
         ...category,
-        customDescription: trimValue(category.customDescription) || undefined,
+        customDescription: undefined,
       }));
       saveToStorage(STORAGE_KEYS.categories, stored);
       onComplete(stored);
@@ -110,25 +56,6 @@ export default function StepCategories({ fixerId, selected, onBack, onComplete }
     }
   }
 
-  const helperNote = useMemo(
-    () => (
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
-        <p>
-          <span className="font-semibold">Descripcion personalizada:</span> Es tu mensaje unico para este oficio. Solo
-          aparece en tu perfil.
-        </p>
-        <p className="mt-2">
-          <span className="font-semibold">Descripcion general:</span> Es la descripcion comun del catalogo. Se muestra
-          cuando otro fixer no define una personalizada.
-        </p>
-        <p className="mt-2 text-xs text-blue-600">
-          Si agregas un oficio nuevo, la descripcion general que registres sera visible para todos los fixers.
-        </p>
-      </div>
-    ),
-    []
-  );
-
   return (
     <section className="mx-auto flex max-w-4xl flex-col gap-6">
       <header className="rounded-3xl bg-white p-8 shadow-lg">
@@ -136,13 +63,11 @@ export default function StepCategories({ fixerId, selected, onBack, onComplete }
           <StepProgress current={3} />
           <h2 className="text-2xl font-semibold text-slate-900">Que tipos de trabajo ofreces?</h2>
           <p className="text-sm text-slate-500">
-            Selecciona tus habilidades y personaliza cada oficio para destacar frente a los requesters.
+            Selecciona tus habilidades. Puedes definir descripciones personalizadas luego desde tu perfil de Fixer.
           </p>
         </div>
 
         <div className="mt-6 space-y-4">
-          {helperNote}
-
           {categories.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
               Aun no has seleccionado tipos de trabajo. Usa el boton siguiente para agregar tus habilidades.
@@ -150,9 +75,7 @@ export default function StepCategories({ fixerId, selected, onBack, onComplete }
           ) : (
             <div className="space-y-4">
               {categories.map((category) => {
-                const general = trimValue(category.description) || "Sin descripcion general registrada.";
-                const personal = category.customDescription ?? "";
-                const message = fieldErrors[category.id] ?? null;
+                const general = (category.description ?? "").trim() || "Sin descripcion general registrada.";
 
                 return (
                   <div key={category.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -163,6 +86,9 @@ export default function StepCategories({ fixerId, selected, onBack, onComplete }
                           Descripcion general
                         </p>
                         <p className="text-sm text-slate-600">{general}</p>
+                        <p className="mt-3 text-xs text-slate-500">
+                          Si deseas añadir una descripcion personalizada para este oficio, podras hacerlo desde tu perfil una vez completes el registro.
+                        </p>
                       </div>
                       <button
                         type="button"
@@ -173,27 +99,6 @@ export default function StepCategories({ fixerId, selected, onBack, onComplete }
                       </button>
                     </div>
 
-                    <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor={`custom-${category.id}`}>
-                      Mi descripcion (opcional)
-                    </label>
-                    <textarea
-                      id={`custom-${category.id}`}
-                      value={personal}
-                      onChange={(event) => handleCustomChange(category.id, event.target.value)}
-                      maxLength={CUSTOM_MAX}
-                      placeholder="Describe tu experiencia o estilo de trabajo en este oficio"
-                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      rows={4}
-                    />
-                    <div className="mt-2 text-xs">
-                      {message ? (
-                        <p className="text-red-600">{message}</p>
-                      ) : (
-                        <p className="text-slate-500">
-                          Puedes dejarlo vacio para usar la descripcion general. Minimo {CUSTOM_MIN} caracteres si decides personalizar.
-                        </p>
-                      )}
-                    </div>
                   </div>
                 );
               })}

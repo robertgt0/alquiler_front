@@ -101,6 +101,18 @@ export async function getFixer(id: string): Promise<ApiSuccess<FixerDTO>> {
   return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}`, { cache: "no-store" });
 }
 
+export async function getFixerByUser(userId: string): Promise<FixerDTO | null> {
+  const url = `${FIXER_BASE}/user/${userId}`;
+  const res = await fetch(url, { cache: "no-store" });
+  const payloadText = await res.text();
+  const payload = payloadText ? (JSON.parse(payloadText) as Partial<ApiSuccess<FixerDTO>>) : null;
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(payload?.message || `Error HTTP ${res.status}`);
+  }
+  return payload?.data ?? null;
+}
+
 export async function getFixersByCategory(search?: string): Promise<FixersByCategoryDTO[]> {
   const url = new URL(`${FIXER_BASE}/by-category`);
   const trimmed = search?.trim();

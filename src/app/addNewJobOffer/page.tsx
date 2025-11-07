@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getOfferById, createOffer, updateOffer } from '@/app/offers/services/offersService';
 import { getCategories, type CategoryDTO } from '@/lib/api/categories';
+import { useClientSession } from '@/lib/auth/useSession';
 
 const PLACEHOLDER_CATEGORY = '';
 const MAX_DESCRIPTION_LENGTH = 100;
@@ -24,6 +26,8 @@ export default function AddOrEditOfferPage() {
   const router = useRouter();
   const search = useSearchParams();
   const editId = search.get('edit');
+  const { user, ready } = useClientSession();
+  const currentFixerId = user?.fixerId ?? null;
 
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<string>(PLACEHOLDER_CATEGORY);
@@ -33,6 +37,7 @@ export default function AddOrEditOfferPage() {
   const [initialLoading, setInitialLoading] = useState(Boolean(editId));
   const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
   const [categories, setCategories] = useState<CategoryDTO[]>([]);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewUrlsRef = useRef<Set<string>>(new Set());
@@ -78,6 +83,12 @@ export default function AddOrEditOfferPage() {
           setInitialLoading(false);
           return;
         }
+        if (currentFixerId && offer.ownerId && offer.ownerId !== currentFixerId) {
+          setAccessDenied(true);
+          setInitialLoading(false);
+          return;
+        }
+        setAccessDenied(false);
         setDescription(offer.description ?? '');
         setCategory(offer.category ?? PLACEHOLDER_CATEGORY);
         const existing = Array.isArray(offer.images) ? offer.images : [];
@@ -97,7 +108,7 @@ export default function AddOrEditOfferPage() {
     return () => {
       active = false;
     };
-  }, [isEdit, editId]);
+  }, [isEdit, editId, currentFixerId]);
 
   const totalImages = existingImages.length + newImages.length;
   const isFormValid =
@@ -296,6 +307,10 @@ export default function AddOrEditOfferPage() {
   }, []);
 
   async function handleSubmit() {
+    if (!currentFixerId) {
+      setFeedback({ type: 'error', message: 'Debes ser fixer para gestionar ofertas.' });
+      return;
+    }
     const trimmedDescription = description.trim();
     if (!trimmedDescription) {
       setFeedback({ type: 'error', message: 'La descripcion es obligatoria.' });
@@ -323,7 +338,7 @@ export default function AddOrEditOfferPage() {
           description: trimmedDescription,
           category,
           images,
-        });
+        }, currentFixerId);
         setFeedback({ type: 'success', message: 'Edicion realizada con exito.' });
         setExistingImages(images);
         initialSnapshot.current = {
@@ -345,6 +360,7 @@ export default function AddOrEditOfferPage() {
           category,
           images,
           contact: { whatsapp: '555-000-0000' },
+          ownerId: currentFixerId,
         });
         setFeedback({ type: 'success', message: 'Oferta creada exitosamente.' });
         setDescription('');
@@ -371,6 +387,49 @@ export default function AddOrEditOfferPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!ready) {
+    return <main className="p-6 text-center text-slate-600">Validando tu perfil...</main>;
+  }
+
+  if (!currentFixerId) {
+    return (
+      <main className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6 text-center text-slate-700">
+        <p className="text-lg font-semibold">Necesitas ser Fixer para crear o editar ofertas.</p>
+        <p className="text-sm text-slate-500">Inicia sesión con tu cuenta de fixer o conviértete en fixer para continuar.</p>
+        <div className="flex gap-3">
+          <Link
+            href="/login?next=/addNewJobOffer"
+            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Iniciar sesión
+          </Link>
+          <Link
+            href="/convertirse-fixer"
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+          >
+            Convertirme en Fixer
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (accessDenied && isEdit) {
+    return (
+      <main className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-6 text-center text-red-600">
+        <p className="text-lg font-semibold">No puedes editar esta oferta.</p>
+        <p className="text-sm text-slate-600">Solo el fixer que registró la oferta puede modificarla.</p>
+        <button
+          type="button"
+          onClick={() => router.push('/offers')}
+          className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Volver al listado
+        </button>
+      </main>
+    );
   }
 
   if (initialLoading) {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { checkCI, createFixer, updateIdentity } from "@/lib/api/fixer";
+import { updateStoredUser } from "@/lib/auth/session";
 import StepProgress from "../components/StepProgress";
 import { STORAGE_KEYS, saveToStorage } from "../storage";
 import type { StepIdentityProps } from "./types";
@@ -52,7 +53,10 @@ export default function StepIdentity({ fixerId, userId, initialCI, onComplete }:
       }
 
       saveToStorage(STORAGE_KEYS.ci, trimmed);
-      if (currentId) saveToStorage(STORAGE_KEYS.fixerId, currentId);
+      if (currentId) {
+        saveToStorage(STORAGE_KEYS.fixerId, currentId);
+        updateStoredUser({ fixerId: currentId });
+      }
       onComplete({ fixerId: currentId!, ci: trimmed });
     } catch (err: any) {
       setError(String(err?.message || "No se pudo guardar el C.I."));
