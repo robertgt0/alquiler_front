@@ -64,6 +64,10 @@ export async function eliminarAutenticacion(usuario:string,provider:string) {
   //console.log("Respuesta del servidor:", res.body);
   return res.json();
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4c19758 (Actualiza UserService.ts)
 
 export async function solicitarEnlaceAcceso(email: string) {
   const res = await fetch(`${API_URL}/api/teamsys/magic-link/request`, {
