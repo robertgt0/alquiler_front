@@ -115,3 +115,12 @@ export async function obtenerPerfilActual(accessToken: string) {
   };
 }
 
+export async function obtenerMetodoAutenticacion(usuario: string) {
+    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
+    method: "GET",
+  });
+  console.log("Respuesta del servidor:", res.body);
+  if (!res.ok) throw new Error("datos Incorrectos");
+  return res.json();
+}
+
