@@ -6,8 +6,11 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
 import { cn } from "@/lib/utils";
-import { createAndNotify } from "@/lib/appointments";
-import { updateAndNotify } from "@/lib/appointments";
+import { createAndNotify } from "@/lib/appointments_gmail";
+import { updateAndNotify } from "@/lib/appointments_gmail";
+import { createAndNotifyWhatsApp } from "@/lib/appointments_whatsapp";
+import { updateAndNotifyWhatsApp } from "@/lib/appointments_whatsapp";
+
 import LocationForm from "./LocationForms";
 import ModalConfirmacion from "./ModalConfirmacion";
 
@@ -312,6 +315,7 @@ export function AppointmentModal({
         cliente: {
           nombre: patientName,
           email: "adrianvallejosflores24@gmail.com", //reemplázalo dinámicamente si lo tienes
+          phone: "59177484270" //se reemplazaria cuando clienteId este completo o usable
         },
       };
 
@@ -363,26 +367,40 @@ export function AppointmentModal({
         return alert(body?.message || `Error HTTP ${res.status}`);
       }
 
-      // Enviar notificación según el caso
-      let resultNotify;
-      if (isEditing) {
-        console.log("📨 Enviando notificación de actualización...");
-        resultNotify = await updateAndNotify(payload);
-      } else {
-        console.log("📨 Enviando notificación de creación...");
-        resultNotify = await createAndNotify(payload);
+      const notificationPromises = isEditing
+      ? [
+          updateAndNotify(payload), // Gmail
+          updateAndNotifyWhatsApp(payload), // WhatsApp
+        ]
+      : [
+          createAndNotify(payload), // Gmail
+          createAndNotifyWhatsApp(payload), // WhatsApp
+        ];
+
+      // Ejecutar ambas en paralelo, sin bloquearse entre sí
+      const results = await Promise.allSettled(notificationPromises);
+
+      // 6️⃣ Evaluar resultados individuales
+      const gmailResult =
+        results[0]?.status === "fulfilled" ? results[0].value : null;
+      const whatsappResult =
+        results[1]?.status === "fulfilled" ? results[1].value : null;
+
+      if (!gmailResult?.ok || !gmailResult?.notified) {
+        console.warn("⚠️ Notificación por Gmail falló o no se confirmó.");
       }
 
-      // Validar resultado de notificación
-      if (!resultNotify.ok) {
-        console.warn("⚠️ La cita fue procesada, pero falló la notificación.");
-        alert("La cita fue registrada correctamente, pero no se pudo enviar la notificación.");
-      } else if (!resultNotify.notified) {
-        console.warn("⚠️ Notificación no confirmada, pero cita guardada.");
-        alert("Cita registrada, pero la notificación no se confirmó.");
-      } else {
-        console.log("✅ Notificación enviada exitosamente:", resultNotify);
+      if (!isEditing && (!whatsappResult?.ok || !whatsappResult?.notified)) {
+        console.warn("⚠️ Notificación por WhatsApp falló o no se confirmó.");
       }
+
+      // 7️⃣ Mensaje final al usuario
+      if ((gmailResult?.ok && gmailResult?.notified) || (whatsappResult?.ok && whatsappResult?.notified)) {
+        console.log("✅ Notificaciones enviadas correctamente.");
+      } else {
+        alert("La cita fue registrada correctamente, pero una o más notificaciones fallaron.");
+      }
+
 
       // Mostrar modal de confirmación y limpiar estado
       setShowConfirmationModal(true);
