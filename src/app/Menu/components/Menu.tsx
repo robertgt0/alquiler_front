@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { CerrarSesiones } from "./cerrarSesiones";
 import CambiarTelefono from "./cambiarTelefono";
+import { MessageSeguridad } from "./messageSeguridad";
 
 export default function SimpleProfileMenu() {
   const [showCerrarSesionMessage, setShowCerrarSesionMessage] = useState(false);
   const [showCambiarTelefono, setShowCambiarTelefono] = useState(false);
+  const [showMessageSeguridad, setShowMessageSeguridad] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [user, setUser] = useState<{
     id: string;
@@ -115,9 +117,13 @@ export default function SimpleProfileMenu() {
     <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
       Métodos de autenticación
     </button>
-    <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
-      Seguridad
-    </button>
+        <button
+     onClick={() => setShowMessageSeguridad(true)}
+     className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
+    >
+     Seguridad
+     </button>
+
     <button
       onClick={handleCerrarSesionesClick}
       className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left mt-2"
@@ -145,6 +151,11 @@ export default function SimpleProfileMenu() {
         userId={user?.id || ""}
         telefonoActual={user?.telefono || ""} />
       )}
+
+       {showMessageSeguridad && (
+       <MessageSeguridad onClose={() => setShowMessageSeguridad(false)} />
+       )}
+
     </div>
   );
 }

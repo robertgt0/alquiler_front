@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface MessageSeguridadProps {
@@ -9,30 +9,36 @@ interface MessageSeguridadProps {
 }
 
 export const MessageSeguridad: React.FC<MessageSeguridadProps> = ({
-  redireccion = "/SeguridadQr",
+ redireccion = "/SeguridadQr",
   onClose,
 }) => {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
 
-   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const isChecked = e.target.checked;
-  setChecked(isChecked);
+  useEffect(() => {
+    const saved = sessionStorage.getItem("checkSeguridad");
+    if (saved === "true") {
+      setChecked(true);
+    }
+  }, []);
 
-  if (isChecked) {
-    // Guardamos una marca temporal para mostrar el check en login
-    sessionStorage.setItem("checkSeguridad", "true");
+    const handleCheckboxChange = () => {
+    // Alterna el valor actual
+    const newChecked = !checked;
+    setChecked(newChecked);
 
-    // Cierra el mensaje
-    onClose?.();
-
-    // Redirige después de un pequeño retraso
-    setTimeout(() => {
-      router.push(redireccion);
-    }, 200);
-  }
-};
-
+    if (newChecked) {
+      // Si se marca, guardamos y redirigimos
+      sessionStorage.setItem("checkSeguridad", "true");
+      onClose?.();
+      setTimeout(() => {
+        router.push(redireccion);
+      }, 200);
+    } else {
+      // Si se desmarca, eliminamos la marca
+      sessionStorage.removeItem("checkSeguridad");
+    }
+  };
 
   const handleOutsideClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {

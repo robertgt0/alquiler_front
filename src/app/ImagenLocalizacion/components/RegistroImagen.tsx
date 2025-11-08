@@ -331,28 +331,27 @@ export default function RegistroImagen() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-
-    const text = await resp.text();
-    let body: ApiResp | null = null;
-    try {
-      body = text ? (JSON.parse(text) as ApiResp) : null;
-    } catch {
-      body = null;
-    }
+    
 
     if (!resp.ok) {
-      const detalle =
-        (body && ("error" in body || "message" in body)) ? (body.error || body.message) : text || `HTTP ${resp.status}`;
-      console.error("Respuesta del servidor:", body ?? text);
-      throw new Error(detalle || "Error al registrar.");
+      throw new Error( "Error al registrar.");
     }
-
+    const data=await resp.json();
     // ÉXITO
     setSuccessOpen(true);
     sessionStorage.removeItem("datosUsuarioParcial");
     setTimeout(() => {
       setSuccessOpen(false);
-      router.push("/home");
+      if (data) {
+      const token = data.data.accessToken ?? data.data.token; 
+
+      if (token) sessionStorage.setItem('authToken', token);
+
+      sessionStorage.setItem('userData', JSON.stringify(data.data.user));
+    }
+      const eventLogin = new CustomEvent("login-exitoso");
+      window.dispatchEvent(eventLogin);
+      router.push("/");
     }, 3000);
   } catch (err: unknown) {
     console.error("Error al crear usuario:", err);
