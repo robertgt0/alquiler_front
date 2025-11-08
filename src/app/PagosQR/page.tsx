@@ -258,10 +258,14 @@ const RecargaQR: React.FC = () => {
                 <span className="px-3 text-gray-700 whitespace-nowrap">+591</span>
                 <input
                   type="text"
-                  placeholder="ingresar nro. telf."
-                  value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
                   className="flex-1 px-3 py-2 bg-transparent focus:outline-none text-black placeholder-gray-400"
+                  value={telefono}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    // Solo números y máximo 8 dígitos
+                    if (/^\d*$/.test(val) && val.length <= 8) setTelefono(val);
+                  }}
+                  placeholder="ingresar nro telf."
                 />
               </div>
 
