@@ -1,5 +1,11 @@
 // src/lib/appointments.ts
 
+import {
+  getProveedorById,
+  getServicioById,
+  getClienteById,
+} from "@/lib/data-fetcher";
+
 export type Destination = { email?: string; phone?: string; name?: string };
 
 export type CreateAppointmentPayload = {
@@ -8,6 +14,7 @@ export type CreateAppointmentPayload = {
   fecha: string; // ISO
   horario?: { inicio?: string; fin?: string };
   cliente?: { nombre?: string; email?: string; phone?: string; id?: string };
+  ubicacion?: { direccion?: string; notas?: string };
   [key: string]: any;
 };
 
@@ -21,42 +28,9 @@ export type CreateResponse = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
-/** Crear cita */
-export async function createAppointment(
-  payload: CreateAppointmentPayload
-): Promise<CreateResponse> {
-  const url = `${API_URL}/api/devcode/citas`;
-
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const body = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      return {
-        ok: false,
-        status: res.status,
-        message: body?.message ?? `HTTP ${res.status}`,
-        data: body,
-        error: body,
-      };
-    }
-
-    return {
-      ok: true,
-      data: body?.data ?? body,
-      status: res.status,
-    };
-  } catch (err: any) {
-    return { ok: false, message: err?.message ?? String(err) };
-  }
-}
-
-/** Enviar notificación (correo, whatsapp, etc.) */
+/** 
+ * 🔔 Enviar notificación (correo, whatsapp, etc.) con reintentos genéricos y timeout 
+ */
 export async function sendNotification(payload: {
   subject: string;
   message: string;
@@ -64,127 +38,312 @@ export async function sendNotification(payload: {
   fromName?: string;
   meta?: any;
 }): Promise<CreateResponse> {
-  const NOTIFY_URL = `${API_URL}/api/gmail-notifications`; // o /api/notifications si usas otro endpoint
+  const NOTIFY_URL = `${API_URL}/api/gmail-notifications`;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
 
-  if (process.env.NEXT_PUBLIC_API_KEY) {
+  if (process.env.NEXT_PUBLIC_API_KEY)
     headers["x-api-key"] = process.env.NEXT_PUBLIC_API_KEY;
-  }
 
-  try {
-    const res = await fetch(NOTIFY_URL, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(payload),
-    });
+  // Reemplazar saltos de línea y *negritas*
+  const safeMessage =
+    payload.message
+      ?.replace(/\*(.*?)\*/g, "<b>$1</b>")
+      ?.replace(/\n/g, "<br>") ?? "";
 
-    const body = await res.json().catch(() => ({}));
+  const formattedPayload = { ...payload, message: safeMessage };
 
-    if (!res.ok) {
-      return {
-        ok: false,
-        status: res.status,
-        message: body?.message ?? `HTTP ${res.status}`,
-        data: body,
-        error: body,
-      };
+  // 🔁 Reintentos genéricos
+  const maxAttempts = 3;
+  const retryDelay = 15000; // 5 segundos
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const startTime = Date.now();
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
+      const res = await fetch(NOTIFY_URL, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(formattedPayload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+      const body = await res.json().catch(() => ({}));
+
+      const backendFailed =
+        !res.ok ||
+        body?.ok === false ||
+        body?.error ||
+        /invalid_client|Unauthorized|fail|error/i.test(
+          JSON.stringify(body)
+        );
+
+      if (backendFailed) {
+        console.warn(`❌ Error en intento ${attempt}:`, body?.message ?? res.statusText);
+
+        if (attempt < maxAttempts) {
+          console.log(`⏳ Esperando ${retryDelay / 1000}s antes del reintento...`);
+          await wait(retryDelay);
+          continue;
+        }
+
+        return {
+          ok: false,
+          status: res.status,
+          message: body?.message ?? "Error al enviar notificación.",
+          error: body?.error ?? null,
+        };
+      }
+
+      console.info(
+        `✅ Notificación enviada correctamente en intento ${attempt} (${Date.now() - startTime}ms)`
+      );
+
+      return { ok: true, data: body?.data ?? body, status: res.status };
+    } catch (err: any) {
+      console.error(`⚠️ Fallo en intento ${attempt}:`, err?.message ?? err);
+
+      if (attempt >= maxAttempts) {
+        return {
+          ok: false,
+          message: err?.message ?? "Error desconocido al enviar notificación.",
+        };
+      }
+
+      console.log(`⏳ Esperando ${retryDelay / 1000}s antes del reintento...`);
+      await wait(retryDelay);
     }
-
-    return {
-      ok: true,
-      data: body?.data ?? body,
-      status: res.status,
-    };
-  } catch (err: any) {
-    return { ok: false, message: err?.message ?? String(err) };
   }
+
+  return { ok: false, message: "No se pudo enviar la notificación tras varios intentos." };
 }
 
 /**
- * Función de alto nivel: crea cita y (si se creó) manda notificación.
- * Retorna un resultado uniforme para fácil manejo en frontend.
+ * ✉️ Enviar notificación de creación de cita.
+ * 
+ * Ya no crea la cita — solo envía la notificación.
  */
 export async function createAndNotify(payload: CreateAppointmentPayload) {
-  // 1️⃣ Crear la cita
-  const creation = await createAppointment(payload);
+  try {
+    // 1️⃣ Obtener datos reales desde el backend (data-fetcher normaliza)
+    const [proveedorResp, servicioResp, clienteResp] = await Promise.all([
+      getProveedorById(payload.proveedorId),
+      getServicioById(payload.servicioId),
+      payload.cliente?.id ? getClienteById(payload.cliente.id) : null,
+    ]);
 
-  if (!creation.ok) {
-    return {
-      ok: false,
-      status: creation.status ?? 500,
-      created: false,
-      notified: false,
-      error: creation.error ?? creation.message,
+    // 2️⃣ Asegurarnos de usar el objeto correcto (normalizado)
+    const proveedor = proveedorResp ?? (payload as any).proveedor ?? null;
+    const servicio = servicioResp ?? (payload as any).servicio ?? null;
+    const cliente = clienteResp ?? payload.cliente ?? null;
+
+    // 3️⃣ Armar destinatarios (con comprobaciones)
+    const destinations: Destination[] = [];
+    if (cliente && (cliente as any).email) {
+      destinations.push({
+        email: (cliente as any).email,
+        name: (cliente as any).nombre ?? "Cliente",
+      });
+    }
+
+    // 4️⃣ Preparar texto de notificación (seguro con fallback)
+    const [year, month, day] = payload.fecha.split("-").map(Number);
+    const fechaLocal = new Date(year, month - 1, day).toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    const horaInicio = payload.horario?.inicio ?? "—";
+    const horaFin = payload.horario?.fin ?? "—";
+
+    const subject = `Creación de cita con ${proveedor?.nombre ?? "tu proveedor"}`;
+    const message = `
+      ✨ *CREACIÓN DE TU CITA* ✨
+
+      Hola *${(cliente as any)?.nombre ?? "Cliente"}*,
+      Tu cita ha sido creada exitosamente. A continuación los detalles:
+
+      📅 *Fecha:* ${fechaLocal}
+      ⏰ *Horario:* ${horaInicio} - ${horaFin}
+      🧾 *Servicio:* ${(servicio as any)?.nombre ?? payload.servicioId}
+      👨‍⚕️ *Proveedor:* ${(proveedor as any)?.nombre ?? payload.proveedorId}
+      📍 *Dirección:* ${payload.ubicacion?.direccion ?? "No especificada"}
+      🗒️ *Notas:* ${payload.ubicacion?.notas ?? "Ninguna"}
+
+      Gracias por confiar en nosotros 💙  
+      — *Sistema de Citas*
+    `;
+
+    // 5️⃣ Enviar notificación (igual que antes)
+    const notifyPayload = {
+      subject,
+      message,
+      destinations,
+      fromName: "Sistema de Citas",
+      meta: { proveedorId: payload.proveedorId, servicioId: payload.servicioId },
     };
+
+    const notifyResult = await sendNotification(notifyPayload);
+    return notifyResult.ok
+      ? { ok: true, notified: true, notifyResult }
+      : { ok: false, notified: false, message: notifyResult.message };
+  } catch (err: any) {
+    return { ok: false, notified: false, message: err?.message };
   }
+}
 
-  // 2️⃣ Obtener datos creados (y posibles relaciones del backend)
-  const createdData = creation.data ?? {};
+/** ✉️ Notificación: cita modificada */
+export async function updateAndNotify(
+  payload: CreateAppointmentPayload & { cambios?: string[] }
+) {
+  try {
+    // 1️⃣ Obtener datos reales desde el backend
+    const [proveedorResp, servicioResp, clienteResp] = await Promise.all([
+      getProveedorById(payload.proveedorId),
+      getServicioById(payload.servicioId),
+      payload.cliente?.id ? getClienteById(payload.cliente.id) : null,
+    ]);
 
-  // 3️⃣ Preparar destinatarios
-  let destinations: Destination[] = [];
+    // 2️⃣ Asegurarnos de usar el objeto correcto (normalizado)
+    const proveedor = proveedorResp ?? (payload as any).proveedor ?? null;
+    const servicio = servicioResp ?? (payload as any).servicio ?? null;
+    const cliente = clienteResp ?? payload.cliente ?? null;
 
-  // Cliente
-  if (payload.cliente?.email)
-    destinations.push({
-      email: payload.cliente.email,
-      name: payload.cliente.nombre ?? "Cliente",
+    // 3️⃣ Armar destinatarios
+    const destinations: Destination[] = [];
+    if (cliente && (cliente as any).email) {
+      destinations.push({
+        email: (cliente as any).email,
+        name: (cliente as any).nombre ?? "Cliente",
+      });
+    }
+
+    // 4️⃣ Texto de cambios
+    const cambiosTexto =
+      payload.cambios?.length
+        ? `🔄 *Cambios realizados:* ${payload.cambios.join(", ")}`
+        : "Se han actualizado los detalles de tu cita.";
+
+    // 5️⃣ Fecha formateada
+    const [year, month, day] = payload.fecha.split("-").map(Number);
+    const fechaLocal = new Date(year, month - 1, day).toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
 
-  // Proveedor (si viene del backend o payload)
-  const proveedor = createdData.proveedor ?? { email: "", nombre: "Proveedor" };
-  if (proveedor?.email)
-    destinations.push({
-      email: proveedor.email,
-      name: proveedor.nombre ?? "Proveedor",
+    const horaInicio = payload.horario?.inicio ?? "—";
+    const horaFin = payload.horario?.fin ?? "—";
+
+    // 6️⃣ Asunto y cuerpo del mensaje
+    const subject = `Actualización de tu cita con ${proveedor?.nombre ?? "tu proveedor"}`;
+    const message = `
+      ✨ *ACTUALIZACIÓN DE CITA* ✨
+
+      Hola *${(cliente as any)?.nombre ?? "Cliente"}*,
+      Tu cita ha sido modificada correctamente.
+
+      ${cambiosTexto}
+
+      📅 *Fecha:* ${fechaLocal}
+      ⏰ *Horario:* ${horaInicio} - ${horaFin}
+      🧾 *Servicio:* ${(servicio as any)?.nombre ?? payload.servicioId}
+      👨‍⚕️ *Proveedor:* ${(proveedor as any)?.nombre ?? payload.proveedorId}
+      📍 *Dirección:* ${payload.ubicacion?.direccion ?? "No especificada"}
+      🗒️ *Notas:* ${payload.ubicacion?.notas ?? "Ninguna"}
+
+      — *Sistema de Citas*
+    `;
+
+    // 7️⃣ Enviar notificación
+    const notifyPayload = {
+      subject,
+      message,
+      destinations,
+      fromName: "Sistema de Citas",
+      meta: { proveedorId: payload.proveedorId, tipo: "update" },
+    };
+
+    const notifyResult = await sendNotification(notifyPayload);
+    return notifyResult.ok
+      ? { ok: true, notified: true, notifyResult }
+      : { ok: false, notified: false, message: notifyResult.message };
+  } catch (err: any) {
+    console.error("❌ Error en updateAndNotify:", err);
+    return { ok: false, notified: false, message: err?.message };
+  }
+}
+
+/** ✉️ Notificación: cita cancelada */
+export async function cancelAndNotify(payload: CreateAppointmentPayload) {
+  try {
+    // 1️⃣ Obtener datos reales desde el backend
+    const [proveedorResp, servicioResp, clienteResp] = await Promise.all([
+      getProveedorById(payload.proveedorId),
+      getServicioById(payload.servicioId),
+      payload.cliente?.id ? getClienteById(payload.cliente.id) : null,
+    ]);
+
+    // 2️⃣ Asegurarnos de usar el objeto correcto (normalizado)
+    const proveedor = proveedorResp ?? (payload as any).proveedor ?? null;
+    const servicio = servicioResp ?? (payload as any).servicio ?? null;
+    const cliente = clienteResp ?? payload.cliente ?? null;
+
+    // 3️⃣ Armar destinatarios
+    const destinations: Destination[] = [];
+    if (cliente && (cliente as any).email) {
+      destinations.push({
+        email: (cliente as any).email,
+        name: (cliente as any).nombre ?? "Cliente",
+      });
+    }
+
+    // 4️⃣ Fecha formateada
+    const [year, month, day] = payload.fecha.split("-").map(Number);
+    const fechaLocal = new Date(year, month - 1, day).toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
 
-  // 4️⃣ Crear cuerpo del correo
-  const fechaLocal = new Date(payload.fecha).toLocaleDateString("es-ES", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+    // 5️⃣ Asunto y mensaje
+    const subject = `Cancelación de cita con ${proveedor?.nombre ?? "tu proveedor"}`;
+    const message = `
+      ❌ *CANCELACIÓN DE CITA* ❌
 
-  const horaInicio = payload.horario?.inicio ?? "";
-  const horaFin = payload.horario?.fin ?? "";
+      Hola *${(cliente as any)?.nombre ?? "Cliente"}*,
+      Tu cita programada con *${(proveedor as any)?.nombre ?? payload.proveedorId}* ha sido cancelada.
 
-  const subject = `Creacion de cita con ${proveedor.nombre}`;
-  const message = `
-  Hola ${payload.cliente?.nombre ?? "Cliente"},
+      📅 *Fecha original:* ${fechaLocal}
+      🧾 *Servicio:* ${(servicio as any)?.nombre ?? payload.servicioId}
 
-  Tu cita ha sido creada exitosamente 🎉
+      Si fue un error, puedes volver a programarla cuando desees.  
+      — *Sistema de Citas*
+    `;
 
-  \n📅 *Fecha:* ${fechaLocal}
-  \n⏰ *Horario:* ${horaInicio} - ${horaFin}
-  \n👨‍⚕️ *Proveedor:* ${proveedor.nombre ?? "Proveedor"}
-  \n🧾 *Servicio:* ${payload.servicioId}
-  \n📍 *Dirección:* ${payload.ubicacion?.direccion ?? "No especificada"}
-  \n🗒️ *Nota adicional:* ${payload.ubicacion?.notas ?? "Ninguna"}
+    // 6️⃣ Enviar notificación
+    const notifyPayload = {
+      subject,
+      message,
+      destinations,
+      fromName: "Sistema de Citas",
+      meta: { proveedorId: payload.proveedorId, tipo: "cancel" },
+    };
 
-  Gracias por confiar en nosotros.
-  `;
-
-  // 5️⃣ Enviar correo
-  const notifyPayload = {
-    subject,
-    message,
-    destinations,
-    fromName: "Sistema de Citas",
-    meta: {
-      appointmentId: createdData.id ?? createdData._id ?? null,
-    },
-  };
-
-  let notifyResult = await sendNotification(notifyPayload);
-  const notified = notifyResult.ok;
-
-  return {
-    ok: true,
-    created: true,
-    notified,
-    creation,
-    notifyResult,
-  };
+    const notifyResult = await sendNotification(notifyPayload);
+    return notifyResult.ok
+      ? { ok: true, notified: true, notifyResult }
+      : { ok: false, notified: false, message: notifyResult.message };
+  } catch (err: any) {
+    console.error("❌ Error en cancelAndNotify:", err);
+    return { ok: false, notified: false, message: err?.message };
+  }
 }
