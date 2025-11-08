@@ -1,0 +1,288 @@
+// EJEMPLO_INTEGRACION_PAGOS.ts
+/**
+ * ============================================
+ * GUÍA DE INTEGRACIÓN PARA EL EQUIPO DE PAGOS
+ * ============================================
+ * 
+ * Este archivo muestra CÓMO y DÓNDE integrar el sistema de notificaciones
+ * en el módulo de pagos.
+ * 
+ * NO es código que se ejecute, es solo una GUÍA DE REFERENCIA.
+ * ============================================
+ */
+
+import { sendNegativeBalanceNotification, shouldNotifyNegativeBalance } from '@/lib/notifications/sendNegativeBalanceNotification';
+
+// ============================================
+// EJEMPLO 1: Integración en una función de pago
+// ============================================
+
+/**
+ * Supongamos que tienen una función que procesa transacciones
+ * y actualiza el saldo de la billetera
+ */
+async function procesarTransaccion(
+  fixerId: number, 
+  monto: number, 
+  tipo: 'debito' | 'credito'
+) {
+  try {
+    // 1. Obtener datos del fixer (según su implementación)
+    const fixer = await obtenerFixerDesdeBD(fixerId);
+    
+    // 2. Calcular nuevo saldo
+    const nuevoSaldo = tipo === 'debito' 
+      ? fixer.balance - monto 
+      : fixer.balance + monto;
+
+    // 3. Actualizar saldo en la BD (su código existente)
+    await actualizarSaldoEnBD(fixerId, nuevoSaldo);
+
+    // ============================================
+    // 🔔 AQUÍ INTEGRAN LA NOTIFICACIÓN
+    // ============================================
+    
+    // Validar si el saldo es negativo
+    if (nuevoSaldo < 0) {
+      console.log('⚠️ Saldo negativo detectado, enviando notificación...');
+      
+      // Llamar a la función de notificaciones
+      await sendNegativeBalanceNotification({
+        fixer_id: fixer.id,
+        name: fixer.name,
+        email: fixer.email,
+        balance: nuevoSaldo
+      });
+    }
+
+    return {
+      success: true,
+      nuevoSaldo
+    };
+
+  } catch (error) {
+    console.error('Error en transacción:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// EJEMPLO 2: Con validación previa
+// ============================================
+
+async function procesarPagoConValidacion(
+  fixerId: number,
+  montoPagar: number
+) {
+  // Obtener fixer
+  const fixer = await obtenerFixerDesdeBD(fixerId);
+  
+  // Calcular nuevo saldo
+  const nuevoSaldo = fixer.balance - montoPagar;
+
+  // Actualizar en BD
+  await actualizarSaldoEnBD(fixerId, nuevoSaldo);
+
+  // ============================================
+  // 🔔 VALIDAR PRIMERO, LUEGO NOTIFICAR
+  // ============================================
+  
+  if (shouldNotifyNegativeBalance(fixerId, nuevoSaldo)) {
+    await sendNegativeBalanceNotification({
+      fixer_id: fixer.id,
+      name: fixer.name,
+      email: fixer.email,
+      balance: nuevoSaldo
+    });
+  }
+
+  return nuevoSaldo;
+}
+
+// ============================================
+// EJEMPLO 3: En un endpoint de API
+// ============================================
+
+/**
+ * Ejemplo en un controlador/handler de Next.js API Route
+ */
+export async function POST_realizarPago(req: Request) {
+  try {
+    const { fixerId, monto } = await req.json();
+
+    // Obtener fixer
+    const fixer = await obtenerFixerDesdeBD(fixerId);
+    
+    // Calcular nuevo saldo
+    const nuevoSaldo = fixer.balance - monto;
+    
+    // Validación del equipo de pagos (su código)
+    if (nuevoSaldo < -1000) {
+      return Response.json({
+        error: 'Límite de saldo negativo excedido'
+      }, { status: 400 });
+    }
+
+    // Actualizar saldo
+    await actualizarSaldoEnBD(fixerId, nuevoSaldo);
+
+    // ============================================
+    // 🔔 NOTIFICAR SI ES NEGATIVO
+    // ============================================
+    
+    if (nuevoSaldo < 0) {
+      // No bloqueamos la respuesta si la notificación falla
+      sendNegativeBalanceNotification({
+        fixer_id: fixer.id,
+        name: fixer.name,
+        email: fixer.email,
+        balance: nuevoSaldo
+      }).catch(error => {
+        console.error('Error al enviar notificación (no crítico):', error);
+      });
+    }
+
+    return Response.json({
+      success: true,
+      nuevoSaldo
+    });
+
+  } catch (error) {
+    return Response.json({ error: 'Error en pago' }, { status: 500 });
+  }
+}
+
+// ============================================
+// EJEMPLO 4: En un hook/servicio de React
+// ============================================
+
+/**
+ * Si usan hooks personalizados para manejar pagos
+ */
+function useWalletPayment() {
+  const realizarPago = async (monto: number) => {
+    try {
+      // Llamar a su API de pagos
+      const response = await fetch('/api/payments', {
+        method: 'POST',
+        body: JSON.stringify({ monto })
+      });
+
+      const data = await response.json();
+
+      // ============================================
+      // 🔔 NOTIFICAR DESDE EL FRONTEND (ALTERNATIVA)
+      // ============================================
+      
+      if (data.nuevoSaldo < 0) {
+        // Importar la función en el componente
+        await sendNegativeBalanceNotification({
+          fixer_id: data.fixerId,
+          name: data.fixerName,
+          email: data.fixerEmail,
+          balance: data.nuevoSaldo
+        });
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
+    }
+  };
+
+  return { realizarPago };
+}
+
+// ============================================
+// EJEMPLO 5: Integración en modelo/servicio
+// ============================================
+
+class WalletService {
+  async debitWallet(fixerId: number, amount: number) {
+    // Obtener wallet actual
+    const wallet = await this.getWallet(fixerId);
+    
+    // Calcular nuevo balance
+    const newBalance = wallet.balance - amount;
+    
+    // Actualizar en BD
+    await this.updateBalance(fixerId, newBalance);
+
+    // ============================================
+    // 🔔 HOOK DE NOTIFICACIÓN
+    // ============================================
+    
+    this.checkAndNotifyNegativeBalance(fixerId, newBalance, wallet);
+
+    return newBalance;
+  }
+
+  private async checkAndNotifyNegativeBalance(
+    fixerId: number, 
+    balance: number, 
+    wallet: any
+  ) {
+    if (balance < 0) {
+      await sendNegativeBalanceNotification({
+        fixer_id: fixerId,
+        name: wallet.owner.name,
+        email: wallet.owner.email,
+        balance: balance
+      });
+    }
+  }
+}
+
+// ============================================
+// DÓNDE BUSCAR EN SU CÓDIGO
+// ============================================
+
+/**
+ * Busquen archivos que contengan:
+ * 
+ * 1. Funciones que actualizan balance/saldo:
+ *    - updateBalance()
+ *    - updateWallet()
+ *    - debitAccount()
+ *    - processPayment()
+ * 
+ * 2. Variables que guardan el saldo:
+ *    - wallet.balance
+ *    - account.balance
+ *    - user.wallet.amount
+ * 
+ * 3. Archivos comunes:
+ *    - src/services/wallet.service.ts
+ *    - src/services/payment.service.ts
+ *    - src/api/payments/route.ts
+ *    - src/app/api/wallet/route.ts
+ * 
+ * 4. Buscar en su código:
+ *    - Ctrl+F: "balance -"
+ *    - Ctrl+F: "wallet.balance"
+ *    - Ctrl+F: "saldo"
+ */
+
+// ============================================
+// FUNCIONES AUXILIARES (implementen según su BD)
+// ============================================
+
+async function obtenerFixerDesdeBD(fixerId: number) {
+  // TODO: Implementar según su ORM (Prisma, TypeORM, etc.)
+  // Ejemplo con Prisma:
+  // return await prisma.fixer.findUnique({ where: { id: fixerId } });
+  
+  throw new Error('Implementar según su BD');
+}
+
+async function actualizarSaldoEnBD(fixerId: number, nuevoSaldo: number) {
+  // TODO: Implementar según su ORM
+  // Ejemplo con Prisma:
+  // return await prisma.wallet.update({
+  //   where: { fixerId },
+  //   data: { balance: nuevoSaldo }
+  // });
+  
+  throw new Error('Implementar según su BD');
+}
