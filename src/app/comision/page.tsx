@@ -1,3 +1,4 @@
+
 "use client";
 // 1. Importa useState y useEffect
 import { useState, useEffect } from "react";
@@ -182,7 +183,7 @@ export default function HomePage() {
     setMessage("Procesando..."); // (Como en tu ejemplo)
 
     try {
-      const response = await fetch(`http://localhost:5000/api/trabajos/${usuario}`);
+      const response = await fetch(`http://localhost:5000/api/bitCrew/trabajos/${usuario}`);
       const data = await response.json();
 
       if (!response.ok) {
