@@ -72,9 +72,38 @@ export default async function WalletPage() {
 
   // 3. Renderiza tus componentes y "pasa" los datos como props
   return (
-    <main>
-      <Wallet />
-    </main>
+    <div className="wallet-container">
+      {/* Título de la página */}
+      {/* <h1>Mi Billetera</h1> */}
+
+      <header className="wallet-header">
+        <div className="header-title">
+          <h1>Mi Billetera</h1>
+          <p>Gestiona tus finanzas fácilmente</p>
+        </div>
+        
+        {/* Contiene solo el botón de "Recargar Saldo" para Desktop */}
+        <div className="header-actions">
+          <button className="reload-button desktop-only">
+            <span>Recargar Saldo</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Pasa los datos del balance a la tarjeta */}
+      <BalanceCard
+        {...({
+          saldo: balanceData.saldo,
+          moneda: balanceData.moneda,
+          estado: balanceData.estado,
+        } as any)}
+      />
+
+      {/* Pasa la lista de transacciones y el mensaje (si existe) */}
+      <TransactionList
+        transactions={transactionData.transacciones}
+      />
+    </div>
   );
   
 }

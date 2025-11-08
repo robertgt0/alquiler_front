@@ -6,11 +6,6 @@ import type { Transaction } from './TransactionList/TransactionList';
 import './Wallet.css';
 
 
-
-
-
-
-
 // --- Datos Ficticios (Mock Data) ---
 const mockTransactions: Transaction[] = [
   { id: '1', type: 'Transferencia recibida', date: 'Hoy, 10:15', amount: 698.23 },
