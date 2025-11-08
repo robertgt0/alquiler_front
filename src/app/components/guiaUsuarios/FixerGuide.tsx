@@ -51,12 +51,12 @@ export const FixerGuide = ({ setVista }: FixerGuideProps) => {
               index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
             } items-center gap-8`}
           >
-            <div className="group w-full md:w-1/2 bg-blue-600 rounded-lg p-8 h-64 flex flex-col items-center justify-center text-center transition-shadow duration-300 ease-in-out hover:shadow-lg">
+            <div className="group w-full md:w-1/2 bg-blue-600 rounded-lg p-7 h-64 flex flex-col items-center justify-center text-center transition-shadow duration-300 ease-in-out hover:shadow-lg">
               {step.icon}
               <p className="text-white mt-4 text-sm">{step.iconLabel}</p>
             </div>
-            <div className="w-full md:w-1/2 p-4">
-              <span className="flex bg-blue-600 text-white rounded-full w-8 h-8 items-center justify-center font-medium mb-4 text-sm">
+            <div className="w-full md:w-1/2 p-3">
+              <span className="flex bg-blue-600 text-white rounded-full w-7 h-7 items-center justify-center font-medium mb-4 text-sm">
                 {index + 1}
               </span>
               <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
