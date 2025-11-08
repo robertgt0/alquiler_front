@@ -1,3 +1,5 @@
+"use client";
+
 // src/app/bitcrew/wallet/components/BalanceCard.tsx
 import React, { useState } from 'react';
 import './BalanceCard.css';
@@ -6,20 +8,29 @@ import './BalanceCard.css';
 import { FiRefreshCw, FiEye, FiEyeOff } from 'react-icons/fi'; 
 
 // Define las 'props' que el componente espera recibir
-interface BalanceCardProps {
+/*interface BalanceCardProps {
   balance: number;
+}*/
+
+//op2
+interface BalanceCardProps {
+  saldo: number;
+  moneda: string;
+  estado: string;
 }
 
-const BalanceCard: React.FC<BalanceCardProps> = ({ balance}) => {
+const BalanceCard: React.FC<BalanceCardProps> = ({ saldo, moneda, estado }) => {
 
   // Estado para controlar si el saldo es visible o no
   const [showBalance, setShowBalance] = useState(true); 
 
+  const numericSaldo = Number(saldo) || 0; // Asegura que sea un número válido
+
   // Formatea el número del balance al estilo de moneda de Bolivia
-  const formattedBalance = new Intl.NumberFormat('es-BO', {
+  const formattedBalance = numericSaldo.toLocaleString('es-BO', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(balance);
+  });
 
   // --- Manejadores de Eventos ---
 

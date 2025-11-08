@@ -38,7 +38,7 @@ const Wallet: React.FC = () => {
       <main className="wallet-main-content">
         
         {/* Tarjeta de Balance Degradada */}
-        <BalanceCard balance={mockBalance}/>
+        <BalanceCard saldo={mockBalance} moneda="Bs." estado="Activo" />
         
         {/* Botón de "Recargar Saldo" solo visible en Mobile */}
         <button className="reload-button mobile-only">
