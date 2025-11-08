@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 
 interface UseSearchHistoryProps {
@@ -23,15 +22,19 @@ interface UseSearchHistoryReturn {
   seleccionarPorIndice: (indice: number) => string | undefined;
 }
 
+// Helper: normaliza NEXT_PUBLIC_API_URL evitando duplicar '/api'
+function getApiRoot(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const trimmed = raw.replace(/\/+$/, '');
+  return trimmed.endsWith('/api') ? trimmed : `${trimmed}/api`;
+}
+
 class HistoryService {
-  private static API_BASE =
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-    "http://localhost:5000/api";
+  private static API_BASE = getApiRoot();
 
   static async getHistorial(endpoint?: string): Promise<string[]> {
     try {
-      const apiEndpoint =
-        endpoint || `${this.API_BASE}/borbotones/search/history`;
+      const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
       const response = await fetch(apiEndpoint);
 
       if (response.ok) {
@@ -49,8 +52,7 @@ class HistoryService {
 
   static async clearHistorial(endpoint?: string): Promise<boolean> {
     try {
-      const apiEndpoint =
-        endpoint || `${this.API_BASE}/borbotones/search/history`;
+      const apiEndpoint = endpoint || `${this.API_BASE}/borbotones/search/history`;
       const response = await fetch(apiEndpoint, {
         method: "DELETE",
       });
@@ -87,23 +89,58 @@ export function useSearchHistory({
       const terminos = await HistoryService.getHistorial(apiConfig?.endpoint);
 
       if (terminos.length > 0) {
-        setHistorial(terminos);
-        console.log("📚 [HISTORIAL] Historial cargado:", terminos);
+        // Limpiar y normalizar términos
+        const historialUnico: string[] = Array.from(
+          new Set(
+            terminos
+              .map((term: string) => term.trim())
+              .filter((term: string) => term.length > 0)
+          )
+        ).slice(0, 10) as string[];
+
+        setHistorial(historialUnico);
+        console.log("📚 [HISTORIAL] Historial cargado del backend:", historialUnico);
       } else {
-        // Si viene vacío, igual seteamos [] para que se muestre el mensaje
-        const stored = localStorage.getItem("historialBusquedas");
-        if (stored) {
-          setHistorial(JSON.parse(stored));
-        } else {
+        // Si viene vacío, intentar localStorage
+        try {
+          const stored = localStorage.getItem("historialBusquedas");
+          if (stored) {
+            const historialLocal: string[] = JSON.parse(stored);
+            const historialUnico: string[] = Array.from(
+              new Set(
+                historialLocal
+                  .map((term: string) => term.trim())
+                  .filter((term: string) => term.length > 0)
+              )
+            ).slice(0, 10);
+            setHistorial(historialUnico);
+            console.log('📚 [HISTORIAL] Historial cargado desde localStorage:', historialUnico);
+          } else {
+            setHistorial([]);
+          }
+        } catch (localError) {
+          console.error('Error con localStorage:', localError);
           setHistorial([]);
         }
-        console.log("📚 [HISTORIAL] Historial vacío o no hay localStorage");
+        console.log("📚 [HISTORIAL] Historial vacío o no hay datos");
       }
     } catch (error) {
       console.error("Error cargando historial:", error);
       try {
         const stored = localStorage.getItem("historialBusquedas");
-        setHistorial(stored ? JSON.parse(stored) : []);
+        if (stored) {
+          const historialLocal: string[] = JSON.parse(stored);
+          const historialUnico: string[] = Array.from(
+            new Set(
+              historialLocal
+                .map((term: string) => term.trim())
+                .filter((term: string) => term.length > 0)
+            )
+          ).slice(0, 10);
+          setHistorial(historialUnico);
+        } else {
+          setHistorial([]);
+        }
       } catch (localError) {
         console.error("Error leyendo localStorage:", localError);
         setHistorial([]);
@@ -128,7 +165,7 @@ export function useSearchHistory({
     };
   }, []);
 
-  // ✅ Guardar en historial
+  // ✅ Guardar en historial - MEJORADO para evitar duplicados y mantener orden
   const guardarEnHistorial = useCallback(
     (texto: string) => {
       if (!mostrarHistorial) return;
@@ -136,21 +173,34 @@ export function useSearchHistory({
       const textoNormalizado = texto.trim();
       if (!textoNormalizado) return;
 
-      const nuevoHistorial = Array.from(
-        new Set([textoNormalizado, ...historial])
-      ).slice(0, 5);
+      setHistorial(prevHistorial => {
+        // Eliminar duplicados (case insensitive) y mantener orden
+        const historialLimpio = prevHistorial
+          .map(item => item.trim())
+          .filter(item => item.length > 0);
 
-      setHistorial(nuevoHistorial);
-      try {
-        localStorage.setItem(
-          "historialBusquedas",
-          JSON.stringify(nuevoHistorial)
-        );
-      } catch (error) {
-        console.error("Error guardando historial en localStorage:", error);
-      }
+        const nuevoHistorial = [
+          textoNormalizado,
+          ...historialLimpio.filter(item =>
+            item.toLowerCase() !== textoNormalizado.toLowerCase()
+          )
+        ].slice(0, 10); // Aumentado a 10 para coincidir con tu código
+
+        // Guardar en localStorage
+        try {
+          localStorage.setItem(
+            "historialBusquedas",
+            JSON.stringify(nuevoHistorial)
+          );
+        } catch (error) {
+          console.error("Error guardando historial en localStorage:", error);
+        }
+
+        console.log('💾 [HISTORIAL] Guardando búsqueda:', textoNormalizado);
+        return nuevoHistorial;
+      });
     },
-    [historial, mostrarHistorial]
+    [mostrarHistorial]
   );
 
   // ✅ Limpiar historial backend
@@ -161,23 +211,43 @@ export function useSearchHistory({
         setHistorial([]);
         setMostrarHistorialLocal(false);
         localStorage.removeItem("historialBusquedas");
-        console.log("✅ Historial limpiado correctamente");
+        historialCargado.current = true;
+        console.log('✅ [HISTORIAL] Historial limpiado correctamente por el usuario');
       } else {
-        console.error("❌ Error al limpiar historial en el backend");
+        console.error('❌ [HISTORIAL] Error al limpiar historial en el backend');
       }
     } catch (error) {
-      console.error("❌ Error limpiando historial:", error);
+      console.error('❌ [HISTORIAL] Error limpiando historial:', error);
+      // Fallback: limpiar localStorage
+      try {
+        localStorage.removeItem("historialBusquedas");
+        setHistorial([]);
+        console.log('✅ [HISTORIAL] Historial limpiado localmente');
+      } catch (localError) {
+        console.error('❌ [HISTORIAL] Error limpiando localStorage:', localError);
+      }
     }
   }, [apiConfig?.endpoint]);
 
   // ✅ Eliminar un solo elemento
   const eliminarDelHistorial = useCallback(
     (texto: string) => {
-      const nuevoHistorial = historial.filter((item) => item !== texto);
-      setHistorial(nuevoHistorial);
-      localStorage.setItem("historialBusquedas", JSON.stringify(nuevoHistorial));
+      setHistorial(prevHistorial => {
+        const nuevoHistorial = prevHistorial.filter(item =>
+          item.toLowerCase() !== texto.toLowerCase()
+        );
+
+        // Actualizar localStorage
+        try {
+          localStorage.setItem("historialBusquedas", JSON.stringify(nuevoHistorial));
+        } catch (error) {
+          console.error("Error actualizando localStorage:", error);
+        }
+
+        return nuevoHistorial;
+      });
     },
-    [historial]
+    []
   );
 
   // ✅ Seleccionar item del historial
