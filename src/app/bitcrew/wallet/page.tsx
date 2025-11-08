@@ -1,49 +1,34 @@
-'use client';
-
-import Wallet from './components/Wallet'; 
-import './components/Wallet.css';
+import React from 'react';
+// ⚠️ IMPORTANTE: Verifica si Wallet.css está en la misma carpeta que este archivo.
+// Si está junto a page.tsx, usa: import './Wallet.css';
+// Si lo moviste a components, usa: import './components/Wallet.css';
+import './components/Wallet.css'; 
 
 import BalanceCard from "./components/BalanceCard/BalanceCard";
 import TransactionList from "./components/TransactionList/TransactionList";
-//import "./Wallet.css";
 
-/*export default function WalletPage() {
-  return (
-    <main>
-      <Wallet />
-    </main>
-  );
-}*/
-
-
-
-
-// --- 1. FUNCIÓN PARA OBTENER EL SALDO ---
-// Esta función llama a tu endpoint: /api/devcode/billetera
+// --- 1. FUNCIÓN PARA OBTENER EL SALD0---
 async function getBalanceData() {
-  // Construye la URL completa usando la variable del .env.local
+  // Asegúrate de que esta variable de entorno esté definida en .env.local
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/billetera`;
 
   try {
-    // Llama al backend. 'no-store' asegura que siempre pida datos frescos.
     const res = await fetch(apiUrl, { cache: "no-store" });
 
     if (!res.ok) {
-      // Si el backend da un error (404, 500), lo capturamos
       console.error("Error al cargar el saldo:", await res.text());
-      return { saldo: 0, moneda: "Bs.", estado: "Error" }; // Datos por defecto
+      // Retornamos undefined para que BalanceCard muestre el estado de carga/error (000.00)
+      return { saldo: undefined, moneda: "Bs.", estado: "Error" }; 
     }
     return res.json();
   } catch (error) {
     console.error("Error de conexión con el backend (saldo):", error);
-    return { saldo: 0, moneda: "Bs.", estado: "Sin conexión" };
+    return { saldo: undefined, moneda: "Bs.", estado: "Sin conexión" };
   }
 }
 
 // --- 2. FUNCIÓN PARA OBTENER LAS TRANSACCIONES ---
-// Esta función llama a tu endpoint: /api/devcode/historial
 async function getTransactionData() {
-  // Pide la página 1, con un límite de 10 (como en los ACs)
   const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/historial?page=1&limit=10`;
 
   try {
@@ -51,38 +36,34 @@ async function getTransactionData() {
 
     if (!res.ok) {
       console.error("Error al cargar transacciones:", await res.text());
-      return { transacciones: [], mensaje: "Error al cargar" }; // Datos por defecto
+      return { transacciones: [] }; // Retorna array vacío en caso de error
     }
     return res.json();
   } catch (error) {
     console.error("Error de conexión con el backend (historial):", error);
-    return { transacciones: [], mensaje: "Sin conexión" };
+    return { transacciones: [] };
   }
 }
 
-// --- 3. TU COMPONENTE DE PÁGINA (ahora 'async') ---
+// --- 3. COMPONENTE DE PÁGINA PRINCIPAL ---
 export default async function WalletPage() {
-  // 1. Llama a las funciones y espera los datos del backend
+  // Llamadas paralelas al backend
   const [balanceData, transactionData] = await Promise.all([
     getBalanceData(),
     getTransactionData(),
   ]);
 
-  // 2. Los datos han llegado. (ej. balanceData = { saldo: 12730.50, ... })
-
-  // 3. Renderiza tus componentes y "pasa" los datos como props
   return (
-    <div className="wallet-container">
-      {/* Título de la página */}
-      {/* <h1>Mi Billetera</h1> */}
-
+    // CORRECCIÓN CLAVE 1: Usar la clase correcta 'wallet-app-container'
+    <div className="wallet-app-container">
+      
       <header className="wallet-header">
         <div className="header-title">
           <h1>Mi Billetera</h1>
           <p>Gestiona tus finanzas fácilmente</p>
         </div>
         
-        {/* Contiene solo el botón de "Recargar Saldo" para Desktop */}
+        {/* Botón visible SOLO en Desktop */}
         <div className="header-actions">
           <button className="reload-button desktop-only">
             <span>Recargar Saldo</span>
@@ -90,20 +71,24 @@ export default async function WalletPage() {
         </div>
       </header>
 
-      {/* Pasa los datos del balance a la tarjeta */}
-      <BalanceCard
-        {...({
-          saldo: balanceData.saldo,
-          moneda: balanceData.moneda,
-          estado: balanceData.estado,
-        } as any)}
-      />
+      {/* CORRECCIÓN CLAVE 2: Restaurar el 'main' con su clase para el layout */}
+      <main className="wallet-main-content">
+        
+        {/* Pasamos el saldo recuperado. Si es undefined, mostrará 000.00 */}
+        <BalanceCard
+          balance={balanceData.saldo} 
+        />
 
-      {/* Pasa la lista de transacciones y el mensaje (si existe) */}
-      <TransactionList
-        transactions={transactionData.transacciones}
-      />
+        {/* CORRECCIÓN CLAVE 3: Restaurar el botón visible SOLO en Mobile */}
+        <button className="reload-button mobile-only">
+          <span>Recargar Saldo</span>
+        </button>
+
+        {/* Pasamos la lista de transacciones recuperada */}
+        <TransactionList
+          transactions={transactionData.transacciones}
+        />
+      </main>
     </div>
   );
-  
 }
