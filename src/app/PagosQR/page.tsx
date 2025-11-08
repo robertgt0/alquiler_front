@@ -11,7 +11,7 @@ const RecargaQR: React.FC = () => {
   const [monto, setMonto] = useState<number | string>("");
   const [montoError, setMontoError] = useState<string>(""); //estado para manejar el error
   const [nombre, setNombre] = useState<string>("");
-  const [tipoDoc, setTipoDoc] = useState<string>("CI");
+  //const [tipoDoc, setTipoDoc] = useState<string>("CI");
   const [nit, setNit] = useState<string>("");
   const [telefono, setTelefono] = useState<string>("");
   //const [correo, setCorreo] = useState<string>("");
@@ -20,6 +20,16 @@ const RecargaQR: React.FC = () => {
   const [correo, setCorreo] = useState("");
   const [correoError, setCorreoError] = useState("");
 
+    type ErroresType = {
+    monto?: string;
+    nombre?: string;
+    documento?: string;
+    telefono?: string;
+    correo?: string;
+    detalle?: string;
+  };
+
+  const [errores, setErrores] = useState<ErroresType>({});
 
   useEffect(() => {
     let valid = true;
@@ -51,10 +61,45 @@ const RecargaQR: React.FC = () => {
     else if (value === "") setMonto("");
   };
 
+  
   const handleConfirmar = () => {
-    if (!isFormValid) return;
+    const nuevosErrores: ErroresType = {};
+    let valido = true;
+
+    const montoNum = typeof monto === "string" && monto !== "" ? Number(monto) : (typeof monto === "number" ? monto : NaN);
+
+    if (!monto || isNaN(montoNum) || montoNum <= 0) {
+      nuevosErrores.monto = "El monto es obligatorio";
+      valido = false;
+    }
+    if (!nombre) {
+      nuevosErrores.nombre = "El nombre es obligatorio";
+      valido = false;
+    }
+    if (!numeroDocumento) {
+      nuevosErrores.documento = `El ${tipoDocumento} es obligatorio`;
+      valido = false;
+    }
+    if (!telefono) {
+      nuevosErrores.telefono = "El teléfono es obligatorio";
+      valido = false;
+    }
+    if (!correo) {
+      nuevosErrores.correo = "El correo es obligatorio";
+      valido = false;
+    }
+    if (!detalle) {
+      nuevosErrores.detalle = "El detalle de recarga es obligatorio";
+      valido = false;
+    }
+
+    setErrores(nuevosErrores);
+
+    if (!valido) return;
+
     alert("Recarga realizada con éxito!");
   };
+
 
   const validarDocumento = (valor: string) => {
     // Solo permitir números
