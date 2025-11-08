@@ -46,12 +46,14 @@ const RecargaQR: React.FC = () => {
     }
     
     if (!nombre || !/^[a-zA-Z\s]+$/.test(nombre) || nombre.length > 40) valid = false;
-    if (!nit || !/^\d{1,8}$/.test(nit)) valid = false;
+  //  if (!nit || !/^\d{1,8}$/.test(nit)) valid = false;
+    if (!numeroDocumento || !/^\d+$/.test(numeroDocumento)) valid = false;
+    if (!correo || correoError) valid = false;
     if (!telefono || telefono.length < 1) valid = false;
     if (!detalle || detalle.length < 1 || detalle.length > 40) valid = false;
 
     setIsFormValid(valid);
-  }, [monto, nombre, nit, telefono, detalle]);
+  }, [monto, nombre, numeroDocumento, telefono, correo, correoError, detalle]);
 
   const handleMontoClick = (valor: number) => setMonto(valor);
 
@@ -171,6 +173,7 @@ const RecargaQR: React.FC = () => {
               </span>
             </div>
             {montoError && <span className="text-red-500 text-sm">{montoError}</span>}
+            {errores.monto && <p className="text-red-500 text-sm mt-1">{errores.monto}</p>}
           </div>
 
           <div>
@@ -185,6 +188,7 @@ const RecargaQR: React.FC = () => {
               }}
               placeholder="ingresar nombre"
             />
+            {errores.nombre && <p className="text-red-500 text-sm mt-1">{errores.nombre}</p>}
           </div>
 
           <div className="space-y-2 mt-4">
@@ -216,6 +220,10 @@ const RecargaQR: React.FC = () => {
             {mensajeError && (
               <p className="text-red-500 text-sm mt-1">{mensajeError}</p>
             )}
+
+            {errores.documento && (
+              <p className="text-red-500 text-sm mt-1">{errores.documento}</p>
+            )}
           </div>
 
           <div>
@@ -241,6 +249,7 @@ const RecargaQR: React.FC = () => {
                 }}
                 placeholder="ingresar nro telf."
               />
+              {errores.telefono && <p className="text-red-500 text-sm mt-1">{errores.telefono}</p>}
             </div>
           </div>
 
@@ -275,6 +284,7 @@ const RecargaQR: React.FC = () => {
             {correoError && (
               <p className="text-red-500 text-sm mt-1">{correoError}</p>
             )}
+            {errores.correo && <p className="text-red-500 text-sm mt-1">{errores.correo}</p>}
           </div>
 
           <div className="sm:col-span-2">
@@ -288,6 +298,7 @@ const RecargaQR: React.FC = () => {
               }}
               placeholder="ingresar detalle de recarga..."
             ></textarea>
+            {errores.detalle && <p className="text-red-500 text-sm mt-1">{errores.detalle}</p>}
           </div>
         </form>
 
