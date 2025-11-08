@@ -11,4 +11,5 @@ export interface Job {
   location: string;    // Ubicación del trabajo
   postedDate: string;  // Fecha en que el trabajo fue publicado
   salaryRange: string; // Rango salarial para el trabajo
+  experienceYears?: number; 
 }

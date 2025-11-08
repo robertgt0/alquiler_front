@@ -134,6 +134,10 @@ export const getExampleJob = (index: number, nombreOverride?: string): Job => {
   const jobId = `${timestamp}${random}${counter}`;
   const isDisponible = seededRandom(index * 41) > 0.2;
 
+
+  const experienceYears = Math.floor(seededRandom(index * 19) * 5) + 1; // 1 a 5 años
+
+
   return {
     id: jobId,
     title: servicio.nombre,

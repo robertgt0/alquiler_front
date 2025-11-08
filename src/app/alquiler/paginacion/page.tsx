@@ -12,6 +12,9 @@ import BusquedaAutocompletado from "../Busqueda/busquedaAutocompletado";
 import FiltrosForm from "../Feature/Componentes/FiltroForm";
 import { UsuarioResumen } from "../Feature/Types/filtroType";
 
+import BusquedaAvanzada from "../BusquedaAvanzada/BusquedaAvanzada";
+
+
 // Componente de carga
 function LoadingFallback() {
   return (
@@ -41,6 +44,11 @@ function BusquedaContent() {
   const [buscando, setBuscando] = useState(false);
   const [estadoBusqueda, setEstadoBusqueda] = useState<"idle" | "success" | "error">("idle");
 
+
+
+
+
+  
   // Efecto para sincronizar estados con URL y mantener la persistencia
   useEffect(() => {
     // Preservar los parámetros actuales de la URL
@@ -120,6 +128,49 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
   return sorted;
 };
 
+
+const handleAdvancedFilters = (filtros: any) => {
+  console.log(" Filtros aplicados:", filtros);
+
+  let filtrados = allJobs.filter((job) => {
+    let match = true;
+
+    // Tipo de servicio
+    if (filtros.tipoServicio)
+      match &&= job.title.toLowerCase() === filtros.tipoServicio.toLowerCase();
+
+    // Zona / ubicación
+    if (filtros.zona)
+      match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
+
+    // Precio
+    if (filtros.precioMin || filtros.precioMax) {
+      const precioNum = Number(job.salaryRange.replace(/[^0-9.-]+/g,""));
+      if (filtros.precioMin) match &&= precioNum >= filtros.precioMin;
+      if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
+    }
+
+    // Disponibilidad / horario
+    if (filtros.horario) {
+      match &&= job.employmentType.toLowerCase() === filtros.horario.toLowerCase();
+    }
+
+   
+
+    return match;
+  });
+
+  setFiltrosAplicados(true);
+  setSearchResults(filtrados);
+  setModoVista("jobs");
+  setFiltersNoResults(filtrados.length === 0);
+};
+
+
+const [busquedaAvanzadaAbierta, setBusquedaAvanzadaAbierta] = useState(false);
+
+
+
   const ordenarUsuarios = (opcion: string, lista: UsuarioResumen[]) => {
     const sorted = [...lista];
     switch (opcion) {
@@ -143,36 +194,30 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
   };
 
   // ---------------- Filtrado y ordenamiento ----------------
-  const jobsToDisplay = useMemo(() => {
-    // Usar siempre allJobs como fuente de datos principal
-    let data = allJobs;
-    
-    // Si hay resultados de búsqueda, usar esos en su lugar
-    if (searchResults.length > 0) {
-      data = searchResults;
-    }
-    
-    // Log para debug
-    console.log('Total trabajos disponibles:', data.length);
-    const normalizar = (texto: string) =>
-      texto
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+const jobsToDisplay = useMemo(() => {
+  // Usar searchResults si hay filtros aplicados o búsqueda activa
+  let data = filtrosAplicados || searchTerm ? searchResults : allJobs;
 
-    const termino = (searchTerm || "").trim();
-    if (termino) {
-      const palabras = normalizar(termino).split(/\s+/).filter(Boolean);
+  // Log para debug
+  console.log('Total trabajos disponibles:', data.length);
 
-      data = data.filter((job) => {
-        const title = normalizar(job.title || "");
-        const company = normalizar(job.company || "");
-        return palabras.some((palabra) => title.includes(palabra) || company.includes(palabra));
-      });
-    }
+  const normalizar = (texto: string) =>
+    texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    return ordenarItems(sortBy, data);
-  }, [searchResults, allJobs, sortBy, searchTerm]);
+  const termino = (searchTerm || "").trim();
+  if (termino) {
+    const palabras = normalizar(termino).split(/\s+/).filter(Boolean);
+
+    data = data.filter((job) => {
+      const title = normalizar(job.title || "");
+      const company = normalizar(job.company || "");
+      return palabras.some((palabra) => title.includes(palabra) || company.includes(palabra));
+    });
+  }
+
+  return ordenarItems(sortBy, data);
+}, [searchResults, allJobs, filtrosAplicados, searchTerm, sortBy]);
+
 
   const usuariosOrdenados = useMemo(
     () => ordenarUsuarios(sortBy, usuariosFiltrados),
@@ -339,39 +384,64 @@ const ordenarItems = (opcion: string, lista: Job[]) => {
         </h1>
 
         {/* Búsqueda */}
-        <BusquedaAutocompletado
-          onSearch={handleSearchResults}
-          datos={allJobs}
-          placeholder="Buscar por nombre parcial o encargado..."
-          valorInicial={urlQuery}
-        />
+        {!busquedaAvanzadaAbierta && (
+      <BusquedaAutocompletado
+        onSearch={handleSearchResults}
+        datos={allJobs}
+        placeholder="Buscar por nombre parcial o encargado..."
+        valorInicial={urlQuery}
+      />
+      )}
 
-        {/* Filtros */}
-        <div className="mt-6">
-          <FiltrosForm
-            onResults={(usuarios: UsuarioResumen[]) => {
-              console.log("🔄 Actualizando resultados filtrados:", usuarios.length);
-              setUsuariosFiltrados(usuarios);
-              setModoVista(usuarios.length > 0 ? "usuarios" : "jobs");
-              setFiltrosAplicados(true);
+
+       {/* Búsqueda Avanzada  */}
+        <div className="mt-8">
+          <BusquedaAvanzada
+            onAplicarFiltros={handleAdvancedFilters}
+            onLimpiarFiltros={() => {
+              setFiltrosAplicados(false);
+              setFiltersNoResults(false);
+              setUsuariosFiltrados([]);
+              setModoVista("jobs");
+              setSearchResults(allJobs);
+              setSortBy("Fecha (Reciente)");
             }}
-            onFilterNoResults={(noResults: boolean) => {
-              console.log("🚫 Actualizando estado de sin resultados:", noResults);
-              setFiltersNoResults(noResults);
-              setFiltrosAplicados(true);
-            }}
-            onClearFilters={handleClearFilters} // NUEVA PROP
-            sort={sortBy}
-            setSort={setSortBy}
-            opcionesOrdenamiento={opcionesOrdenamiento}
-            totalItems={totalItems}
-            disabled={
-              (modoVista === "jobs" && jobsToDisplay.length === 0) ||
-              (modoVista === "usuarios" && usuariosFiltrados.length === 0)
-            }
+            onToggle={(abierta: boolean) => setBusquedaAvanzadaAbierta(abierta)} // <--- agregar esta prop
           />
         </div>
 
+
+        {/* Filtros */}
+        {!busquedaAvanzadaAbierta && (
+  <div className="mt-6">
+    <FiltrosForm
+      onResults={(usuarios: UsuarioResumen[]) => {
+        console.log("🔄 Actualizando resultados filtrados:", usuarios.length);
+        setUsuariosFiltrados(usuarios);
+        setModoVista(usuarios.length > 0 ? "usuarios" : "jobs");
+        setFiltrosAplicados(true);
+      }}
+      onFilterNoResults={(noResults: boolean) => {
+        console.log("🚫 Actualizando estado de sin resultados:", noResults);
+        setFiltersNoResults(noResults);
+        setFiltrosAplicados(true);
+      }}
+      onClearFilters={handleClearFilters} // NUEVA PROP
+      sort={sortBy}
+      setSort={setSortBy}
+      opcionesOrdenamiento={opcionesOrdenamiento}
+      totalItems={totalItems}
+      disabled={
+        (modoVista === "jobs" && jobsToDisplay.length === 0) ||
+        (modoVista === "usuarios" && usuariosFiltrados.length === 0)
+      }
+    />
+  </div>
+)}
+
+
+         
+          
         {/* Vista Usuarios */}
         {modoVista === "usuarios" ? (
           <section className="mt-10">
