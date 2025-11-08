@@ -44,16 +44,16 @@ export default function SendNotificationForm({ title, onSend, showDetails }: Pro
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6 w-full max-w-md mx-auto my-6">
-      <h2 className="text-xl font-semibold mb-4">{title}</h2>
-      <form onSubmit={handleSubmit} className="space-y-3">
+    <div className="bg-white rounded-2xl shadow-md border border-blue-100 p-6 w-full max-w-md mx-auto my-6 transition-all duration-300 hover:shadow-lg">
+      <h2 className="text-xl font-semibold text-blue-700 mb-4">{title}</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="email"
           placeholder="Correo"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           required
-          className="border p-2 rounded w-full"
+          className="border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 p-2.5 rounded-lg w-full outline-none transition"
         />
         <input
           type="text"
@@ -61,7 +61,7 @@ export default function SendNotificationForm({ title, onSend, showDetails }: Pro
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           required
-          className="border p-2 rounded w-full"
+          className="border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 p-2.5 rounded-lg w-full outline-none transition"
         />
         {showDetails && (
           <div>
@@ -69,7 +69,6 @@ export default function SendNotificationForm({ title, onSend, showDetails }: Pro
               placeholder="Detalles (máx. 500 caracteres)"
               value={form.details}
               onChange={(e) => {
-                // 🟢 Controla el límite en tiempo real
                 if (e.target.value.length <= 500) {
                   setForm({ ...form, details: e.target.value });
                   setError("");
@@ -77,26 +76,32 @@ export default function SendNotificationForm({ title, onSend, showDetails }: Pro
                   setError("Máximo 500 caracteres permitidos.");
                 }
               }}
-              className="border p-2 rounded w-full min-h-[120px] resize-y"
+              className="border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 p-2.5 rounded-lg w-full min-h-[120px] resize-y outline-none transition"
               rows={5}
             />
-            {/* Contador de caracteres */}
-            <p className="text-sm text-gray-500 text-right">
-              {form.details.length}/500
-            </p>
-            {/* Mensaje de error local */}
+            <p className="text-sm text-gray-500 text-right">{form.details.length}/500</p>
             {error && <p className="text-red-600 text-sm">{error}</p>}
           </div>
         )}
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg w-full font-medium transition"
         >
           {loading ? "Enviando..." : "Enviar"}
         </button>
       </form>
-      {message && <p className="text-center mt-3">{message}</p>}
+      {message && (
+        <p
+          className={`text-center mt-3 text-sm ${
+            message.startsWith("✅")
+              ? "text-green-600"
+              : "text-red-600"
+          }`}
+        >
+          {message}
+        </p>
+      )}
     </div>
   );
 }
