@@ -1,9 +1,8 @@
 export interface Horario {
   id: string;
+  proveedorId: string;
   horaInicio: string;
   horaFin: string;
-  costo: number;
-  moneda: string;
 }
 
 export type HorariosDisponiblesType = {

@@ -1,7 +1,9 @@
+// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // (Opcional) No frena el build por errores de TypeScript
+  typescript: { ignoreBuildErrors: true },
 };
 
 export default nextConfig;

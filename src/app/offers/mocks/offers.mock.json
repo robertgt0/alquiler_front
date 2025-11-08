@@ -1,0 +1,69 @@
+[
+  {
+    "id": "1",
+    "ownerId": "fixer-1",
+    "title": "Arreglar grifo con goteo",
+    "description": "Revisión de grifería en cocina, fuga leve y goteo constante. Material básico disponible.",
+    "category": "Plomería",
+    "contact": { "whatsapp": "555-123-4567" },
+    "createdAt": "2025-10-15T13:45:00.000Z",
+    "status": "active",
+    "images": [
+      "https://images.unsplash.com/photo-1503174971373-b1f69850bded?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1523419409543-8a3e06d8c65b?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1400&auto=format"
+    ]
+  },
+  {
+    "id": "2",
+    "ownerId": "fixer-2",
+    "title": "Instalar luces en la sala de estar",
+    "description": "Instalación de 4 focos LED empotrables y verificación de apagadores existentes.",
+    "category": "Electricidad",
+    "contact": { "whatsapp": "555-987-6543" },
+    "createdAt": "2025-10-14T17:10:00.000Z",
+    "status": "active",
+    "images": [
+      "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1400&auto=format"
+    ]
+  },
+  {
+    "id": "3",
+    "ownerId": "fixer-3",
+    "title": "Arreglar marco de puerta roto",
+    "description": "Marco astillado por golpe, requiere encolado y ajuste de bisagras.",
+    "category": "Carpintería",
+    "contact": { "whatsapp": "555-246-8013" },
+    "createdAt": "2025-10-12T08:30:00.000Z",
+    "status": "active",
+    "images": []
+  },
+  {
+    "id": "4",
+    "ownerId": "fixer-4",
+    "title": "Pintar paredes del cuarto",
+    "description": "Pintura de dormitorio 3x4 m, se provee pintura lavable tono claro.",
+    "category": "Pintura",
+    "contact": { "whatsapp": "555-369-1470" },
+    "createdAt": "2025-10-10T10:05:00.000Z",
+    "status": "inactive",
+    "images": []
+  },
+  {
+    "id": "5",
+    "ownerId": "fixer-5",
+    "title": "Destapar lavaplatos de la cocina",
+    "description": "Lavaplatos obstruido, requiere destape y limpieza de sifón en U.",
+    "category": "Plomería",
+    "contact": { "whatsapp": "555-789-0123" },
+    "createdAt": "2025-10-09T09:20:00.000Z",
+    "status": "active",
+    "images": [
+      "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1503174971373-b1f69850bded?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1523419409543-8a3e06d8c65b?q=80&w=1400&auto=format",
+      "https://images.unsplash.com/photo-1520880867055-1e30d1cb001c?q=80&w=1400&auto=format"
+    ]
+  }
+]
