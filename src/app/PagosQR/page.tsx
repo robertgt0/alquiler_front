@@ -144,16 +144,32 @@ const RecargaQR: React.FC = () => {
         </div>
 
         {/* Botones de montos */}
-        <div className="flex justify-center flex-wrap gap-3 mb-8">
-          {[10, 20, 50, 100, 200, 300].map((valor) => (
-            <button
-              key={valor}
-              className="px-4 sm:px-6 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 flex-1 sm:flex-none text-center"
-              onClick={() => handleMontoClick(valor)}
-            >
-              {valor} BS
-            </button>
-          ))}
+        <div className="flex flex-col items-center gap-3 mb-8">
+          {/* Fila 1 */}
+          <div className="flex justify-center gap-3 flex-wrap">
+            {[10, 20, 50].map((valor) => (
+              <button
+                key={valor}
+                className="px-4 sm:px-6 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 flex-1 sm:flex-none text-center"
+                onClick={() => handleMontoClick(valor)}
+              >
+                {valor} BS
+              </button>
+            ))}
+          </div>
+
+          {/* Fila 2 */}
+          <div className="flex justify-center gap-3 flex-wrap">
+            {[100, 200, 300].map((valor) => (
+              <button
+                key={valor}
+                className="px-4 sm:px-6 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 flex-1 sm:flex-none text-center"
+                onClick={() => handleMontoClick(valor)}
+              >
+                {valor} BS
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Formulario */}
@@ -191,68 +207,69 @@ const RecargaQR: React.FC = () => {
             {errores.nombre && <p className="text-red-500 text-sm mt-1">{errores.nombre}</p>}
           </div>
 
-          <div className="space-y-2 mt-4">
-            <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>
-              Tipo de documento
-            </label>
+          {/* Fila: Tipo de documento y Nro. teléfono */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:gap-6 mt-4">
+            {/* Tipo de documento */}
+            <div className="flex-1 flex flex-col space-y-2">
+              <label className="text-sm font-medium" style={{ color: "#11255A" }}>
+                Tipo de documento
+              </label>
 
-            <select
-              value={tipoDocumento}
-              onChange={(e) => {
-                setTipoDocumento(e.target.value);
-                setNumeroDocumento("");
-                setMensajeError("");
-              }}
-              className="w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black"
-            >
-              <option value="CI">CI</option>
-              <option value="NIT">NIT</option>
-            </select>
+              <div className="flex items-center gap-2">
+                {/* Campo de número de documento */}
+                <input
+                  type="text"
+                  placeholder={`Ingrese su ${tipoDocumento}`}
+                  value={numeroDocumento}
+                  onChange={(e) => validarDocumento(e.target.value)}
+                  className="flex-1 min-w-0 border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400"
+                />
 
-            <input
-              type="text"
-              placeholder={`Ingrese su ${tipoDocumento}`}
-              value={numeroDocumento}
-              onChange={(e) => validarDocumento(e.target.value)}
-              className="w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400"
-            />
+                {/* Selector CI/NIT */}
+                <select
+                  value={tipoDocumento}
+                  onChange={(e) => {
+                    setTipoDocumento(e.target.value);
+                    setNumeroDocumento("");
+                    setMensajeError("");
+                  }}
+                  className="w-24 border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-2 py-2 text-black"
+                >
+                  <option value="CI">CI</option>
+                  <option value="NIT">NIT</option>
+                </select>
+              </div>
 
-            {mensajeError && (
-              <p className="text-red-500 text-sm mt-1">{mensajeError}</p>
-            )}
+              {mensajeError && (
+                <p className="text-red-500 text-sm mt-1">{mensajeError}</p>
+              )}
+              {errores.documento && (
+                <p className="text-red-500 text-sm mt-1">{errores.documento}</p>
+              )}
+            </div>
 
-            {errores.documento && (
-              <p className="text-red-500 text-sm mt-1">{errores.documento}</p>
-            )}
-          </div>
+            {/* Nro. teléfono */}
+            <div className="flex-1 flex flex-col space-y-2 mt-4 sm:mt-0">
+              <label className="text-sm font-medium" style={{ color: "#11255A" }}>
+                Nro. teléfono
+              </label>
 
-          <div>
-            <label
-              className="block text-sm font-medium mb-1"
-              style={{ color: "#11255A" }}
-            >
-              Nro. teléfono
-            </label>
+              <div className="flex items-center border border-gray-300 rounded-md bg-white/70 focus-within:ring-2 focus-within:ring-blue-500">
+                <span className="px-3 text-gray-700 whitespace-nowrap">+591</span>
+                <input
+                  type="text"
+                  placeholder="ingresar nro. telf."
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  className="flex-1 px-3 py-2 bg-transparent focus:outline-none text-black placeholder-gray-400"
+                />
+              </div>
 
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 font-semibold">
-                +591
-              </span>
-              <input
-                type="text"
-                className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 pl-16 pr-3 py-2 text-black placeholder-gray-400`}
-                value={telefono}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  // Solo números y máximo 8 dígitos
-                  if (/^\d*$/.test(val) && val.length <= 8) setTelefono(val);
-                }}
-                placeholder="ingresar nro telf."
-              />
-              {errores.telefono && <p className="text-red-500 text-sm mt-1">{errores.telefono}</p>}
+              {errores.telefono && (
+                <p className="text-red-500 text-sm mt-1">{errores.telefono}</p>
+              )}
             </div>
           </div>
-
 
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Correo electrónico</label>
