@@ -30,6 +30,21 @@ export default function Home() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+  // 🟢 CREAR FUNCIÓN REUTILIZABLE PARA CARGAR SERVICIOS
+  const fetchServicios = () => {
+    fetch(`${API_URL}/api/devcode/servicios`)
+      .then((res) => res.json())
+      .then((response) => {
+        if (response.success && Array.isArray(response.data)) {
+          setServicios(response.data);
+        } else {
+          console.error("Respuesta inesperada del backend:", response);
+          setServicios([]);
+        }
+      })
+      .catch((err) => console.error("Error al cargar servicios:", err));
+  };
+
   // Cliente hardcodeado (reemplaza con autenticación real)
   const clienteId = "68fb93e079308369b5a0f264";
 
@@ -37,7 +52,8 @@ export default function Home() {
   const { nuevasOfertas, checking, error, markAsRead } = useNewOffersPolling({
     clienteId,
     enabled: true, // Activar polling
-    intervalMs: 15 * 60 * 1000, // 15 minutos
+    //intervalMs: 15 * 60 * 1000, // 15 minutos
+    intervalMs: 15 * 1000,
     onNewOffers: (count, servicios) => {
       console.log(`🔔 ${count} nuevas ofertas detectadas`);
       setNewOffersData({ count, servicios });
@@ -55,7 +71,7 @@ export default function Home() {
   });
 
   // Cargar servicios
-  useEffect(() => {
+ /* useEffect(() => {
     fetch(`${API_URL}/api/devcode/servicios`)
       .then((res) => res.json())
       .then((response) => {
@@ -67,8 +83,12 @@ export default function Home() {
         }
       })
       .catch((err) => console.error("Error al cargar servicios:", err));
-  }, []);
-
+  }, []);*/
+  
+  useEffect(() => {
+    fetchServicios(); // Llamada inicial
+  }, []);
+  
   // Solicitar permisos de notificaciones al cargar
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
@@ -76,7 +96,7 @@ export default function Home() {
     }
   }, []);
 
-  const handleViewOffers = async () => {
+  /*const handleViewOffers = async () => {
     // Marcar como vistas
     if (newOffersData.servicios.length > 0) {
       try {
@@ -86,7 +106,23 @@ export default function Home() {
         console.error('Error al marcar ofertas como vistas:', err);
       }
     }
-  };
+  };*/
+
+  const handleViewOffers = async () => {
+    // Marcar como vistas
+    if (newOffersData.servicios.length > 0) {
+      try {
+        await markAsRead(newOffersData.servicios.map((s) => s._id));
+        
+        // 🟢 PASO 3: FORZAR LA RECARGA DE DATOS PARA MOSTRAR LA NUEVA OFERTA
+        fetchServicios(); 
+
+        setNewOffersData({ count: 0, servicios: [] });
+      } catch (err) {
+        console.error('Error al marcar ofertas como vistas:', err);
+      }
+    }
+  };
 
   const handleDismissNotification = () => {
     setShowNotification(false);

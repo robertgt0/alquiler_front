@@ -12,6 +12,8 @@ export function useNewOffersPolling({
   clienteId,
   enabled = true,
   intervalMs = 15 * 60 * 1000, // 15 minutos
+  //intervalMs = 15 * 1000, // 15 segundos (solo pruebas)
+
   onNewOffers,
 }: UseNewOffersPollingOptions) {
   const [nuevasOfertas, setNuevasOfertas] = useState(0);
