@@ -15,6 +15,9 @@ import TransactionList from "./components/TransactionList/TransactionList";
   );
 }*/
 
+
+
+
 // --- 1. FUNCIÓN PARA OBTENER EL SALDO ---
 // Esta función llama a tu endpoint: /api/devcode/billetera
 async function getBalanceData() {
@@ -69,23 +72,9 @@ export default async function WalletPage() {
 
   // 3. Renderiza tus componentes y "pasa" los datos como props
   return (
-    <div className="wallet-container">
-      {/* Título de la página */}
-      <h1>Mi Billetera</h1>
-
-      {/* Pasa los datos del balance a la tarjeta */}
-      <BalanceCard
-        {...({
-          saldo: balanceData.saldo,
-          moneda: balanceData.moneda,
-          estado: balanceData.estado,
-        } as any)}
-      />
-
-      {/* Pasa la lista de transacciones y el mensaje (si existe) */}
-      <TransactionList
-        transactions={transactionData.transacciones}
-      />
-    </div>
+    <main>
+      <Wallet />
+    </main>
   );
+  
 }

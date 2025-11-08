@@ -5,6 +5,12 @@ import TransactionList from './TransactionList/TransactionList';
 import type { Transaction } from './TransactionList/TransactionList';
 import './Wallet.css';
 
+
+
+
+
+
+
 // --- Datos Ficticios (Mock Data) ---
 const mockTransactions: Transaction[] = [
   { id: '1', type: 'Transferencia recibida', date: 'Hoy, 10:15', amount: 698.23 },
@@ -37,7 +43,7 @@ const Wallet: React.FC = () => {
       <main className="wallet-main-content">
         
         {/* Tarjeta de Balance Degradada */}
-        <BalanceCard balance={mockBalance} />
+        <BalanceCard balance={mockBalance}/>
         
         {/* Botón de "Recargar Saldo" solo visible en Mobile */}
         <button className="reload-button mobile-only">

@@ -10,7 +10,7 @@ interface BalanceCardProps {
   balance: number;
 }
 
-const BalanceCard: React.FC<BalanceCardProps> = ({ balance = 12000.50 }) => {
+const BalanceCard: React.FC<BalanceCardProps> = ({ balance}) => {
 
   // Estado para controlar si el saldo es visible o no
   const [showBalance, setShowBalance] = useState(true); 
