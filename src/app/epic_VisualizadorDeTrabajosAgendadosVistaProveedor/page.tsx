@@ -65,7 +65,7 @@ export default function TrabajosAgendadosPage() {
     let alive = true;
 
     // Llamamos a la API (Mock).
-    fetchTrabajosProveedor('proveedor_123')
+    fetchTrabajosProveedor()
       .then((d) => {
         if (alive) setJobs(d);
       })
