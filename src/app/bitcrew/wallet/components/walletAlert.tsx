@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import "./WalletAlert.css"; 
+import "./walletAlert.css"; 
 
 interface WalletAlertProps {
   balance: number;
