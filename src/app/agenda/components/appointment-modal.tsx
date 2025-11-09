@@ -80,7 +80,7 @@ export function AppointmentModal({
   const [saving, setSaving] = useState(false);
   // 🔔 Estados para alertas visuales
   const [showAlert, setShowAlert] = useState(false);
-  const [alertType, setAlertType] = useState<"success" | "error" | "info">("success");
+  const [alertType, setAlertType] = useState<"success" | "error">("success");
   const [alertMessage, setAlertMessage] = useState("");
 
   const isEdit = false;
@@ -305,7 +305,7 @@ export function AppointmentModal({
   }
 
   if (!selectedDate || !selectedSlot || !locationData) {
-    setAlertType("info");
+    setAlertType("error");
     setAlertMessage("Debe completar todos los campos obligatorios antes de continuar");
     setShowAlert(true);
     return;
@@ -383,7 +383,7 @@ export function AppointmentModal({
   }
 };
 
-    return (
+  return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="!w-[50vw] !max-w-none !sm:max-w-none bg-white rounded-xl shadow-2xl overflow-x-auto max-h-[90vh] overflow-y-auto p-0">
@@ -617,13 +617,16 @@ export function AppointmentModal({
         />
       </Dialog>
 
-      {/* 🔔 Alerta global (fuera del modal, visible siempre) */}
-      <TopNotificationAlert
-        show={showAlert}
-        type={alertType}
-        message={alertMessage}
-        onClose={() => setShowAlert(false)}
-      />
+      {/* 🔔 Alerta global — SIEMPRE visible sobre todo */}
+      <div className="fixed top-0 left-0 w-full z-[9999999] pointer-events-none flex justify-end pr-6 pt-6">
+        <TopNotificationAlert
+          show={showAlert}
+          type={alertType}
+          message={alertMessage}
+          onClose={() => setShowAlert(false)}
+          duration={4500}
+        />
+      </div>
     </>
   );
 }
