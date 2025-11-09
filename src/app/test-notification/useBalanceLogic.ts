@@ -93,7 +93,7 @@ const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Prom
       fromName: 'Sistema de Billetera Fixer'
     };
 
-    const backendUrl = 'http://localhost:5000';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL;
     
     console.log('📤 Enviando petición al backend:', `${backendUrl}/api/gmail-notifications`);
     
