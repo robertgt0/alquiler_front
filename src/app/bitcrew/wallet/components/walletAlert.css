@@ -1,0 +1,67 @@
+.wallet-alert-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 20, 40, 0.6); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.wallet-alert {
+  background: #f9fbff; 
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 20px rgba(11, 52, 110, 0.3);
+  text-align: center;
+  animation: fadeIn 0.3s ease-out;
+  border: 2px solid #bcd4ff;
+}
+
+.wallet-alert h2 {
+  color: #0a4ba5; 
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.alert-balance {
+  color: #1565c0; 
+  font-weight: bold;
+}
+
+.wallet-alert p {
+  color: #133b6b;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.wallet-alert button {
+  background-color: #1565c0;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.wallet-alert button:hover {
+  background-color: #0d47a1;
+  transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
