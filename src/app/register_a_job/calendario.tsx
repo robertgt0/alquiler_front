@@ -1,9 +1,39 @@
 "use client";
 import React, { useState } from "react";
+import { useEffect } from "react";
 import { mesesNombres, diasSemanaCortos } from "./Constantes";
 import Horarios from "./horarios";
 
+const URL = "http://localhost:5000" //"https://back-1kgu.onrender.com/";
+const ID_PROVEEDOR = "6902c43438df4e88b6680640"; 
+
+
+
 const Calendario: React.FC = () => {
+  const [proveedorNombre, setProveedorNombre] = useState<string>("");
+  useEffect(() => {
+    const fetchProveedor = async () => {
+      try {
+        const res = await fetch(`${URL}/api/los_vengadores/proveedores/${ID_PROVEEDOR}`);
+        if (!res.ok) throw new Error("Error al obtener proveedor");
+        const data = await res.json();
+        // La ruta devuelve algo como { success: true, data: { nombre: "Juan" } }
+        setProveedorNombre(data.nombre || "Sin nombre");
+      } catch (err) {
+        console.error(err);
+        setProveedorNombre("Sin nombre");
+      }
+    };
+  
+    fetchProveedor();
+  }, []);
+  
+
+
+
+
+
+
   const hoy = new Date();
   const [currentMonth, setCurrentMonth] = useState(hoy.getMonth());
   const [currentYear, setCurrentYear] = useState(hoy.getFullYear());
@@ -120,7 +150,8 @@ const Calendario: React.FC = () => {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-800">Electricista</h2>
-              <p className="text-gray-600 text-base">Juan Pérez</p>
+              
+              <p className="text-gray-600 text-base">{proveedorNombre}</p>
             </div>
           </div>
         </div>

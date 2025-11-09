@@ -1,0 +1,47 @@
+/* app/convertirse-en-fixer/globals.css */
+body {
+  /*imagen de fondo*/
+  font-family: sans-serif;
+  background-color: #f2f1fc;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 400px;
+  margin: 2rem auto;
+}
+
+
+.register-form label {
+  color: #ec0c0c;
+  font-weight: bold;
+}
+.register-form label {
+  color: #1366fd;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.register-form h2 {
+  color: #0c4fe9; /* rojo */
+  text-align: center;
+  font-size: 29px;
+}
+/*letra dentro de los inputs*/
+input::placeholder {
+ 
+  color: rgb(179, 158, 158); 
+  opacity: 6; 
+}
+.register-form input {
+  
+  outline: none; 
+  
+}
+/*efecto de concentracion en los iputs*/
+.register-form input:focus {
+  border-color: #67a0f5; /* azul */
+  box-shadow: 0 0 5px #1a53ee; /* brillo azul suave */
+}
