@@ -1,67 +1,75 @@
-.wallet-alert-overlay {
+
+.alert-overlay {
   position: fixed;
-  inset: 0;
-  background-color: rgba(0, 20, 40, 0.6); 
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 999;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.wallet-alert {
-  background: #f9fbff; 
-  padding: 2rem;
-  border-radius: 1rem;
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 8px 20px rgba(11, 52, 110, 0.3);
+/* Caja del modal */
+.alert-modal {
+  background-color: #e8f0ff;
+  border: 1px solid #bcd4ff;
+  border-radius: 12px;
+  width: 360px;
   text-align: center;
-  animation: fadeIn 0.3s ease-out;
-  border: 2px solid #bcd4ff;
+  padding: 1.8rem 1.5rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.25s ease-in-out;
 }
 
-.wallet-alert h2 {
-  color: #0a4ba5; 
+/* Encabezado con ícono */
+.alert-header {
+  background-color: #dbe9ff;
+  border-radius: 8px;
+  padding: 0.6rem 0;
   margin-bottom: 1rem;
-  font-size: 1.4rem;
+}
+
+.alert-icon {
+  font-size: 2rem;
+}
+
+/* Título principal */
+.alert-title {
+  color: #153e8a;
   font-weight: 700;
+  font-size: 1.2rem;
+  margin-bottom: 0.6rem;
 }
 
-.alert-balance {
-  color: #1565c0; 
-  font-weight: bold;
-}
-
-.wallet-alert p {
-  color: #133b6b;
-  margin-bottom: 0.5rem;
+/* Mensaje descriptivo */
+.alert-message {
+  color: #0a2d73;
   font-size: 0.95rem;
+  line-height: 1.4rem;
+  margin-bottom: 1.5rem;
 }
 
-.wallet-alert button {
-  background-color: #1565c0;
+/* Botón de cerrar */
+.alert-button {
+  background-color: #3d8bff;
   color: white;
   border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.5rem;
-  margin-top: 1rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 600;
-  transition: background 0.3s, transform 0.2s;
+  font-weight: 500;
+  transition: background 0.2s ease;
 }
 
-.wallet-alert button:hover {
-  background-color: #0d47a1;
-  transform: scale(1.05);
+.alert-button:hover {
+  background-color: #256dff;
 }
 
+/* Animación */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
