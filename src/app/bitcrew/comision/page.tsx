@@ -1,6 +1,6 @@
-
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link"; // ⬅️ Usamos Link de Next.js
 
 // --- 1. CONSTANTE DE COMISIÓN ---
 const TASA_COMISION = 0.05; // 5%
@@ -9,19 +9,21 @@ const TASA_COMISION = 0.05; // 5%
 interface ITrabajo {
   _id: string;
   descripcion: string;
-  estado: 'pendiente' | 'completado' | 'pagado'; // Ahora incluye 'pendiente'
+  estado: 'pendiente' | 'completado' | 'pagado';
   monto_a_pagar: number;
   fecha_creacion: string;
   fixer_id: string;
 }
 
-// (La interfaz de Billetera ya no es necesaria en el frontend)
-
-// --- 3. INTERFACES DEL MODAL (Sin cambios) ---
+// --- 3. INTERFACES DEL MODAL ---
 type ModalView = 'closed' | 'options' | 'confirm_cash';
 
-// --- 4. COMPONENTE SIDEBAR (Sin cambios) ---
-function Sidebar() {
+// --- 4. COMPONENTE SIDEBAR (MODIFICADO) ---
+// Recibe el 'usuario' para habilitar/deshabilitar el Link
+function Sidebar({ usuario }: { usuario: string }) {
+  
+  const hasUser = !!usuario; // true si el string no está vacío
+
   return (
     <aside className="w-full md:w-64 lg:w-72 bg-white p-6 shadow-lg md:shadow-none md:border-r md:border-gray-200 flex-shrink-0">
       {/* Logo */}
@@ -43,18 +45,37 @@ function Sidebar() {
         >
           <span>Trabajos Activos</span>
         </a>
-        <a
-          href="#"
-          className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
-        >
-          <span>Historial de Trabajos</span>
-        </a>
-        <a
-          href="#"
-          className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
-        >
-          <span>Mi Billetera</span>
-        </a>
+        
+        {/* Historial (Deshabilitado si no hay usuario) */}
+        {!hasUser ? (
+           <span className="flex items-center space-x-3 p-3 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed">
+             <span>Historial de Trabajos</span>
+           </span>
+        ) : (
+          <Link
+            href={`/bitcrew/historial?usuario=${usuario}`} // Asumiendo una ruta
+            className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
+          >
+            <span>Historial de Trabajos</span>
+          </Link>
+        )}
+
+        {/* Billetera (LÓGICA REQUERIDA) */}
+        {!hasUser ? (
+           // Versión deshabilitada
+           <span className="flex items-center space-x-3 p-3 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed" title="Debe buscar un usuario primero">
+             <span>Mi Billetera</span>
+           </span>
+        ) : (
+          // Versión habilitada (Link de Next.js)
+          <Link
+            href={`/bitcrew/wallet?usuario=${usuario}`} // ⬅️ Pasa el usuario como query param
+            className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
+          >
+            <span>Mi Billetera</span>
+          </Link>
+        )}
+
         <a
           href="#"
           className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
@@ -66,7 +87,7 @@ function Sidebar() {
   );
 }
 
-// --- 5. COMPONENTE TARJETA DE TRABAJO (¡MODIFICADO!) ---
+// --- 5. COMPONENTE TARJETA DE TRABAJO ---
 interface TrabajoCardProps {
   trabajo: ITrabajo;
   onClick: (trabajo: ITrabajo) => void;
@@ -78,10 +99,8 @@ function TrabajoCard({ trabajo, onClick }: TrabajoCardProps) {
     year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
   });
   
-  // ⬇️ La lógica de clic se mantiene: solo 'completado' es clicable
   const isClickable = trabajo.estado === 'completado';
 
-  // ⬇️ Función de ayuda para los estilos del botón de estado
   const getStatusStyle = (estado: ITrabajo['estado']) => {
     switch (estado) {
       case 'completado':
@@ -99,10 +118,9 @@ function TrabajoCard({ trabajo, onClick }: TrabajoCardProps) {
   return (
     <li
       className={`bg-blue-50 border border-blue-200 rounded-xl shadow-sm p-5 flex flex-col md:flex-row justify-between md:items-center space-y-4 md:space-y-0 
-        ${isClickable ? 'cursor-pointer hover:bg-blue-100 transition-colors' : 'cursor-default opacity-70'}`} // ⬇️ Estilo de clic/opacidad
-      onClick={() => isClickable && onClick(trabajo)} // ⬇️ Solo llama a onClick si es clicable
+        ${isClickable ? 'cursor-pointer hover:bg-blue-100 transition-colors' : 'cursor-default opacity-70'}`}
+      onClick={() => isClickable && onClick(trabajo)}
     >
-      {/* Detalles del Trabajo (sin cambios) */}
       <div className="flex-grow">
         <h3 className="font-bold text-lg text-gray-800">Nombre del cliente</h3>
         <p className="text-sm text-gray-600 mt-1">
@@ -118,19 +136,18 @@ function TrabajoCard({ trabajo, onClick }: TrabajoCardProps) {
         </div>
       </div>
       
-      {/* Botón de Estado (Actualizado) */}
       <div className="flex-shrink-0">
         <span
-          className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${status.class}`} // ⬇️ Usa la clase de estado
+          className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${status.class}`}
         >
-          {status.text} {/* ⬇️ Usa el texto de estado */}
+          {status.text}
         </span>
       </div>
     </li>
   );
 }
 
-// --- 6. COMPONENTE MODAL (Sin cambios) ---
+// --- 6. COMPONENTE MODAL ---
 interface ModalProps {
   view: 'options' | 'confirm_cash';
   setView: (view: ModalView) => void;
@@ -140,7 +157,6 @@ interface ModalProps {
 }
 
 function CompletadoModal({ view, setView, onConfirm, isConfirming, error }: ModalProps) {
-  // ... (El JSX de este componente es idéntico al anterior, no necesita cambios)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-white/30">
       <div
@@ -154,17 +170,14 @@ function CompletadoModal({ view, setView, onConfirm, isConfirming, error }: Moda
               <h2 className="text-2xl font-bold text-gray-900">Método de Pago</h2>
             </div>
             <div className="space-y-4 text-gray-700">
-              {/* Opción 1: QR */}
               <button className="w-full flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 ease-in-out">
                 <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 5h3v3H5V5zm0 8h3v3H5v-3zm8-8h3v3h-3V5zm0 8h3v3h-3v-3zm-4 4h.01M9 9h.01M15 9h.01M9 15h.01M15 15h.01"></path></svg>
                 <span className="font-semibold text-lg">QR</span>
               </button>
-              {/* Opción 2: Tarjeta */}
               <button className="w-full flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 ease-in-out">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7-4h12a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z"></path></svg>
                 <span className="font-semibold text-lg">Tarjeta</span>
               </button>
-              {/* Opción 3: Efectivo */}
               <button
                 className="w-full flex items-center space-x-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-150 ease-in-out"
                 onClick={() => setView('confirm_cash')}
@@ -222,21 +235,21 @@ function CompletadoModal({ view, setView, onConfirm, isConfirming, error }: Moda
   );
 }
 
-// --- 7. COMPONENTE DE PÁGINA PRINCIPAL (¡MODIFICADO!) ---
+// --- 7. COMPONENTE DE PÁGINA PRINCIPAL ---
 export default function FixerJobsPage() {
-  // --- Estados (Sin cambios) ---
-  const [usuario, setUsuario] = useState("");
+  // --- Estados ---
+  const [usuario, setUsuario] = useState(""); // ⬅️ Este es el estado clave
   const [trabajos, setTrabajos] = useState<ITrabajo[]>([]);
   const [loading, setLoading] = useState(false); 
   const [message, setMessage] = useState("Busca un usuario para ver sus trabajos.");
 
-  // Estados del Modal (Sin cambios)
+  // Estados del Modal
   const [modalView, setModalView] = useState<ModalView>('closed');
   const [selectedTrabajo, setSelectedTrabajo] = useState<ITrabajo | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
-  // --- Carga de Datos (Sin cambios) ---
+  // --- Carga de Datos ---
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!usuario) {
@@ -261,7 +274,7 @@ export default function FixerJobsPage() {
       
       if (Array.isArray(trabajosData) && trabajosData.length > 0) {
         setTrabajos(trabajosData);
-        setMessage(""); // Limpiar mensaje si hay resultados
+        setMessage(""); 
       } else {
         setTrabajos([]);
         setMessage(`No se encontraron trabajos para el usuario "${usuario}".`);
@@ -275,15 +288,13 @@ export default function FixerJobsPage() {
     }
   };
 
-  // --- Lógica del Modal (Sin cambios) ---
+  // --- Lógica del Modal ---
   const handleTrabajoClick = (trabajo: ITrabajo) => {
-    // ⬇️ Esta es la lógica clave que pediste
     if (trabajo.estado === 'completado') {
       setSelectedTrabajo(trabajo);
       setModalError(null);
       setModalView('options');
     }
-    // Si el estado es 'pendiente' o 'pagado', no hace nada.
   };
 
   const handleConfirmCashPayment = async () => {
@@ -307,16 +318,14 @@ export default function FixerJobsPage() {
         throw new Error(data.message || 'Error en el servidor');
       }
 
-      // Actualizar la lista de trabajos en el frontend
       setTrabajos(prevTrabajos =>
         prevTrabajos.map(t =>
           t._id === selectedTrabajo._id
-            ? { ...t, estado: 'pagado' } // Actualiza el estado localmente
+            ? { ...t, estado: 'pagado' }
             : t
         )
       );
       
-      // Cerrar el modal
       setModalView('closed');
       setSelectedTrabajo(null);
 
@@ -328,19 +337,16 @@ export default function FixerJobsPage() {
     }
   };
 
-  // --- ⬇️ SE ELIMINÓ EL useMemo 'trabajosCompletados' ---
-  // const trabajosCompletados = useMemo(() => ... );
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
       
       {/* Sidebar (Columna Izquierda) */}
-      <Sidebar />
+      <Sidebar usuario={usuario} /> {/* ⬅️ Le pasamos el usuario al Sidebar */}
 
       {/* Contenido Principal (Columna Derecha) */}
       <main className="flex-1 p-6 md:p-10">
         
-        {/* Título y Formulario de Búsqueda (Sin cambios) */}
+        {/* Título y Formulario de Búsqueda */}
         <h1 className="text-3xl font-bold text-gray-900">Trabajos</h1>
         <p className="mt-2 text-gray-600">
           Busca un fixer por su nombre de usuario para ver sus trabajos.
@@ -355,7 +361,7 @@ export default function FixerJobsPage() {
               type="text"
               id="usuario"
               value={usuario}
-              onChange={(e) => setUsuario(e.target.value)}
+              onChange={(e) => setUsuario(e.target.value)} // ⬅️ Actualiza el estado
               placeholder="Escribe el usuario (ej. tmolina)"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
@@ -363,7 +369,7 @@ export default function FixerJobsPage() {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 disabled:opacity-50 h-11" // h-11 para alinear
+            className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 disabled:opacity-50 h-11"
           >
             {loading ? 'Buscando...' : 'Buscar'}
           </button>
@@ -371,7 +377,7 @@ export default function FixerJobsPage() {
         {/* --- FIN DEL FORMULARIO --- */}
 
 
-        {/* ⬇️ --- Lista de Trabajos (¡MODIFICADA!) --- ⬇️ */}
+        {/* --- Lista de Trabajos --- */}
         <div className="mt-8">
           
           {loading && (
@@ -382,16 +388,13 @@ export default function FixerJobsPage() {
             <p className="text-gray-500">{message}</p>
           )}
 
-          {/* Ahora renderiza basado en 'trabajos' en lugar de 'trabajosCompletados' 
-          */}
           {!loading && !message && (
             <>
-              {trabajos.length === 0 ? ( // ⬅️ CAMBIADO
-                // Este mensaje solo aparece si la búsqueda fue exitosa pero no devolvió nada
+              {trabajos.length === 0 ? (
                 <p className="text-gray-500">Este usuario no tiene ningún trabajo registrado.</p> 
               ) : (
                 <ul className="space-y-4">
-                  {trabajos.map(trabajo => ( // ⬅️ CAMBIADO
+                  {trabajos.map(trabajo => (
                     <TrabajoCard
                       key={trabajo._id}
                       trabajo={trabajo}
