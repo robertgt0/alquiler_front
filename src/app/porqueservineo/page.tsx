@@ -9,18 +9,24 @@ const PorQueServineoPage: React.FC = () => {
 
   return (
     <main className="w-full flex flex-col items-center justify-center bg-gray-50 text-center">
-      {/* 🔹 Header principal */}
+      {/* 🔹 Header normal (no fijo): se desplaza junto al contenido */}
       <section className="bg-gradient-to-r from-blue-600 to-purple-700 text-white py-12 w-full">
         <div className="container mx-auto px-4">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 mr-6 md:mr-8">
+          <div className="flex items-center justify-center flex-wrap">
+            {/* ✅ Logo ahora redirige al Home */}
+            <div
+              className="flex-shrink-0 mr-4 md:mr-8 cursor-pointer transition-transform hover:scale-105"
+              onClick={() => router.push("/")}
+              title="Volver al inicio"
+            >
               <img
-                src="/logo-servineo.jpg"
+                src="/logo-header.png"
                 alt="SERVINEO Logo"
                 className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-full border-2 border-white shadow-lg"
               />
             </div>
-            <div className="flex-1 text-center">
+
+            <div className="text-center">
               <h1 className="text-3xl md:text-4xl font-bold mb-3">
                 ¿Por Qué Elegir SERVINEO?
               </h1>
@@ -28,23 +34,24 @@ const PorQueServineoPage: React.FC = () => {
                 La plataforma líder para servicios locales en tu comunidad
               </p>
             </div>
-            <div className="w-16 h-16 md:w-20 md:h-20 flex-shrink-0"></div>
           </div>
         </div>
       </section>
 
       {/* 🔹 Contenido principal */}
-      <section className="w-full max-w-7xl px-6 py-16 space-y-24 text-left">
+      <section className="w-full max-w-7xl px-4 md:px-6 py-16 space-y-24 text-left">
         {/* Beneficio 1 */}
-        <div className="flex flex-col md:flex-row items-center gap-10">
-          <Image
-            src="/beneficio1.png"
-            alt="Beneficio 1"
-            width={800}
-            height={500}
-            className="rounded-2xl shadow-2xl object-cover w-full md:w-[50%] h-[400px]"
-          />
-          <div className="md:w-1/2">
+        <div className="flex flex-row items-center justify-center gap-6 overflow-x-auto">
+          <div className="min-w-[320px] sm:w-[45%]">
+            <Image
+              src="/beneficio1.png"
+              alt="Beneficio 1"
+              width={800}
+              height={500}
+              className="rounded-2xl shadow-2xl object-cover w-full h-[250px] sm:h-[400px]"
+            />
+          </div>
+          <div className="min-w-[320px] sm:w-[45%]">
             <h2 className="text-2xl font-bold mb-2 text-gray-900">
               Beneficio 1: Servicio a Domicilio
             </h2>
@@ -56,24 +63,23 @@ const PorQueServineoPage: React.FC = () => {
               necesitas perder tiempo en desplazamientos ni salir de casa. Los
               profesionales llegan directamente a tu puerta, brindándote mayor
               comodidad al recibir el servicio en la tranquilidad de tu hogar u
-              oficina. Puedes agendar según tu disponibilidad y adaptarte a tu
-              propia rutina con total flexibilidad horaria. Además, tendrás la
-              ventaja de supervisar directamente todo el trabajo y recibirlo en un
-              entorno familiar, seguro y controlado.
+              oficina.
             </p>
           </div>
         </div>
 
         {/* Beneficio 2 */}
-        <div className="flex flex-col md:flex-row-reverse items-center gap-10">
-          <Image
-            src="/beneficio2.png"
-            alt="Beneficio 2"
-            width={800}
-            height={500}
-            className="rounded-2xl shadow-2xl object-cover w-full md:w-[50%] h-[400px]"
-          />
-          <div className="md:w-1/2">
+        <div className="flex flex-row-reverse items-center justify-center gap-6 overflow-x-auto">
+          <div className="min-w-[320px] sm:w-[45%]">
+            <Image
+              src="/beneficio2.png"
+              alt="Beneficio 2"
+              width={800}
+              height={500}
+              className="rounded-2xl shadow-2xl object-cover w-full h-[250px] sm:h-[400px]"
+            />
+          </div>
+          <div className="min-w-[320px] sm:w-[45%]">
             <h2 className="text-2xl font-bold mb-2 text-gray-900">
               Beneficio 2: Garantía y Confianza
             </h2>
@@ -83,26 +89,25 @@ const PorQueServineoPage: React.FC = () => {
             <p className="text-gray-700 text-justify leading-relaxed">
               Todos los servicios en{" "}
               <span className="font-semibold text-blue-700">SERVINEO</span> están
-              respaldados por nuestra garantía de satisfacción, lo que significa que
-              si no estás conforme con el resultado, lo resolvemos sin costo
-              adicional. Cada trabajo está cubierto por nuestra póliza de garantía y
-              contarás con soporte post-servicio para cualquier asistencia que
-              necesites después de finalizado el trabajo. Tu dinero está protegido
-              hasta que apruebes completamente el servicio.
+              respaldados por nuestra garantía de satisfacción, lo que significa
+              que si no estás conforme con el resultado, lo resolvemos sin costo
+              adicional.
             </p>
           </div>
         </div>
 
         {/* Beneficio 3 */}
-        <div className="flex flex-col md:flex-row items-center gap-10">
-          <Image
-            src="/beneficio3.png"
-            alt="Beneficio 3"
-            width={800}
-            height={500}
-            className="rounded-2xl shadow-2xl object-cover w-full md:w-[50%] h-[400px]"
-          />
-          <div className="md:w-1/2">
+        <div className="flex flex-row items-center justify-center gap-6 overflow-x-auto">
+          <div className="min-w-[320px] sm:w-[45%]">
+            <Image
+              src="/beneficio3.png"
+              alt="Beneficio 3"
+              width={800}
+              height={500}
+              className="rounded-2xl shadow-2xl object-cover w-full h-[250px] sm:h-[400px]"
+            />
+          </div>
+          <div className="min-w-[320px] sm:w-[45%]">
             <h2 className="text-2xl font-bold mb-2 text-gray-900">
               Beneficio 3: Calificación y Transparencia
             </h2>
@@ -112,16 +117,19 @@ const PorQueServineoPage: React.FC = () => {
             <p className="text-gray-700 text-justify leading-relaxed">
               En <span className="font-semibold text-blue-700">SERVINEO</span> puedes
               revisar opiniones y valoraciones por estrellas de usuarios antes de
-              contratar, lo que permite tomar decisiones informadas. Nuestros
-              profesionales pasan por un proceso de validación estricta para
-              garantizar confianza y seguridad en cada contratación.
+              contratar, lo que permite tomar decisiones informadas.
             </p>
           </div>
         </div>
       </section>
 
-      {/* 🔹 Tabla comparativa que toca los bordes */}
-      <section className="w-full bg-white">
+      {/* 🔹 Tabla comparativa */}
+      <section className="w-full bg-white py-8">
+        {/* ✅ Título de la tabla */}
+        <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">
+          Tabla comparativa
+        </h2>
+
         <div className="overflow-x-auto w-full">
           <table className="w-full border-collapse border border-gray-300 text-center text-base md:text-lg">
             <thead className="bg-gray-100">
@@ -163,7 +171,7 @@ const PorQueServineoPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 🔹 Footer con misma paleta de colores que el header */}
+      {/* 🔹 Footer */}
       <section className="w-full py-16 flex flex-col items-center bg-gradient-to-r from-blue-600 to-purple-700 text-white">
         <h2 className="text-3xl font-semibold mb-8">
           ¿Listo para Unirte a SERVINEO?

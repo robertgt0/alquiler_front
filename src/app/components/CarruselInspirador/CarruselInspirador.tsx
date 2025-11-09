@@ -38,11 +38,10 @@ const CarruselInspirador: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // --- 🔹 Efecto scroll suave (más lento y 2500px hacia abajo) ---
   const handleVerMas = () => {
     const start = window.scrollY;
-    const end = start + 2500; // distancia más grande hacia abajo
-    const duration = 2500; // duración más larga = animación más visible
+    const end = start + 2500;
+    const duration = 2500;
     let startTime: number | null = null;
 
     const easeInOutQuad = (t: number) =>
@@ -60,58 +59,55 @@ const CarruselInspirador: React.FC = () => {
 
     requestAnimationFrame(scroll);
   };
-  // --- 🔹 Fin del efecto scroll ---
 
-  // --- 🔹 Redirección corregida ---
   const handlePorQueServineo = () => {
-    router.push("/porqueservineo"); // ✅ coincide con tu carpeta src/app/porqueservineo/page.tsx
+    router.push("/porqueservineo");
   };
 
   return (
-    <section className="relative w-full h-[420px] overflow-hidden rounded-2xl shadow-lg bg-white flex">
-      {/* Imagen a la izquierda */}
-      <div className="relative w-1/2 h-full">
+    <section className="relative w-full overflow-hidden rounded-2xl shadow-lg bg-white flex flex-col md:flex-row h-auto md:h-[420px]">
+      {/* Imagen */}
+      <div className="relative w-full md:w-1/2 h-64 md:h-full">
         <Image
           src={slides[current].image}
           alt={slides[current].title}
           fill
-          className="object-cover object-center transition-transform duration-[2000ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+          className="object-cover transition-transform duration-2000 ease-[cubic-bezier(0.4,0,0.2,1)] scale-100"
         />
       </div>
 
-      {/* Contenido a la derecha */}
-      <div className="w-1/2 flex flex-col justify-center items-center text-center px-8 bg-gradient-to-r from-gray-50 to-white">
-        <h2 className="text-2xl md:text-3xl font-bold mb-4 text-gray-800">
+      {/* Contenido */}
+      <div className="w-full md:w-1/2 flex flex-col justify-center items-center text-center px-6 md:px-8 py-6 md:py-0 bg-gradient-to-r from-gray-50 to-white">
+        <h2 className="text-xl md:text-3xl font-bold mb-4 text-gray-800">
           {slides[current].title}
         </h2>
-        <p className="text-gray-600 text-lg mb-8 max-w-md">
+        <p className="text-gray-600 text-base md:text-lg mb-6 md:mb-8 max-w-md">
           {slides[current].description}
         </p>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
           <button
             onClick={handleVerMas}
-            className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 text-white px-6 py-3 rounded-full shadow-md"
+            className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 text-white px-6 py-3 rounded-full shadow-md w-full sm:w-auto"
           >
             Ver más
           </button>
           <button
             onClick={handlePorQueServineo}
-            className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 text-white px-6 py-3 rounded-full shadow-md"
+            className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 text-white px-6 py-3 rounded-full shadow-md w-full sm:w-auto"
           >
-            ¿Por qué elegir Servineo?
+            ¿Por qué escoger Servineo?
           </button>
         </div>
       </div>
 
-      {/* Flechas de navegación */}
+      {/* Flechas */}
       <button
         onClick={prevSlide}
         className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 p-3 rounded-full"
       >
         <ChevronLeft className="text-white" />
       </button>
-
       <button
         onClick={nextSlide}
         className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 p-3 rounded-full"
