@@ -6,8 +6,11 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dialog";
 import { cn } from "@/lib/utils";
-import { createAndNotify } from "@/lib/appointments";
-import { updateAndNotify } from "@/lib/appointments";
+import { createAndNotify } from "@/lib/appointments_gmail";
+import { updateAndNotify } from "@/lib/appointments_gmail";
+import { createAndNotifyWhatsApp } from "@/lib/appointments_whatsapp";
+import { updateAndNotifyWhatsApp } from "@/lib/appointments_whatsapp";
+
 import LocationForm from "./LocationForms";
 import ModalConfirmacion from "./ModalConfirmacion";
 
@@ -312,6 +315,7 @@ export function AppointmentModal({
         cliente: {
           nombre: patientName,
           email: "adrianvallejosflores24@gmail.com", //reemplázalo dinámicamente si lo tienes
+          phone: "59177484270" //se reemplazaria cuando clienteId este completo o usable
         },
       };
 
