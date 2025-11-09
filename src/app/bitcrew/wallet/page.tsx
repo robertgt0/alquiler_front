@@ -1,6 +1,7 @@
 "use client"; // Necesitamos un componente de cliente para usar hooks
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import WalletAlert from "./components/walletAlert";
 
 // --- 1. DEFINICIÓN DE INTERFACES ---
 
@@ -47,10 +48,8 @@ interface TransactionItemProps {
   transaction: IFrontendTransaction;
 }
 
-
 // --- 2. ICONOS SVG (como componentes) ---
 
-// Icono de Ojo (Abierto)
 const EyeIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
@@ -58,33 +57,26 @@ const EyeIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   </svg>
 );
 
-// Icono de Ojo (Cerrado)
 const EyeSlashIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L12 12" />
   </svg>
 );
 
-// Icono de Recargar (en la tarjeta)
 const RefreshIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
   </svg>
 );
 
-// Icono de Transacción (en la lista)
 const TransactionIcon = ({ className = "w-6 h-6 text-blue-500" }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h6m3-3.75l-3.75-3.75M17.25 19.5l-3.75-3.75m-4.5 3.75h6.75c.621 0 1.125-.504 1.125-1.125V11.25c0-.621-.504-1.125-1.125-1.125H8.25c-.621 0-1.125.504-1.125 1.125v6.75c0 .621.504 1.125 1.125 1.125Z" />
   </svg>
 );
 
-
 // --- 3. COMPONENTES HIJOS ---
 
-/**
- * Componente: Tarjeta de Saldo (Diseño de la Imagen)
- */
 function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSaldo, onRefresh, loading }: BalanceCardProps) {
   const saldoFormateado = (saldo || 0).toLocaleString('es-BO', {
     minimumFractionDigits: 2,
@@ -92,33 +84,21 @@ function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSaldo, onRefresh, l
   });
 
   return (
-    // --- CAMBIO ANTERIOR: Gradiente de 3 colores ---
     <div className="bg-gradient-to-r from-[#11255A] via-[#5C83BE] to-[#8DC0FF] text-white p-6 rounded-2xl shadow-lg relative">
-      {/* Iconos de la esquina superior derecha */}
       <div className="absolute top-4 right-4 flex items-center space-x-3">
-        <button 
-          onClick={onRefresh} 
-          className="text-white/70 hover:text-white transition-opacity disabled:opacity-50"
-          disabled={loading}
-        >
+        <button onClick={onRefresh} className="text-white/70 hover:text-white transition-opacity disabled:opacity-50" disabled={loading}>
           <RefreshIcon className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
         </button>
         <button onClick={onToggleShowSaldo} className="text-white/70 hover:text-white transition-opacity">
           {showSaldo ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
         </button>
       </div>
-      
-      {/* Contenido Principal */}
+
       <p className="font-medium text-blue-100">Balance Total</p>
       <div className="mt-2 text-4xl font-bold">
-        {showSaldo ? (
-          <span>{moneda} {saldoFormateado}</span>
-        ) : (
-          <span>{moneda} ****.**</span>
-        )}
+        {showSaldo ? <span>{moneda} {saldoFormateado}</span> : <span>{moneda} ****.**</span>}
       </div>
-      
-      {/* Info "Verificada" */}
+
       <div className="mt-4 flex items-center space-x-2 text-sm">
         <span className="font-mono text-blue-100">**** 4829</span>
         <span className="bg-green-500/30 text-green-100 text-xs font-semibold px-2 py-0.5 rounded-full">
@@ -129,9 +109,6 @@ function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSaldo, onRefresh, l
   );
 }
 
-/**
- * Componente: Fila de Transacción (Diseño de la Imagen)
- */
 function TransactionItem({ transaction }: TransactionItemProps) {
   const { type, descripcion, date, amount } = transaction;
   const esCredito = type === 'credito';
@@ -140,8 +117,7 @@ function TransactionItem({ transaction }: TransactionItemProps) {
     day: "numeric",
     month: "short",
   });
-  
-  // Corregido: usar (amount || 0) para evitar error
+
   const montoFormateado = (amount || 0).toLocaleString('es-BO', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -154,7 +130,6 @@ function TransactionItem({ transaction }: TransactionItemProps) {
           <TransactionIcon className="w-6 h-6" />
         </div>
         <div>
-          {/* --- CAMBIO AQUÍ: Color de la descripción de la transacción --- */}
           <p className="font-semibold text-[#11255A]">{descripcion || 'Transferencia'}</p>
           <p className="text-sm text-gray-500">{fechaFormateada}</p>
         </div>
@@ -166,14 +141,10 @@ function TransactionItem({ transaction }: TransactionItemProps) {
   );
 }
 
-/**
- * Componente: Lista de Transacciones (Diseño de la Imagen)
- */
 function TransactionList({ transactions }: TransactionListProps) {
   return (
     <div className="mt-10">
       <div className="flex justify-between items-center mb-4">
-        {/* --- CAMBIO AQUÍ: Color del título de transacciones --- */}
         <h2 className="text-2xl font-bold text-[#11255A]">Transacciones Recientes</h2>
         <a href="#" className="text-sm font-medium text-blue-600 hover:underline">
           Ver todas
@@ -195,53 +166,37 @@ function TransactionList({ transactions }: TransactionListProps) {
   );
 }
 
-// --- 4. COMPONENTE DE PÁGINA PRINCIPAL ---
+// --- 4. COMPONENTE PRINCIPAL ---
 export default function WalletPage() {
-  
-  // Estados para los datos
   const [balanceData, setBalanceData] = useState<IBilletera | null>(null);
   const [transactions, setTransactions] = useState<IFrontendTransaction[]>([]);
-  
-  // Estados de UI
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSaldo, setShowSaldo] = useState(true);
 
-  // ⬇️ --- ¡IMPORTANTE! CAMBIA ESTE USUARIO --- ⬇️
-  const usuario = "tmolina"; 
+  const usuario = "tmolina";
 
-  // --- Función de Carga de Datos (Separada) ---
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
-    if (!API_BASE_URL) {
-      setError("Error: NEXT_PUBLIC_API_URL no está definida.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Peticiones en paralelo
       const [billeteraRes, historialRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/devcode/billetera/${usuario}`, { cache: "no-store" }),
-        fetch(`${API_BASE_URL}/devcode/historial/${usuario}`, { cache: "no-store" })
+        fetch(`${API_BASE_URL}/bitcrew/billetera/${usuario}`, { cache: "no-store" }),
+        fetch(`${API_BASE_URL}/bitcrew/historial/${usuario}`, { cache: "no-store" })
       ]);
 
-      // --- Procesar Billetera ---
       if (!billeteraRes.ok) throw new Error(`Error HTTP (Saldo): ${billeteraRes.status}`);
       const dataBilletera = await billeteraRes.json();
-      if (!dataBilletera.success) throw new Error(dataBilletera.message || "Error al obtener billetera");
+      if (!dataBilletera.success) throw new Error(dataBilletera.message);
       setBalanceData(dataBilletera.billetera);
 
-      // --- Procesar Historial ---
       if (!historialRes.ok) throw new Error(`Error HTTP (Historial): ${historialRes.status}`);
       const dataHistorial = await historialRes.json();
-      if (!dataHistorial.success) throw new Error(dataHistorial.message || "Error al obtener historial");
-      
-      // "Traducir" Transacciones
+      if (!dataHistorial.success) throw new Error(dataHistorial.message);
+
       const frontendTransactions: IFrontendTransaction[] = dataHistorial.transacciones.map((tx: ITransaccionBackend) => ({
         id: tx._id,
         type: tx.tipo,
@@ -254,37 +209,26 @@ export default function WalletPage() {
     } catch (err: any) {
       console.error("Error al cargar datos:", err);
       setError(err.message);
-      setBalanceData(null); // Poner balance a null en caso de error
+      setBalanceData(null);
     } finally {
       setLoading(false);
     }
-  }, [usuario]); // 'usuario' es una dependencia
+  }, [usuario]);
 
-  // useEffect para la carga inicial
   useEffect(() => {
     loadData();
-  }, [loadData]); // Solo depende de la función 'loadData'
+  }, [loadData]);
 
-  
-  // --- RENDERIZADO ---
   return (
-    // Contenedor principal con fondo gris claro
     <div className="bg-gray-50 min-h-screen">
-      
-      {/* Contenedor del contenido (centrado y con padding) */}
       <div className="max-w-4xl mx-auto p-4 md:p-8">
-        
-        {/* --- Cabecera --- */}
         <header className="flex justify-between items-center mb-8">
           <div>
-            {/* --- CAMBIO AQUÍ: Color del título principal --- */}
             <h1 className="text-3xl font-bold text-[#11255A]">Mi Billetera</h1>
             <p className="text-gray-500">Gestiona tus finanzas fácilmente</p>
           </div>
-          {/* Botones de la cabecera (incluyendo el de recargar) */}
           <div className="flex items-center space-x-4">
-            <button 
-              // --- CAMBIO ANTERIOR: Color de botón y hover ---
+            <button
               className="flex items-center space-x-2 bg-[#11255A] text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md hover:bg-[#0B1A40] transition-colors disabled:opacity-50"
               onClick={loadData}
               disabled={loading}
@@ -294,37 +238,22 @@ export default function WalletPage() {
               </svg>
               <span>Recargar Saldo</span>
             </button>
-            {/* Iconos de settings y avatar (como en la imagen) */}
-            <button className="text-gray-500 hover:text-gray-800">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-              </svg>
-            </button>
-            <button className="text-gray-500 hover:text-gray-800">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.242 1.417l-1.07 1.07a1.125 1.125 0 0 0 0 1.591l1.07 1.07a1.125 1.125 0 0 1 .242 1.417l-1.296 2.247a1.125 1.125 0 0 1-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 0 1-.22.127c-.332.183-.582.495-.645.869l-.213 1.28c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 0 1-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 0 1-1.37-.49l-1.296-2.247a1.125 1.125 0 0 1 .242-1.417l1.07-1.07a1.125 1.125 0 0 0 0-1.591l-1.07-1.07a1.125 1.125 0 0 1-.242-1.417l1.296-2.247a1.125 1.125 0 0 1 1.37.49l1.217.456c.355.133.75.072 1.075.124a6.57 6.57 0 0 1 .22-.128c.332.183.582.495.645.869l.213 1.28Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-              </svg>
-            </button>
-            <img 
-              src="https://placehold.co/40x40/blue/white?text=User" // Placeholder para el avatar
-              alt="Avatar" 
-              className="w-10 h-10 rounded-full"
-            />
+            <img src="https://placehold.co/40x40/blue/white?text=User" alt="Avatar" className="w-10 h-10 rounded-full" />
           </div>
         </header>
 
-        {/* --- Contenido Principal --- */}
         <main>
-          {/* Mensaje de Error (si existe) */}
+          {/* 
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6" role="alert">
               <strong className="font-bold">Error: </strong>
               <span className="block sm:inline">{error}</span>
             </div>
           )}
+          */}
 
-          {/* Tarjeta de Saldo */}
+          <WalletAlert balance={balanceData?.saldo ?? 0} estado={balanceData?.estado} />
+
           <BalanceCard
             saldo={balanceData?.saldo}
             moneda={balanceData?.moneda || "Bs."}
@@ -333,20 +262,14 @@ export default function WalletPage() {
             onRefresh={loadData}
             loading={loading}
           />
-          
-          {/* Lista de Transacciones */}
+
           {loading && !error && (
-             <p className="text-center py-10 text-gray-500">
-               Cargando transacciones...
-             </p>
-          )}
-          
-          {!loading && !error && (
-             <TransactionList
-               transactions={transactions}
-             />
+            <p className="text-center py-10 text-gray-500">Cargando transacciones...</p>
           )}
 
+          {!loading && !error && (
+            <TransactionList transactions={transactions} />
+          )}
         </main>
       </div>
     </div>
