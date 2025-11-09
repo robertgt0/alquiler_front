@@ -14,6 +14,8 @@ import { updateAndNotifyWhatsApp } from "@/lib/appointments_whatsapp";
 import LocationForm from "./LocationForms";
 import ModalConfirmacion from "./ModalConfirmacion";
 
+import TopNotificationAlert from "@/components/TopNotificationAlert";
+
 type UISlot = { label: string; startISO: string; endISO: string };
 
 interface LocationFormProps {
@@ -76,6 +78,11 @@ export function AppointmentModal({
   // Confirmación
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  // 🔔 Estados para alertas visuales
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState<"success" | "error" | "info">("success");
+  const [alertMessage, setAlertMessage] = useState("");
+
   const isEdit = false;
 
   // Días feriados
@@ -290,354 +297,334 @@ export function AppointmentModal({
 
   // ---- POST/PUT para crear/actualizar cita ----
   const handleConfirm = async () => {
-    if (!API_URL) return alert("Falta NEXT_PUBLIC_API_URL en .env.local");
-    if (!selectedDate || !selectedSlot) return alert("Selecciona fecha y horario");
-    if (!locationData) return alert("Completa los datos de ubicación");
+  if (!API_URL) {
+    setAlertType("error");
+    setAlertMessage("Falta configuración del servidor (API_URL).");
+    setShowAlert(true);
+    return;
+  }
 
-    try {
-      setSaving(true);
-      const formatHour = (iso: string) => {
-        const date = new Date(iso);
-        return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
-      };
+  if (!selectedDate || !selectedSlot || !locationData) {
+    setAlertType("info");
+    setAlertMessage("Debe completar todos los campos obligatorios antes de continuar");
+    setShowAlert(true);
+    return;
+  }
 
-      const payload = {
-        proveedorId: providerId,
-        servicioId,
-        clienteId,
-        fecha: toYYYYMMDD(selectedDate),
-        horario: {
-          inicio: formatHour(selectedSlot.startISO),
-          fin: formatHour(selectedSlot.endISO),
-        },
-        ubicacion: locationData,
-        estado: "pendiente",
-        cliente: {
-          nombre: patientName,
-          email: "adrianvallejosflores24@gmail.com", //reemplázalo dinámicamente si lo tienes
-          phone: "59177484270" //se reemplazaria cuando clienteId este completo o usable
-        },
-      };
+  try {
+    setSaving(true);
+    const formatHour = (iso: string) => {
+      const date = new Date(iso);
+      return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+    };
 
-      console.log("Enviando payload:", payload);
+    const payload = {
+      proveedorId: providerId,
+      servicioId,
+      clienteId,
+      fecha: toYYYYMMDD(selectedDate),
+      horario: {
+        inicio: formatHour(selectedSlot.startISO),
+        fin: formatHour(selectedSlot.endISO),
+      },
+      ubicacion: locationData,
+      estado: "pendiente",
+      cliente: {
+        nombre: patientName,
+        email: "adrianvallejosflores24@gmail.com",
+        phone: "59177484270",
+      },
+    };
 
-      /*
-      let url = `${API_URL}/api/devcode/citas`;
-      let method = "POST";
+    console.log("Enviando payload:", payload);
 
-      
-      if (isEditing && appointmentId) {
-        url = `${API_URL}/api/devcode/citas/${appointmentId}`;
-        method = "PUT";
-        console.log(" Actualizando cita existente:", appointmentId);
-      }
+    const url = isEditing && appointmentId
+      ? `${API_URL}/api/devcode/citas/${appointmentId}`
+      : `${API_URL}/api/devcode/citas`;
+    const method = isEditing ? "PUT" : "POST";
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-      const body = await res.json().catch(() => ({}));
-      
-      if (!res.ok) {
-        if (res.status === 409) return alert(body?.message || "Horario no disponible.");
-        return alert(body?.message || `Error HTTP ${res.status}`);
-      }
-      */
-     
-     //Si es edición, actualizamos SIN enviar notificación.
-      const url = isEditing && appointmentId
-        ? `${API_URL}/api/devcode/citas/${appointmentId}`
-        : `${API_URL}/api/devcode/citas`;
+    if (!res.ok) throw new Error("Error al crear la cita");
 
-      const method = isEditing ? "PUT" : "POST";
+    // 🔵 ÉXITO
+    setAlertType("success");
+    setAlertMessage("Cita creada correctamente");
+    setShowAlert(true);
 
-      // Llamada principal al backend (crea o actualiza la cita)
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const body = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        if (res.status === 409) return alert(body?.message || "Horario no disponible.");
-        return alert(body?.message || `Error HTTP ${res.status}`);
-      }
-
-      // Enviar notificación según el caso
-      let resultNotify;
-      if (isEditing) {
-        console.log("📨 Enviando notificación de actualización...");
-        resultNotify = await updateAndNotify(payload);
-      } else {
-        console.log("📨 Enviando notificación de creación...");
-        resultNotify = await createAndNotify(payload);
-      }
-
-      // Validar resultado de notificación
-      try {
-        if (isEditing) {
-          console.log("📨 Enviando notificación de actualización...");
-
-          await Promise.allSettled([
-            updateAndNotify(payload),
-            updateAndNotifyWhatsApp(payload),
-          ]);
-        } else {
-          console.log("📨 Enviando notificación de creación...");
-
-          await Promise.allSettled([
-            createAndNotify(payload),
-            createAndNotifyWhatsApp(payload),
-          ]);
-        }
-
-        console.log("✅ Notificaciones procesadas (Gmail y WhatsApp)");
-      } catch (notifyError) {
-        console.warn("⚠️ Ocurrió un error al enviar las notificaciones:", notifyError);
-      }
-
-      // Mostrar modal de confirmación y limpiar estado
-      setShowConfirmationModal(true);
-      onOpenChange(false);
-      setSelectedTime(null);
-      setSelectedSlot(null);
-
-    } catch (err) {
-      console.error(err);
-      alert("No se pudo crear o actualizar la cita");
-    } finally {
-      setSaving(false);
+    // 🔔 Notificaciones (no tocamos lógica)
+    if (isEditing) {
+      await Promise.allSettled([
+        updateAndNotify(payload),
+        updateAndNotifyWhatsApp(payload),
+      ]);
+    } else {
+      await Promise.allSettled([
+        createAndNotify(payload),
+        createAndNotifyWhatsApp(payload),
+      ]);
     }
-  };
 
+    setShowConfirmationModal(true);
+    onOpenChange(false);
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[50vw] !max-w-none !sm:max-w-none bg-white rounded-xl shadow-2xl overflow-x-auto max-h-[90vh] overflow-y-auto p-0">
-        <div className="p-6 border-b">
-          <DialogTitle className="text-2xl font-bold text-gray-800">
-            {isEditing ? "Editar Cita" : "Agendar Cita"} - {patientName}
-          </DialogTitle>
-          <DialogDescription className="text-sm text-gray-500 mt-1">
-            {isEditing ? "Modifica la fecha, horario o ubicación de tu cita." : "Selecciona fecha, horario y ubicación para agendar tu cita."}
-          </DialogDescription>
-        </div>
+    setTimeout(() => setShowAlert(false), 3000);
+  } catch (error) {
+    console.error(error);
+    setAlertType("error");
+    setAlertMessage("Error al crear la cita");
+    setShowAlert(true);
+  } finally {
+    setSaving(false);
+  }
+};
 
-        <div className="p-6">
-          {/* Barra superior */}
-          <div className="flex items-center justify-between mb-6">
-            <Input 
-              type="text" 
-              placeholder="dd/mm/aaaa" 
-              value={dateInput} 
-              onChange={e => setDateInput(e.target.value)} 
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-32" 
-            />
-            <div className="flex gap-2">
-              <Button onClick={() => selectedDate && loadAvailable(selectedDate)} className="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-lg text-sm font-medium text-blue-600">
-                Buscar
-              </Button>
-              <Button onClick={handleToday} className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium text-gray-800">
-                Hoy
-              </Button>
-            </div>
+    return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="!w-[50vw] !max-w-none !sm:max-w-none bg-white rounded-xl shadow-2xl overflow-x-auto max-h-[90vh] overflow-y-auto p-0">
+          <div className="p-6 border-b">
+            <DialogTitle className="text-2xl font-bold text-gray-800">
+              {isEditing ? "Editar Cita" : "Agendar Cita"} - {patientName}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-500 mt-1">
+              {isEditing
+                ? "Modifica la fecha, horario o ubicación de tu cita."
+                : "Selecciona fecha, horario y ubicación para agendar tu cita."}
+            </DialogDescription>
           </div>
 
-          {/* Calendario y horarios */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                className="w-full"
-                captionLayout="dropdown-months"
-                disabled={isDayDisabled}
-                modifiers={{
-                  booked: (day: Date) => bookedDays.includes(toYYYYMMDD(day)),
-                  holiday: (day: Date) => holidays.includes(toYYYYMMDD(day)),
-                  weekend: (day: Date) => [0,6].includes(day.getDay()),
-                  ...(isEditing && initialAppointment ? {
-                    currentAppointment: (day: Date) => toYYYYMMDD(day) === initialAppointment.fecha
-                  } : {})
-                }}
-                modifiersStyles={{
-                  booked: { backgroundColor: "#93C5FD", color: "#1E3A8A", borderRadius: "8px" },
-                  holiday: { backgroundColor: "#FCA5A5", color: "#7F1D1D", borderRadius: "8px" },
-                  weekend: { backgroundColor: "#E5E7EB", color: "#6B7280", borderRadius: "8px" },
-                  ...(isEditing && initialAppointment ? {
-                    currentAppointment: { backgroundColor: "#10B981", color: "#064E3B", borderRadius: "8px", fontWeight: "bold" }
-                  } : {})
-                }}
+          <div className="p-6">
+            {/* Barra superior */}
+            <div className="flex items-center justify-between mb-6">
+              <Input 
+                type="text" 
+                placeholder="dd/mm/aaaa" 
+                value={dateInput} 
+                onChange={e => setDateInput(e.target.value)} 
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-32" 
               />
-              <div className="mt-4 text-xs space-y-2">
-                {Object.entries(APPOINTMENT_STATES).map(([key, state]) => (
-                  <div key={key} className="flex items-center space-x-2">
-                    <div className={cn("w-4 h-4 rounded", state.color)} />
-                    <span>{state.label}</span>
-                  </div>
-                ))}
-                {/* Leyenda extra: fin de semana */}
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded bg-gray-200" />
-                  <span>Fin de semana</span>
-                </div>
-                {isEditing && (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 rounded bg-green-400" />
-                    <span>Fecha actual de la cita</span>
-                  </div>
-                )}
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => selectedDate && loadAvailable(selectedDate)} 
+                  className="bg-blue-100 hover:bg-blue-200 px-4 py-2 rounded-lg text-sm font-medium text-blue-600"
+                >
+                  Buscar
+                </Button>
+                <Button 
+                  onClick={handleToday} 
+                  className="bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-sm font-medium text-gray-800"
+                >
+                  Hoy
+                </Button>
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-lg font-semibold text-gray-800">
-                  Horarios disponibles
-                  {selectedDate && (
-                    <span className="text-sm font-normal text-gray-500 ml-2">
-                      - {formatDateForSummary(selectedDate)}
-                    </span>
+            {/* Calendario y horarios */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={handleDateSelect}
+                  className="w-full"
+                  captionLayout="dropdown-months"
+                  disabled={isDayDisabled}
+                  modifiers={{
+                    booked: (day: Date) => bookedDays.includes(toYYYYMMDD(day)),
+                    holiday: (day: Date) => holidays.includes(toYYYYMMDD(day)),
+                    weekend: (day: Date) => [0,6].includes(day.getDay()),
+                    ...(isEditing && initialAppointment ? {
+                      currentAppointment: (day: Date) => toYYYYMMDD(day) === initialAppointment.fecha
+                    } : {})
+                  }}
+                  modifiersStyles={{
+                    booked: { backgroundColor: "#93C5FD", color: "#1E3A8A", borderRadius: "8px" },
+                    holiday: { backgroundColor: "#FCA5A5", color: "#7F1D1D", borderRadius: "8px" },
+                    weekend: { backgroundColor: "#E5E7EB", color: "#6B7280", borderRadius: "8px" },
+                    ...(isEditing && initialAppointment ? {
+                      currentAppointment: { backgroundColor: "#10B981", color: "#064E3B", borderRadius: "8px", fontWeight: "bold" }
+                    } : {})
+                  }}
+                />
+                <div className="mt-4 text-xs space-y-2">
+                  {Object.entries(APPOINTMENT_STATES).map(([key, state]) => (
+                    <div key={key} className="flex items-center space-x-2">
+                      <div className={cn("w-4 h-4 rounded", state.color)} />
+                      <span>{state.label}</span>
+                    </div>
+                  ))}
+                  {/* Leyenda extra: fin de semana */}
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 rounded bg-gray-200" />
+                    <span>Fin de semana</span>
+                  </div>
+                  {isEditing && (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 rounded bg-green-400" />
+                      <span>Fecha actual de la cita</span>
+                    </div>
                   )}
-                </h4>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => selectedDate && loadAvailable(selectedDate)} disabled={loadingSlots || !selectedDate}>
-                    {loadingSlots ? "Cargando..." : "Recargar"}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-lg font-semibold text-gray-800">
+                    Horarios disponibles
+                    {selectedDate && (
+                      <span className="text-sm font-normal text-gray-500 ml-2">
+                        - {formatDateForSummary(selectedDate)}
+                      </span>
+                    )}
+                  </h4>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => selectedDate && loadAvailable(selectedDate)} 
+                      disabled={loadingSlots || !selectedDate}
+                    >
+                      {loadingSlots ? "Cargando..." : "Recargar"}
+                    </Button>
+                  </div>
+                </div>
+
+                {slotsError && (
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                    {slotsError}
+                  </div>
+                )}
+
+                {loadingSlots && (
+                  <div className="flex items-center justify-center p-6">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-2"></div>
+                    <span className="text-sm text-gray-500">Cargando horarios disponibles...</span>
+                  </div>
+                )}
+
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {!loadingSlots && availableSlots.length === 0 && !slotsError && selectedDate && (
+                    <div className="text-center p-6 text-gray-500 border border-gray-200 rounded-lg">
+                      No hay horarios disponibles para este día.
+                    </div>
+                  )}
+                  
+                  {!selectedDate && (
+                    <div className="text-center p-6 text-gray-500 border border-gray-200 rounded-lg">
+                      Selecciona una fecha para ver los horarios disponibles.
+                    </div>
+                  )}
+                  
+                  {availableSlots.map(slot => {
+                    const isCurrentAppointmentSlot = isEditing && 
+                      initialAppointment && 
+                      initialAppointment.horario && 
+                      `${initialAppointment.horario.inicio} - ${initialAppointment.horario.fin}` === slot.label;
+                    
+                    return (
+                      <button 
+                        key={slot.startISO} 
+                        onClick={() => handleTimeSelect(slot)} 
+                        className={cn(
+                          "w-full p-3 text-left rounded-lg border transition-colors font-medium relative",
+                          selectedTime === slot.label 
+                            ? "bg-blue-600 text-white border-blue-700 shadow-md" 
+                            : "bg-white hover:bg-blue-50 text-gray-700 border-gray-300 hover:border-blue-300",
+                          isCurrentAppointmentSlot && "ring-2 ring-green-500"
+                        )}
+                      >
+                        {slot.label}
+                        {isCurrentAppointmentSlot && (
+                          <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            Actual
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Formulario ubicación */}
+            {!formSubmitted && selectedDate && selectedTime && (
+              <div ref={locationFormRef} className="mt-6">
+                <LocationForm 
+                  onSubmit={handleFormSubmit} 
+                  initialData={locationData}
+                />
+              </div>
+            )}
+
+            {/* Resumen cita */}
+            {formSubmitted && (
+              <div className="mt-6 p-4 rounded-lg border bg-slate-50">
+                <h4 className="font-semibold mb-2 text-blue-700">Resumen de la cita</h4>
+                <div className="text-sm space-y-1 text-blue-800">
+                  <p><strong>Proveedor:</strong> {patientName}</p>
+                  <p><strong>Fecha:</strong> {selectedDate ? formatDateForSummary(selectedDate) : ""}</p>
+                  <p><strong>Hora:</strong> {selectedTime}</p>
+                  <p><strong>Ubicación:</strong> {locationData?.direccion?.trim() || "No especificada"}</p>
+                  <p><strong>Nota adicional:</strong> {locationData?.notas?.trim() || "No especificada"}</p>
+                </div>
+
+                <div className="mt-4 flex gap-3">
+                  <Button 
+                    className="flex-1 text-white bg-blue-600 hover:bg-blue-700" 
+                    onClick={handleConfirm} 
+                    disabled={saving}
+                  >
+                    {saving ? "Guardando..." : isEditing ? "Guardar cambios" : "Confirmar Cita"}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setFormSubmitted(false);
+                      setTimeout(() => {
+                        locationFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      }, 50);
+                    }}
+                  >
+                    Editar ubicación
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedTime(null);
+                      setFormSubmitted(false);
+                    }}
+                  >
+                    Cancelar
                   </Button>
                 </div>
               </div>
-
-              {slotsError && (
-                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                  {slotsError}
-                </div>
-              )}
-
-              {loadingSlots && (
-                <div className="flex items-center justify-center p-6">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-2"></div>
-                  <span className="text-sm text-gray-500">Cargando horarios disponibles...</span>
-                </div>
-              )}
-
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {!loadingSlots && availableSlots.length === 0 && !slotsError && selectedDate && (
-                  <div className="text-center p-6 text-gray-500 border border-gray-200 rounded-lg">
-                    No hay horarios disponibles para este día.
-                  </div>
-                )}
-                
-                {!selectedDate && (
-                  <div className="text-center p-6 text-gray-500 border border-gray-200 rounded-lg">
-                    Selecciona una fecha para ver los horarios disponibles.
-                  </div>
-                )}
-                
-                {availableSlots.map(slot => {
-                  const isCurrentAppointmentSlot = isEditing && 
-                    initialAppointment && 
-                    initialAppointment.horario && 
-                    `${initialAppointment.horario.inicio} - ${initialAppointment.horario.fin}` === slot.label;
-                  
-                  return (
-                    <button 
-                      key={slot.startISO} 
-                      onClick={() => handleTimeSelect(slot)} 
-                      className={cn(
-                        "w-full p-3 text-left rounded-lg border transition-colors font-medium relative",
-                        selectedTime === slot.label 
-                          ? "bg-blue-600 text-white border-blue-700 shadow-md" 
-                          : "bg-white hover:bg-blue-50 text-gray-700 border-gray-300 hover:border-blue-300",
-                        isCurrentAppointmentSlot && "ring-2 ring-green-500"
-                      )}
-                    >
-                      {slot.label}
-                      {isCurrentAppointmentSlot && (
-                        <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                          Actual
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            )}
           </div>
+        </DialogContent>
 
-          {/* Formulario ubicación */}
-          {!formSubmitted && selectedDate && selectedTime && (
-            <div ref={locationFormRef} className="mt-6">
-              <LocationForm 
-                onSubmit={handleFormSubmit} 
-                initialData={locationData}
-              />
-            </div>
-          )}
+        <ModalConfirmacion 
+          isOpen={showConfirmationModal} 
+          onClose={() => setShowConfirmationModal(false)} 
+        />
+      </Dialog>
 
-          {/* Resumen cita */}
-          {formSubmitted && (
-            <div className="mt-6 p-4 rounded-lg border bg-slate-50">
-              <h4 className="font-semibold mb-2 text-blue-700">Resumen de la cita</h4>
-              <div className="text-sm space-y-1 text-blue-800">
-                <p><strong>Proveedor:</strong> {patientName}</p>
-                <p><strong>Fecha:</strong> {selectedDate ? formatDateForSummary(selectedDate) : ""}</p>
-                <p><strong>Hora:</strong> {selectedTime}</p>
-                <p><strong>Ubicación:</strong> {locationData?.direccion?.trim() || "No especificada"}</p>
-                <p><strong>Nota adicional:</strong> {locationData?.notas?.trim() || "No especificada"}</p>
-              </div>
-
-              <div className="mt-4 flex gap-3">
-                <Button 
-                  className="flex-1 text-white bg-blue-600 hover:bg-blue-700" 
-                  onClick={handleConfirm} 
-                  disabled={saving}
-                >
-                  {saving ? "Guardando..." : isEditing ? "Guardar cambios" : "Confirmar Cita"}
-                </Button>
-
-                {/* Editar ubicación: vuelve a mostrar LocationForm para cambiar mapa/dirección */}
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    // permitir editar la ubicación (mostrar el formulario otra vez)
-                    setFormSubmitted(false);
-                    // opcional: forzar scroll hasta el formulario si existe
-                    setTimeout(() => {
-                      locationFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }, 50);
-                  }}
-                >
-                  Editar ubicación
-                </Button>
-
-                {/* Cancelar (resetea selección de hora solo) */}
-                <Button
-                  variant="ghost"
-                  className="flex-1"
-                  onClick={() => {
-                    setSelectedTime(null);
-                    setFormSubmitted(false);
-                  }}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-
-      <ModalConfirmacion 
-        isOpen={showConfirmationModal} 
-        onClose={() => setShowConfirmationModal(false)} 
+      {/* 🔔 Alerta global (fuera del modal, visible siempre) */}
+      <TopNotificationAlert
+        show={showAlert}
+        type={alertType}
+        message={alertMessage}
+        onClose={() => setShowAlert(false)}
       />
-    </Dialog>
+    </>
   );
 }
 
