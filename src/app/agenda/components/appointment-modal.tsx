@@ -378,14 +378,26 @@ export function AppointmentModal({
       }
 
       // Validar resultado de notificación
-      if (!resultNotify.ok) {
-        console.warn("⚠️ La cita fue procesada, pero falló la notificación.");
-        alert("La cita fue registrada correctamente, pero no se pudo enviar la notificación.");
-      } else if (!resultNotify.notified) {
-        console.warn("⚠️ Notificación no confirmada, pero cita guardada.");
-        alert("Cita registrada, pero la notificación no se confirmó.");
-      } else {
-        console.log("✅ Notificación enviada exitosamente:", resultNotify);
+      try {
+        if (isEditing) {
+          console.log("📨 Enviando notificación de actualización...");
+
+          await Promise.allSettled([
+            updateAndNotify(payload),
+            updateAndNotifyWhatsApp(payload),
+          ]);
+        } else {
+          console.log("📨 Enviando notificación de creación...");
+
+          await Promise.allSettled([
+            createAndNotify(payload),
+            createAndNotifyWhatsApp(payload),
+          ]);
+        }
+
+        console.log("✅ Notificaciones procesadas (Gmail y WhatsApp)");
+      } catch (notifyError) {
+        console.warn("⚠️ Ocurrió un error al enviar las notificaciones:", notifyError);
       }
 
       // Mostrar modal de confirmación y limpiar estado
