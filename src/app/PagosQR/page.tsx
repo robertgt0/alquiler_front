@@ -5,6 +5,7 @@ const RecargaQR: React.FC = () => {
 
   //para el QR generado
   const [mostrarQR, setMostrarQR] = useState(false);
+  const qrRef = React.useRef<HTMLDivElement>(null);
 
   //para selector CI/NIT
   const [tipoDocumento, setTipoDocumento] = useState("CI");
@@ -106,6 +107,126 @@ const RecargaQR: React.FC = () => {
 
     //alert("Recarga realizada con éxito!");
     setMostrarQR(true);
+  };
+
+  const descargarQR = async () => {
+    if (!qrRef.current) return;
+
+    try {
+      // Esperar a que la imagen del QR esté completamente cargada
+      const qrImg = qrRef.current.querySelector('img');
+      if (qrImg && !qrImg.complete) {
+        await new Promise((resolve) => {
+          qrImg.onload = resolve;
+        });
+      }
+
+      // Crear canvas
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Configurar tamaño (más grande para mejor calidad)
+      const scale = 2;
+      canvas.width = 384 * scale; // w-96 = 384px
+      canvas.height = 550 * scale;
+      ctx.scale(scale, scale);
+
+      // Fondo blanco con bordes redondeados
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 384, 550);
+
+      // Título
+      ctx.fillStyle = '#11255A';
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('QR generado', 192, 40);
+
+      // Línea divisoria
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(35, 60);
+      ctx.lineTo(349, 60);
+      ctx.stroke();
+
+      // Fondo del QR (azul oscuro)
+      ctx.fillStyle = '#11255A';
+      const qrX = 92;
+      const qrY = 90;
+      const qrSize = 200;
+      ctx.beginPath();
+      ctx.roundRect(qrX, qrY, qrSize, qrSize, 12);
+      ctx.fill();
+
+      // Cargar y dibujar imagen QR
+      const qrData = `${nombre}-${monto}-${detalle}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrData)}`;
+      
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        // Dibujar QR centrado con padding
+        ctx.drawImage(img, qrX + 8, qrY + 8, qrSize - 16, qrSize - 16);
+
+        // Información (alineada a la izquierda)
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#374151';
+        
+        let yPos = 330;
+        
+        // Monto
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('Monto:', 50, yPos);
+        ctx.font = '16px Arial';
+        ctx.fillText(`${monto} Bs`, 180, yPos);
+        
+        yPos += 40;
+        
+        // Nombre
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('Nombre a facturar:', 50, yPos);
+        ctx.font = '16px Arial';
+        yPos += 25;
+        const nombreTexto = nombre.length > 30 ? nombre.substring(0, 30) + '...' : nombre;
+        ctx.fillText(nombreTexto, 50, yPos);
+        
+        yPos += 40;
+        
+        // Detalle
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('Detalle de Recarga:', 50, yPos);
+        ctx.font = '16px Arial';
+        yPos += 25;
+        const detalleTexto = detalle.length > 35 ? detalle.substring(0, 35) + '...' : detalle;
+        ctx.fillText(detalleTexto, 50, yPos);
+
+        // Descargar
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `QR-Recarga-${nombre.replace(/\s+/g, '-')}-${monto}BS.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }
+        }, 'image/jpeg', 0.95);
+      };
+
+      img.onerror = () => {
+        alert('Error al cargar la imagen del QR. Verifica tu conexión a internet.');
+      };
+
+      img.src = qrUrl;
+      
+    } catch (error) {
+      console.error('Error al descargar:', error);
+      alert('Error al descargar el QR. Por favor, intenta nuevamente.');
+    }
   };
 
 
@@ -342,7 +463,7 @@ const RecargaQR: React.FC = () => {
 
         {mostrarQR && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white rounded-xl shadow-lg p-6 w-96 text-center relative">
+            <div ref={qrRef} className="bg-white rounded-xl shadow-lg p-6 w-96 text-center relative">
               <h2 className="text-xl font-semibold text-[#11255A] mb-4 border-b pb-2">QR generado</h2>
 
               <div className="flex justify-center mb-4">
@@ -362,12 +483,20 @@ const RecargaQR: React.FC = () => {
                 <p><strong>Detalle de Recarga:</strong> {detalle}</p>
               </div>
 
-              <button
-                onClick={() => setMostrarQR(false)}
-                className="mt-6 bg-[#11255A] text-white px-6 py-2 rounded-md hover:bg-blue-800"
-              >
-                Quardar
-              </button>
+              <div className="mt-6 flex gap-3 justify-center">
+                <button
+                  onClick={descargarQR}
+                  className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
+                >
+                  Descargar
+                </button>
+                <button
+                  onClick={() => setMostrarQR(false)}
+                  className="bg-[#11255A] text-white px-6 py-2 rounded-md hover:bg-blue-800"
+                >
+                  Guardar
+                </button>
+              </div>
             </div>
           </div>
         )}        
