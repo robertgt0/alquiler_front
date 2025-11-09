@@ -92,7 +92,7 @@ function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSaldo, onRefresh, l
   });
 
   return (
-    // --- CAMBIO AQUÍ: Gradiente de 3 colores ---
+    // --- CAMBIO ANTERIOR: Gradiente de 3 colores ---
     <div className="bg-gradient-to-r from-[#11255A] via-[#5C83BE] to-[#8DC0FF] text-white p-6 rounded-2xl shadow-lg relative">
       {/* Iconos de la esquina superior derecha */}
       <div className="absolute top-4 right-4 flex items-center space-x-3">
@@ -154,7 +154,8 @@ function TransactionItem({ transaction }: TransactionItemProps) {
           <TransactionIcon className="w-6 h-6" />
         </div>
         <div>
-          <p className="font-semibold text-gray-800">{descripcion || 'Transferencia'}</p>
+          {/* --- CAMBIO AQUÍ: Color de la descripción de la transacción --- */}
+          <p className="font-semibold text-[#11255A]">{descripcion || 'Transferencia'}</p>
           <p className="text-sm text-gray-500">{fechaFormateada}</p>
         </div>
       </div>
@@ -172,7 +173,8 @@ function TransactionList({ transactions }: TransactionListProps) {
   return (
     <div className="mt-10">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold text-gray-900">Transacciones Recientes</h2>
+        {/* --- CAMBIO AQUÍ: Color del título de transacciones --- */}
+        <h2 className="text-2xl font-bold text-[#11255A]">Transacciones Recientes</h2>
         <a href="#" className="text-sm font-medium text-blue-600 hover:underline">
           Ver todas
         </a>
@@ -275,13 +277,14 @@ export default function WalletPage() {
         {/* --- Cabecera --- */}
         <header className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mi Billetera</h1>
+            {/* --- CAMBIO AQUÍ: Color del título principal --- */}
+            <h1 className="text-3xl font-bold text-[#11255A]">Mi Billetera</h1>
             <p className="text-gray-500">Gestiona tus finanzas fácilmente</p>
           </div>
           {/* Botones de la cabecera (incluyendo el de recargar) */}
           <div className="flex items-center space-x-4">
             <button 
-              // --- CAMBIO AQUÍ: Color de botón y hover ---
+              // --- CAMBIO ANTERIOR: Color de botón y hover ---
               className="flex items-center space-x-2 bg-[#11255A] text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md hover:bg-[#0B1A40] transition-colors disabled:opacity-50"
               onClick={loadData}
               disabled={loading}
