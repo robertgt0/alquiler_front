@@ -118,7 +118,7 @@ export default function Header() {
         <div className="flex items-center space-x-4">
           {!isLoggedIn ? (
             <>
-              <Link href="/ser-fixer">
+              <Link href="/bitcrew/comision">
                 <button className="px-4 py-2 font-semibold text-[#ffffff] bg-[#2a87ff] rounded-md hover:bg-[#1a347a] transition-colors">
                   Ser Fixer
                 </button>

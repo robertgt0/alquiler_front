@@ -1,11 +1,15 @@
-"use client"; // Necesitamos un componente de cliente para usar hooks
+"use client"; 
 
+<<<<<<< HEAD
 import React, { useState, useEffect, useCallback } from 'react';
 import WalletAlert from "./components/walletAlert";
+=======
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+// ⬇️ Imports de Next.js para leer la URL y navegar
+import { useSearchParams, useRouter } from 'next/navigation';
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
 
 // --- 1. DEFINICIÓN DE INTERFACES ---
-
-// Lo que recibimos del Backend
 interface IBilletera {
   _id: string;
   saldo: number;
@@ -21,7 +25,6 @@ interface ITransaccionBackend {
   fecha: string;
 }
 
-// Lo que los componentes del Frontend esperan
 interface IFrontendTransaction {
   id: string;
   type: 'credito' | 'debito';
@@ -49,7 +52,10 @@ interface TransactionItemProps {
 }
 
 // --- 2. ICONOS SVG (como componentes) ---
+<<<<<<< HEAD
 
+=======
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
 const EyeIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
@@ -76,7 +82,10 @@ const TransactionIcon = ({ className = "w-6 h-6 text-blue-500" }: { className?: 
 );
 
 // --- 3. COMPONENTES HIJOS ---
+<<<<<<< HEAD
 
+=======
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
 function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSaldo, onRefresh, loading }: BalanceCardProps) {
   const saldoFormateado = (saldo || 0).toLocaleString('es-BO', {
     minimumFractionDigits: 2,
@@ -93,12 +102,20 @@ function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSaldo, onRefresh, l
           {showSaldo ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
         </button>
       </div>
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
       <p className="font-medium text-blue-100">Balance Total</p>
       <div className="mt-2 text-4xl font-bold">
         {showSaldo ? <span>{moneda} {saldoFormateado}</span> : <span>{moneda} ****.**</span>}
       </div>
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
       <div className="mt-4 flex items-center space-x-2 text-sm">
         <span className="font-mono text-blue-100">**** 4829</span>
         <span className="bg-green-500/30 text-green-100 text-xs font-semibold px-2 py-0.5 rounded-full">
@@ -117,7 +134,11 @@ function TransactionItem({ transaction }: TransactionItemProps) {
     day: "numeric",
     month: "short",
   });
+<<<<<<< HEAD
 
+=======
+  
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
   const montoFormateado = (amount || 0).toLocaleString('es-BO', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -166,17 +187,39 @@ function TransactionList({ transactions }: TransactionListProps) {
   );
 }
 
+<<<<<<< HEAD
 // --- 4. COMPONENTE PRINCIPAL ---
 export default function WalletPage() {
+=======
+// --- 4. COMPONENTE DE LÓGICA DE BILLETERA (MODIFICADO) ---
+// Este componente ahora lee el 'usuario' de la URL
+function WalletLogic() {
+  const router = useRouter(); // ⬅️ Hook de Next.js para navegación
+  const searchParams = useSearchParams(); // ⬅️ Hook de Next.js para leer la URL
+  const usuario = searchParams.get('usuario') || ""; // ⬅️ Obtiene el usuario
+  
+  // Estados para los datos
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
   const [balanceData, setBalanceData] = useState<IBilletera | null>(null);
   const [transactions, setTransactions] = useState<IFrontendTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSaldo, setShowSaldo] = useState(true);
 
+<<<<<<< HEAD
   const usuario = "tmolina";
 
+=======
+  // --- Función de Carga de Datos ---
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
   const loadData = useCallback(async () => {
+    // Si no hay usuario en la URL, muestra un error.
+    if (!usuario) {
+      setError("No se especificó un usuario.");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -184,8 +227,13 @@ export default function WalletPage() {
 
     try {
       const [billeteraRes, historialRes] = await Promise.all([
+<<<<<<< HEAD
         fetch(`${API_BASE_URL}/bitcrew/billetera/${usuario}`, { cache: "no-store" }),
         fetch(`${API_BASE_URL}/bitcrew/historial/${usuario}`, { cache: "no-store" })
+=======
+        fetch(`${API_BASE_URL}/bitCrew/billetera/${usuario}`, { cache: "no-store" }),
+        fetch(`${API_BASE_URL}/bitCrew/historial/${usuario}`, { cache: "no-store" })
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
       ]);
 
       if (!billeteraRes.ok) throw new Error(`Error HTTP (Saldo): ${billeteraRes.status}`);
@@ -195,8 +243,13 @@ export default function WalletPage() {
 
       if (!historialRes.ok) throw new Error(`Error HTTP (Historial): ${historialRes.status}`);
       const dataHistorial = await historialRes.json();
+<<<<<<< HEAD
       if (!dataHistorial.success) throw new Error(dataHistorial.message);
 
+=======
+      if (!dataHistorial.success) throw new Error(dataHistorial.message || "Error al obtener historial");
+      
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
       const frontendTransactions: IFrontendTransaction[] = dataHistorial.transacciones.map((tx: ITransaccionBackend) => ({
         id: tx._id,
         type: tx.tipo,
@@ -209,26 +262,61 @@ export default function WalletPage() {
     } catch (err: any) {
       console.error("Error al cargar datos:", err);
       setError(err.message);
+<<<<<<< HEAD
       setBalanceData(null);
     } finally {
       setLoading(false);
     }
   }, [usuario]);
+=======
+      setBalanceData(null); 
+    } finally {
+      setLoading(false);
+    }
+  }, [usuario]); // 'usuario' (de la URL) es la dependencia
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
 
   useEffect(() => {
     loadData();
+<<<<<<< HEAD
   }, [loadData]);
+=======
+  }, [loadData]); 
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto p-4 md:p-8">
         <header className="flex justify-between items-center mb-8">
+<<<<<<< HEAD
           <div>
             <h1 className="text-3xl font-bold text-[#11255A]">Mi Billetera</h1>
             <p className="text-gray-500">Gestiona tus finanzas fácilmente</p>
           </div>
           <div className="flex items-center space-x-4">
             <button
+=======
+          <div className="flex items-center space-x-4">
+            {/* Botón Volver (usa router de Next.js) */}
+            <button 
+              onClick={() => router.back()} 
+              className="text-gray-500 hover:text-gray-800 p-2"
+              title="Volver"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-[#11255A]">Mi Billetera</h1>
+              {/* Muestra el usuario "heredado" */}
+              <p className="text-gray-500">Billetera de: {usuario}</p>
+            </div>
+          </div>
+          {/* Botones de la cabecera */}
+          <div className="flex items-center space-x-4">
+            <button 
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
               className="flex items-center space-x-2 bg-[#11255A] text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md hover:bg-[#0B1A40] transition-colors disabled:opacity-50"
               onClick={loadData}
               disabled={loading}
@@ -238,12 +326,19 @@ export default function WalletPage() {
               </svg>
               <span>Recargar Saldo</span>
             </button>
+<<<<<<< HEAD
             <img src="https://placehold.co/40x40/blue/white?text=User" alt="Avatar" className="w-10 h-10 rounded-full" />
+=======
+            {/* ... otros iconos ... */}
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
           </div>
         </header>
 
         <main>
+<<<<<<< HEAD
           {/* 
+=======
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6" role="alert">
               <strong className="font-bold">Error: </strong>
@@ -262,7 +357,11 @@ export default function WalletPage() {
             onRefresh={loadData}
             loading={loading}
           />
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
           {loading && !error && (
             <p className="text-center py-10 text-gray-500">Cargando transacciones...</p>
           )}
@@ -275,3 +374,16 @@ export default function WalletPage() {
     </div>
   );
 }
+<<<<<<< HEAD
+=======
+
+// --- 5. COMPONENTE DE PÁGINA (Wrapper de Suspense) ---
+// Es necesario para que useSearchParams() funcione correctamente en Next.js
+export default function WalletPage() {
+  return (
+    <Suspense fallback={<div>Cargando billetera...</div>}>
+      <WalletLogic />
+    </Suspense>
+  );
+}
+>>>>>>> d68a5dc68d1fc3d85af619a8e2a3c82a86b57d62
