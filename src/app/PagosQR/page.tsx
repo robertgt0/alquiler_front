@@ -2,6 +2,10 @@
 import React, { useState, useEffect } from "react";
 
 const RecargaQR: React.FC = () => {
+
+  //para el QR generado
+  const [mostrarQR, setMostrarQR] = useState(false);
+
   //para selector CI/NIT
   const [tipoDocumento, setTipoDocumento] = useState("CI");
   const [numeroDocumento, setNumeroDocumento] = useState("");
@@ -97,9 +101,11 @@ const RecargaQR: React.FC = () => {
 
     setErrores(nuevosErrores);
 
+
     if (!valido) return;
 
-    alert("Recarga realizada con éxito!");
+    //alert("Recarga realizada con éxito!");
+    setMostrarQR(true);
   };
 
 
@@ -333,6 +339,39 @@ const RecargaQR: React.FC = () => {
             Confirmar
           </button>
         </div>
+
+        {mostrarQR && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-xl shadow-lg p-6 w-96 text-center relative">
+              <h2 className="text-xl font-semibold text-[#11255A] mb-4 border-b pb-2">QR generado</h2>
+
+              <div className="flex justify-center mb-4">
+                {/* Aquí puedes usar una librería QR real o un placeholder */}
+                <div className="bg-[#11255A] p-2 rounded-xl">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${nombre}-${monto}-${detalle}`}
+                    alt="QR"
+                    className="rounded-lg"
+                  />
+                </div>
+              </div>
+
+              <div className="text-left text-gray-700 space-y-2">
+                <p><strong>Monto:</strong> {monto} Bs</p>
+                <p><strong>Nombre a facturar:</strong> {nombre}</p>
+                <p><strong>Detalle de Recarga:</strong> {detalle}</p>
+              </div>
+
+              <button
+                onClick={() => setMostrarQR(false)}
+                className="mt-6 bg-[#11255A] text-white px-6 py-2 rounded-md hover:bg-blue-800"
+              >
+                Quardar
+              </button>
+            </div>
+          </div>
+        )}        
+
       </div>
     </div>
   );
