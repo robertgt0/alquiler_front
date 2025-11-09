@@ -39,6 +39,10 @@ function Inner() {
 
         if (!data.success) {
           if (data.message === 'usuario ya registrado') {
+            if(data.data.user.authProvider=='local'){
+              throw new Error("metodo de autenticacion no activado para este correo");
+              
+            }
             if (data) {
       const token = data.data.accessToken ?? data.data.token; 
 
@@ -48,6 +52,10 @@ function Inner() {
     }
       
       // Disparar evento de login exitoso para que el Header se actualice
+      if(data.data.user.twoFactorEnabled){
+      router.push('/loginSeguridad')
+      return
+      }
           const eventLogin = new CustomEvent("login-exitoso");
           window.dispatchEvent(eventLogin);
           router.push('/');

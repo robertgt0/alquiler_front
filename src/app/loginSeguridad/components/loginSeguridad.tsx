@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { verifyTwoFactorLogin } from '@/app/teamsys/services/UserService';
 
 // Export default directamente al definir el componente
 export default function LoginSeguridad() {
@@ -47,16 +47,17 @@ const router = useRouter();
 
     try {
       // Simulación con backend
-     const res = await fetch('/api/verificar-codigo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.valido) {
-        router.push('/'); // Código correcto, redirige al home
+      const usuario=sessionStorage.getItem('userData')
+      if(usuario==null)throw new Error('usaurio no encontrado');
+      
+      const res = await verifyTwoFactorLogin(JSON.parse(usuario)._id,codigo)
+      
+      if (res.success) {
+        if (res.data) {
+          const eventLogin = new CustomEvent("login-exitoso");
+          window.dispatchEvent(eventLogin);
+          router.push('/'); 
+    }// Código correcto, redirige al home
       } else {
         setIntentos(prev => {
         const nuevosIntentos = prev + 1;

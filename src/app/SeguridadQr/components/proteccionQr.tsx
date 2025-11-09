@@ -22,12 +22,12 @@ export const ProteccionQr: React.FC = () => {
         const Token = sessionStorage.getItem('authToken');
         if (!Token) throw new Error("No existe token de sesión");
 
-        //const qr = await setupTwoFactor(JSON.stringify(Token));
-        //setQrData(qr.qrCode);
-       // setSecretData(qr.secret);
-       // setCodes(qr.backupCodes);
+        const qr = await setupTwoFactor(JSON.stringify(Token));
+        setQrData(qr.qrCode);
+        setSecretData(qr.secret);
+        setCodes(qr.backupCodes);
        setSecretData('123')
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error al generar el QR:", err);
         setError("Error al generar el código QR. Intenta nuevamente.");
       }
@@ -54,13 +54,18 @@ export const ProteccionQr: React.FC = () => {
 
     setIsLoading(true);
     try {
-     // const llamada = await verifyTwoFactor(Token, secretData, codigo);
-     // if (!llamada.success) throw new Error(llamada.message);
+      const llamada = await verifyTwoFactor(Token, secretData, codigo);
+      if (!llamada.success) throw new Error(llamada.message);
 
       // Si la verificación es correcta, redirige
       router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'Código incorrecto. Inténtalo de nuevo.');
+    } catch (err) {
+      if(typeof err ==='string'){
+        setError("error en el servidor")
+      }else{
+        setError('error en el servidor');
+      }
+      
     } finally {
       setIsLoading(false);
     }
