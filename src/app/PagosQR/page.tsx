@@ -1,5 +1,6 @@
 "use client";    
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 const RecargaQR: React.FC = () => {
 
@@ -68,8 +69,35 @@ const RecargaQR: React.FC = () => {
     else if (value === "") setMonto("");
   };
 
-  
-  const handleConfirmar = () => {
+  //Para el backend enviarRecarga
+  const enviarRecarga = async (): Promise<void> => {
+    try {
+      const response = await axios.post("http://localhost:5000/api/recargar", {
+        nombre,
+        detalle,
+        monto,
+      });
+
+      console.log("✅ Respuesta del backend:", response.data);
+
+      if (response.data.success) {
+        alert("Recarga registrada correctamente en el backend ✅");
+        setMostrarQR(true);
+      } else {
+        alert("Error: " + response.data.message);
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error("❌ Error de Axios:", error.response?.data || error.message);
+        alert(`Error del servidor: ${error.response?.data?.message || error.message}`);
+      } else {
+        console.error("❌ Error desconocido:", error);
+        alert("Ocurrió un error inesperado al registrar la recarga.");
+      }
+    }
+  };
+
+  const handleConfirmar = async () => {
     const nuevosErrores: ErroresType = {};
     let valido = true;
 
@@ -104,9 +132,11 @@ const RecargaQR: React.FC = () => {
 
 
     if (!valido) return;
-
+    // Enviar datos al backend
+    await enviarRecarga();  
     //alert("Recarga realizada con éxito!");
     setMostrarQR(true);
+
   };
 
   const descargarQR = async () => {
@@ -494,7 +524,7 @@ const RecargaQR: React.FC = () => {
                   onClick={() => setMostrarQR(false)}
                   className="bg-[#11255A] text-white px-6 py-2 rounded-md hover:bg-blue-800"
                 >
-                  Guardar
+                  Cerrar
                 </button>
               </div>
             </div>
