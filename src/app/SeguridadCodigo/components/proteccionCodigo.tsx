@@ -12,7 +12,7 @@ const SecretCodeBox: React.FC = () => {
 useEffect(() => {
     const sec = sessionStorage.getItem('twofactor_secret') ?? '';
     setSecretData(sec);
-    sessionStorage.removeItem('twofactor_secret')
+    
   }, []);
 
   const copiarCodigo = async () => {
@@ -80,7 +80,7 @@ export const ProteccionCodigo: React.FC = () => {
 
     // limpieza: borra secret y backup codes
     sessionStorage.removeItem('twofactor_secret');
-    sessionStorage.removeItem('twofactor_backup');
+    //sessionStorage.removeItem('twofactor_backup');
 
     router.push('/');
   } catch (err) {
