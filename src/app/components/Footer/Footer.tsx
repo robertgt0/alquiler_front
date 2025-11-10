@@ -8,7 +8,8 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 // ELIMINADO: Ya no se usa Image
 // import Image from 'next/image';
-import { FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaFacebookF, FaInstagram } from 'react-icons/fa';
+import { SiTiktok } from 'react-icons/si';
 import Modal from '../reutilizables/Modal';
 // AÑADIDO: Importamos tu componente de icono
 import Icono from '../Header/Icono';
@@ -180,7 +181,7 @@ const Footer = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center md:text-left">
             <div className="space-y-4">
               <div className="flex items-center justify-center md:justify-start">
-                <div className="mr-3 flex-shrink-0">
+                <div className="mr-3 shrink-0">
                   <Icono size={50} />
                 </div>
                 <h3 className="text-2xl font-bold font-heading">Servineo</h3>
@@ -231,6 +232,38 @@ const Footer = () => {
                   </a>
                 </li>
               </ul>
+              {/* Social icons placed below support links */}
+              <div className="flex items-center gap-6 mt-4 justify-center md:justify-start">
+                <a
+                  href="https://www.facebook.com/share/1CympwHFao/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Servineo en Facebook"
+                  className="text-[#52abff] hover:text-[#89c9ff] transition transform duration-150 ease-in-out hover:scale-110 p-1.5 rounded"
+                >
+                  <FaFacebookF size={24} />
+                </a>
+
+                <a
+                  href="https://www.tiktok.com/@servineobol?_r=1&_t=ZM-91DYkqESBGi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Servineo en TikTok"
+                  className="text-[#52abff] hover:text-[#89c9ff] transition transform duration-150 ease-in-out hover:scale-110 p-1.5 rounded"
+                >
+                  <SiTiktok size={26} />
+                </a>
+
+                <a
+                  href="https://www.instagram.com/servineobol?igsh=Z2U2c3hpZmp5ODQ2"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Servineo en Instagram"
+                  className="text-[#52abff] hover:text-[#89c9ff] transition transform duration-150 ease-in-out hover:scale-110 p-1.5 rounded"
+                >
+                  <FaInstagram size={24} />
+                </a>
+              </div>
             </div>
           </div>
 
