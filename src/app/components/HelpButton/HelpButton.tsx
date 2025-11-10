@@ -11,7 +11,8 @@ export default function HelpButton() {
   };
 
   return (
-    <div className="fixed z-50 bottom-6 right-6 md:bottom-8 md:right-8">
+  // Moved up to avoid covering footer buttons / social icons
+  <div className="fixed z-50 bottom-20 right-6 md:bottom-24 md:right-8">
       <button 
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
