@@ -72,7 +72,7 @@ const RecargaQR: React.FC = () => {
   //Para el backend enviarRecarga
   const enviarRecarga = async (): Promise<void> => {
     try {
-      const response = await axios.post("http://localhost:5000/api/recargar", {
+      const response = await axios.post("http://localhost:5000/api/devcode/recargar", {
         nombre,
         detalle,
         monto,
