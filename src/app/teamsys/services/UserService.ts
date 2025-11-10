@@ -1,5 +1,4 @@
-
-
+import { redirect } from "next/navigation";
 import { UsuarioDocument } from "../../registro/interfaces/types";
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL??"http://localhost:5000 " ;
 
@@ -64,10 +63,6 @@ export async function eliminarAutenticacion(usuario:string,provider:string) {
   //console.log("Respuesta del servidor:", res.body);
   return res.json();
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 4c19758 (Actualiza UserService.ts)
 
 export async function solicitarEnlaceAcceso(email: string) {
   const res = await fetch(`${API_URL}/api/teamsys/magic-link/request`, {
@@ -134,7 +129,7 @@ export async function obtenerPerfilActual(accessToken: string) {
 }
 
 export async function obtenerMetodoAutenticacion(usuario: string) {
-    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
+  const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
     method: "GET",
   });
   console.log("Respuesta del servidor:", res.body);
@@ -142,3 +137,42 @@ export async function obtenerMetodoAutenticacion(usuario: string) {
   return res.json();
 }
 
+// falta implementar este metodo, solo creado para evitar errores de compilacion
+export async function actualizarUbicacionBack(userId: string, lat: string, lng: string) {
+    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/`, {
+      method: "GET",
+    });
+
+    return res.json();
+}
+
+// falta implementar este metodo, solo creado para evitar errores de compilacion
+export async function cambiarContrasenaHU3(params: object) {
+    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/`, {
+      method: "GET",
+    });
+
+    return res.json();
+}
+
+
+export async function cerrarSesionesRemotas() {
+  const accessToken = sessionStorage.getItem('authToken');
+  const res = await fetch(`${API_URL}/api/teamsys/sessions/user/all-except-current`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (res.status === 401) {
+    sessionStorage.removeItem('authToken');
+    // redirect('login');
+    location.href = 'login';
+  }
+
+  if (!res.ok) throw new Error("Error al cerrar las sesiones. Intente nuevamente.");
+
+  return res.json();
+}
