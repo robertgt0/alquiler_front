@@ -139,11 +139,12 @@ export async function obtenerMetodoAutenticacion(usuario: string) {
 }
 export async function setupTwoFactor(token: string) {
   const res = await fetch(`${API_URL}/api/teamsys/2fa/setup`, {
-    method: 'GET',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`, // token del usuario logueado
     },
+    body: JSON.stringify({}) 
   });
 
   const data = await res.json();
@@ -188,3 +189,4 @@ export async function verifyTwoFactorLogin(userId: string, code: string) {
 
   return data;
 }
+

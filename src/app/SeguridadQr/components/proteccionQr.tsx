@@ -19,14 +19,24 @@ export const ProteccionQr: React.FC = () => {
   useEffect(() => {
     const cargarQR = async () => {
       try {
-        const Token = sessionStorage.getItem('authToken');
-        if (!Token) throw new Error("No existe token de sesión");
+        const raw = sessionStorage.getItem('authToken');
+      if (!raw) throw new Error("No existe token de sesión");
 
-        const qr = await setupTwoFactor(JSON.stringify(Token));
+      // quita comillas si el token quedó guardado como string JSON
+      const Token = raw.replace(/^"(.+)"$/, '$1');
+        if (!Token) throw new Error("No existe token de sesión");
+        console.log(JSON.stringify(Token))
+        const qr = await setupTwoFactor(Token);
         setQrData(qr.qrCode);
         setSecretData(qr.secret);
         setCodes(qr.backupCodes);
-       setSecretData('123')
+        try {
+  sessionStorage.setItem('twofactor_secret', qr.secret);
+  // si backupCodes es array/objeto:
+  //sessionStorage.setItem('twofactor_backup', JSON.stringify(qr.backupCodes));
+} catch (e) {
+  console.error('No se pudo guardar en sessionStorage', e);
+}
       } catch (err: unknown) {
         console.error("Error al generar el QR:", err);
         setError("Error al generar el código QR. Intenta nuevamente.");

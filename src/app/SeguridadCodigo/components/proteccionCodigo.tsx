@@ -1,21 +1,29 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
+import { verifyTwoFactor } from '@/app/teamsys/services/UserService';
 // Componente para mostrar el código secreto y copiarlo
 const SecretCodeBox: React.FC = () => {
   const [copiado, setCopiado] = useState(false);
+  const [secretData, setSecretData] = useState<string>('');
 
-  const copiarCodigo = () => {
-    const codigoSecreto = "ABCD-EFGH-IJKL-MNOP"; // Código de ejemplo
-    navigator.clipboard.writeText(codigoSecreto)
-      .then(() => {
-        setCopiado(true);
-        setTimeout(() => setCopiado(false), 2000);
-      })
-      .catch(err => console.error('Error al copiar: ', err));
+useEffect(() => {
+    const sec = sessionStorage.getItem('twofactor_secret') ?? '';
+    setSecretData(sec);
+    sessionStorage.removeItem('twofactor_secret')
+  }, []);
+
+  const copiarCodigo = async () => {
+    if (!secretData) return;
+    try {
+      await navigator.clipboard.writeText(secretData);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch (err) {
+      console.error('Error al copiar: ', err);
+    }
   };
 
   return (
@@ -51,33 +59,38 @@ export const ProteccionCodigo: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+  e.preventDefault();
+  setError(null);
+  if (!/^\d{6}$/.test(codigo)) {
+    setError('Código incorrecto. Inténtalo de nuevo.');
+    return;
+  }
 
-    // Validar que tenga 6 dígitos
-    if (!/^\d{6}$/.test(codigo)) {
-      setError('Código incorrecto. Inténtalo de nuevo.');
-      return;
-    }
+  const Token = sessionStorage.getItem('authToken');
+  const secret = sessionStorage.getItem('twofactor_secret');
+  if (!Token || !secret) {
+    setError('Falta información (token o secret). Vuelve a generar el QR.');
+    return;
+  }
 
-    setIsLoading(true);
-    try {
-      //  llamar al backend 
-      // const response = await fetch('/api/verificar-codigo', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ codigo }),
-      // });
-      // if (!response.ok) throw new Error('Código incorrecto');
+  setIsLoading(true);
+  try {
+    const llamada = await verifyTwoFactor(Token, secret, codigo);
+    if (!llamada.success) throw new Error(llamada.message || 'Verificación fallida');
 
-      router.push('/'); // Cambia la ruta si quieres ir a otra página
-    } catch (err) {
-      console.error('Error al verificar el código:', err);
-      setError('Código incorrecto. Inténtalo de nuevo.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // limpieza: borra secret y backup codes
+    sessionStorage.removeItem('twofactor_secret');
+    sessionStorage.removeItem('twofactor_backup');
+
+    router.push('/');
+  } catch (err) {
+    console.error(err);
+    setError(typeof err === 'string' ? err : 'Código incorrecto. Inténtalo de nuevo.');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     

@@ -47,17 +47,26 @@ const router = useRouter();
 
     try {
       // Simulación con backend
-      const usuario=sessionStorage.getItem('userData')
-      if(usuario==null)throw new Error('usaurio no encontrado');
-      
-      const res = await verifyTwoFactorLogin(JSON.parse(usuario)._id,codigo)
-      
-      if (res.success) {
-        if (res.data) {
+      const usuarioRaw = sessionStorage.getItem('userData');
+if (!usuarioRaw) {
+  setError('No existe userData en sesión');
+  return;
+}
+const usuario = JSON.parse(usuarioRaw);
+const userId = String(usuario._id || '').trim();
+const token = String(codigo || '').trim();
+
+console.log('verify-login payload ->', { userId, token }); // 👈 revisa en consola
+const res = await verifyTwoFactorLogin(userId, token);
+
+      console.log(res)
+      if (res.success==true) {
+        
           const eventLogin = new CustomEvent("login-exitoso");
           window.dispatchEvent(eventLogin);
           router.push('/'); 
-    }// Código correcto, redirige al home
+          return
+    // Código correcto, redirige al home
       } else {
         setIntentos(prev => {
         const nuevosIntentos = prev + 1;
@@ -78,7 +87,7 @@ const router = useRouter();
       setError('Ocurrió un error, inténtalo más tarde.');
     } finally {
       setIsLoading(false);
-      setCodigo('');
+      setCodigo("");
     }
   };
 
