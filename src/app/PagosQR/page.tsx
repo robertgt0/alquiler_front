@@ -76,6 +76,10 @@ const RecargaQR: React.FC = () => {
         nombre,
         detalle,
         monto,
+        correo,
+        telefono,
+        tipoDocumento,
+        numeroDocumento,
       });
 
       console.log("✅ Respuesta del backend:", response.data);
