@@ -27,7 +27,7 @@ export const categorias: CategoriaBase[] = [
   { id: 20, titulo: "Peluquería",          descripcion: "Corte y peinado",                   icono: "💇" },
   { id: 21, titulo: "Domótica",            descripcion: "Automatización del hogar",          icono: "🏠" },
   { id: 22, titulo: "Pisos y Cerámica",    descripcion: "Colocación y reparación",           icono: "🧩" },
-  { id: 23, titulo: "Toldos y Persianas",  descripcion: "Instalación y mantenimiento",       icono: "🎀" }, // “cortinas”
+  { id: 23, titulo: "Toldos y Persianas",  descripcion: "Instalación y mantenimiento",       icono: "" }, // “cortinas”
   { id: 24, titulo: "Calefacción",         descripcion: "Instalación y revisión",            icono: "🔥" },
   { id: 25, titulo: "Impermeabilización",  descripcion: "Sellado y protección",              icono: "💧" },
   { id: 26, titulo: "Metalistería",        descripcion: "Estructuras y acabados metálicos",  icono: "🛠️" },
