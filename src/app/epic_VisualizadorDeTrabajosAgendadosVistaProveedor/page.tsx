@@ -158,9 +158,20 @@ export default function TrabajosAgendadosPage() {
                         router.push(`/epic_aceptar-rechazar-trabajo-proveedor?${params.toString()}`);
                       } else {
                         router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}`);
+                        router.push(`/trabajo-terminado/${encodeURIComponent(job.id)}`);
                       }
+                      
                     }}
-                    style={{ padding: '8px 14px', minWidth: 110, height: 36, borderRadius: 8, background: C.confirmed, color: C.white, border: 'none', cursor: 'pointer' }}
+                    style={{
+                      padding: '8px 14px',
+                      minWidth: 110,
+                      height: 36,
+                      borderRadius: 8,
+                      background: C.confirmed,
+                      color: C.white,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
                   >
                     Ver Detalles
                   </button>
