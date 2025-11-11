@@ -173,6 +173,8 @@ export function useSearchHistory({
       const textoNormalizado = texto.trim();
       if (!textoNormalizado) return;
 
+      console.log("💾 Intentando guardar en historial desde hook:", textoNormalizado);
+
       setHistorial(prevHistorial => {
         // Eliminar duplicados (case insensitive) y mantener orden
         const historialLimpio = prevHistorial

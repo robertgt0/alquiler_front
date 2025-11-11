@@ -669,16 +669,45 @@ export default function BusquedaAutocompletado({
         esEspecialidad: boolean = false,
         actualizarUrl: boolean = true
     ) => {
+
+        // 🛑 DETENER BÚSQUEDAS REPETIDAS
         if (busquedaEnCurso.current) {
             console.log('⏸️ [BÚSQUEDA] Ya hay una búsqueda en curso, omitiendo...');
             return;
         }
 
+
+        // Esto es síncrono. La próxima vez que se renderice, esto será 'true'.
+        busquedaEnCurso.current = true;
         const textoLimpio = texto.trim();
+
+        // Hay que cancelarlos para que no compitan.
+        if (debounceSugerenciasRef.current) {
+            clearTimeout(debounceSugerenciasRef.current);
+        }
+        if (debounceResultadosRef.current) {
+            clearTimeout(debounceResultadosRef.current);
+        }
+        if (debounceSugerenciasLocalesRef.current) {
+            clearTimeout(debounceSugerenciasLocalesRef.current);
+        }
+
+        if (guardarEnHistorialFlag && mostrarHistorial) {
+            guardarEnHistorial(textoLimpio);
+        }
+
+        setMostrarSugerencias(false);
+        setMostrarHistorialLocal(false);
+        setLoadingResultados(true);
+        setEstadoBusqueda("loading");
+
+
+
         console.log('🚀 [BÚSQUEDA-COMPLETA] Iniciando búsqueda para:', textoLimpio, 'actualizarUrl:', actualizarUrl);
 
         // 🔥 PASO 1: ANALIZAR CARACTERES PROBLEMA
         const analisis = analizarCaracteresQuery(textoLimpio);
+
 
         if (analisis.tieneProblema) {
             console.log('🚫 [BÚSQUEDA] Caracteres problema detectados - Mostrando mensaje de no resultados');
@@ -691,8 +720,11 @@ export default function BusquedaAutocompletado({
 
             // Informar al padre con array vacío
             onSearch(textoLimpio, [], actualizarUrl);
+            busquedaEnCurso.current = false;
             return; // 🔥 SALIR - NO PASA A NORMALIZACIÓN
         }
+
+
 
         // 🔥 PASO 2: SI NO HAY CARACTERES PROBLEMA, ENTONCES NORMALIZAR
         let queryParaBuscar: string;
@@ -709,6 +741,7 @@ export default function BusquedaAutocompletado({
             setLoadingResultados(false);
             setResultados([]);
             onSearch(textoLimpio, [], actualizarUrl);
+            busquedaEnCurso.current = false;
             return;
         }
 
@@ -717,6 +750,7 @@ export default function BusquedaAutocompletado({
             setMensaje("La búsqueda no puede exceder 80 caracteres");
             setEstadoBusqueda("error");
             setLoadingResultados(false);
+            busquedaEnCurso.current = false;
             return;
         }
 
@@ -727,26 +761,18 @@ export default function BusquedaAutocompletado({
             setLoadingResultados(false);
             setMensajeNoResultados("");
             onSearch("", [], actualizarUrl);
+            busquedaEnCurso.current = false;
             return;
         }
 
-        busquedaEnCurso.current = true;
 
-        setLoadingResultados(true);
-        setEstadoBusqueda("loading");
-        setMostrarSugerencias(false);
-        setMostrarHistorialLocal(false);
-
-        // Mostrar mensaje informativo para separadores
         if (analisis.tieneSeparadores) {
             setMensajeNoResultados(analisis.mensaje || "Búsqueda con separadores");
         }
 
         terminoBusquedaAnteriorResultados.current = textoLimpio;
 
-        if (guardarEnHistorialFlag && mostrarHistorial) {
-            guardarEnHistorial(textoLimpio);
-        }
+
 
         try {
             console.log('🔍 [BÚSQUEDA] Buscando trabajos con query normalizado:', queryParaBuscar);
@@ -778,12 +804,19 @@ export default function BusquedaAutocompletado({
             setEstadoBusqueda("error");
             setMensajeNoResultados(`Error en la búsqueda para "${textoLimpio}"`);
             onSearch(textoLimpio, [], actualizarUrl);
+            busquedaEnCurso.current = false;
 
         } finally {
             setLoadingResultados(false);
             busquedaEnCurso.current = false;
         }
-    }, [datos, onSearch, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint]);
+    }, [datos, onSearch, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint,setMostrarSugerencias,
+    setMostrarHistorialLocal,
+    setLoadingResultados,
+    setEstadoBusqueda,
+    setMensajeNoResultados,
+    setResultados,
+    setMensaje]);
 
     // 🔥 CORREGIDO: Selección de sugerencia AHORA actualiza URL
     const seleccionarSugerencia = useCallback(async (texto: string) => {
@@ -824,6 +857,13 @@ export default function BusquedaAutocompletado({
     // 🔥 NUEVO: useEffect PARA SUGERENCIAS LOCALES EN TIEMPO REAL
     // ============================================================================
     useEffect(() => {
+
+        if (busquedaEnCurso.current) {
+            console.log('🚫 [SUGERENCIAS] Omitido, búsqueda completa en curso.');
+            return;
+        }
+
+
         if (debounceSugerenciasLocalesRef.current) {
             clearTimeout(debounceSugerenciasLocalesRef.current);
         }
@@ -848,7 +888,15 @@ export default function BusquedaAutocompletado({
 
         if (debeBuscarSugerenciasLocales) {
             debounceSugerenciasLocalesRef.current = setTimeout(async () => {
+                if (busquedaEnCurso.current) {
+                    console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
+                    return;
+                }
                 try {
+                    if (busquedaEnCurso.current) {
+                        console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
+                        return;
+                    }
                     console.log('🚀 [SUGERENCIAS-LOCALES-REAL-TIME] Buscando sugerencias locales para:', texto);
 
                     // 🔥 BUSCAR SUGERENCIAS LOCALES DIRECTAMENTE
@@ -890,12 +938,18 @@ export default function BusquedaAutocompletado({
                 clearTimeout(debounceSugerenciasLocalesRef.current);
             }
         };
-    }, [query, inputFocused, datos]);
+    }, [query, inputFocused, datos, onSearch]);
 
     // ============================================================================
     // 🔥 NUEVO: useEffect PARA RESULTADOS LOCALES EN TIEMPO REAL  
     // ============================================================================
     useEffect(() => {
+
+        if (busquedaEnCurso.current) {
+            console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
+            return;
+        }
+
         if (debounceResultadosLocalesRef.current) {
             clearTimeout(debounceResultadosLocalesRef.current);
         }
@@ -921,7 +975,15 @@ export default function BusquedaAutocompletado({
 
         if (debeBuscarResultadosLocales) {
             debounceResultadosLocalesRef.current = setTimeout(async () => {
+                if (busquedaEnCurso.current) {
+                    console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
+                    return;
+                }
                 try {
+                    if (busquedaEnCurso.current) {
+                        console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
+                        return;
+                    }
                     console.log('🚀 [RESULTADOS-LOCALES-REAL-TIME] Buscando resultados locales para:', texto);
 
                     // 🔥 BUSCAR RESULTADOS LOCALES DIRECTAMENTE
@@ -962,7 +1024,7 @@ export default function BusquedaAutocompletado({
                 clearTimeout(debounceResultadosLocalesRef.current);
             }
         };
-    }, [query, inputFocused, datos, campoBusqueda, onSearch]);
+    }, [query, inputFocused, datos, campoBusqueda]);
 
     // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
     const manejarCambioInput = useCallback((nuevoValor: string) => {
@@ -1027,6 +1089,12 @@ export default function BusquedaAutocompletado({
 
     // 🔥 CORREGIDO: useEffect de sugerencias para manejar backend + local automáticamente
     useEffect(() => {
+
+        if (busquedaEnCurso.current) {
+            console.log('🚫 [RESULTADOS-AUTO] Cancelado, la búsqueda completa ya empezó.');
+            return; // NO HAGAS NADA
+        }
+
         if (debounceSugerenciasRef.current) {
             clearTimeout(debounceSugerenciasRef.current);
         }
@@ -1092,6 +1160,10 @@ export default function BusquedaAutocompletado({
             terminoBusquedaAnteriorSugerencias.current = texto;
 
             debounceSugerenciasRef.current = setTimeout(async () => {
+                if (busquedaEnCurso.current) {
+                    console.log('🚫 [RESULTADOS-AUTO] Cancelado, la búsqueda completa ya empezó.');
+                    return; // NO HAGAS NADA
+                }
                 try {
                     // 🔥 ESTA FUNCIÓN YA MANEJA BACKEND + LOCAL AUTOMÁTICAMENTE
                     const sugerenciasFinales = await buscarSugerencias(textoNormalizado);
@@ -1134,14 +1206,25 @@ export default function BusquedaAutocompletado({
     // 🔥 CORREGIDO: useEffect de resultados para manejar backend + local automáticamente
     // 🔥 CORREGIDO: useEffect de resultados con la MISMA normalización que sugerencias
     useEffect(() => {
+
+        if (busquedaEnCurso.current) {
+            console.log('🚫 [RESULTADOS-AUTO] Omitido, "Enter" tiene prioridad.');
+            return;
+        }
+
         if (debounceResultadosRef.current) {
             clearTimeout(debounceResultadosRef.current);
         }
 
         const texto = query.trim();
-
         if (desactivarBusquedaAutomatica.current) {
             console.log('⏸️ [RESULTADOS] Desactivada temporalmente');
+            return;
+        }
+
+
+        if (busquedaEnCurso.current) {
+            console.log('🚫 [RESULTADOS-AUTO] Omitido, búsqueda completa en curso.');
             return;
         }
 
@@ -1178,6 +1261,17 @@ export default function BusquedaAutocompletado({
             console.log('🚀 [RESULTADOS] Programando búsqueda automática para:', textoNormalizado);
 
             debounceResultadosRef.current = setTimeout(async () => {
+
+                if (busquedaEnCurso.current) {
+                    console.log('🚫 [RESULTADOS-AUTO] Cancelado, "Enter" se adelantó.');
+                    return; // NO HAGAS NADA
+                }
+
+                if (desactivarBusquedaAutomatica.current) {
+                    console.log('🚫 [RESULTADOS-AUTO] Cancelado, se desactivó la búsqueda.');
+                    return;
+                }
+
                 if (query.trim() === texto && !desactivarBusquedaAutomatica.current) {
                     console.log('📊 [RESULTADOS] Ejecutando búsqueda automática');
 
@@ -1188,41 +1282,13 @@ export default function BusquedaAutocompletado({
                         return;
                     }
 
-                    busquedaEnCurso.current = true;
-                    terminoBusquedaAnteriorResultados.current = texto;
-                    setLoadingResultados(true);
-                    setEstadoBusqueda("loading");
+                    //busquedaEnCurso.current = true;
+                    //terminoBusquedaAnteriorResultados.current = texto;
+                    //setLoadingResultados(true);
+                    //setEstadoBusqueda("loading");
+                    console.log('📊 [RESULTADOS-AUTO] Ejecutando (llamando a función principal)');
+                    await ejecutarBusquedaCompleta(query.trim(), false, false, true);
 
-                    try {
-                        console.log('🔍 [RESULTADOS-AUTO] Buscando trabajos con query normalizado:', textoNormalizado);
-
-                        // 🔥 ENVIAR EL TEXTO NORMALIZADO (sin comas) al servicio
-                        const resultadosFinales = await BusquedaService.searchJobsOptimized(textoNormalizado, datos, apiConfig?.endpoint);
-
-                        console.log('📊 [RESULTADOS-AUTO] Resultados encontrados:', resultadosFinales.length);
-
-                        if (query.trim() === texto) {
-                            setResultados(resultadosFinales);
-                            setEstadoBusqueda("success");
-
-                            if (resultadosFinales.length > 0) {
-                                setMensajeNoResultados("");
-                                onSearch(textoNormalizado, resultadosFinales, true);
-                            } else {
-                                setMensajeNoResultados(`No se encontraron resultados para "${texto}"`);
-                                onSearch(textoNormalizado, [], true);
-                            }
-                        }
-                    } catch (error) {
-                        console.error("❌ [RESULTADOS-AUTO] Error:", error);
-                        setEstadoBusqueda("error");
-                        setMensajeNoResultados(`Error en la búsqueda para "${texto}"`);
-                        // 🔥 ENVIAR TÉRMINO NORMALIZADO AL PADRE (incluso para error)
-                        onSearch(textoNormalizado, [], true);
-                    } finally {
-                        setLoadingResultados(false);
-                        busquedaEnCurso.current = false;
-                    }
                 }
             }, 600);
         } else {
@@ -1234,7 +1300,7 @@ export default function BusquedaAutocompletado({
                 clearTimeout(debounceResultadosRef.current);
             }
         };
-    }, [query, inputFocused, datos, onSearch, apiConfig?.endpoint, mostrarHistorial, guardarEnHistorial]);
+    }, [query, inputFocused, datos, onSearch, apiConfig?.endpoint, ejecutarBusquedaCompleta]);
 
     const manejarFocusInput = useCallback(async () => {
         setInputFocused(true);
