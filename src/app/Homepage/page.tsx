@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <main>
       {/* Hero / inspiración */}
-      <section className="my-5">
+      <section id="carrusel" className="my-5">
         <CarruselInspirador />
       </section>
 

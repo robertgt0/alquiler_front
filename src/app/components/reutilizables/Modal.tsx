@@ -16,16 +16,30 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<Element | null>(null);
+  const scrollPosition = useRef<number>(0);
 
   useEffect(() => {
     if (isOpen) {
+      // Guardar posición actual del scroll
+      scrollPosition.current = window.pageYOffset;
+      
       // Guardar el elemento enfocado antes de abrir para restaurarlo luego
       previouslyFocused.current = document.activeElement;
+      
+      // Bloquear scroll del body
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px'; // Evita el salto por el scrollbar
+      
       // Focar el botón de cerrar cuando se abre
       if (closeBtnRef.current) closeBtnRef.current.focus();
-      document.body.classList.add('overflow-hidden');
     } else {
-      document.body.classList.remove('overflow-hidden');
+      // Restaurar scroll del body
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      
+      // Restaurar la posición del scroll exacta
+      window.scrollTo(0, scrollPosition.current);
+      
       // Restaurar foco al elemento previo si existe
       if (previouslyFocused.current instanceof HTMLElement) {
         (previouslyFocused.current as HTMLElement).focus();
@@ -34,7 +48,42 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
 
     // Limpieza al desmontar
     return () => {
-      document.body.classList.remove('overflow-hidden');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [isOpen]);
+
+  // Prevenir scroll con rueda del mouse y teclado fuera del modal
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const preventScroll = (e: WheelEvent | TouchEvent) => {
+      // Permitir scroll solo dentro del modal
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    const preventKeyScroll = (e: KeyboardEvent) => {
+      const scrollKeys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '];
+      if (scrollKeys.includes(e.key)) {
+        if (!modalRef.current?.contains(document.activeElement)) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    };
+
+    // Prevenir scroll en todo el documento
+    document.addEventListener('wheel', preventScroll, { passive: false });
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    document.addEventListener('keydown', preventKeyScroll, { passive: false });
+    
+    return () => {
+      document.removeEventListener('wheel', preventScroll);
+      document.removeEventListener('touchmove', preventScroll);
+      document.removeEventListener('keydown', preventKeyScroll);
     };
   }, [isOpen]);
 
