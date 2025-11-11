@@ -5,47 +5,83 @@ import EtiquetaEstado from "../components/EtiquetaEstado";
 import { SolicitudDetalle } from "../interfaces/Trabajo.interface";
 import { useGestionSolicitud } from "../hooks/useGestionSolicitud";
 
-//Formato de fecha literal (ej: Martes 25 de noviembre)
+/* -------------------------------------------------------------------------- */
+/* ✅ CORRECCIÓN: interpretar fecha como LOCAL (sin desfase de día)           */
+/* -------------------------------------------------------------------------- */
 function formatearFecha(fechaISO: string): string {
-  const fecha = new Date(fechaISO);
-  const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  return `${dias[fecha.getUTCDay()]} ${fecha.getUTCDate()} de ${meses[fecha.getUTCMonth()]}`;
+  // Si la fecha viene como "YYYY-MM-DD", la descomponemos
+  const partes = fechaISO.split("-");
+  const fecha = new Date(
+    Number(partes[0]), // año
+    Number(partes[1]) - 1, // mes (base 0)
+    Number(partes[2]) // día
+  );
+
+  const dias = [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+  ];
+  const meses = [
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+  ];
+
+  return `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}`;
 }
 
-export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetalle }) {
-  // Hook SOLO front-end (no cambia estado real ni llama backend)
-  const { loading, mensaje, setMensaje, simularConfirmar, simularRechazar } =
+/* -------------------------------------------------------------------------- */
+/* 🔹 COMPONENTE PRINCIPAL                                                    */
+/* -------------------------------------------------------------------------- */
+export default function DetalleSolicitudTrabajo({
+  data,
+}: {
+  data: SolicitudDetalle;
+}) {
+  const { loading, mensaje, setMensaje, confirmarTrabajo, rechazarTrabajo } =
     useGestionSolicitud();
 
-  //Botones habilitados solo si el estado es "Pendiente"
   const botonesHabilitados = useMemo(
     () => data.estado === "Pendiente" && !loading,
     [data.estado, loading]
   );
 
-  //medir tiempo de carga de la vista "Trabajo"
+  // Medir tiempo de carga
   useEffect(() => {
     const t0 = performance.now();
     const id = requestAnimationFrame(() => {
       const elapsed = Math.round(performance.now() - t0);
       console.log(`[Métrica] Carga de "Trabajo": ${elapsed} ms`);
-      if (elapsed > 1000) console.warn("⚠️ La vista 'Trabajo' tardó > 1s en cargar.");
+      if (elapsed > 1000)
+        console.warn("⚠️ La vista 'Trabajo' tardó > 1s en cargar.");
     });
     return () => cancelAnimationFrame(id);
   }, []);
 
-  //medir tiempo desde clic hasta fin de la acción de UI (simulada)
   const tAccionRef = useRef<number | null>(null);
 
   const handleConfirmar = async () => {
     if (!botonesHabilitados) return;
     setMensaje(null);
     tAccionRef.current = performance.now();
-    await simularConfirmar();
+    await confirmarTrabajo(data.id);
     const dt = Math.round(performance.now() - (tAccionRef.current ?? 0));
-    console.log(`[Métrica] Confirmar (UI) en ${dt} ms`);
-    if (dt > 1000) console.warn("⚠️ Confirmar (UI) tardó > 1s.");
+    console.log(`[Métrica] Confirmar (API) en ${dt} ms`);
+    if (dt > 1000) console.warn("⚠️ Confirmar (API) tardó > 1s.");
     tAccionRef.current = null;
   };
 
@@ -53,14 +89,14 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
     if (!botonesHabilitados) return;
     setMensaje(null);
     tAccionRef.current = performance.now();
-    await simularRechazar();
+    await rechazarTrabajo(data.id);
     const dt = Math.round(performance.now() - (tAccionRef.current ?? 0));
-    console.log(`[Métrica] Rechazar (UI) en ${dt} ms`);
-    if (dt > 1000) console.warn("⚠️ Rechazar (UI) tardó > 1s.");
+    console.log(`[Métrica] Rechazar (API) en ${dt} ms`);
+    if (dt > 1000) console.warn("⚠️ Rechazar (API) tardó > 1s.");
     tAccionRef.current = null;
   };
 
-  const volver = () => window.history.back(); // CA4
+  const volver = () => window.history.back();
 
   return (
     <div className="w-full max-w-3xl mx-auto border border-white rounded-md p-8 sm:p-10 bg-white">
@@ -91,13 +127,12 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
 
           <span className="font-bold">Estado:</span>
           <span>
-            {/*"Pendiente" en amarillo (lo maneja EtiquetaEstado) */}
             <EtiquetaEstado estado={data.estado} />
           </span>
         </div>
       </div>
 
-      {/* Mensaje de acción (solo UI, centrado y con color por tipo) */}
+      {/* Mensaje de acción */}
       {mensaje && (
         <div
           className={`mt-6 w-full text-center text-[17px] font-medium Poppins rounded-md px-5 py-3 border ${
@@ -132,7 +167,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
             {loading === "rechazar" ? "Rechazando…" : "Rechazar"}
           </button>
 
-        <button
+          <button
             type="button"
             onClick={handleConfirmar}
             disabled={!botonesHabilitados}

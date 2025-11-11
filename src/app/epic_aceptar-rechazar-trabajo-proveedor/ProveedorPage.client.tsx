@@ -13,10 +13,13 @@ function buildFromParams(sp: URLSearchParams): SolicitudDetalle | null {
   const id = sp.get('id');
   if (!id) return null;
 
+  // ✅ Aceptamos tanto "fecha" como "date" (corrección principal)
+  const fechaISO = sp.get('fecha') || sp.get('date') || '2025-11-25';
+
   return {
     id,
     cliente: sp.get('cliente') || 'Juan Pérez',
-    fechaISO: sp.get('fecha') || '2025-11-25',
+    fechaISO, // 🔹 Ahora toma correctamente el valor de la URL
     horaInicio: sp.get('inicio') || '10:00',
     horaFin: sp.get('fin') || '11:00',
     descripcion:
