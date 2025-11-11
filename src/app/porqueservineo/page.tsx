@@ -139,21 +139,21 @@ const PorQueServineoPage: React.FC = () => {
                   Servineo
                 </th>
                 <th className="border border-gray-300 p-4 font-semibold">
-                  Competidor 1
+                  MarketPlace
                 </th>
                 <th className="border border-gray-300 p-4 font-semibold">
-                  Competidor 2
+                  Thumbtack
                 </th>
               </tr>
             </thead>
             <tbody>
               {[
-                ["Registro gratuito", "✔️", "✔️", "✔️"],
-                ["Sistema de seguimiento", "✔️", "✔️", "❌"],
-                ["Calificación de empleados", "✔️", "❌", "✔️"],
-                ["Publicación de empleos", "✔️", "✔️", "❌"],
-                ["Matching automático", "✔️", "❌", "✔️"],
-                ["Sin cargos ocultos", "✔️", "❌", "❌"],
+                ["Registro gratuito", "✔", "✔", "✔"],
+                ["Sistema de seguimiento", "✔", "❌", "❌"],
+                ["Calificación de empleados", "✔", "❌", "✔"],
+                ["Publicación de empleos", "✔", "❌", "✔"],
+                ["Matching automático", "✔", "❌", "✔"],
+                ["Sin cargos ocultos", "✔", "❌", "❌"],
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-gray-50">
                   {row.map((cell, j) => (
