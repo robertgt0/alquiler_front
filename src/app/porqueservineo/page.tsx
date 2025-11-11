@@ -139,10 +139,10 @@ const PorQueServineoPage: React.FC = () => {
                   Servineo
                 </th>
                 <th className="border border-gray-300 p-4 font-semibold">
-                  Competidor 1
+                  Workana
                 </th>
                 <th className="border border-gray-300 p-4 font-semibold">
-                  Competidor 2
+                  Thumbtack
                 </th>
               </tr>
             </thead>
