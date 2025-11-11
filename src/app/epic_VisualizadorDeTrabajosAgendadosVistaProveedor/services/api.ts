@@ -1,44 +1,75 @@
-// frontend: src/app/epic-VisualizadorDeTrabajosAgendadosVistaProveedor/services/api.ts
-import { Job, JobStatus } from '../interfaces/types';
+// src/app/epic_VisualizadorDeTrabajosAgendadosVistaProveedor/services/api.ts
+import { Job } from '../interfaces/types';
 import { convertirAISO, normalizarEstado } from '../utils/helpers';
 
-// Definimos la URL base de nuestro backend real
+// API real del backend (ajusta host/puerto si tu backend corre en otro puerto)
 const API_URL = 'http://localhost:5000/api/los_vengadores/trabajos';
 
-// --- FUNCIÓN PARA LA VISTA DEL PROVEEDOR (HU 1.7) ---
-// Esta función se conecta al backend real
+// Interfaz que representa la estructura del trabajo que viene del backend (MongoDB)
+interface TrabajoBackend {
+  _id: string;
+  id_cliente?: { nombre: string };
+  id_proveedor?: { nombre: string };
+  cliente?: string;
+  proveedor?: string;
+  servicio?: string;
+  fecha?: string;          // ej. "2025-11-02"
+  hora_inicio?: string;    // ej. "09:00"
+  hora_fin?: string;       // ej. "11:00"
+  estado?: string;
+  descripcion?: string;
+  descripcion_trabajo?: string;
+  costo?: number;
+  precio?: number;
+  // campos adicionales opcionales:
+  fechaISO?: string;
+  horaInicio?: string;
+  horaFin?: string;
+  estadoTrabajo?: string;
+}
+
+// Convierte fecha y hora en formato ISO "YYYY-MM-DDTHH:MM:00"
+function safeConvertToISO(fecha?: string, hora?: string): string {
+  if (!fecha || !hora) return '';
+  return `${fecha}T${hora}:00`;
+}
+
+/** 🔹 Obtiene trabajos del proveedor */
 export async function fetchTrabajosProveedor(): Promise<Job[]> {
   const res = await fetch(`${API_URL}/proveedor`, { cache: 'no-store' });
-
   if (!res.ok) throw new Error('Error al obtener trabajos del proveedor');
-  const data = await res.json();
 
-  // Mapeamos la respuesta de la BD (con _id) al formato del frontend (con id)
-  return data.map((t: any) => ({
-    id: t._id, // Usamos el _id que viene de MongoDB
-    clientName: t.id_cliente.nombre, // Usamos el nombre del cliente "populado"
-    service: t.servicio,
-    startISO: convertirAISO(t.fecha, t.hora_inicio),
-    endISO: convertirAISO(t.fecha, t.hora_fin),
-    status: normalizarEstado(t.estado),
+  const data: TrabajoBackend[] = await res.json();
+
+  return data.map((t) => ({
+    id: t._id,
+    clientName: t.id_cliente?.nombre ?? t.cliente ?? '',
+    service: t.servicio ?? '',
+    startISO: safeConvertToISO(t.fecha ?? t.fechaISO, t.hora_inicio ?? t.horaInicio),
+    endISO: safeConvertToISO(t.fecha ?? t.fechaISO, t.hora_fin ?? t.horaFin),
+    fechaISO: t.fecha ?? t.fechaISO,
+    status: normalizarEstado(t.estado ?? t.estadoTrabajo ?? ''),
+    description: t.descripcion_trabajo ?? t.descripcion ?? '',
+    costo: t.costo ?? t.precio,
   }));
 }
 
-// --- FUNCIÓN PARA LA VISTA DEL CLIENTE (HU 1.8) ---
-// Esta función también se conecta al backend real
+/** 🔹 Obtiene trabajos del cliente */
 export async function fetchTrabajosCliente(clienteId: string): Promise<Job[]> {
   const res = await fetch(`${API_URL}/cliente/${clienteId}`, { cache: 'no-store' });
-
   if (!res.ok) throw new Error('Error al obtener trabajos del cliente');
-  const data = await res.json();
 
-  // Mapeamos la respuesta de la BD al formato del frontend
-  return data.map((t: any) => ({
+  const data: TrabajoBackend[] = await res.json();
+
+  return data.map((t) => ({
     id: t._id,
-    providerName: t.id_proveedor.nombre, // Usamos el nombre del proveedor "populado"
-    service: t.servicio,
-    startISO: convertirAISO(t.fecha, t.hora_inicio),
-    endISO: convertirAISO(t.fecha, t.hora_fin),
-    status: normalizarEstado(t.estado),
+    providerName: t.id_proveedor?.nombre ?? t.proveedor ?? '',
+    service: t.servicio ?? '',
+    startISO: safeConvertToISO(t.fecha ?? t.fechaISO, t.hora_inicio ?? t.horaInicio),
+    endISO: safeConvertToISO(t.fecha ?? t.fechaISO, t.hora_fin ?? t.horaFin),
+    fechaISO: t.fecha ?? t.fechaISO,
+    status: normalizarEstado(t.estado ?? t.estadoTrabajo ?? ''),
+    description: t.descripcion_trabajo ?? t.descripcion ?? '',
+    costo: t.costo ?? t.precio,
   }));
 }
