@@ -9,8 +9,8 @@ const PorQueServineoPage: React.FC = () => {
 
   return (
     <main className="w-full flex flex-col items-center justify-center bg-gray-50 text-center">
-      {/* 🔹 Header normal (no fijo): se desplaza junto al contenido */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-700 text-white py-12 w-full">
+      {/* 🔹 Header ahora fijo: permanece visible durante el scroll */}
+      <section className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-blue-600 to-purple-700 text-white pt-20 pb-8 w-full shadow-lg">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center flex-wrap">
             {/* ✅ Logo ahora redirige al Home */}
@@ -37,6 +37,9 @@ const PorQueServineoPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* 🔹 Espaciador para compensar ambos headers fijos */}
+      <div className="h-[240px] md:h-[240px]"></div>
 
       {/* 🔹 Contenido principal */}
       <section className="w-full max-w-7xl px-4 md:px-6 py-16 space-y-24 text-left">
@@ -151,8 +154,8 @@ const PorQueServineoPage: React.FC = () => {
                 ["Registro gratuito", "✔️", "✔️", "✔️"],
                 ["Sistema de seguimiento", "✔️", "❌", "❌"],
                 ["Calificación de empleados", "✔️", "❌", "✔️"],
-                ["Publicación de empleos", "✔️", "✔️", "✔️"],
-                ["Matching automático", "✔️", "❌", "❌"],
+                ["Publicación de empleos", "✔️", "❌", "✔️"],
+                ["Matching automático", "✔️", "❌", "✔️"],
                 ["Sin cargos ocultos", "✔️", "❌", "❌"],
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-gray-50">
