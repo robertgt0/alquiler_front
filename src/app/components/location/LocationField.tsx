@@ -1,12 +1,17 @@
+// src/app/components/location/LocationField.tsx
 "use client";
 import { useState } from "react";
 import type { LocationDTO } from "@/types/fixer";
-import { LocationPicker } from "./LocationPicker";
+import LocationPicker from "./LocationPicker";
 import SelectedMap from "./SelectedMap";
 
 export function LocationField({
-  value, onChange
-}: { value: LocationDTO | null; onChange: (v: LocationDTO | null) => void }) {
+  value,
+  onChange,
+}: {
+  value: LocationDTO | null;
+  onChange: (v: LocationDTO | null) => void;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -19,7 +24,10 @@ export function LocationField({
       </div>
 
       {!value ? (
-        <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setOpen(true)}>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+          onClick={() => setOpen(true)}
+        >
           Añadir mi ubicación
         </button>
       ) : (
@@ -34,13 +42,17 @@ export function LocationField({
               ) : null}
             </div>
 
-        
-
-            <button className="px-3 py-2 rounded border" onClick={() => setOpen(true)}>
+            <button
+              className="px-3 py-2 rounded border"
+              onClick={() => setOpen(true)}
+            >
               Cambiar ubicación
             </button>
 
-            <button className="px-3 py-2 rounded" onClick={() => onChange(null)}>
+            <button
+              className="px-3 py-2 rounded"
+              onClick={() => onChange(null)}
+            >
               Quitar
             </button>
           </div>
@@ -50,12 +62,46 @@ export function LocationField({
         </div>
       )}
 
+      {/* Modal ligero para seleccionar ubicación */}
       {open && (
-        <LocationPicker
-          initial={value ?? undefined}
-          onConfirm={(loc) => { onChange(loc); setOpen(false); }}
-          onCancel={() => setOpen(false)}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded max-w-3xl w-full p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">Selecciona ubicación</h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setOpen(false)}
+                  className="px-3 py-1 rounded border text-sm"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <LocationPicker
+                value={value ? { lat: value.lat, lng: value.lng } : undefined}
+                onChange={(coords) => {
+                  // Construimos un LocationDTO mínimo con lat/lng.
+                  // Si tu LocationDTO requiere otros campos, añádelos aquí.
+                  const loc = { lat: coords.lat, lng: coords.lng } as LocationDTO;
+                  onChange(loc);
+                  setOpen(false);
+                }}
+                height={400}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 rounded border"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
