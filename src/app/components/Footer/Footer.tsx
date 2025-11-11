@@ -1,4 +1,4 @@
-// components/Footer/Footer.tsx
+
 // components/Footer/Footer.tsx
 
 'use client';
@@ -194,10 +194,36 @@ const Footer = () => {
             <div className="space-y-4">
               <h4 className="text-xl font-semibold font-heading">Categorías</h4>
               <nav className="flex flex-col space-y-2 items-center md:items-start">
-                <a href="#trabajos-recientes" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
-                <a href="#mapa" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
-                <a href="#servicios" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
-              </nav>
+  <a
+    href="#trabajos-recientes"
+    className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded"
+  >
+    Trabajos recientes
+  </a>
+
+  <a
+    href="#mapa"
+    className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded"
+  >
+    Mapa
+  </a>
+
+  <a
+    href="#servicios"
+    className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded"
+  >
+    Lista de servicios
+  </a>
+
+  {/* 🔹 Nuevo botón agregado */}
+ <a
+  href="/panel"
+  className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded"
+>
+  Ver manual usuario
+</a>
+</nav>
+
             </div>
 
             <div className="space-y-4">
