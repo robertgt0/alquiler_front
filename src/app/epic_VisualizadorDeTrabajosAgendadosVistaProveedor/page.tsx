@@ -230,9 +230,7 @@ export default function TrabajosAgendadosPage() {
                   <button
                     onClick={() => {
                       // Ruta correcta pasando el ID
-                      router.push(
-                        `/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}`
-                      );
+                      router.push(`/trabajo-terminado/${encodeURIComponent(job.id)}`);
                     }}
                     style={{
                       padding: '8px 14px',
