@@ -149,10 +149,10 @@ const PorQueServineoPage: React.FC = () => {
             <tbody>
               {[
                 ["Registro gratuito", "✔️", "✔️", "✔️"],
-                ["Sistema de seguimiento", "✔️", "✔️", "❌"],
+                ["Sistema de seguimiento", "✔️", "❌", "❌"],
                 ["Calificación de empleados", "✔️", "❌", "✔️"],
-                ["Publicación de empleos", "✔️", "✔️", "❌"],
-                ["Matching automático", "✔️", "❌", "✔️"],
+                ["Publicación de empleos", "✔️", "✔️", "✔️"],
+                ["Matching automático", "✔️", "❌", "❌"],
                 ["Sin cargos ocultos", "✔️", "❌", "❌"],
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-gray-50">
