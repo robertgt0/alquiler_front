@@ -139,7 +139,7 @@ const PorQueServineoPage: React.FC = () => {
                   Servineo
                 </th>
                 <th className="border border-gray-300 p-4 font-semibold">
-                  Workana
+                  MarketPlace
                 </th>
                 <th className="border border-gray-300 p-4 font-semibold">
                   Thumbtack
