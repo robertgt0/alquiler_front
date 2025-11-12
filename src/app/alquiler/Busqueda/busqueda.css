@@ -162,7 +162,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     overflow: hidden;
-    max-height: 250px;
+    max-height: 350px;
     overflow-y: auto;
     animation: aparecer 0.2s ease-out;
 }
@@ -356,6 +356,11 @@
     .caja-sugerencias li {
         padding: 14px 16px;
         font-size: 15px;
+    }
+
+    .caja-sugerencias.caja-historial-grande {
+        max-height: 500;
+        
     }
 
     .caja-resultados {
