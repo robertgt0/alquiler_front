@@ -4,6 +4,7 @@ import { CalendarDays, Clock, Edit, Trash2 } from "lucide-react";
 import EditAppointmentModal from "./components/EditAppointmentModal";
 import ConfirmationModal from "./components/confirmationModal";
 import Sidebar from "@/app/agenda/components/Sidebar";
+import { useNotifications } from '@/context/NotificationContext';
 
 interface Cita {
 	_id: string;
@@ -35,6 +36,7 @@ export default function FixerCitas() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [isDemo, setIsDemo] = useState(false);
+	const { notify } = useNotifications();
 
 	// Datos de ejemplo para mostrar en modo offline/demo
 	const sampleCitas: Cita[] = [
@@ -119,6 +121,7 @@ export default function FixerCitas() {
 		// Si estamos en modo demo/offline, aplicar el cambio localmente y salir
 		if (isDemo) {
 			setCitas(prev => prev.map(c => c._id === citaToDelete._id ? { ...c, estado: 'cancelado' } : c));
+			notify(`Se canceló la cita ${citaToDelete.fecha}`,'info'); // Nueva notificación para BUG
 			setIsConfirmModalOpen(false);
 			setCitaToDelete(null);
 			return;
@@ -127,7 +130,7 @@ export default function FixerCitas() {
 		// Optimistic update: aplicar cambio en UI inmediatamente y revertir si falla
 		const previous = [...citas];
 		setCitas(prev => prev.map(c => c._id === citaToDelete._id ? { ...c, estado: 'cancelado' } : c));
-
+		notify(`Se canceló la cita ${citaToDelete.fecha}`,'info'); // Notificar aunque la petición tarde o falle
 		try {
 			const res = await fetch(`${API_URL}/api/devcode/citas/${citaToDelete._id}`, {
 				method: 'PUT',
