@@ -14,12 +14,12 @@ const ComparisonTable = () => {
 
   // Datos de la tabla
   const tableData = [
-    ["Registro gratuito", "✔", "✔", "✔", "❌", "✔", "❌"],
-    ["Sistema de seguimiento", "✔", "❌", "❌", "✔", "❌", "✔"],
-    ["Calificación de empleados", "✔", "❌", "✔", "✔", "❌", "❌"],
-    ["Publicación de empleos", "✔", "❌", "✔", "❌", "✔", "✔"],
-    ["Matching automático", "✔", "❌", "✔", "❌", "❌", "✔"],
-    ["Sin cargos ocultos", "✔", "❌", "❌", "✔", "✔", "❌"],
+    ["Registro gratuito",        "✔", "✔", "✔", "❌", "✔", "❌"],
+    ["Sistema de seguimiento",   "✔", "❌", "❌", "✔", "❌", "✔"],
+    ["Calificación de empleados","✔", "❌", "✔", "✔", "❌", "❌"],
+    ["Publicación de empleos",   "✔", "❌", "✔", "❌", "✔", "✔"],
+    ["Matching automático",      "✔", "❌", "✔", "❌", "❌", "✔"],
+    ["Sin cargos ocultos",       "✔", "❌", "❌", "✔", "✔", "❌"],
   ];
 
   const headers = [
@@ -27,9 +27,9 @@ const ComparisonTable = () => {
     "Servineo",
     "MarketPlace", 
     "Thumbtack",
-    "Competidor A",
-    "Competidor B",
-    "Competidor C"
+    "TaskRabbit",      // Competidor A (servicios locales, EE.UU.)
+    "HomeAdvisor",     // Competidor B (hogar, mantenimiento)
+    "Angi"             // Competidor C (antes Angie’s List, servicios del hogar)
   ];
 
   return (
@@ -41,12 +41,7 @@ const ComparisonTable = () => {
 
         {/* Botón para mostrar/ocultar columnas adicionales */}
         <div className="flex justify-center mb-6">
-          <button
-            onClick={toggleAdditionalColumns}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105"
-          >
-            {showAdditionalColumns ? 'Ocultar competidores' : 'Ver más competidores'}
-          </button>
+
         </div>
 
         <div className="overflow-x-auto w-full border border-gray-200 rounded-lg shadow-lg">
