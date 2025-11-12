@@ -2,11 +2,13 @@
 import Mapa from "./components/mapa/MapaWrapper";
 import CarruselOfertas from "./components/CarruselOfertas/CarruselOfertas";
 import HomeFixer from "./components/ListaCategorias/HomeFixer";
-import type { Categoria } from "./components/ListaCategorias/tipos";
+// ❌ Eliminamos la importación de tipos estáticos
+// import type { Categoria } from "./components/ListaCategorias/tipos";
 import Footer from "./components/Footer/Footer";
 import CarruselInspirador from "./components/CarruselInspirador/CarruselInspirador";
 
-import categorias, { type CategoriaBase } from "./components/data/categoriasData";
+// ❌ ELIMINADO: Ya no importamos los datos estáticos que borraste
+// import categorias, { type CategoriaBase } from "./components/data/categoriasData";
 
 export default function Home() {
   return (
@@ -20,8 +22,11 @@ export default function Home() {
       </section>
 
       <section id="servicios" className="my-5 w-full">
-        {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
-        <HomeFixer categorias={categorias as CategoriaBase[]} />
+        {/* ✅ SOLUCIÓN:
+          Llamamos a HomeFixer SIN la prop 'categorias'.
+          Ahora, HomeFixer se encargará de hacer el fetch por sí mismo.
+        */}
+        <HomeFixer />
       </section>
 
       <section id="trabajos-recientes" className="my-5 w-full">
