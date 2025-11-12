@@ -25,7 +25,7 @@ export default function MagicLinkPage() {
           body: JSON.stringify({ token }),
         });
 
-        const data = await res.json().catch(() => ({}));
+        let data = await res.json().catch(() => ({}));
 
         if (res.status === 410) throw new Error("El enlace ha expirado. Solicita uno nuevo.");
         if (res.status === 409) throw new Error("Este enlace ya ha sido usado. Solicita uno nuevo.");
@@ -45,15 +45,7 @@ export default function MagicLinkPage() {
 
         // 3) Leer /me para extraer correo y authProvider (y cualquier otro dato fresco)
         try {
-          const me = await obtenerPerfilActual(accessToken);
-          const { correo, authProvider } = me.data;
-
-          // fusiona con userData existente si quieres
-          const mergedUser = { ...(userFromVerify || {}), correo, authProvider };
-          localStorage.setItem("userData", JSON.stringify(mergedUser));
-
-          // ⚠️ NO guardes la contraseña si viene en /me:
-          // const { password } = me.data; // NO almacenar ni mostrar
+           data = await obtenerPerfilActual(accessToken);
         } catch (e) {
           console.warn("No se pudo leer /me:", e);
           // no bloquea el login
@@ -61,13 +53,9 @@ export default function MagicLinkPage() {
 
         setStatus("ok");
         setMessage("✅ Acceso concedido. Redirigiendo…");
-         if (data.data) {
-      const token = data.token ?? data.data.token; 
-
-      if (token) sessionStorage.setItem('authToken', token);
-
+        sessionStorage.setItem("accessToken", accessToken);
       sessionStorage.setItem('userData', JSON.stringify(data.data));
-    }
+    
       
       // Disparar evento de login exitoso para que el Header se actualice
       const eventLogin = new CustomEvent("login-exitoso");
