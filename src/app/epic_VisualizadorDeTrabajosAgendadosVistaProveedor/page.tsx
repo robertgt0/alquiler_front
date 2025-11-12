@@ -60,7 +60,15 @@ export default function TrabajosAgendadosPage() {
   useEffect(() => {
     let alive = true;
     fetchTrabajosProveedor()
-      .then((d) => alive && setJobs(d))
+      .then((d) => {
+        if (!alive) return;
+        // Normaliza posibles estados "completed" → "done"
+        const normalized = (d ?? []).map((j: Job & { status: string }) => ({
+          ...j,
+          status: (j.status === 'done' ? 'done' : j.status) as JobStatus,
+        }));
+        setJobs(normalized);
+      })
       .catch((err) => console.error('Error al cargar trabajos:', err));
     return () => { alive = false; };
   }, []);
@@ -104,13 +112,57 @@ export default function TrabajosAgendadosPage() {
         {paginatedJobs.map((job) => {
           const { fecha, hora } = fmt(job.startISO);
           const { hora: horaFin } = fmt(job.endISO);
-          const chipBg = job.status === 'confirmed' ? C.confirmed : job.status === 'pending' ? C.pending : job.status === 'done' ? C.done : C.cancelled;
+          const chipBg =
+            job.status === 'confirmed' ? C.confirmed :
+            job.status === 'pending'   ? C.pending   :
+            job.status === 'done'      ? C.done      : C.cancelled;
 
           // Extraer HH:MM desde ISO (ej. "2025-11-02T09:00:00" -> "09:00")
           const inicioHHMM = job.startISO ? job.startISO.slice(11, 16) : hora;
           const finHHMM = job.endISO ? job.endISO.slice(11, 16) : horaFin;
           // fechaISO disponible en job.fechaISO (YYYY-MM-DD)
           const fechaISO = job.fechaISO ?? (job.startISO ? job.startISO.slice(0, 10) : '');
+
+          const handleVerDetalles = () => {
+            const status = job.status; // ya normalizado
+            const from = String(tab);
+
+            switch (status) {
+              case 'pending': {
+                const params = new URLSearchParams({
+                  id: job.id,
+                  cliente: job.clientName ?? '',
+                  date: fechaISO,            // YYYY-MM-DD
+                  inicio: inicioHHMM,        // HH:MM
+                  fin: finHHMM,              // HH:MM
+                  servicio: job.service ?? '',
+                  estado: status,
+                  costo: job.costo !== undefined ? String(job.costo) : '',
+                  descripcion: job.description ?? '',
+                  from,
+                });
+                router.push(`/epic_aceptar-rechazar-trabajo-proveedor?${params.toString()}`);
+                break;
+              }
+              case 'done': {
+                router.push(`/trabajo-terminado/${encodeURIComponent(job.id)}?from=${from}`);
+                break;
+              }
+              case 'confirmed': {
+                router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+                break;
+              }
+              //aqui rediriges a tu ventana de cancelado
+              case 'cancelled': {
+                router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}&view=cancelled`);
+                break;
+              }
+              default: {
+                router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+                break;
+              }
+            }
+          };
 
           return (
             <article key={job.id} style={{ border: `2.5px solid ${C.borderMain}`, borderRadius: 8, background: C.white, padding: '14px 18px' }}>
@@ -141,27 +193,7 @@ export default function TrabajosAgendadosPage() {
 
                 <div style={{ gridColumn: '4', gridRow: '1 / span 2', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
-                    onClick={() => {
-                      if (job.status === 'pending') {
-                        // Enviamos: id, cliente, date (ISO YYYY-MM-DD), inicio (HH:MM), fin (HH:MM), servicio, estado, costo, descripcion
-                        const params = new URLSearchParams({
-                          id: job.id,
-                          cliente: job.clientName ?? '',
-                          date: fechaISO,                 // <-- ISO que necesita HU1
-                          inicio: inicioHHMM,             // "HH:MM"
-                          fin: finHHMM,                   // "HH:MM"
-                          servicio: job.service ?? '',
-                          estado: job.status,
-                          costo: job.costo !== undefined ? String(job.costo) : '',
-                          descripcion: job.description ?? '',
-                        });
-                        router.push(`/epic_aceptar-rechazar-trabajo-proveedor?${params.toString()}`);
-                      } else {
-                        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}`);
-                        router.push(`/trabajo-terminado/${encodeURIComponent(job.id)}`);
-                      }
-                      
-                    }}
+                    onClick={handleVerDetalles}
                     style={{
                       padding: '8px 14px',
                       minWidth: 110,
@@ -179,7 +211,10 @@ export default function TrabajosAgendadosPage() {
 
                 <div>
                   <div style={{ display: 'inline-block', padding: '8px 16px', borderRadius: 12, background: chipBg, color: job.status === 'pending' ? '#000' : C.white }}>
-                    {job.status === 'confirmed' ? 'Confirmado' : job.status === 'pending' ? 'Pendiente' : job.status === 'done' ? 'Terminado' : 'Cancelado'}
+                    {job.status === 'confirmed' ? 'Confirmado'
+                      : job.status === 'pending' ? 'Pendiente'
+                      : job.status === 'done' ? 'Terminado'
+                      : 'Cancelado'}
                   </div>
                 </div>
 
@@ -235,7 +270,11 @@ function TabsComponent({ tab, setTab, counts, setCurrentPage }: TabsProps) {
         };
         return (
           <button key={k} onClick={() => { setTab(k); setCurrentPage(1); }} style={baseBtn}>
-            {k === 'all' ? `Todos (${badge})` : k === 'confirmed' ? `Confirmados (${badge})` : k === 'pending' ? `Pendientes (${badge})` : k === 'cancelled' ? `Cancelados (${badge})` : `Terminados (${badge})`}
+            {k === 'all' ? `Todos (${badge})`
+              : k === 'confirmed' ? `Confirmados (${badge})`
+              : k === 'pending' ? `Pendientes (${badge})`
+              : k === 'cancelled' ? `Cancelados (${badge})`
+              : `Terminados (${badge})`}
           </button>
         );
       })}

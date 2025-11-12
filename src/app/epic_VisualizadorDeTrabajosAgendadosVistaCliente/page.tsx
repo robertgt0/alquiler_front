@@ -191,7 +191,7 @@ export default function TrabajosAgendadosPage() {
                 <div style={{ gridColumn: '4', gridRow: '1 / span 2', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
                     onClick={() => {
-                      router.push(`/trabajo-terminado/${encodeURIComponent(job.id)}`);
+                      router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}`);
                     }}
                     style={{
                       padding: '8px 14px',
