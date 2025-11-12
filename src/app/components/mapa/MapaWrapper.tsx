@@ -1,14 +1,14 @@
-// components/MapaWrapper.tsx
+// src/app/components/MapaWrapper.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import BuscadorUbicaciones from "./BuscadorUbicaciones";
 import FixersHeader from "./FixersHeader";
+import PermisoGeolocalizacion from "./PermisoGeolocalizacion";
 import { Ubicacion, Fixer, UserLocation, UbicacionFromAPI } from "../../types";
 import { UbicacionManager } from "./UbicacionManager";
 import { ubicacionesRespaldo, fixersRespaldo, fixersDefinidos } from "../data/fixersData";
-import { useResetGuia } from "../../hooks/useResetGuia"; // 👈 Agregar esta línea
 
 const Mapa = dynamic(() => import("./mapa"), { ssr: false });
 
@@ -17,25 +17,19 @@ export default function MapaWrapper() {
   const [fixers, setFixers] = useState<Fixer[]>([]);
   const [fixersFiltrados, setFixersFiltrados] = useState<Fixer[]>([]);
 
-  // ✅ 1. ESTADO INICIAL: Por defecto en la Plaza 14 de Septiembre
   const [ubicacionSeleccionada, setUbicacionSeleccionada] =
     useState<Ubicacion | null>(ubicacionesRespaldo[0]);
 
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [cargando, setCargando] = useState(true);
-  const [mostrarSenalizacion, setMostrarSenalizacion] = useState(false);
 
-  // Sigue rastreando si el permiso fue solicitado (inicia en falso)
   const [permisoDecidido, setPermisoDecidido] = useState(false);
   const [usandoRespaldo, setUsandoRespaldo] = useState(false);
 
-  // ✅ NUEVO: Estado para controlar si el usuario ha iniciado sesión
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const ubicacionManager = UbicacionManager.getInstancia();
-  const { resetearGuia } = useResetGuia(); // 👈 Agregar esta línea
 
-  // ✅ 2. FUNCIÓN DE UBICACIÓN (envuelta en useCallback)
   const obtenerUbicacion = useCallback(() => {
     if (!navigator.geolocation) {
       console.log("Geolocalización no soportada");
@@ -62,12 +56,9 @@ export default function MapaWrapper() {
 
         ubicacionManager.setUbicacion(ubicacionTemporal);
         setUbicacionSeleccionada(ubicacionTemporal);
-        setMostrarSenalizacion(true);
         setPermisoDecidido(true);
-        setTimeout(() => setMostrarSenalizacion(false), 3000);
       },
       () => {
-        // ✅ FALLBACK: Si se rechaza, volver a la Plaza
         console.log("Ubicación rechazada - Enfocando en Plaza Principal");
         ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
         setUbicacionSeleccionada(ubicacionesRespaldo[0]);
@@ -82,7 +73,6 @@ export default function MapaWrapper() {
     );
   }, [ubicacionManager]);
 
-  // ✅ 3. EFECTO PARA ESCUCHAR EL EVENTO DEL HEADER
   useEffect(() => {
     const handleSolicitarGeo = () => {
       console.log("Evento 'solicitar-geolocalizacion' recibido. Pidiendo ubicación...");
@@ -102,9 +92,7 @@ export default function MapaWrapper() {
     };
   }, [obtenerUbicacion]);
 
-  // 🌐 Cargar ubicaciones y fixers
   useEffect(() => {
-    // ✅ 4. ESTABLECER UBICACIÓN INICIAL EN EL MANAGER
     if (!permisoDecidido) {
       ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
     }
@@ -134,18 +122,21 @@ export default function MapaWrapper() {
                 (item: UbicacionFromAPI, index: number) => ({
                   id: index + 1,
                   nombre: item.nombre,
-                  posicion: [item.posicion.lat, item.posicion.lng] as [
-                    number,
-                    number
-                  ],
+                  posicion: [item.posicion.lat, item.posicion.lng] as [number, number],
                 })
               );
             setUbicaciones(ubicacionesTransformadas);
           }
 
           if (dataFixers.success) {
-            setFixers(dataFixers.data);
-            const cercanos = ubicacionManager.filtrarFixersCercanos(dataFixers.data);
+            // ✅ SOLO AQUÍ procesamos las imágenes
+            const fixersConImagen: Fixer[] = dataFixers.data.map((fixer: Fixer) => ({
+              ...fixer,
+              imagenPerfil: fixer.imagenPerfil || "/imagenes_respaldo/perfil-default.jpg"
+            }));
+            
+            setFixers(fixersConImagen);
+            const cercanos = ubicacionManager.filtrarFixersCercanos(fixersConImagen);
             setFixersFiltrados(cercanos);
           }
 
@@ -156,8 +147,12 @@ export default function MapaWrapper() {
       } catch (error) {
         console.log("❌ Backend no disponible - Usando datos de respaldo", error);
 
-        // 🛡️ USAR DATOS DE RESPUESTA
-        const todosLosFixers: Fixer[] = [...fixersRespaldo, ...fixersDefinidos];
+        // ✅ Aplicar mismo procesamiento a datos de respaldo
+        const todosLosFixers: Fixer[] = [...fixersRespaldo, ...fixersDefinidos].map(fixer => ({
+          ...fixer,
+          imagenPerfil: fixer.imagenPerfil || "/imagenes_respaldo/imagen2.jpg"
+        }));
+        
         setUbicaciones(ubicacionesRespaldo);
         setFixers(todosLosFixers);
         setUsandoRespaldo(true);
@@ -172,7 +167,6 @@ export default function MapaWrapper() {
     cargarDatos();
   }, [userLocation, permisoDecidido, ubicacionManager]);
 
-  // ✅ NUEVA FUNCIÓN: Manejar marcador agregado por presión prolongada
   const handleMarcadorAgregado = (lat: number, lng: number) => {
     const nuevaUbicacion: Ubicacion = {
       id: Date.now(),
@@ -188,8 +182,10 @@ export default function MapaWrapper() {
 
   if (cargando)
     return (
-      <div className="flex items-center justify-center min-h-screen text-lg">
-        Cargando mapa y especialistas...
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-lg sm:text-xl font-bold text-[#2a87ff]">
+          Cargando mapa y especialistas...
+        </p>
       </div>
     );
 
@@ -200,14 +196,6 @@ export default function MapaWrapper() {
           {/* Mensaje de respaldo si es necesario */}
         </div>
       )}
-
-      {/* 👈 Agregar botón aquí - sin cambiar nada más */}
-      <button 
-        onClick={resetearGuia}
-        className="fixed top-20 right-4 bg-blue-500 text-white px-3 py-2 rounded text-sm z-10 shadow-lg"
-      >
-        Ver Guía
-      </button>
 
       <BuscadorUbicaciones
         ubicaciones={ubicaciones}
@@ -234,6 +222,8 @@ export default function MapaWrapper() {
         }}
         onMarcadorAgregado={handleMarcadorAgregado}
       />
+
+      <PermisoGeolocalizacion isLoggedIn={isLoggedIn} />
     </div>
   );
 }

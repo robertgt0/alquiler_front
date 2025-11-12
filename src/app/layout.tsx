@@ -7,7 +7,6 @@ import "./globals.css";
 
 import Header from "./components/Header/Header";
 import { useUsuarioNuevo } from "./hooks/useUsuarioNuevo";
-import ModalGuiaUsuario from "./components/guiaUsuarios/modalUsuario";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -74,8 +73,7 @@ export default function RootLayout({
             {children}
           </main>
         </div>
-        
-        <ModalGuiaUsuario isOpen={modalAbierto} onClose={cerrarModal} />
+
       </body>
     </html>
   );

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "critters": "^0.0.23",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
     "lucide-react": "^0.545.0",

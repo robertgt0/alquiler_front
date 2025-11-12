@@ -1,5 +1,8 @@
-// utils/UbicacionManager.ts
+// src/app/components/UbicacionManager.ts
 import { Fixer, Ubicacion } from "../../types";
+
+type PermissionStateLike = "granted" | "denied" | "prompt";
+type PermissionStatusLike = { state: PermissionStateLike };
 
 export class UbicacionManager {
   private static instancia: UbicacionManager;
@@ -15,19 +18,72 @@ export class UbicacionManager {
     return UbicacionManager.instancia;
   }
 
+  // 📍 Verificar si los permisos de geolocalización están concedidos
+  public async verificarPermisosGeolocalizacion(): Promise<boolean> {
+    if (typeof navigator === "undefined" || !("permissions" in navigator)) {
+      return false;
+    }
+
+    try {
+      const permissions = (navigator as unknown) as {
+        query: (params: { name: "geolocation" }) => Promise<PermissionStatusLike>;
+      };
+      const result = await permissions.query({ name: "geolocation" });
+      return result.state === "granted";
+    } catch (error) {
+      console.log("Error al verificar permisos:", error);
+      return false;
+    }
+  }
+
+  // 📍 Solicitar permisos de geolocalización (intenta obtener la posición)
+  public async solicitarPermisosGeolocalizacion(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+        console.log("Geolocalización no soportada");
+        resolve(false);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          console.log("Permisos de geolocalización concedidos");
+          resolve(true);
+        },
+        (error) => {
+          console.log("Permisos de geolocalización denegados:", error);
+          resolve(false);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: Infinity,
+        }
+      );
+    });
+  }
+
   // 📍 Guarda la ubicación actual
-  public setUbicacion(ubicacion: Ubicacion) {
+  public setUbicacion(ubicacion: Ubicacion): void {
     this.ubicacionActual = ubicacion;
-    localStorage.setItem("ubicacionActual", JSON.stringify(ubicacion));
+    try {
+      localStorage.setItem("ubicacionActual", JSON.stringify(ubicacion));
+    } catch (e) {
+      console.warn("No se pudo guardar ubicación en localStorage:", e);
+    }
   }
 
   // 📤 Obtiene la ubicación (de memoria o localStorage)
   public getUbicacion(): Ubicacion | null {
     if (this.ubicacionActual) return this.ubicacionActual;
-    const guardada = localStorage.getItem("ubicacionActual");
-    if (guardada) {
-      this.ubicacionActual = JSON.parse(guardada);
-      return this.ubicacionActual;
+    try {
+      const guardada = localStorage.getItem("ubicacionActual");
+      if (guardada) {
+        this.ubicacionActual = JSON.parse(guardada) as Ubicacion;
+        return this.ubicacionActual;
+      }
+    } catch (e) {
+      console.warn("Error leyendo localStorage:", e);
     }
     return null;
   }
@@ -58,8 +114,12 @@ export class UbicacionManager {
   }
 
   // 🧹 Limpia la ubicación actual
-  public limpiarUbicacion() {
+  public limpiarUbicacion(): void {
     this.ubicacionActual = null;
-    localStorage.removeItem("ubicacionActual");
+    try {
+      localStorage.removeItem("ubicacionActual");
+    } catch (e) {
+      /* no-op */
+    }
   }
 }
