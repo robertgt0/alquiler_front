@@ -215,9 +215,9 @@ const Footer = () => {
               <h4 className="text-xl font-semibold font-heading">Soporte</h4>
               <ul className="space-y-3">
                 <li className="flex items-center justify-center md:justify-start">
-                  <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                  <a href="https://wa.me/59160379823" target="_blank" rel="noopener noreferrer" className="flex items-center transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
                     <FaPhone className="mr-3 text-[#52abff]" />
-                    <span className="text-sm">+591 73782241</span>
+                    <span className="text-sm">+591 60379823</span>
                   </a>
                 </li>
                 <li className="flex items-center justify-center md:justify-start">
