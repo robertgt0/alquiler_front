@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, MapPin, Zap } from 'lucide-react';
 import { FaStar } from 'react-icons/fa';
 
@@ -30,15 +30,21 @@ const JobCard: React.FC<JobCardProps> = ({
   onViewDetails,
 }) => {
   const horarios = ["Mañana", "Tarde", "Noche"];
-  const zonas = ["Sur", "Central", "Norte", "Oeste", "Este"];
+  const zonas = ["Sur", "Centro", "Norte", "Oeste", "Este"];
   const experiencias = ["1 año", "2 años", "3 años", "4 años", "5 años"];
 
   const obtenerAleatorio = (lista: string[]): string => 
     lista[Math.floor(Math.random() * lista.length)];
 
-  const horarioAleatorio = useMemo(() => obtenerAleatorio(horarios), []);
-  const zonaAleatoria = useMemo(() => obtenerAleatorio(zonas), []);
-  const experienciaAleatoria = useMemo(() => obtenerAleatorio(experiencias), []);
+  const [horarioAleatorio, setHorarioAleatorio] = useState("");
+  const [zonaAleatoria, setZonaAleatoria] = useState("");
+  const [experienciaAleatoria, setExperienciaAleatoria] = useState("");
+
+  useEffect(() => {
+    setHorarioAleatorio(obtenerAleatorio(horarios));
+    setZonaAleatoria(obtenerAleatorio(zonas));
+    setExperienciaAleatoria(obtenerAleatorio(experiencias));
+  }, []);
 
   return (
     <div className="w-full bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
