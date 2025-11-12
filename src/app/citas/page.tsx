@@ -24,6 +24,7 @@ type Appointment = {
   ubicacion?: string;
   solicitudId?: string;
   solicitudFecha?: string;
+  reprogramCount?: number; // Añadir propiedad para contar reprogramaciones
 };
 
 export default function CitasPage() {
@@ -48,7 +49,8 @@ export default function CitasPage() {
           solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
           ubicacion: 'Calle siempre viva',
           solicitudId: '28/10/2025',
-          solicitudFecha: '9:38:39'
+          solicitudFecha: '9:38:39',
+          reprogramCount: 0 // Inicializar el contador
         },
         {
           id: '2',
@@ -60,7 +62,8 @@ export default function CitasPage() {
           solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
           ubicacion: 'Calle siempre viva',
           solicitudId: '28/10/2025',
-          solicitudFecha: '9:38:39'
+          solicitudFecha: '9:38:39',
+          reprogramCount: 0
         },
         {
           id: '3',
@@ -72,7 +75,8 @@ export default function CitasPage() {
           solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
           ubicacion: 'Calle siempre viva',
           solicitudId: '28/10/2025',
-          solicitudFecha: '9:38:39'
+          solicitudFecha: '9:38:39',
+          reprogramCount: 0
         },
         {
           id: '4',
@@ -84,7 +88,8 @@ export default function CitasPage() {
           solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
           ubicacion: 'Calle siempre viva',
           solicitudId: '28/10/2025',
-          solicitudFecha: '9:38:39'
+          solicitudFecha: '9:38:39',
+          reprogramCount: 0
         }
       ]);
       setIsLoading(false);
@@ -110,20 +115,44 @@ export default function CitasPage() {
 
   const handleReprogram = async (id: string, newDate: string, newTime: string) => {
     try {
-      // Aquí iría la llamada al endpoint: PUT /api/citas/{id}/reprogramar
+      // Obtener la cita actual
+      const cita = citas.find((c) => c.id === id);
+      if (!cita) throw new Error('Cita no encontrada');
+
+      // Soporte no intrusivo y retrocompatible: usamos una propiedad auxiliar reprogramCount
+      const reprogramCount = typeof (cita as any).reprogramCount === 'number' ? (cita as any).reprogramCount : 0;
+
+      // Regla 1: No permitir más de 3 reprogramaciones
+      if (reprogramCount >= 3) {
+        notify('No puedes reprogramar esta cita más de 3 veces. Contacta soporte.', 'error');
+        return;
+      }
+
+      // Regla 2: No permitir reprogramar con menos de 3 horas de anticipación
+      const now = new Date();
+      const citaDate = new Date(newDate);
+      const [hours, minutes] = newTime.split(':').map(Number);
+      citaDate.setHours(hours, minutes, 0, 0);
+      if ((citaDate.getTime() - now.getTime()) < 3 * 60 * 60 * 1000) {
+        notify('No puedes reprogramar con menos de 3 horas de anticipación.', 'error');
+        return;
+      }
+
+      // Simula la llamada a API y en la respuesta incrementa el contador
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setCitas(citas.map(cita => 
-        cita.id === id 
-          ? { 
-              ...cita, 
+
+      setCitas(citas.map(citaObj =>
+        citaObj.id === id
+          ? {
+              ...citaObj,
               fecha: newDate,
-              horario: { inicio: newTime, fin: cita.horario.fin },
-              estado: 'reprogramar'
-            } 
-          : cita
+              horario: { inicio: newTime, fin: citaObj.horario.fin },
+              estado: 'reprogramar',
+              reprogramCount: reprogramCount + 1,
+            }
+          : citaObj
       ));
-      
+
       notify('Cita reprogramada exitosamente', 'success');
     } catch (error) {
       notify('Error al reprogramar cita', 'error');
