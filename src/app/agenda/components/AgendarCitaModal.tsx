@@ -1,394 +1,287 @@
-"use client";
-import { useState, useEffect } from "react";
-import { Search, MapPin } from 'lucide-react';
-import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/maplibre';
+// 'use client';
 
-interface SearchResult {
-  place_name: string;
-  center: [number, number];
-}
+// import { useState, useEffect, useCallback } from 'react';
+// import { GoogleMap, Marker, useJsApiLoader, Autocomplete } from '@react-google-maps/api';
+// import { Search } from 'lucide-react';
 
-export default function AgendarCitaModal({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState(1);
-  const [data, setData] = useState({
-    fecha: "",
-    hora: "",
-    direccion: "",
-    latitude: 18.4861,
-    longitude: -69.9312,
-    details: "",
-    notas: "",
-  });
-  
-  // Estados para búsqueda y mapa
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [viewport, setViewport] = useState({
-    latitude: 18.4861,
-    longitude: -69.9312,
-    zoom: 12,
-  });
-  const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
-  
-  const apiKey = process.env.NEXT_PUBLIC_MAPTILER_API_KEY || 'LhV4wKx4qmmZcU9D61C9';
+// const containerStyle = {
+//   width: '100%',
+//   height: '400px',
+//   borderRadius: '12px',
+//   border: '2px solid #E5E7EB',
+// };
 
-  const handleChange = (field: string, value: string | number) => {
-    setData({ ...data, [field]: value });
-  };
+// const defaultCenter = { lat: -17.3895, lng: -66.1568 }; // Cochabamba
 
-  const canContinue = data.fecha && data.hora;
-  
-  // Actualizar marcador cuando cambian las coordenadas
-  useEffect(() => {
-    if (data.latitude && data.longitude) {
-      setMarkerPosition({ lat: data.latitude, lng: data.longitude });
-      setViewport(prev => ({
-        ...prev,
-        latitude: data.latitude,
-        longitude: data.longitude,
-      }));
-    }
-  }, [data.latitude, data.longitude]);
-  
-  // Búsqueda de direcciones con debounce
-  useEffect(() => {
-    const searchAddress = async (query: string) => {
-      if (!query || query.length < 3) {
-        setSearchResults([]);
-        return;
-      }
+// export default function AgendarCitaModal({ onClose }: { onClose: () => void }) {
+//   const [step, setStep] = useState(1);
+//   const [data, setData] = useState({
+//     fecha: '',
+//     hora: '',
+//     direccion: '',
+//     latitude: defaultCenter.lat,
+//     longitude: defaultCenter.lng,
+//     details: '',
+//     notas: '',
+//   });
 
-      setIsSearching(true);
-      try {
-        const response = await fetch(
-          `https://api.maptiler.com/geocoding/${encodeURIComponent(query)}.json?key=${apiKey}&country=DO&limit=5`
-        );
-        const data = await response.json();
-        console.log('Citas recibidas:', data);
+//   const [map, setMap] = useState<google.maps.Map | null>(null);
+//   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+//   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number }>(defaultCenter);
 
-        setSearchResults(data.features || []);
-        setShowResults(true);
-      } catch (error) {
-        console.error('Error buscando dirección:', error);
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    };
+//   const { isLoaded } = useJsApiLoader({
+//     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+//     libraries: ['places'],
+//   });
 
-    const timer = setTimeout(() => {
-      searchAddress(searchQuery);
-    }, 500);
+//   const handleChange = (field: string, value: string | number) => {
+//     setData((prev) => ({ ...prev, [field]: value }));
+//   };
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, apiKey]);
-  
-  // Seleccionar dirección de los resultados
-  const selectAddress = (result: SearchResult) => {
-    const [lng, lat] = result.center;
-    
-    setData({ ...data, direccion: result.place_name, latitude: lat, longitude: lng });
-    setSearchQuery(result.place_name);
-    setShowResults(false);
-    setMarkerPosition({ lat, lng });
-    setViewport({
-      latitude: lat,
-      longitude: lng,
-      zoom: 15,
-    });
-  };
-  
-  // Manejar clic en el mapa
-  const handleMapClick = async (event: any) => {
-    const { lng, lat } = event.lngLat;
-    
-    setData({ ...data, latitude: lat, longitude: lng });
-    setMarkerPosition({ lat, lng });
+//   const canContinue = data.fecha && data.hora;
 
-    // Geocodificación inversa
-    try {
-      const response = await fetch(
-        `https://api.maptiler.com/geocoding/${lng},${lat}.json?key=${apiKey}`
-      );
-      const data = await response.json();
-      console.log('Citas recibidas:', data);
+//   // ✅ Cuando el usuario selecciona una dirección desde el autocompletado
+//   const onPlaceChanged = useCallback(() => {
+//     if (!autocomplete) return;
+//     const place = autocomplete.getPlace();
+//     if (!place.geometry || !place.geometry.location) return;
 
-      if (data.features && data.features.length > 0) {
-        const address = data.features[0].place_name;
-        setData(prev => ({ ...prev, direccion: address }));
-        setSearchQuery(address);
-      }
-    } catch (error) {
-      console.error('Error en geocodificación inversa:', error);
-    }
-  };
+//     const lat = place.geometry.location.lat();
+//     const lng = place.geometry.location.lng();
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
-      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-3xl min-h-[70vh] max-h-[90vh] overflow-y-auto">
-        {/* HEADER */}
-        <div className="flex justify-between items-center mb-6 border-b pb-3">
-          <h2 className="text-2xl font-semibold text-gray-800">
-            Agendar Cita
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-3xl font-bold leading-none"
-          >
-            ×
-          </button>
-        </div>
+//     setData((prev) => ({
+//       ...prev,
+//       direccion: place.formatted_address || place.name || '',
+//       latitude: lat,
+//       longitude: lng,
+//     }));
 
-        {/* PASO 1 — Calendario y hora */}
-        <section>
-          <p className="text-gray-600 mb-6">
-            Elige la fecha y hora para tu consultoría (duración: 30 minutos)
-          </p>
-          <div className="border border-dashed border-gray-400 rounded-lg p-10 text-center text-gray-500">
-            🗓️ <br />
-            Calendario en construcción...
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Fecha
-              </label>
-              <input
-                type="date"
-                value={data.fecha}
-                onChange={(e) => handleChange("fecha", e.target.value)}
-                className="border border-gray-300 rounded-lg p-3 w-full focus:border-[#4289CC] focus:ring-[#4289CC]"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">
-                Hora
-              </label>
-              <input
-                type="time"
-                value={data.hora}
-                onChange={(e) => handleChange("hora", e.target.value)}
-                className="border border-gray-300 rounded-lg p-3 w-full focus:border-[#4289CC] focus:ring-[#4289CC]"
-              />
-            </div>
-          </div>
-        </section>
+//     setMarkerPosition({ lat, lng });
+//     map?.panTo({ lat, lng });
+//     map?.setZoom(15);
+//   }, [autocomplete, map]);
 
-        {/* PASO 2 — Formulario de ubicación (se muestra debajo cuando se elige fecha/hora) */}
-        {canContinue && step === 1 && (
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={() => setStep(2)}
-              className="px-6 py-2 bg-[#4289CC] text-white rounded-lg hover:bg-blue-700 transition transition transform hover:scale-105 duration-300 font-medium"
-            >
-              Continuar
-            </button>
-          </div>
-        )}
+//   // ✅ Cuando el usuario hace clic en el mapa
+//   const handleMapClick = async (e: google.maps.MapMouseEvent) => {
+//     if (!e.latLng) return;
+//     const lat = e.latLng.lat();
+//     const lng = e.latLng.lng();
+//     setMarkerPosition({ lat, lng });
 
-        {step === 2 && (
-          <section className="mt-8 border-t border-gray-200 pt-6">
-            <div className="border border-gray-300 rounded-lg p-5 shadow-lg flex flex-col justify-between h-full">
-                <h2 className="text-2x1 font-semibold mb-2">
-                    Detalles de la ubicación
-                </h2>
-                <p className="text-gray-600 mb-6">
-                    Especifica dónde se realizará el servicio (campo obligatorio)
-                </p>
-                <div className="space-y-7">
-                
-                {/* Búsqueda de Dirección */}
-                <div className="relative">
-                  <label htmlFor="address-search" className="block text-sm font-semibold text-gray-800 mb-2.5">
-                    📍 Dirección del Servicio
-                  </label>
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400" />
-                    <input
-                      id="address-search"
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => searchResults.length > 0 && setShowResults(true)}
-                      className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-900 placeholder-gray-400 transition-all hover:border-gray-300"
-                      placeholder="Busca tu dirección aquí..."
-                    />
-                    {isSearching && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                      </div>
-                    )}
-                  </div>
+//     // Reverse geocoding para obtener dirección
+//     const geocoder = new google.maps.Geocoder();
+//     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+//       if (status === 'OK' && results && results[0]) {
+//         setData((prev) => ({
+//           ...prev,
+//           direccion: results[0].formatted_address,
+//           latitude: lat,
+//           longitude: lng,
+//         }));
+//       } else {
+//         console.error('Error en geocodificación inversa:', status);
+//       }
+//     });
+//   };
 
-                  {/* Resultados de búsqueda */}
-                  {showResults && searchResults.length > 0 && (
-                    <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-2xl max-h-64 overflow-y-auto">
-                      {searchResults.map((result, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => selectAddress(result)}
-                          className="w-full px-5 py-3.5 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0 transition-all"
-                        >
-                          <div className="flex items-start">
-                            <MapPin className="w-5 h-5 mr-3 mt-0.5 text-blue-500 flex-shrink-0" />
-                            <span className="text-sm text-gray-800">{result.place_name}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Mapa de Maptiler */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2.5">
-                    🗺️ Selecciona la ubicación en el mapa
-                  </label>
-                  <div className="h-96 w-full rounded-xl overflow-hidden border-2 border-gray-200 shadow-md">
-                    <Map
-                      {...viewport}
-                      onMove={(evt: any) => setViewport(evt.viewState)}
-                      onClick={handleMapClick}
-                      mapStyle={`https://api.maptiler.com/maps/streets-v2/style.json?key=${apiKey}`}
-                      style={{ width: '100%', height: '100%' }}
-                    >
-                      <NavigationControl position="top-right" />
-                      <GeolocateControl position="top-right" />
-                      
-                      {markerPosition && (
-                        <Marker
-                          latitude={markerPosition.lat}
-                          longitude={markerPosition.lng}
-                          anchor="bottom"
-                        >
-                          <div className="relative">
-                            <MapPin className="w-8 h-8 text-blue-500 fill-blue-500 drop-shadow-lg" />
-                          </div>
-                        </Marker>
-                      )}
-                    </Map>
-                  </div>
-                  <div className="mt-3 bg-blue-50 border border-blue-100 rounded-lg p-3">
-                    <p className="text-sm text-gray-700">
-                      💡 <span className="font-medium">Tip:</span> Haz clic en el mapa para ajustar la ubicación exacta
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Detalles de Ubicación */}
-                <div>
-                  <label htmlFor="details" className="block text-sm font-semibold text-gray-800 mb-2.5">
-                    🏠 Detalles de Ubicación
-                  </label>
-                  <textarea
-                    id="details"
-                    value={data.details}
-                    onChange={(e) => handleChange("details", e.target.value)}
-                    rows={3}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 resize-none text-gray-900 placeholder-gray-400 transition-all hover:border-gray-300"
-                    placeholder="Ej: Edificio Torre Azul, Apartamento 5B, 3er piso"
-                  />
-                </div>
-                
-                {/* Notas Adicionales */}
-                <div>
-                  <label htmlFor="notas" className="block text-sm font-semibold text-gray-800 mb-2.5">
-                    📝 Notas Adicionales <span className="text-xs text-gray-500 font-normal">(Opcional)</span>
-                  </label>
-                  <textarea
-                    id="notas"
-                    value={data.notas}
-                    onChange={(e) => handleChange("notas", e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 resize-none text-gray-900 placeholder-gray-400 transition-all hover:border-gray-300"
-                    placeholder="¿Algo más que debamos saber? Referencias, instrucciones especiales, etc."
-                  />
-                </div>
-                </div>
+//   // ✅ Nueva función: cuando el usuario escribe manualmente una dirección
+//   const handleDireccionManual = async (e: React.FocusEvent<HTMLInputElement>) => {
+//     const value = e.target.value.trim();
+//     if (!value) return;
 
-                {/* BOTONES */}
-                <div className="mt-6 flex justify-between border-t border-gray-200 pt-4">
-                <button
-                    onClick={() => setStep(1)}
-                    className="text-gray-600 hover:text-blue-600 transition transform hover:scale-105 duration-300 font-medium"
-                >
-                    Volver
-                </button>
-                <button
-                    onClick={() => setStep(3)}
-                    className="px-6 py-2 bg-[#4289CC] text-white rounded-lg hover:bg-blue-700 transition transition transform hover:scale-105 duration-300 font-medium"
-                >
-                    Continuar
-                </button>
-                </div>
-            </div>
-            
-          </section>
-        )}
+//     const geocoder = new google.maps.Geocoder();
+//     geocoder.geocode({ address: value }, (results, status) => {
+//       if (status === 'OK' && results && results[0]) {
+//         const loc = results[0].geometry.location;
+//         const lat = loc.lat();
+//         const lng = loc.lng();
+//         setMarkerPosition({ lat, lng });
+//         map?.panTo({ lat, lng });
+//         setData((prev) => ({
+//           ...prev,
+//           direccion: results[0].formatted_address,
+//           latitude: lat,
+//           longitude: lng,
+//         }));
+//       } else {
+//         console.error('No se encontró la dirección:', status);
+//       }
+//     });
+//   };
 
-        {/* PASO 3 — Resumen de la cita (debajo del calendario, ocultando el paso 2) */}
-        {step === 3 && (
-          <section className="mt-8 border-t border-gray-200 pt-6">
-            <div className="border border-gray-300 rounded-lg p-5 shadow-md flex flex-col justify-between h-full bg-white">
-                <h2 className="text-2x1 font-semibold mb-2 text-gray-800">
-                    Resumen de la cita
-                </h2>
+//   if (!isLoaded) return <p className="text-center py-10">Cargando mapa...</p>;
 
-                <div className="space-y-4 text-gray-800">
-                <div className="flex justify-between">
-                    <span className="font-medium">📅 Fecha:</span>
-                    <span>{data.fecha}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="font-medium">⏰ Hora:</span>
-                    <span>{data.hora}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="font-medium">📍 Dirección:</span>
-                    <span className="text-right max-w-[70%] truncate">
-                    {data.direccion || 'No especificada'}
-                    </span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="font-medium">🏠 Detalles:</span>
-                    <span className="text-right max-w-[70%]">
-                    {data.details || 'No especificados'}
-                    </span>
-                </div>
-                {data.notas && (
-                    <div className="flex justify-between">
-                    <span className="font-medium">📝 Notas:</span>
-                    <span className="text-right max-w-[70%]">
-                        {data.notas}
-                    </span>
-                    </div>
-                )}
-                </div>
+//   return (
+//     <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
+//       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-3xl min-h-[70vh] max-h-[90vh] overflow-y-auto">
+//         {/* HEADER */}
+//         <div className="flex justify-between items-center mb-6 border-b pb-3">
+//           <h2 className="text-2xl font-semibold text-gray-800">Agendar Cita</h2>
+//           <button
+//             onClick={onClose}
+//             className="text-gray-400 hover:text-gray-600 text-3xl font-bold leading-none"
+//           >
+//             ×
+//           </button>
+//         </div>
 
-                {/* BOTONES */}
-                <div className="mt-6 flex justify-between border-t border-gray-200 pt-4">
-                <button
-                    onClick={() => setStep(2)}
-                    className="text-gray-600 hover:text-blue-600 transition transform hover:scale-105 duration-300 font-medium"
-                >
-                    Volver
-                </button>
-                <button
-                    onClick={() => alert("✅ Cita confirmada (guardar en BD)")}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition transition transform hover:scale-105 duration-300 font-medium"
-                >
-                    Confirmar Cita
-                </button>
-                </div>
-            </div>
+//         {/* PASO 1 */}
+//         {step === 1 && (
+//           <section>
+//             <p className="text-gray-600 mb-6">
+//               Elige la fecha y hora para tu consultoría (duración: 30 minutos)
+//             </p>
+//             <div className="grid grid-cols-2 gap-6">
+//               <div>
+//                 <label className="block text-gray-700 font-medium mb-2">Fecha</label>
+//                 <input
+//                   type="date"
+//                   value={data.fecha}
+//                   onChange={(e) => handleChange('fecha', e.target.value)}
+//                   className="border border-gray-300 rounded-lg p-3 w-full"
+//                 />
+//               </div>
+//               <div>
+//                 <label className="block text-gray-700 font-medium mb-2">Hora</label>
+//                 <input
+//                   type="time"
+//                   value={data.hora}
+//                   onChange={(e) => handleChange('hora', e.target.value)}
+//                   className="border border-gray-300 rounded-lg p-3 w-full"
+//                 />
+//               </div>
+//             </div>
+//             {canContinue && (
+//               <div className="mt-6 flex justify-end">
+//                 <button
+//                   onClick={() => setStep(2)}
+//                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+//                 >
+//                   Continuar
+//                 </button>
+//               </div>
+//             )}
+//           </section>
+//         )}
 
-            
-          </section>
-        )}
-      </div>
-    </div>
-  );
-}
+//         {/* PASO 2 */}
+//         {step === 2 && (
+//           <section className="space-y-6">
+//             <div>
+//               <label className="block text-sm font-semibold text-gray-800 mb-2">
+//                 📍 Dirección del Servicio
+//               </label>
+//               <div className="relative">
+//                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-blue-400" />
+//                 <Autocomplete onLoad={setAutocomplete} onPlaceChanged={onPlaceChanged}>
+//                   <input
+//                     type="text"
+//                     placeholder="Escribe o busca tu dirección..."
+//                     value={data.direccion}
+//                     onChange={(e) => handleChange('direccion', e.target.value)}
+//                     onBlur={handleDireccionManual}
+//                     className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+//                   />
+//                 </Autocomplete>
+//               </div>
+//               <p className="text-sm text-gray-500 mt-1">
+//                 ✏️ Puedes escribir la dirección manualmente o seleccionarla del autocompletado.
+//               </p>
+//             </div>
+
+//             {/* MAPA */}
+//             <div>
+//               <label className="block text-sm font-semibold text-gray-800 mb-2">
+//                 🗺️ Selecciona la ubicación en el mapa
+//               </label>
+//               <GoogleMap
+//                 mapContainerStyle={containerStyle}
+//                 center={markerPosition}
+//                 zoom={13}
+//                 onLoad={setMap}
+//                 onClick={handleMapClick}
+//               >
+//                 <Marker position={markerPosition} />
+//               </GoogleMap>
+//               <p className="text-sm text-gray-500 mt-2">
+//                 💡 Haz clic en el mapa para ajustar la ubicación exacta.
+//               </p>
+//             </div>
+
+//             {/* Detalles */}
+//             <div>
+//               <label className="block text-sm font-semibold text-gray-800 mb-2">
+//                 🏠 Detalles de ubicación
+//               </label>
+//               <textarea
+//                 value={data.details}
+//                 onChange={(e) => handleChange('details', e.target.value)}
+//                 rows={3}
+//                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+//                 placeholder="Ej: Edificio azul, piso 3, apartamento B"
+//               />
+//             </div>
+
+//             {/* Notas */}
+//             <div>
+//               <label className="block text-sm font-semibold text-gray-800 mb-2">
+//                 📝 Notas adicionales
+//               </label>
+//               <textarea
+//                 value={data.notas}
+//                 onChange={(e) => handleChange('notas', e.target.value)}
+//                 rows={3}
+//                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400"
+//                 placeholder="Instrucciones especiales..."
+//               />
+//             </div>
+
+//             <div className="flex justify-between border-t pt-4">
+//               <button
+//                 onClick={() => setStep(1)}
+//                 className="text-gray-600 hover:text-blue-600 font-medium"
+//               >
+//                 Volver
+//               </button>
+//               <button
+//                 onClick={() => setStep(3)}
+//                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+//               >
+//                 Continuar
+//               </button>
+//             </div>
+//           </section>
+//         )}
+
+//         {/* PASO 3 */}
+//         {step === 3 && (
+//           <section className="mt-8 border-t border-gray-200 pt-6">
+//             <h2 className="text-xl font-semibold mb-4">Resumen de la cita</h2>
+//             <ul className="space-y-2 text-gray-700">
+//               <li>📅 Fecha: {data.fecha}</li>
+//               <li>⏰ Hora: {data.hora}</li>
+//               <li>📍 Dirección: {data.direccion}</li>
+//               <li>🏠 Detalles: {data.details || 'N/A'}</li>
+//               <li>📝 Notas: {data.notas || 'N/A'}</li>
+//             </ul>
+
+//             <div className="flex justify-between border-t mt-4 pt-4">
+//               <button
+//                 onClick={() => setStep(2)}
+//                 className="text-gray-600 hover:text-blue-600 font-medium"
+//               >
+//                 Volver
+//               </button>
+//               <button
+//                 onClick={() => alert('✅ Cita confirmada')}
+//                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+//               >
+//                 Confirmar Cita
+//               </button>
+//             </div>
+//           </section>
+//         )}
+//       </div>
+//     </div>
+//   );
+// }

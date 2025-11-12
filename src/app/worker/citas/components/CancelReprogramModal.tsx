@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, AlertCircle, Mail, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, AlertCircle, Mail } from 'lucide-react';
 
 type Appointment = {
   id: string;
   fecha: string;
-  horario: string;
-  servicio: string;
-  proveedor: string;
+  horario: { inicio: string; fin: string };
+  servicio: { nombre: string };
+  proveedor: { nombre: string };
+  estado: 'agendado' | 'pendiente' | 'cancelado' | 'concluido' | 'reprogramar';
+  ubicacion?: string;
 };
 
 interface CancelReprogramModalProps {
@@ -21,6 +23,9 @@ interface CancelReprogramModalProps {
   onReprogram: (id: string, newDate: string, newTime: string) => Promise<void>;
   actionType: 'cancel' | 'reprogram';
   isFixer?: boolean;
+  citaId: string;
+  onUpdate?: (updated: Appointment) => void; // <-- agrega esto
+
 }
 
 export default function CancelReprogramModal({
@@ -37,15 +42,15 @@ export default function CancelReprogramModal({
   const [newTime, setNewTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isWithinLimit, setIsWithinLimit] = useState(false);
-  
+
+  // 🔹 Verifica si falta menos de 3 horas para la cita
   const isWithin3Hours = () => {
+    if (!appointment.horario) return false;
     const now = new Date();
-    const [startTime] = appointment.horario.split(' - ');
-    const [hours, minutes] = startTime.split(':').map(Number);
+    const [hours, minutes] = appointment.horario.inicio.split(':').map(Number);
     const appointmentDate = new Date(appointment.fecha);
     appointmentDate.setHours(hours, minutes, 0, 0);
-    
-    return (appointmentDate.getTime() - now.getTime()) < (3 * 60 * 60 * 1000);
+    return appointmentDate.getTime() - now.getTime() < 3 * 60 * 60 * 1000;
   };
 
   const handleCancel = async () => {
@@ -75,33 +80,30 @@ export default function CancelReprogramModal({
               <AlertCircle className="text-red-500 w-6 h-6" />
               <span>Cancelar Cita como Reparador</span>
             </>
+          ) : actionType === 'cancel' ? (
+            <>
+              <AlertCircle className="text-red-500 w-6 h-6" />
+              <span>Cancelar Cita</span>
+            </>
           ) : (
-            actionType === 'cancel' ? (
-              <>
-                <AlertCircle className="text-red-500 w-6 h-6" />
-                <span>Cancelar Cita</span>
-              </>
-            ) : (
-              <>
-                <Calendar className="text-blue-500 w-6 h-6" />
-                <span>Reprogramar Cita</span>
-              </>
-            )
+            <>
+              <Calendar className="text-blue-500 w-6 h-6" />
+              <span>Reprogramar Cita</span>
+            </>
           )}
         </DialogTitle>
 
-        {/* Contenido del modal con estilos exactos */}
+        {/* Información de la cita */}
         <div className="space-y-4">
-          {/* Sección de información de la cita */}
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <h4 className="font-semibold text-gray-800">{appointment.servicio}</h4>
+            <h4 className="font-semibold text-gray-800">{appointment.servicio.nombre}</h4>
             <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
               <Calendar className="w-4 h-4" />
               <span>{new Date(appointment.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Clock className="w-4 h-4" />
-              <span>{appointment.horario}</span>
+              <span>{appointment.horario.inicio} - {appointment.horario.fin}</span>
             </div>
           </div>
 
@@ -111,8 +113,8 @@ export default function CancelReprogramModal({
               <span>No puedes cancelar ni reprogramar con menos de 3 horas de anticipación.</span>
             </div>
           )}
-          
-          {/* Campos específicos según acción */}
+
+          {/* Campos según acción */}
           {isFixer ? (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de cancelación *</label>
@@ -121,54 +123,51 @@ export default function CancelReprogramModal({
                 placeholder="Explique el motivo de cancelación..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                required
               />
               <div className="mt-4 bg-blue-50 p-3 rounded-lg text-sm flex items-start gap-2">
                 <Mail className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <span>Se enviará notificación al usuario con este motivo</span>
               </div>
             </div>
+          ) : actionType === 'cancel' ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de cancelación</label>
+              <textarea
+                className="w-full border border-gray-300 rounded-lg p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Explique el motivo de cancelación..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                disabled={isWithin3Hours()}
+              />
+            </div>
           ) : (
-            actionType === 'cancel' ? (
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Motivo de cancelación</label>
-                <textarea
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Explique el motivo de cancelación..."
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nueva fecha</label>
+                <input
+                  type="date"
+                  className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  min={new Date().toISOString().split('T')[0]}
+                  value={newDate}
+                  onChange={(e) => setNewDate(e.target.value)}
                   disabled={isWithin3Hours()}
                 />
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nueva fecha</label>
-                  <input
-                    type="date"
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    min={new Date().toISOString().split('T')[0]}
-                    value={newDate}
-                    onChange={(e) => setNewDate(e.target.value)}
-                    disabled={isWithin3Hours()}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nuevo horario</label>
-                  <input
-                    type="time"
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={newTime}
-                    onChange={(e) => setNewTime(e.target.value)}
-                    disabled={isWithin3Hours()}
-                  />
-                </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nuevo horario</label>
+                <input
+                  type="time"
+                  className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={newTime}
+                  onChange={(e) => setNewTime(e.target.value)}
+                  disabled={isWithin3Hours()}
+                />
               </div>
-            )
+            </div>
           )}
 
-          {/* Botones del modal - Estilo IDÉNTICO a imágenes */}
+          {/* Botones */}
           <div className="flex justify-end gap-3 pt-4">
             <Button 
               variant="outline"
@@ -185,7 +184,7 @@ export default function CancelReprogramModal({
                   ? 'bg-red-600 text-white hover:bg-red-700'
                   : 'bg-blue-900 text-white hover:bg-blue-800'
               }`}
-              disabled={isSubmitting || (isFixer || actionType === 'cancel') && !reason.trim() || (actionType === 'reprogram' && (!newDate || !newTime))}
+              disabled={isSubmitting || ((isFixer || actionType === 'cancel') && !reason.trim()) || (actionType === 'reprogram' && (!newDate || !newTime))}
             >
               {isSubmitting ? 'Procesando...' : isFixer || actionType === 'cancel' ? 'Confirmar Cancelación' : 'Confirmar Reprogramación'}
             </Button>

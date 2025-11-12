@@ -1,4 +1,4 @@
-'use client'; 
+'use client';
 
 import React, { useState, useCallback } from 'react';
 import {
@@ -10,8 +10,10 @@ import {
   WeeklyUniformSchedule, 
   DaySchedule
 } from '../types'; 
+
 const PROVEEDOR_ID = "690c29d00c736bec44e473e4";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 // --- Tipos para el Modal de Resumen ---
 interface SummaryData {
     title: string;
@@ -65,12 +67,11 @@ export default function ScheduleConfigurator() {
     // ESTADOS ACTUALIZADOS PARA EL MODAL DE RESUMEN
     const [isSummaryModalOpen, setIsSummaryModalOpen] = useState<boolean>(false);
     const [savedScheduleSummary, setSavedScheduleSummary] = useState<SummaryData | null>(null);
-    // REMOVIDO: const [isSuccessVisible, setIsSuccessVisible] = useState<boolean>(false);
     
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [weeklySchedule, setWeeklySchedule] = useState<WeeklyUniformSchedule>(initialWeeklySchedule);
 
-    // --- Funciones de Manejo de Estado (sin cambios) ---
+    // --- Funciones de Manejo de Estado ---
     const toggleWeeklyDay = (day: DayName) => {
         setWeeklySchedule(prev => {
             const isSelected = prev.selectedDays.includes(day);
@@ -177,7 +178,7 @@ export default function ScheduleConfigurator() {
         }
     };
     
-    // --- Lógica de Validación (sin cambios) ---
+    // --- Lógica de Validación ---
     const validateAndSetErrors = useCallback((): boolean => {
         let isValid = true;
         const newErrors: ScheduleErrors = {};
@@ -241,7 +242,7 @@ export default function ScheduleConfigurator() {
                 lines.push("No se ha habilitado ningún día, horario laboral es nulo.");
             } else {
                 enabledDays.forEach(day => {
-                    const ranges = dailyData[day].ranges.map(r => `${r.start} - ${r.end}`).join(' / ');
+                    const ranges = dailyData[day].ranges.map((r: TimeRange) => `${r.start} - ${r.end}`).join(' / ');
                     lines.push(`${day}: ${ranges}`);
                 });
             }
@@ -251,22 +252,23 @@ export default function ScheduleConfigurator() {
                 lines: lines
             };
         } else { // weekly
-            const weeklyData = data as WeeklyUniformSchedule;
-            const rangesText = weeklyData.ranges.map(r => `${r.start} - ${r.end}`).join(' / ');
-            
-            return {
-                title: "Configuración Semanal Guardada (Uniforme)",
-                lines: [
-                    `Días Aplicados: ${weeklyData.selectedDays.length > 0 ? weeklyData.selectedDays.join(', ') : 'Ninguno'}`,
-                    `Horario Uniforme: ${rangesText}`
-                ]
-            };
+            if ('selectedDays' in data && 'ranges' in data) {
+                const weeklyData = data as WeeklyUniformSchedule;
+                const rangesText = weeklyData.ranges.map((r: TimeRange) => `${r.start} - ${r.end}`).join(' / ');
+                
+                return {
+                    title: "Configuración Semanal Guardada (Uniforme)",
+                    lines: [
+                        `Días Aplicados: ${weeklyData.selectedDays.length > 0 ? weeklyData.selectedDays.join(', ') : 'Ninguno'}`,
+                        `Horario Uniforme: ${rangesText}`
+                    ]
+                };
+            }
+            return { title: "Datos Semanales Inválidos", lines: [] };
         }
     };
 
-
-    // --- FUNCIÓN DE GUARDADO ACTUALIZADA ---
-    
+    // --- FUNCIÓN DE GUARDADO ---
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
     
@@ -275,49 +277,42 @@ export default function ScheduleConfigurator() {
           return;
         }
     
-        // Elegir datos según la pestaña activa
         const dataToSave = activeTab === "daily" ? schedule : weeklySchedule;
         console.log(`Datos a guardar para la pestaña ${activeTab}:`, dataToSave);
-        // Transformar al formato que espera el backend
+
         const diasMap: Record<string, number> = {
-          Lunes: 1,
-          Martes: 2,
-          Miercoles: 3,
-          Jueves: 4,
-          Viernes: 5,
-          Sabado: 6,
-          Domingo: 7,
+          Lunes: 1, Martes: 2, Miercoles: 3, Jueves: 4, Viernes: 5, Sabado: 6, Domingo: 7,
         };
+
         let payload = {};
-        if (activeTab === "weekly") {
+
+        if (activeTab === "weekly" && 'selectedDays' in dataToSave && 'ranges' in dataToSave) {
            payload = {
               modo: "semanal",
               dias: dataToSave.selectedDays.map(nombreDia => ({
                 dia: diasMap[nombreDia],
-                activo: true, // como viene en selectedDays, asumimos que está activo
-                rangos: dataToSave.ranges.map(r => ({
+                activo: true,
+                rangos: dataToSave.ranges.map((r: TimeRange) => ({
                   inicio: r.start,
                   fin: r.end,
                 })),
               })),
             };
-        }else{
+        } else { // daily
           payload = {
-          modo: "diaria",
-          dias: Object.entries(dataToSave)
-            .filter(([_, data]) => data.enabled && data.ranges.length > 0) // solo días activos con rangos
-            .map(([nombreDia, data]) => ({
-              dia: diasMap[nombreDia],
-              activo: data.enabled,
-              rangos: data.ranges.map(r => ({
-                inicio: r.start,
-                fin: r.end,
+            modo: "diaria",
+            dias: Object.entries(dataToSave)
+              .filter(([_, data]) => data.enabled && data.ranges.length > 0)
+              .map(([nombreDia, data]) => ({
+                dia: diasMap[nombreDia],
+                activo: data.enabled,
+                rangos: data.ranges.map((r: TimeRange) => ({
+                  inicio: r.start,
+                  fin: r.end,
+                })),
               })),
-            })),
-        };
+          };
         }
-    
-         
     
         console.log("Payload a enviar:", payload);
     
@@ -328,7 +323,7 @@ export default function ScheduleConfigurator() {
     
         try {
             const res = await fetch(endpoint, {
-            method: "PUT",  // ✅ CORRECTO
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
@@ -345,26 +340,23 @@ export default function ScheduleConfigurator() {
     
           const result = await res.json();  
           console.log("Respuesta JSON del servidor:", result);
-    
-          // Éxito
-          // 1. Generar resumen
-            const summary = generateSummary(dataToSave, activeTab);
 
-            // 2. Guardar resumen y abrir el modal
-            setSavedScheduleSummary(summary);
-            setIsSummaryModalOpen(true);
-            setHasChanges(false);
-            
-            console.log(`Horarios de ${activeTab} a guardar:`, dataToSave);
+          // Éxito: generar y abrir modal resumen
+          const summary = generateSummary(dataToSave, activeTab);
+          setSavedScheduleSummary(summary);
+          setIsSummaryModalOpen(true);
+          setHasChanges(false);
         } catch (error: any) {
           console.error("Error al guardar horarios:", error.message);
           alert(`Error al guardar: ${error.message}`);
         } finally {
           clearTimeout(timeout);
         }
-      };
-    // --- Fin de FUNCIÓN DE GUARDADO ---
-    
+    };
+
+    // --- Resto de componentes (SummaryModal, WeeklyConfigSection, JSX principal) ---
+    // Los dejo igual, no generan errores de TS.
+
     // --- NUEVO COMPONENTE: Modal de Resumen ---
     const SummaryModal = () => {
         if (!savedScheduleSummary) return null;

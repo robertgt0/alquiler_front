@@ -5,12 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Calendar, X } from 'lucide-react';
 import CancelReprogramModal from './CancelReprogramModal';
 
+// ✅ Incluimos reprogramCount opcional para compatibilidad
 type Appointment = {
   id: string;
   fecha: string;
-  horario: string;
-  servicio: string;
-  proveedor: string;
+  horario: { inicio: string; fin: string };
+  servicio: { nombre: string };
+  proveedor: { nombre: string };
+  estado: 'agendado' | 'pendiente' | 'cancelado' | 'concluido' | 'reprogramar';
+  ubicacion?: string;
+  reprogramCount?: number; // agregado
 };
 
 interface AppointmentActionsProps {
@@ -31,7 +35,7 @@ export default function AppointmentActions({
 
   return (
     <div className="flex gap-3">
-      {/* Botón Cancelar - IDÉNTICO a las imágenes */}
+      {/* Botón Cancelar */}
       <Button 
         variant={isFixer ? "destructive" : "outline"}
         onClick={() => {
@@ -44,7 +48,7 @@ export default function AppointmentActions({
         {isFixer ? 'Cancelar como Reparador' : 'Cancelar'}
       </Button>
       
-      {/* Botón Reprogramar - IDÉNTICO a las imágenes */}
+      {/* Botón Reprogramar */}
       {!isFixer && (
         <Button 
           onClick={() => {
@@ -60,6 +64,8 @@ export default function AppointmentActions({
 
       <CancelReprogramModal
         appointment={appointment}
+        citaId={appointment.id} // id del objeto
+
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCancel={onCancel}

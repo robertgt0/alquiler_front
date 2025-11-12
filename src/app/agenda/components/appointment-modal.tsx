@@ -26,6 +26,9 @@ interface AppointmentModalProps {
   initialAppointment?: any;
   isEditing?: boolean;
   appointmentId?: string;
+  slotMinutes?: number;
+  hours?: string;
+
 }
 
 const APPOINTMENT_STATES = {

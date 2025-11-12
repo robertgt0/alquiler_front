@@ -1,275 +1,348 @@
-"use client";
-import { useState, useEffect } from "react";
-import { CalendarDays, Clock, Edit, Trash2 } from "lucide-react";
-import EditAppointmentModal from "./components/EditAppointmentModal";
-import ConfirmationModal from "./components/confirmationModal";
-import Sidebar from "@/app/agenda/components/Sidebar";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { CalendarDays, Clock, User, Wrench, AlertCircle, ChevronDown, MoreHorizontal } from 'lucide-react';
 import { useNotifications } from '@/context/NotificationContext';
+import AppointmentActions from './components/AppointmentActions';
 
-interface Cita {
-	_id: string;
-	fecha: string;
-	horario: {
-		inicio: string;
-		fin: string;
-	};
-	estado: string;
-	servicioId: {
-		_id: string;
-		nombre: string;
-	} | null;
-	clienteId: {
-		_id: string;
-		nombre: string;
-	} | null;
-}
+type Appointment = {
+  id: string;
+  fecha: string;
+  horario: {
+    inicio: string;
+    fin: string;
+  };
+  servicio: {
+    nombre: string;
+  };
+  proveedor: {
+    nombre: string;
+  };
+  estado: 'agendado' | 'pendiente' | 'cancelado' | 'concluido' | 'reprogramar';
+  solicitud?: string;
+  ubicacion?: string;
+  solicitudId?: string;
+  solicitudFecha?: string;
+  reprogramCount?: number; 
+};
 
-export default function FixerCitas() {
-	const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-	const FIXER_ID = "690c29d00c736bec44e473e4"; // ID del fixer
+export default function CitasPage() {
+  const [activeSubTab, setActiveSubTab] = useState<'programadas' | 'cancelar'>('programadas');
+  const [citas, setCitas] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filterValue, setFilterValue] = useState('Todos');
+  const { notify } = useNotifications();
+  const [userRole, setUserRole] = useState<'requester' | 'fixer'>('requester'); // 'requester' por defecto
 
-	const [citas, setCitas] = useState<Cita[]>([]);
-	const [citaToEdit, setCitaToEdit] = useState<Cita | null>(null);
-	const [citaToDelete, setCitaToDelete] = useState<Cita | null>(null);
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-	const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [isDemo, setIsDemo] = useState(false);
-	const { notify } = useNotifications();
+  useEffect(() => {
+    // Datos de ejemplo con la estructura ampliada
+    setTimeout(() => {
+      setCitas([
+        {
+          id: '1',
+          fecha: '2025-11-05',
+          horario: { inicio: '14:00', fin: '15:00' },
+          servicio: { nombre: 'Servicio plomería' },
+          proveedor: { nombre: 'Jose Gutierrez' },
+          estado: 'reprogramar',
+          solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
+          ubicacion: 'Calle siempre viva',
+          solicitudId: '28/10/2025',
+          solicitudFecha: '9:38:39',
+          reprogramCount: 0 // Inicializar el contador
+        },
+        {
+          id: '2',
+          fecha: '2025-11-09',
+          horario: { inicio: '14:00', fin: '15:00' },
+          servicio: { nombre: 'Servicio plomería' },
+          proveedor: { nombre: 'Jose Gutierrez' },
+          estado: 'cancelado',
+          solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
+          ubicacion: 'Calle siempre viva',
+          solicitudId: '28/10/2025',
+          solicitudFecha: '9:38:39',
+          reprogramCount: 0
+        },
+        {
+          id: '3',
+          fecha: '2025-11-05',
+          horario: { inicio: '14:00', fin: '15:00' },
+          servicio: { nombre: 'Servicio plomería' },
+          proveedor: { nombre: 'Jose Gutierrez' },
+          estado: 'pendiente',
+          solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
+          ubicacion: 'Calle siempre viva',
+          solicitudId: '28/10/2025',
+          solicitudFecha: '9:38:39',
+          reprogramCount: 0
+        },
+        {
+          id: '4',
+          fecha: '2025-11-05',
+          horario: { inicio: '14:00', fin: '15:00' },
+          servicio: { nombre: 'Servicio plomería' },
+          proveedor: { nombre: 'Jose Gutierrez' },
+          estado: 'concluido',
+          solicitud: 'Solicitud del servicio de plomería para solucionar mi problema urgente.',
+          ubicacion: 'Calle siempre viva',
+          solicitudId: '28/10/2025',
+          solicitudFecha: '9:38:39',
+          reprogramCount: 0
+        }
+      ]);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
 
-	// Datos de ejemplo para mostrar en modo offline/demo
-	const sampleCitas: Cita[] = [
-		{
-			_id: 'demo-1',
-			fecha: new Date().toISOString().split('T')[0],
-			horario: { inicio: '10:00', fin: '11:00' },
-			estado: 'agendado',
-			servicioId: { _id: 's1', nombre: 'Instalación de persiana' },
-			clienteId: { _id: 'c1', nombre: 'María López' },
-		},
-		{
-			_id: 'demo-2',
-			fecha: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-			horario: { inicio: '14:00', fin: '15:00' },
-			estado: 'cancelado',
-			servicioId: { _id: 's2', nombre: 'Reparación de cerradura' },
-			clienteId: { _id: 'c2', nombre: 'Carlos García' },
-		},
-	];
+  const handleCancel = async (id: string, reason: string) => {
+    try {
+      // Aquí iría la llamada al endpoint: PUT /api/citas/{id}/cancelar
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setCitas(citas.map(cita => 
+        cita.id === id 
+          ? { ...cita, estado: 'cancelado' } 
+          : cita
+      ));
+      
+      notify('Cita cancelada exitosamente', 'success');
+    } catch (error) {
+      notify('Error al cancelar cita', 'error');
+    }
+  };
 
-	const fetchCitas = async () => {
-		setError(null);
-		setLoading(true);
-		// Añadir timeout para evitar que quede indefinidamente en "Cargando..."
-		const controller = new AbortController();
-		const timeout = setTimeout(() => controller.abort(), 8000);
-		try {
-			const res = await fetch(`${API_URL}/api/devcode/citas/proveedor/${FIXER_ID}`, { signal: controller.signal });
-			if (!res.ok) throw new Error('Error al cargar citas');
-			const data = await res.json();
-			if (!data.success) throw new Error(data.error || 'Error al cargar citas');
-			setCitas(data.data);
-		} catch (err: any) {
-			console.error('Error:', err);
-			// Si falla la petición, cargar datos de ejemplo para que la UI muestre el flujo
-			setCitas(sampleCitas);
-			setIsDemo(true);
-			if (err?.name === 'AbortError') {
-				setError('La solicitud tardó demasiado. Mostrando datos de ejemplo.');
-			} else {
-				setError((err && err.message) ? err.message + '. Mostrando datos de ejemplo.' : 'Error al cargar citas. Mostrando datos de ejemplo.');
-			}
-		} finally {
-			clearTimeout(timeout);
-			setLoading(false);
-		}
-	};
+  const handleReprogram = async (id: string, newDate: string, newTime: string) => {
+    try {
+      // Obtener la cita actual
+      const cita = citas.find((c) => c.id === id);
+      if (!cita) throw new Error('Cita no encontrada');
 
-	useEffect(() => {
-		fetchCitas();
-	}, []);
+      // Soporte no intrusivo y retrocompatible: usamos una propiedad auxiliar reprogramCount
+      const reprogramCount = typeof (cita as any).reprogramCount === 'number' ? (cita as any).reprogramCount : 0;
 
-	// Formatea fecha en español con día de la semana y capitaliza la primera letra
-	const formatDate = (isoDate: string) => {
-		try {
-			const d = new Date(isoDate + 'T12:00:00');
-			const formatted = d.toLocaleDateString('es-ES', {
-				weekday: 'long',
-				day: 'numeric',
-				month: 'long',
-				year: 'numeric',
-			});
-			return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-		} catch (e) {
-			return isoDate;
-		}
-	};
+      // Regla 1: No permitir más de 3 reprogramaciones
+      if (reprogramCount >= 3) {
+        notify('No puedes reprogramar esta cita más de 3 veces. Contacta soporte.', 'error');
+        return;
+      }
 
-	const handleEdit = (cita: Cita) => {
-		setCitaToEdit(cita);
-		setIsEditModalOpen(true);
-	};
+      // Regla 2: No permitir reprogramar con menos de 3 horas de anticipación
+      const now = new Date();
+      const citaDate = new Date(newDate);
+      const [hours, minutes] = newTime.split(':').map(Number);
+      citaDate.setHours(hours, minutes, 0, 0);
+      if ((citaDate.getTime() - now.getTime()) < 3 * 60 * 60 * 1000) {
+        notify('No puedes reprogramar con menos de 3 horas de anticipación.', 'error');
+        return;
+      }
 
-	const handleCancelRequest = (cita: Cita) => {
-		setCitaToDelete(cita);
-		setIsConfirmModalOpen(true);
-	};
+      // Simula la llamada a API y en la respuesta incrementa el contador
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-	const handleCancelConfirm = async () => {
-		if (!citaToDelete) return;
-		// Si estamos en modo demo/offline, aplicar el cambio localmente y salir
-		if (isDemo) {
-			setCitas(prev => prev.map(c => c._id === citaToDelete._id ? { ...c, estado: 'cancelado' } : c));
-			notify(`Se canceló la cita ${citaToDelete.fecha}`,'info'); // Nueva notificación para BUG
-			setIsConfirmModalOpen(false);
-			setCitaToDelete(null);
-			return;
-		}
+      setCitas(citas.map(citaObj =>
+        citaObj.id === id
+          ? {
+              ...citaObj,
+              fecha: newDate,
+              horario: { inicio: newTime, fin: citaObj.horario.fin },
+              estado: 'reprogramar',
+              reprogramCount: reprogramCount + 1,
+            }
+          : citaObj
+      ));
 
-		// Optimistic update: aplicar cambio en UI inmediatamente y revertir si falla
-		const previous = [...citas];
-		setCitas(prev => prev.map(c => c._id === citaToDelete._id ? { ...c, estado: 'cancelado' } : c));
-		notify(`Se canceló la cita ${citaToDelete.fecha}`,'info'); // Notificar aunque la petición tarde o falle
-		try {
-			const res = await fetch(`${API_URL}/api/devcode/citas/${citaToDelete._id}`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ estado: 'cancelado', proveedorId: FIXER_ID }),
-			});
+      notify('Cita reprogramada exitosamente', 'success');
+    } catch (error) {
+      notify('Error al reprogramar cita', 'error');
+    }
+  };
 
-			if (!res.ok) {
-				const errText = await res.text().catch(() => null);
-				throw new Error(errText || 'Error al cancelar la cita');
-			}
-		} catch (error) {
-			console.error('Error:', error);
-			// Revertir UI si falla
-			setCitas(previous);
-		} finally {
-			// Limpiar estados
-			setIsConfirmModalOpen(false);
-			setCitaToDelete(null);
-		}
-	};
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long',
+      year: 'numeric'
+    };
+    return new Date(dateString).toLocaleDateString('es-ES', options);
+  };
 
-	if (loading) {
-		return <div className="flex justify-center items-center min-h-screen">Cargando...</div>;
-	}
+  const getEstadoConfig = (estado: string) => {
+    switch (estado) {
+      case 'agendado':
+        return { color: 'bg-green-500', text: 'Agendado', textColor: 'text-green-600' };
+      case 'cancelado':
+        return { color: 'bg-red-500', text: 'Cancelado', textColor: 'text-red-600' };
+      case 'pendiente':
+        return { color: 'bg-yellow-500', text: 'Pendiente', textColor: 'text-yellow-600' };
+      case 'concluido':
+        return { color: 'bg-green-600', text: 'Concluido', textColor: 'text-green-700' };
+      case 'reprogramar':
+        return { color: 'bg-orange-500', text: 'Reprogramar Cita', textColor: 'text-orange-600' };
+      default:
+        return { color: 'bg-gray-500', text: estado, textColor: 'text-gray-600' };
+    }
+  };
 
-	// Si hubo error, mostramos una alerta en la UI pero dejamos la lista (posiblemente demo)
+  return (
+    <div className="min-h-screen bg-gray-100 p-8">
+      <main className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg p-8 shadow-sm">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">Gestiona tus citas programadas</h2>
+          
+          {/* Pestañas */}
+          <div className="flex gap-4 mb-6">
+            <button 
+              onClick={() => setActiveSubTab('programadas')}
+              className={`flex-1 px-6 py-3 text-base font-semibold rounded-lg transition-all ${activeSubTab === 'programadas' ? 'bg-blue-900 text-white' : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50'}`}
+            >
+              Citas programadas
+            </button>
+            <button 
+              onClick={() => setActiveSubTab('cancelar')}
+              className={`flex-1 px-6 py-3 text-base font-semibold rounded-lg transition-all ${activeSubTab === 'cancelar' ? 'bg-blue-900 text-white' : 'bg-white text-gray-700 border-2 border-gray-300 hover:bg-gray-50'}`}
+            >
+              Cancelar varias citas
+            </button>
+          </div>
 
-	return (
-		<>
-			<Sidebar />
-			<div className="ml-0 md:ml-64 min-h-screen bg-gray-50">
-				<div className="container mx-auto px-4 py-8">
-					<h1 className="text-2xl font-bold mb-6">Gestiona tus citas programadas</h1>
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-						{citas.map((cita) => {
-							const estado = (cita.estado || '').toLowerCase();
-							const estadoMap: Record<string, { label: string; color: string }> = {
-								agendado: { label: 'Agendado', color: 'bg-green-500' },
-								cancelado: { label: 'Cancelado', color: 'bg-red-500' },
-								concluido: { label: 'Concluido', color: 'bg-gray-400' },
-								reprogramar: { label: 'Reprogramar Cita', color: 'bg-orange-400' },
-								// fallback
-								'': { label: 'Agendado', color: 'bg-green-500' },
-							};
-							const estadoInfo = estadoMap[estado] || estadoMap[''];
+          <div className="flex items-center gap-2 ml-4">
+            <span className="text-sm font-medium">Vista:</span>
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={() => setUserRole(userRole === 'requester' ? 'fixer' : 'requester')}
+              className="px-3 py-1 text-sm"
+            >
+              {userRole === 'requester' ? 'Solicitante' : 'Reparador'}
+            </Button>
+          </div>
 
-							return (
-								<div key={cita._id} className="bg-white rounded-lg shadow-sm border border-[#1C3FAA] overflow-hidden">
-									{/* Header azul */}
-									<div className="flex items-center gap-4 bg-[#1C3FAA] text-white p-4 rounded-t-lg">
-										<div className="flex items-center gap-3">
-											<div className="w-12 h-12 bg-white/20 rounded-[10px] flex items-center justify-center">
-												{/* avatar placeholder */}
-												<div className="w-8 h-8 bg-white rounded-[10px]" />
-											</div>
-											<div>
-												<div className="font-semibold">{cita.servicioId?.nombre || 'Servicio no especificado'}</div>
-												<div className="text-sm opacity-90">{(cita as any).proveedorId?.nombre || 'Saitama'}</div>
-											</div>
-										</div>
-									</div>
+          {activeSubTab === 'programadas' && (
+            <div>
+              <p className="text-sm text-gray-600 mb-4"><span className="font-semibold">Gestión de Citas:</span> Administra tus citas recibidas en función de tu horario laboral establecido.</p>
+              
+              {/* Filtro */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Filtrar por:</span>
+                  <div className="relative">
+                    <select 
+                      value={filterValue}
+                      onChange={(e) => setFilterValue(e.target.value)}
+                      className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option>Todos</option>
+                      <option>Agendado</option>
+                      <option>Cancelado</option>
+                      <option>Pendiente</option>
+                      <option>Concluido</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-900 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
 
-									{/* Body */}
-									<div className="p-4">
-										<div className="flex items-center gap-3 text-gray-700 mb-3">
-											<CalendarDays className="w-5 h-5 text-[#1C3FAA]" />
-											<div className="text-sm open-sans">{formatDate(cita.fecha)}</div>
-										</div>
-
-										<div className="flex items-center gap-3 text-gray-700 mb-3">
-											<Clock className="w-5 h-5 text-[#1C3FAA]" />
-											<div className="text-sm open-sans">{cita.horario.inicio} - {cita.horario.fin}</div>
-										</div>
-
-										<div className="flex items-center gap-2">
-											<span className={`${estadoInfo.color} inline-block w-3 h-3 rounded-[10px]`} />
-											<span className="text-sm font-medium text-gray-700 open-sans">{estadoInfo.label}</span>
-										</div>
-									</div>
-
-									{/* Footer acciones */}
-									<div className="p-4 flex justify-end gap-3 bg-white">
-										<button
-											onClick={() => handleCancelRequest(cita)}
-											className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-										>
-											Cancelar
-										</button>
-										<button
-											onClick={() => handleEdit(cita)}
-											className="px-3 py-1.5 text-sm font-medium rounded-md bg-[#1C3FAA] text-white hover:bg-[#163688]"
-										>
-											Reprogramar
-										</button>
-									</div>
-								</div>
-							);
-						})}
-					</div>
-
-					{citaToEdit && (
-						<EditAppointmentModal
-							isOpen={isEditModalOpen}
-							onClose={() => {
-								setIsEditModalOpen(false);
-								setCitaToEdit(null);
+              <div className="space-y-4">
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : citas.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">No tienes citas programadas</p>
+                  </div>
+                ) : (
+                  citas.map((cita) => {
+                    const estadoConfig = getEstadoConfig(cita.estado);
+                    return (
+                      <div key={cita.id} className="border border-gray-200 rounded-lg overflow-hidden mb-4">
+                        {/* Header azul */}
+                        <div className="bg-blue-900 text-white px-6 py-3">
+                          <h3 className="font-semibold text-base">{cita.servicio.nombre}</h3>
+                          <p className="text-xs text-blue-200">Solicitado: {cita.solicitudId}, {cita.solicitudFecha}</p>
+                        </div>
+                        
+                        {/* Contenido */}
+                        <div className="bg-white px-6 py-4">
+                          <div className="grid grid-cols-3 gap-4 mb-4">
+                            {/* Columna 1 */}
+                            <div className="space-y-2">
+                              <div className="flex items-start gap-2">
+                                <CalendarDays className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">
+                                  {new Date(cita.fecha).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                </span>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <Clock className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">{cita.horario.inicio} - {cita.horario.fin}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Columna 2 */}
+                            <div className="space-y-2">
+                              <div className="flex items-start gap-2">
+                                <User className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">{cita.proveedor.nombre}</span>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <Wrench className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">{cita.ubicacion}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Columna 3 */}
+                            <div>
+                              <div className="flex items-start gap-2">
+                                <AlertCircle className="w-4 h-4 text-gray-600 mt-0.5" />
+                                <span className="text-sm text-gray-700">{cita.solicitud}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Estado y botones */}
+                          <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full ${estadoConfig.color}`}></div>
+                              <span className={`text-sm font-medium ${estadoConfig.textColor}`}>{estadoConfig.text}</span>
+                            </div>
+                            
+							<AppointmentActions 
+							appointment={{
+								id: cita.id,
+								fecha: cita.fecha,
+								horario: { inicio: cita.horario.inicio, fin: cita.horario.fin },
+								servicio: cita.servicio,
+								proveedor: cita.proveedor,
+								estado: cita.estado,
+								reprogramCount: cita.reprogramCount
 							}}
-							cita={citaToEdit}
-							proveedorId={FIXER_ID}
-							isDemo={isDemo}
-							onUpdate={(updated) => {
-								if (!updated) return;
-								// actualizar usando el _id que recibimos del modal
-								setCitas(prev => prev.map(c => c._id === updated._id ? { ...c, estado: updated.estado ?? 'agendado', fecha: updated?.fecha ?? c.fecha, horario: updated?.horario ?? c.horario } : c));
-								// Si no estamos en modo demo, recargar desde servidor para garantizar persistencia
-								if (!isDemo) {
-									fetchCitas();
-								}
-							}}
-						/>
-					)}
+							onCancel={handleCancel}
+							onReprogram={handleReprogram}
+							isFixer={userRole === 'fixer'}
+							/>
 
-					{citaToDelete && (
-						<ConfirmationModal
-							isOpen={isConfirmModalOpen}
-							onClose={() => {
-								setIsConfirmModalOpen(false);
-								setCitaToDelete(null);
-							}}
-							onConfirm={handleCancelConfirm}
-							title="Cancelar Cita"
-							message="¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer."
-						/>
-					)}
-				</div>
-			</div>
-		</>
-	);
+
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+          
+          {activeSubTab === 'cancelar' && (
+            <div>
+              <p className="text-center py-12 text-gray-500">Selecciona citas para cancelar</p>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
 }
