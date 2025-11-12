@@ -5,29 +5,33 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { CerrarSesiones } from "./cerrarSesiones";
 import CambiarTelefono from "./cambiarTelefono";
+import CambiarContrasena from "./cambiarContraseña";
+import ActualizarUbicacion from "./actualizarUbicacion";
 import PaginaMetodosAutenticacion from "../../metodosAutenticacion/metodosAuten/pagina";
-
 import { MessageSeguridad } from "./messageSeguridad";
 import { MensajeCerrarSesion } from "./mensajeCerrarSesion";
 
 export default function SimpleProfileMenu() {
   const [showCerrarSesionMessage, setShowCerrarSesionMessage] = useState(false);
   const [showCambiarTelefono, setShowCambiarTelefono] = useState(false);
+  const [showCambiarContrasena, setShowCambiarContrasena] = useState(false);
+  const [showActualizarUbicacion, setShowActualizarUbicacion] = useState(false);
   const [showMetodosAutenticacion, setShowMetodosAutenticacion] = useState(false);
   const [showMessageSeguridad, setShowMessageSeguridad] = useState(false);
   const [showMensajeCerrarSesion, setShowMensajeCerrarSesion] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
+
   const [user, setUser] = useState<{
     id: string;
     nombre: string;
     correo: string;
-    
     fotoPerfil: string;
     telefono: string;
-  } | null>(null)
+  } | null>(null);
 
   const router = useRouter();
 
+  // 🔴 Cerrar sesión: limpia storage y muestra mensaje de salida
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     sessionStorage.removeItem("authToken");
@@ -36,53 +40,61 @@ export default function SimpleProfileMenu() {
 
     setShowMensajeCerrarSesion(true);
   };
-   useEffect(() => {
-  if (showMensajeCerrarSesion) {
-    // ⏳ Espera 2 segundos mientras se muestra el mensaje
-    const timer = setTimeout(() => {
-      // 🔔 Emitimos el evento de logout justo antes de redirigir
-      const eventLogout = new CustomEvent("logout-exitoso");
-      window.dispatchEvent(eventLogout);
 
-      // 🚀 Ahora sí redirigimos
-      setShowMensajeCerrarSesion(false);
-      router.push("/");
-    }, 2000);
+  // ⏳ Cuando se muestra el mensaje de cierre, esperamos 2s, emitimos evento y redirigimos
+  useEffect(() => {
+    if (showMensajeCerrarSesion) {
+      const timer = setTimeout(() => {
+        const eventLogout = new CustomEvent("logout-exitoso");
+        window.dispatchEvent(eventLogout);
 
-    return () => clearTimeout(timer);
-  }
-}, [showMensajeCerrarSesion, router]);
+        setShowMensajeCerrarSesion(false);
+        router.push("/");
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showMensajeCerrarSesion, router]);
 
   const handleContinue = () => setShowCerrarSesionMessage(false);
   const handleCancel = () => setShowCerrarSesionMessage(false);
   const handleCerrarSesionesClick = () => setShowCerrarSesionMessage(true);
+
   const handleCambiarTelefonoClick = () => setShowCambiarTelefono(true);
   const handleCerrarCambiarTelefono = () => setShowCambiarTelefono(false);
-  const handleMetodosAutenticacionClick = () => setShowMetodosAutenticacion(true);
-  const handleCerrarMetodosAutenticacion = () => setShowMetodosAutenticacion(false);
+
   const toggleSubMenu = () => setShowSubMenu(prev => !prev);
 
+  const handleCambiarContrasenaClick = () => setShowCambiarContrasena(true);
+  const handleCerrarCambiarContrasena = () => setShowCambiarContrasena(false);
+
+  const handleActualizarUbicacionClick = () => setShowActualizarUbicacion(true);
+  const handleCerrarActualizarUbicacion = () => setShowActualizarUbicacion(false);
+
+  const handleMetodosAutenticacionClick = () => setShowMetodosAutenticacion(true);
+  const handleCerrarMetodosAutenticacion = () => setShowMetodosAutenticacion(false);
+
   useEffect(() => {
-    // Obtener usuario desde localStorage
+    // Obtener usuario desde sessionStorage
     const storedUser = sessionStorage.getItem("userData");
     if (!storedUser) return;
 
     try {
       const parsed = JSON.parse(storedUser);
 
-    setUser({
-      id: parsed._id || parsed.id,
-      nombre:
-        parsed.nombre ||
-        `${parsed.firstName ?? ""} ${parsed.lastName ?? ""}`.trim() ||
-        "Usuario",
-      correo: parsed.correo || parsed.email || "correo@desconocido.com",
-      fotoPerfil: parsed.fotoPerfil || "/images/default-profile.jpg",
-      telefono: parsed.telefono ||""
-    });
-  } catch (error) {
-    console.error("Error al leer userData del localStorage:", error);
-  }
+      setUser({
+        id: parsed._id || parsed.id,
+        nombre:
+          parsed.nombre ||
+          `${parsed.firstName ?? ""} ${parsed.lastName ?? ""}`.trim() ||
+          "Usuario",
+        correo: parsed.correo || parsed.email || "correo@desconocido.com",
+        fotoPerfil: parsed.fotoPerfil || "/images/default-profile.jpg",
+        telefono: parsed.telefono || ""
+      });
+    } catch (error) {
+      console.error("Error al leer userData del sessionStorage:", error);
+    }
   }, []);
 
   return (
@@ -98,8 +110,7 @@ export default function SimpleProfileMenu() {
           className="rounded-full object-cover border border-gray-300"
           unoptimized
           onError={(e) => {
-            // fallback si la URL remota falla
-            (e.currentTarget).src = "/images/default-profile.jpg";
+            (e.currentTarget as HTMLImageElement).src = "/images/default-profile.jpg";
           }}
         />
         <div className="ml-3 truncate">
@@ -124,40 +135,57 @@ export default function SimpleProfileMenu() {
 
       {/* Submenú */}
       {showSubMenu && (
-  <div className="flex flex-col space-y-3 pl-4 mt-3 border-l-2 border-gray-200
-                  max-h-[60vh] sm:max-h-[50vh] md:max-h-[40vh] overflow-y-auto">
-    <button 
-    
-    className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
-      Cambiar contraseña
-    </button>
-    <button
-      onClick={handleCambiarTelefonoClick}
-      className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
-    >
-      Cambiar teléfono
-    </button>
-    <button
-      onClick={handleMetodosAutenticacionClick}
-      className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
-        Métodos de autenticación
-    </button>
-        <button
-     onClick={() => setShowMessageSeguridad(true)}
-     className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
-    >
-     Seguridad
-     </button>
+        <div className="flex flex-col space-y-3 pl-4 mt-3 border-l-2 border-gray-200
+                        max-h-[60vh] sm:max-h-[50vh] md:max-h-[40vh] overflow-y-auto">
+          {/* Cambiar contraseña */}
+          <button
+            onClick={handleCambiarContrasenaClick}
+            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
+          >
+            Cambiar contraseña
+          </button>
 
-    <button
-      onClick={handleCerrarSesionesClick}
-      className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left mt-2"
-    >
-      Cerrar sesiones
-    </button>
-  </div>
-)}
+          {/* Cambiar teléfono */}
+          <button
+            onClick={handleCambiarTelefonoClick}
+            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
+          >
+            Cambiar teléfono
+          </button>
 
+          {/* Actualizar ubicación */}
+          <button
+            onClick={handleActualizarUbicacionClick}
+            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
+          >
+            Actualizar ubicación
+          </button>
+
+          {/* Métodos de autenticación */}
+          <button
+            onClick={handleMetodosAutenticacionClick}
+            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
+          >
+            Métodos de autenticación
+          </button>
+
+          {/* Seguridad */}
+          <button
+            onClick={() => setShowMessageSeguridad(true)}
+            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
+          >
+            Seguridad
+          </button>
+
+          {/* Cerrar sesiones */}
+          <button
+            onClick={handleCerrarSesionesClick}
+            className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left mt-2"
+          >
+            Cerrar sesiones
+          </button>
+        </div>
+      )}
 
       {/* Botón Cerrar sesión fuera del submenú */}
       <button
@@ -171,19 +199,33 @@ export default function SimpleProfileMenu() {
       {showCerrarSesionMessage && (
         <CerrarSesiones onContinue={handleContinue} onCancel={handleCancel} />
       )}
+
       {showCambiarTelefono && (
-        <CambiarTelefono onClose={handleCerrarCambiarTelefono} 
-        userId={user?.id || ""}
-        telefonoActual={user?.telefono || ""} />
+        <CambiarTelefono
+          onClose={handleCerrarCambiarTelefono}
+          userId={user?.id || ""}
+          telefonoActual={user?.telefono || ""}
+        />
       )}
 
-       {showMessageSeguridad && (
-       <MessageSeguridad onClose={() => setShowMessageSeguridad(false)} />
-       )}
-       {showMensajeCerrarSesion && (
-       <MensajeCerrarSesion onClose={() => setShowMensajeCerrarSesion(false)} />
+      {showCambiarContrasena && (
+        <CambiarContrasena onClose={handleCerrarCambiarContrasena} />
       )}
 
+      {showActualizarUbicacion && (
+        <ActualizarUbicacion
+          onClose={handleCerrarActualizarUbicacion}
+          // onSave opcional si luego quieres hacer algo más
+        />
+      )}
+
+      {showMessageSeguridad && (
+        <MessageSeguridad onClose={() => setShowMessageSeguridad(false)} />
+      )}
+
+      {showMensajeCerrarSesion && (
+        <MensajeCerrarSesion onClose={() => setShowMensajeCerrarSesion(false)} />
+      )}
 
       {showMetodosAutenticacion && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -201,7 +243,7 @@ export default function SimpleProfileMenu() {
               </button>
             </div>
 
-            {/* Content - Usando directamente el componente de página */}
+            {/* Content */}
             <div className="p-4">
               <PaginaMetodosAutenticacion />
             </div>
