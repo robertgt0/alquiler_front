@@ -59,6 +59,7 @@ export const LoginForm: React.FC = () => {
       const eventLogin = new CustomEvent("login-exitoso");
       window.dispatchEvent(eventLogin);
       if(res.data.user.twoFactorEnabled){
+        sessionStorage.setItem("checkSeguridad", "true");
       router.push('/loginSeguridad')
       return
       }

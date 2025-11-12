@@ -67,6 +67,7 @@ function Inner() {
       
       // Disparar evento de login exitoso para que el Header se actualice
       if(data.data.user.twoFactorEnabled){
+        sessionStorage.setItem("checkSeguridad", "true");
       router.push('/loginSeguridad')
       return
       }

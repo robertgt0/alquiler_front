@@ -316,7 +316,7 @@ export async function cerrarSesionesRemotas(
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        Authorization: Bearer ${accessToken},
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -339,7 +339,7 @@ export async function cerrarSesionesRemotas(
     const errorMessage =
       data?.message ||
       data?.error ||
-      Error HTTP ${res.status} al cerrar las sesiones remotas.;
+      `Error HTTP ${res.status} al cerrar las sesiones remotas.`;
 
     return { ok: false, message: errorMessage };
   } catch (e: any) {
@@ -347,4 +347,5 @@ export async function cerrarSesionesRemotas(
       ok: false,
       message: e?.message ?? "Error de red al cerrar sesiones remotas.",
     };
-  }}
+  }
+}
