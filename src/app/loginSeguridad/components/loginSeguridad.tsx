@@ -61,7 +61,9 @@ const res = await verifyTwoFactorLogin(userId, token);
 
       console.log(res)
       if (res.success==true) {
-        
+         // para que se guarde la sesion de seguridad
+         // sessionStorage.setItem("checkSeguridad", "true");
+          
           const eventLogin = new CustomEvent("login-exitoso");
           window.dispatchEvent(eventLogin);
           router.push('/'); 
@@ -70,7 +72,6 @@ const res = await verifyTwoFactorLogin(userId, token);
       } else {
         setIntentos(prev => {
         const nuevosIntentos = prev + 1;
-
         if (nuevosIntentos >= 3) { 
             setBloqueado(true);
             setTiempoRestante(300);

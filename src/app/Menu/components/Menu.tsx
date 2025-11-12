@@ -6,11 +6,13 @@ import Image from "next/image";
 import { CerrarSesiones } from "./cerrarSesiones";
 import CambiarTelefono from "./cambiarTelefono";
 import { MessageSeguridad } from "./messageSeguridad";
+import { MensajeCerrarSesion } from "./mensajeCerrarSesion";
 
 export default function SimpleProfileMenu() {
   const [showCerrarSesionMessage, setShowCerrarSesionMessage] = useState(false);
   const [showCambiarTelefono, setShowCambiarTelefono] = useState(false);
   const [showMessageSeguridad, setShowMessageSeguridad] = useState(false);
+  const [showMensajeCerrarSesion, setShowMensajeCerrarSesion] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [user, setUser] = useState<{
     id: string;
@@ -28,11 +30,24 @@ export default function SimpleProfileMenu() {
     localStorage.removeItem("userData");
     sessionStorage.removeItem("userData");
 
-    const eventLogout = new CustomEvent("logout-exitoso");
-    window.dispatchEvent(eventLogout);
-
-    router.push("/");
+    setShowMensajeCerrarSesion(true);
   };
+   useEffect(() => {
+  if (showMensajeCerrarSesion) {
+    // ⏳ Espera 2 segundos mientras se muestra el mensaje
+    const timer = setTimeout(() => {
+      // 🔔 Emitimos el evento de logout justo antes de redirigir
+      const eventLogout = new CustomEvent("logout-exitoso");
+      window.dispatchEvent(eventLogout);
+
+      // 🚀 Ahora sí redirigimos
+      setShowMensajeCerrarSesion(false);
+      router.push("/");
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }
+}, [showMensajeCerrarSesion, router]);
 
   const handleContinue = () => setShowCerrarSesionMessage(false);
   const handleCancel = () => setShowCerrarSesionMessage(false);
@@ -155,6 +170,10 @@ export default function SimpleProfileMenu() {
        {showMessageSeguridad && (
        <MessageSeguridad onClose={() => setShowMessageSeguridad(false)} />
        )}
+       {showMensajeCerrarSesion && (
+       <MensajeCerrarSesion onClose={() => setShowMensajeCerrarSesion(false)} />
+      )}
+
 
     </div>
   );
