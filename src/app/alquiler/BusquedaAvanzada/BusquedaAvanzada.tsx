@@ -265,7 +265,8 @@ const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
   };
 
   const hayFiltros = Object.values(filtros).some((v) => v !== "" && v !== undefined);
-
+fechaInicio !== "" ||
+  fechaFin !== "";
   
   return (
     <div className="w-full bg-white rounded-xl shadow p-4">
