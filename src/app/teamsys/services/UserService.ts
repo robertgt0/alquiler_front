@@ -16,7 +16,6 @@ export async function crearUsuario(usuario: UsuarioDocument) {
 }
 
 
-
 export async function loginUsuario(correoElectronico: string, password: string) {
   const res = await fetch(`${API_URL}/api/teamsys/auth/login`, {
     method: "POST",
@@ -348,4 +347,30 @@ export async function cerrarSesionesRemotas(
       message: e?.message ?? "Error de red al cerrar sesiones remotas.",
     };
   }
+}
+
+export async function obtenerPerfilActual(accessToken: string) {
+  const res = await fetch(`${API_URL}/api/teamsys/me`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok || json?.success === false) {
+    throw new Error(json?.message || `Error /me (${res.status})`);
+  }
+
+  return json /*as {
+    success: true;
+    data: {
+      correo: string;
+      authProvider?: string;
+      password?: string; // ⚠️ si el back la manda, no la guardes ni muestres
+      [k: string]: any;
+    };
+  };*/
 }
