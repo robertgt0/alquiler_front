@@ -104,10 +104,15 @@ function BusquedaContent() {
       let match = true;
 
       if (filtros.tipoServicio)
-        match &&= job.title.toLowerCase() === filtros.tipoServicio.toLowerCase();
+        match &&= job.title.toLowerCase().includes(filtros.tipoServicio.toLowerCase());
+
 
       if (filtros.zona)
         match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
+
+      if (filtros.horario)
+        match &&= job.employmentType.toLowerCase().includes(filtros.horario.toLowerCase());
+
 
       if (filtros.precioMin || filtros.precioMax) {
         const precioNum = Number(job.salaryRange.replace(/[^0-9.-]+/g, ""));
@@ -115,11 +120,12 @@ function BusquedaContent() {
         if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
       }
 
-      if (filtros.horario)
-        match &&= job.employmentType.toLowerCase() === filtros.horario.toLowerCase();
+      
 
       return match;
     });
+     // Reinicia la paginación a la página 1
+    handlePageChange(1);
 
     setFiltrosAplicados(true);
     setSearchResults(filtrados);
@@ -236,6 +242,8 @@ function BusquedaContent() {
       } else {
         setErrorCaracteres("");
       }
+       // Reinicia la paginación a la página 1
+        handlePageChange(1);
 
       setSearchTerm(termino);
       setSearchResults(resultados);
@@ -275,6 +283,10 @@ function BusquedaContent() {
     filtersNoResults;
 
   const mostrarErrorCaracteres = errorCaracteres && !buscando;
+
+
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 to-white">
