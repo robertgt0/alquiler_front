@@ -1,16 +1,11 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-
-// CAMBIO 1: Usamos la ruta absoluta con el nombre de carpeta EXACTO
 import { Job, JobStatus } from '@/app/epic_VisualizadorDeTrabajosAgendadosVistaProveedor/interfaces/types';
-// CAMBIO 2: Usamos la ruta absoluta con el nombre de carpeta EXACTO
 import { fetchTrabajosCliente } from '@/app/epic_VisualizadorDeTrabajosAgendadosVistaProveedor/services/api';
-// CAMBIO 3: Usamos la ruta absoluta con el nombre de carpeta EXACTO
 import { fmt } from '@/app/epic_VisualizadorDeTrabajosAgendadosVistaProveedor/utils/helpers';
-
 import { useRouter } from 'next/navigation';
 
-/* Paleta de colores (sin cambios) */
+
 const C = {
   title: '#0C4FE9',
   text: '#1140BC',
@@ -28,13 +23,13 @@ const C = {
 type TabKey = 'all' | JobStatus;
 const ITEMS_PER_PAGE = 10;
 
-/* Íconos (sin cambios) */
 const IcoUser = ({ size = 24, color = C.text }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 21a8 8 0 0 0-16 0" />
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
+
 const IcoCalendar = ({ size = 24, color = C.text }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -43,12 +38,14 @@ const IcoCalendar = ({ size = 24, color = C.text }: { size?: number; color?: str
     <line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
+
 const IcoBrief = ({ size = 24, color = C.text }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="7" width="18" height="13" rx="2" />
     <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
   </svg>
 );
+
 const IcoClock = ({ size = 24, color = C.text }: { size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />
@@ -62,28 +59,24 @@ export default function TrabajosAgendadosPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
-  // CAMBIO 4: Usamos un ID de cliente REAL de tu base de datos (María López)
   const clienteIdDePrueba = '6902c31538df4e88b6680634';
+  const from = 'cliente';
 
   useEffect(() => {
     let alive = true;
-    setJobs(null); // Resetea los jobs al cargar o cambiar de filtro
-    
-    // CAMBIO 5: Llamamos a 'fetchTrabajosCliente' con el ID real
-    fetchTrabajosCliente('6902c31538df4e88b6680634')// Filtro de 'estado' se maneja localmente por ahora
+    setJobs(null);
+
+    fetchTrabajosCliente(clienteIdDePrueba)
       .then((d) => {
         if (alive) setJobs(d);
       })
-      .catch((err) => {
-        console.error('Error al cargar trabajos (cliente):', err);
-      });
+      .catch((err) => console.error('Error al cargar trabajos (cliente):', err));
 
     return () => {
       alive = false;
     };
-  }, []); // Solo se carga una vez al inicio
+  }, []);
 
-  // ... (useMemo para 'counts' y 'filtered' sin cambios) ...
   const counts = useMemo(() => {
     const c = { confirmed: 0, pending: 0, cancelled: 0, done: 0 } as Record<JobStatus, number>;
     (jobs ?? []).forEach((j) => c[j.status]++);
@@ -94,86 +87,99 @@ export default function TrabajosAgendadosPage() {
     if (!jobs) return [];
     return tab === 'all' ? jobs : jobs.filter((j) => j.status === tab);
   }, [jobs, tab]);
-  
-  // ... (Lógica de paginación sin cambios) ...
+
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedJobs = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     if (currentPage > Math.ceil(filtered.length / ITEMS_PER_PAGE) && filtered.length > 0) {
-      setCurrentPage(1); 
+      setCurrentPage(1);
     }
     return filtered.slice(startIndex, endIndex);
   }, [filtered, currentPage]);
 
-  // CAMBIO 6: Títulos y textos de carga/vacío actualizados para "Cliente"
+  // 🔹 Función centralizada para redirigir según el estado
+  const handleVerDetalles = (job: Job) => {
+    const status = job.status;
+    const fechaISO = job.startISO.split('T')[0]; // YYYY-MM-DD
+    const inicioHHMM = new Date(job.startISO).toTimeString().slice(0, 5);
+    const finHHMM = new Date(job.endISO).toTimeString().slice(0, 5);
+
+    switch (status) {
+      case 'pending': {
+        const params = new URLSearchParams({
+          id: job.id,
+          proveedor: job.providerName ?? '',
+          date: fechaISO,
+          inicio: inicioHHMM,
+          fin: finHHMM,
+          servicio: job.service ?? '',
+          estado: status,
+          costo: job.costo !== undefined ? String(job.costo) : '',
+          descripcion: job.description ?? '',
+          from,
+        });
+        router.push(`/epic-ver-solicitud-pendiente-cliente?${params.toString()}`);
+        break;
+      }
+      case 'done': {
+        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+        break;
+      }
+      case 'confirmed': {
+        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+        break;
+      }
+      case 'cancelled': {
+        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}&view=cancelled`);
+        break;
+      }
+      default: {
+        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+        break;
+      }
+    }
+  };
+
   if (!jobs) {
     return (
       <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 500, color: C.text, fontSize: '20px' }}>
-        <h1 style={{ fontSize: 36, fontWeight: 400, color: C.title, marginTop: 2, marginBottom: 0 }}>Mis Trabajos</h1>
+        <h1 style={{ fontSize: 36, fontWeight: 400, color: C.title }}>Mis Trabajos</h1>
         <div style={{ height: 1.5, width: '660px', background: C.line, marginBottom: 10 }} />
-        <p style={{textAlign: 'center'}}>Cargando mis trabajos...</p>
+        <p style={{ textAlign: 'center' }}>Cargando mis trabajos...</p>
       </main>
     );
   }
 
-  if (tab !== 'all' && counts[tab] === 0) {
-     return (
-       <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 500, color: C.text, fontSize: '20px' }}>
-         <h1 style={{ fontSize: 36, fontWeight: 400, color: C.title, marginTop: 2, marginBottom: 0 }}>Mis Trabajos</h1>
-         <div style={{ height: 1.5, width: '660px', background: C.line, marginBottom: 10 }} />
-         <TabsComponent tab={tab} setTab={setTab} counts={counts} setCurrentPage={setCurrentPage} />
-         <p style={{ color: 'red', fontSize: '24px', fontWeight: 700, marginTop: 40, textAlign: 'center' }}>DISPONIBLE EN EL SEGUNDO SPRINT</p>
-       </main>
-     );
-   }
-  
-   if (tab === 'all' && filtered.length === 0) {
-     return (
-       <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 500, color: C.text, fontSize: '20px' }}>
-         <h1 style={{ fontSize: 36, fontWeight: 400, color: C.title, marginTop: 2, marginBottom: 0 }}>Mis Trabajos</h1>
-         <div style={{ height: 1.5, width: '660px', background: C.line, marginBottom: 10 }} />
-         <TabsComponent tab={tab} setTab={setTab} counts={counts} setCurrentPage={setCurrentPage} />
-         <p style={{ color: C.text, fontSize: '22px', fontWeight: 500, marginTop: 40, textAlign: 'center' }}>Aún no tienes trabajos agendados.</p>
-       </main>
-     );
-   }
-
   return (
     <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 400 }}>
-      {/* CAMBIO 7: Título principal */}
-      <h1 style={{ fontSize: 36, fontWeight: 400, color: C.title, marginTop: 2, marginBottom: 0 }}>Mis Trabajos</h1>
-
+      <h1 style={{ fontSize: 36, fontWeight: 400, color: C.title }}>Mis Trabajos</h1>
       <div style={{ height: 1.5, width: '660px', background: C.line, marginBottom: 10 }} />
-
-      {/* Tabs (sin cambios, reutiliza el componente) */}
       <TabsComponent tab={tab} setTab={setTab} counts={counts} setCurrentPage={setCurrentPage} />
 
-      {/* Lista */}
       <div className="scrollwrap" style={{ display: 'grid', gap: 14, maxHeight: 520, overflow: 'auto', paddingRight: 8, width: '660px' }}>
         {paginatedJobs.map((job) => {
           const { fecha, hora } = fmt(job.startISO);
           const { hora: horaFin } = fmt(job.endISO);
           const chipBg =
-            job.status === 'confirmed' ? C.confirmed :
-            job.status === 'pending' ? C.pending :
-            job.status === 'done' ? C.done : C.cancelled;
+            job.status === 'confirmed'
+              ? C.confirmed
+              : job.status === 'pending'
+              ? C.pending
+              : job.status === 'done'
+              ? C.done
+              : C.cancelled;
 
           return (
             <article key={job.id} style={{ border: `2.5px solid ${C.borderMain}`, borderRadius: 8, background: C.white, padding: '14px 18px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr auto', gridTemplateRows: 'auto auto', columnGap: 16, rowGap: 6, alignItems: 'center' }}>
-                
-                {/* CAMBIO 8: Mostrar "Proveedor" y "job.providerName" */}
                 <div style={{ gridColumn: '1', gridRow: '1', display: 'flex', gap: 8, alignItems: 'center' }}>
                   <IcoUser />
                   <div>
-                    <span style={{ color: C.text }}>Proveedor</span>
-                    <br />
+                    <span style={{ color: C.text }}>Proveedor</span><br />
                     <span style={{ color: '#000' }}>{job.providerName}</span>
                   </div>
                 </div>
-
-                {/* El resto de la tarjeta (Fecha, Hora, Servicio, etc.) no necesita cambios */}
                 <div style={{ gridColumn: '2', gridRow: '1', display: 'flex', gap: 8, alignItems: 'center' }}>
                   <IcoCalendar />
                   <div style={{ transform: 'translateY(3px)' }}>
@@ -190,9 +196,7 @@ export default function TrabajosAgendadosPage() {
                 </div>
                 <div style={{ gridColumn: '4', gridRow: '1 / span 2', display: 'flex', justifyContent: 'flex-end' }}>
                   <button
-                    onClick={() => {
-                      router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}`);
-                    }}
+                    onClick={() => handleVerDetalles(job)}
                     style={{
                       padding: '8px 14px',
                       minWidth: 110,
@@ -207,17 +211,23 @@ export default function TrabajosAgendadosPage() {
                     Ver Detalles
                   </button>
                 </div>
+
                 <div style={{ gridColumn: '1', gridRow: '2' }}>
-                  <div style={{
-                    display: 'inline-block',
-                    padding: '8px 16px',
-                    borderRadius: 12,
-                    background: chipBg,
-                    color: job.status === 'pending' ? '#000000' : C.white,
-                  }}>
-                    {job.status === 'confirmed' ? 'Confirmado'
-                      : job.status === 'pending' ? 'Pendiente'
-                      : job.status === 'done' ? 'Terminado'
+                  <div
+                    style={{
+                      display: 'inline-block',
+                      padding: '8px 16px',
+                      borderRadius: 12,
+                      background: chipBg,
+                      color: job.status === 'pending' ? '#000000' : C.white,
+                    }}
+                  >
+                    {job.status === 'confirmed'
+                      ? 'Confirmado'
+                      : job.status === 'pending'
+                      ? 'Pendiente'
+                      : job.status === 'done'
+                      ? 'Terminado'
                       : 'Cancelado'}
                   </div>
                 </div>
@@ -240,88 +250,10 @@ export default function TrabajosAgendadosPage() {
           );
         })}
       </div>
-
-      {/* Paginación y Volver (sin cambios) */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginTop: '20px', 
-        width: '660px' 
-      }}>
-        <button
-          onClick={() => router.push('/')} 
-          style={{
-            padding: '10px 20px',
-            height: 40,
-            borderRadius: 8,
-            background: C.confirmed, 
-            color: C.white,
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: '16px'
-          }}
-        >
-          Volver
-        </button>
-        {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px' }}>
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              style={{
-                padding: '10px 15px',
-                borderRadius: 5,
-                border: '1px solid #ddd',
-                background: C.white,
-                color: C.text,
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                opacity: currentPage === 1 ? 0.6 : 1,
-              }}
-            >
-              Anterior
-            </button>
-            <span style={{ color: C.text, fontSize: '16px', fontWeight: 500 }}>
-              Página {currentPage} de {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              style={{
-                padding: '10px 15px',
-                borderRadius: 5,
-                border: '1px solid #ddd',
-                background: C.white,
-                color: C.text,
-                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                opacity: currentPage === totalPages ? 0.6 : 1,
-              }}
-            >
-              Siguiente
-            </button>
-          </div>
-        )}
-        {totalPages <= 1 && (<div />)}
-      </div>
-
-      {/* Estilos (sin cambios) */}
-      <style jsx global>{`
-        .scrollwrap::-webkit-scrollbar { width: 10px; }
-        .scrollwrap::-webkit-scrollbar-track { background: #cbd9ff; }
-        .scrollwrap::-webkit-scrollbar-thumb { background: ${C.text}; border-radius: 0; }
-        .scrollwrap { scrollbar-color: ${C.text} #cbd9ff; }
-        button:active {
-          background: ${C.active} !important;
-          border-color: ${C.active} !important;
-          color: ${C.white} !important;
-        }
-      `}</style>
     </main>
   );
 }
 
-// --- COMPONENTE DE TABS (sin cambios) ---
 interface TabsProps {
   tab: TabKey;
   setTab: (tab: TabKey) => void;
@@ -330,27 +262,16 @@ interface TabsProps {
 }
 
 function TabsComponent({ tab, setTab, counts, setCurrentPage }: TabsProps) {
-  // ... (código del componente TabsComponent sin cambios)
   return (
-    <div 
-      role="tablist" 
-      aria-label="Filtros de estado" 
-      style={{ 
-        display: 'flex', 
-        gap: 12, 
-        marginBottom: 14, 
-        width: '660px' 
-      }}
-    >
+    <div role="tablist" aria-label="Filtros de estado" style={{ display: 'flex', gap: 12, marginBottom: 14, width: '660px' }}>
       {(['all', 'confirmed', 'pending', 'cancelled', 'done'] as TabKey[]).map((k) => {
         const active = tab === k;
-        const badge =
-          k === 'all'
-            ? (counts.confirmed + counts.pending + counts.cancelled + counts.done) 
-            : counts[k];
+        const badge = k === 'all'
+          ? counts.confirmed + counts.pending + counts.cancelled + counts.done
+          : counts[k];
         const baseBtn: React.CSSProperties = {
           borderRadius: 8,
-          border: `2px solid ${C.borderBtn}`, 
+          border: `2px solid ${C.borderBtn}`,
           background: active ? C.active : C.white,
           color: active ? C.white : C.text,
           fontWeight: 400,
@@ -361,35 +282,29 @@ function TabsComponent({ tab, setTab, counts, setCurrentPage }: TabsProps) {
           gap: 8,
           cursor: 'pointer',
           transition: 'all 0.2s ease',
-          padding: '8px 12px', 
+          padding: '8px 12px',
           lineHeight: '22px',
-          whiteSpace: 'nowrap', 
+          whiteSpace: 'nowrap',
         };
         const isAll = k === 'all';
-        const allSize: React.CSSProperties = isAll
-          ? {
-              padding: '8px 14px', 
-              minWidth: 115, 
-              height: 40,
-            }
-          : {};
+        const allSize: React.CSSProperties = isAll ? { padding: '8px 14px', minWidth: 115, height: 40 } : {};
         return (
-          <button 
-            key={k} 
+          <button
+            key={k}
             onClick={() => {
               setTab(k);
-              setCurrentPage(1); 
-            }} 
+              setCurrentPage(1);
+            }}
             style={{ ...baseBtn, ...allSize }}
           >
             {k === 'all'
-              ? `Todos (${badge})` 
+              ? `Todos (${badge})`
               : k === 'confirmed'
-              ? `Confirmados (${badge})` 
+              ? `Confirmados (${badge})`
               : k === 'pending'
-              ? `Pendientes (${badge})` 
+              ? `Pendientes (${badge})`
               : k === 'cancelled'
-              ? `Cancelados (${badge})` 
+              ? `Cancelados (${badge})`
               : `Terminados (${badge})`}
           </button>
         );

@@ -18,14 +18,12 @@ function buildFromParams(sp: URLSearchParams): SolicitudClienteDetalle | null {
 
   return {
     id,
-    proveedor: sp.get('proveedor') || 'Armando Paredes',
-    fechaISO: sp.get('fecha') || '2025-11-25',
+    proveedor: sp.get('proveedor') || 'Proveedor no especificado',
+    fechaISO: sp.get('date') || sp.get('fecha') || '2025-11-25', // ✅ soporta ambas variantes
     horaInicio: sp.get('inicio') || '10:00',
     horaFin: sp.get('fin') || '11:00',
-    descripcion:
-      sp.get('descripcion') ||
-      'El trabajo es la construcción de un muro perimetral de 20 metros.',
-    costo: Number(sp.get('costo') || 250),
+    descripcion: sp.get('descripcion') || 'Descripción no disponible.',
+    costo: Number(sp.get('costo') || 0),
     estado: parseEstado(sp.get('estado')),
   };
 }
@@ -35,13 +33,12 @@ export default function ClientePageClient() {
   const data = buildFromParams(sp);
 
   const fallback: SolicitudClienteDetalle = {
-    id: 'sol-1',
+    id: 'sol-fallback',
     proveedor: 'Armando Paredes',
     fechaISO: '2025-11-25',
     horaInicio: '10:00',
     horaFin: '11:00',
-    descripcion:
-      'El trabajo es la construcción de un muro perimetral de 20 metros.',
+    descripcion: 'El trabajo es la construcción de un muro perimetral de 20 metros.',
     costo: 250,
     estado: 'Pendiente',
   };
