@@ -239,7 +239,7 @@ function WalletLogic() {
           <div className="flex items-center space-x-4">
             <button
               className="flex items-center space-x-2 bg-[#11255A] text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md hover:bg-[#0B1A40] transition-colors disabled:opacity-50"
-              onClick={loadData}
+              onClick={() => router.push(`/bitcrew/pagosQR?usuario=${usuario}`)}
               disabled={loading}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
