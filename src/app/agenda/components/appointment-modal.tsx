@@ -14,6 +14,10 @@ import { updateAndNotifyWhatsApp } from "@/lib/appointments_whatsapp";
 import LocationForm from "./LocationForms";
 import ModalConfirmacion from "./ModalConfirmacion";
 
+// ✅ imports del panel flotante
+import { useQuickRecipients } from "@/components/quick-recipients/NotificationsContext";
+import { enrichPayloadWithExtraDestinations } from "@/components/quick-recipients/enrichPayload";
+
 type UISlot = { label: string; startISO: string; endISO: string };
 
 interface LocationFormProps {
@@ -57,6 +61,9 @@ export function AppointmentModal({
 }: AppointmentModalProps) {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+  // ✅ Hook dentro del componente
+  const { extraDestinations } = useQuickRecipients();
+
   // Fecha / hora
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -76,7 +83,6 @@ export function AppointmentModal({
   // Confirmación
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const isEdit = false;
 
   // Días feriados
   const holidays = ["2025-11-01", "2025-11-02", "2025-12-24"];
@@ -262,7 +268,7 @@ export function AppointmentModal({
     }
   }, [selectedDate, providerId, open]);
 
-  // ---- POST /api/appointments ----
+  // ---- Helpers de calendario ----
   const isDayDisabled = (day: Date) => {
     const dateStr = toYYYYMMDD(day);
     const today = new Date();
@@ -270,21 +276,14 @@ export function AppointmentModal({
 
     const isWeekend = (d: Date) => d.getDay() === 0 || d.getDay() === 6;
 
-    // Días pasados
     if (day < today) return true;
-
-    // Fines de semana
     if (isWeekend(day)) return true;
-
-    // Feriados
     if (holidays.includes(dateStr)) return true;
 
-    // Permitir la fecha actual de la cita cuando editamos
     if (isEditing && initialAppointment && dateStr === initialAppointment.fecha) {
       return false;
     }
 
-    // Días ocupados
     return bookedDays.includes(dateStr);
   };
 
@@ -313,51 +312,28 @@ export function AppointmentModal({
         ubicacion: locationData,
         estado: "pendiente",
         cliente: {
-          nombre: patientName,
-          email: "adrianvallejosflores24@gmail.com", //reemplázalo dinámicamente si lo tienes
-          phone: "59177484270" //se reemplazaria cuando clienteId este completo o usable
+          nombre: patientName, 
+          // TODO: reemplazar por email/teléfono reales si ya los tienes del cliente
+          email: "adrianvallejosflores24@gmail.com", 
+          phone: "59177484270",
         },
       };
 
-      console.log("Enviando payload:", payload);
+      // ✅ enriquecer con destinatarios extra del panel flotante
+      const payloadConExtras = enrichPayloadWithExtraDestinations(payload, extraDestinations);
 
-      /*
-      let url = `${API_URL}/api/devcode/citas`;
-      let method = "POST";
-
-      
-      if (isEditing && appointmentId) {
-        url = `${API_URL}/api/devcode/citas/${appointmentId}`;
-        method = "PUT";
-        console.log(" Actualizando cita existente:", appointmentId);
-      }
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const body = await res.json().catch(() => ({}));
-      
-      if (!res.ok) {
-        if (res.status === 409) return alert(body?.message || "Horario no disponible.");
-        return alert(body?.message || `Error HTTP ${res.status}`);
-      }
-      */
-     
-     //Si es edición, actualizamos SIN enviar notificación.
+      // URL y método según creación/edición
       const url = isEditing && appointmentId
         ? `${API_URL}/api/devcode/citas/${appointmentId}`
         : `${API_URL}/api/devcode/citas`;
 
       const method = isEditing ? "PUT" : "POST";
 
-      // Llamada principal al backend (crea o actualiza la cita)
+      // Llamada principal al backend (crea o actualiza la cita) — usando el payload enriquecido
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payloadConExtras),
       });
 
       const body = await res.json().catch(() => ({}));
@@ -367,31 +343,29 @@ export function AppointmentModal({
         return alert(body?.message || `Error HTTP ${res.status}`);
       }
 
-      // Enviar notificación según el caso
+      // Enviar notificación según el caso (Gmail simple)
       let resultNotify;
       if (isEditing) {
-        console.log("📨 Enviando notificación de actualización...");
-        resultNotify = await updateAndNotify(payload);
+        console.log("📨 Enviando notificación de actualización (Gmail)...");
+        resultNotify = await updateAndNotify(payloadConExtras);
       } else {
-        console.log("📨 Enviando notificación de creación...");
-        resultNotify = await createAndNotify(payload);
+        console.log("📨 Enviando notificación de creación (Gmail)...");
+        resultNotify = await createAndNotify(payloadConExtras);
       }
 
-      // Validar resultado de notificación
+      // Enviar notificaciones en paralelo (Gmail + WhatsApp) con el payload enriquecido
       try {
         if (isEditing) {
-          console.log("📨 Enviando notificación de actualización...");
-
+          console.log("📨 Enviando notificaciones (Gmail + WhatsApp) actualización...");
           await Promise.allSettled([
-            updateAndNotify(payload),
-            updateAndNotifyWhatsApp(payload),
+            updateAndNotify(payloadConExtras),
+            updateAndNotifyWhatsApp(payloadConExtras),
           ]);
         } else {
-          console.log("📨 Enviando notificación de creación...");
-
+          console.log("📨 Enviando notificaciones (Gmail + WhatsApp) creación...");
           await Promise.allSettled([
-            createAndNotify(payload),
-            createAndNotifyWhatsApp(payload),
+            createAndNotify(payloadConExtras),
+            createAndNotifyWhatsApp(payloadConExtras),
           ]);
         }
 
@@ -413,7 +387,6 @@ export function AppointmentModal({
       setSaving(false);
     }
   };
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

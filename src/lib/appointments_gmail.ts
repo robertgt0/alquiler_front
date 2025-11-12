@@ -1,5 +1,3 @@
-// src/lib/appointments_gmail.ts
-
 /* Para las funciones de actualizacion y cancelacion faltan validar valores para el nombre
  * del cliente, ya que estamos usando el predeterminado, solo se puso su nombre de pila
  */
@@ -15,12 +13,13 @@ export type Destination = { email?: string; phone?: string; name?: string };
 export type CreateAppointmentPayload = {
   proveedorId: string;
   servicioId: string;
-  fecha: string; // ISO
+  fecha: string; // ISO YYYY-MM-DD
   horario?: { inicio?: string; fin?: string };
   cliente?: { nombre?: string; email?: string; phone?: string; id?: string };
   ubicacion?: { direccion?: string; notas?: string };
   citaId?: string;
-  [key: string]: any;
+  cambios?: string[];
+  [key: string]: any; // meta, proveedor, servicio, etc.
 };
 
 export type CreateResponse = {
@@ -33,7 +32,7 @@ export type CreateResponse = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
-/* Utils */
+/* ----------------------- Utils de formato ----------------------- */
 
 const formatearFechaLarga = (iso: string) => {
   const [y, m, d] = iso.split("-").map(Number);
@@ -47,6 +46,68 @@ const formatearFechaLarga = (iso: string) => {
 
 const safeStr = (v: any, fallback = "—") =>
   v === undefined || v === null || v === "" ? fallback : String(v);
+
+/* ----------------------- Helpers de nombres ----------------------- */
+function firstNonEmpty(...vals: Array<any>): string | undefined {
+  for (const v of vals) {
+    const s = (v ?? "").toString().trim();
+    if (s) return s;
+  }
+  return undefined;
+}
+
+function resolveNombreDesdeExtras(meta: any, match: { email?: string; phone?: string }) {
+  if (!meta || !Array.isArray(meta.extraDestinations)) return undefined;
+  const byEmail = meta.extraDestinations.find((d: any) => match.email && d?.email && d.email === match.email);
+  const byPhone = meta.extraDestinations.find((d: any) => match.phone && d?.phone && d.phone === match.phone);
+  return firstNonEmpty(byEmail?.name, byPhone?.name);
+}
+
+/* ----------------------- Extras (UI + .env) ----------------------- */
+
+function parseCsv(v?: string) {
+  if (!v) return [];
+  return v.split(",").map(s => s.trim()).filter(Boolean);
+}
+
+function normalizeEmailExtras(meta: any): Destination[] {
+  const list = Array.isArray(meta?.extraDestinations) ? meta.extraDestinations : [];
+
+  // Defaults opcionales desde .env del frontend
+  const envEmails = parseCsv(process.env.NEXT_PUBLIC_NOTIFY_EMAILS);
+  const envPhones = parseCsv(process.env.NEXT_PUBLIC_NOTIFY_PHONES);
+
+  const envAsDests: Destination[] = [
+    ...envEmails.map(e => ({ email: e })),
+    ...envPhones.map(p => ({ phone: p })),
+  ];
+
+  // Filtrar entradas vacías
+  const combined = [...envAsDests, ...list].filter(
+    (d) => d && (d.email || d.phone)
+  );
+
+  // Normalizar strings a objetos { email/phone }
+  return combined.map((d) => {
+    if (typeof d === "string") {
+      if (d.includes("@")) return { email: d };
+      return { phone: d };
+    }
+    return d;
+  });
+}
+
+function dedupeEmailDests(dests: Destination[]): Destination[] {
+  const seen = new Set<string>();
+  const out: Destination[] = [];
+  for (const d of dests) {
+    const key = `${d.email ?? ""}|${d.phone ?? ""}`.trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(d);
+  }
+  return out;
+}
 
 /* ===========================================================
    📧 Función base: Gmail
@@ -73,7 +134,7 @@ export async function sendNotification(payload: {
   const formattedPayload = { ...payload, message: safeMessage };
 
   const maxAttempts = 3;
-  const retryDelay = 15000;
+  const retryDelay = 40000;
 
   const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -82,7 +143,7 @@ export async function sendNotification(payload: {
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      const timeout = setTimeout(() => controller.abort(), 8000);
 
       const res = await fetch(NOTIFY_URL, {
         method: "POST",
@@ -132,16 +193,13 @@ export async function sendNotification(payload: {
 
       return { ok: true, data: body?.data ?? body, status: res.status };
     } catch (err: any) {
-      console.error(
-        `⚠️ Fallo en intento ${attempt}:`,
-        err?.message ?? err
-      );
+      const msg = err?.message ?? String(err);
+      console.error(`⚠️ Fallo en intento ${attempt}:`, msg);
 
       if (attempt >= maxAttempts) {
         return {
           ok: false,
-          message:
-            err?.message ?? "Error desconocido al enviar notificación.",
+          message: msg || "Error desconocido al enviar notificación.",
         };
       }
 
@@ -159,7 +217,7 @@ export async function sendNotification(payload: {
 }
 
 /* ===========================================================
-   📧 CREAR CITA — Requester + Fixer
+   📧 CREAR CITA — Requester (+extras) y Fixer
    =========================================================== */
 
 export async function createAndNotify(payload: CreateAppointmentPayload) {
@@ -180,22 +238,39 @@ export async function createAndNotify(payload: CreateAppointmentPayload) {
     const direccion = payload.ubicacion?.direccion ?? "No especificada";
     const notas = payload.ubicacion?.notas ?? "Ninguna";
     const servicioNombre = (servicio as any)?.nombre ?? payload.servicioId;
-    const proveedorNombre = (proveedor as any)?.nombre ?? "tu proveedor";
-    const clienteNombre = (cliente as any)?.nombre ?? "Cliente";
+
+    const clienteEmail = payload?.cliente?.email ?? (cliente as any)?.email;
+    const clientePhone = payload?.cliente?.phone ?? (cliente as any)?.phone ?? (cliente as any)?.telefono;
+
+    const proveedorNombre =
+      firstNonEmpty(
+        (proveedor as any)?.nombre,
+        resolveNombreDesdeExtras((payload as any)?.meta, { phone: (proveedor as any)?.telefono ?? (proveedor as any)?.phone })
+      ) ?? "tu proveedor";
+
+    const clienteNombre =
+      firstNonEmpty(
+        payload?.cliente?.nombre,
+        (cliente as any)?.nombre,
+        resolveNombreDesdeExtras((payload as any)?.meta, { email: clienteEmail, phone: clientePhone })
+      ) ?? "Cliente";
+
     const citaId =
       payload.citaId ||
       (payload as any)?._id ||
       (payload as any)?.id ||
       "";
 
-    /* 📨 Requester (cliente) */
-    const destinations: Destination[] = [];
-    if (cliente && (cliente as any).email) {
-      destinations.push({
-        email: (cliente as any).email,
-        name: clienteNombre,
-      });
+    /* 📨 Requester (cliente) + extras */
+    const base: Destination[] = [];
+    if (cliente && clienteEmail) {
+      base.push({ email: clienteEmail, name: clienteNombre });
     }
+
+    const extras = dedupeEmailDests([
+      ...base,
+      ...normalizeEmailExtras((payload as any).meta)
+    ]);
 
     const subject = `Creación de cita con ${proveedorNombre}`;
     const message = [
@@ -218,21 +293,23 @@ export async function createAndNotify(payload: CreateAppointmentPayload) {
       .filter(Boolean)
       .join("\n");
 
-    const notifyPayload = {
-      subject,
-      message,
-      destinations,
-      fromName: "Sistema de Citas",
-      meta: { proveedorId: payload.proveedorId, servicioId: payload.servicioId },
-    };
-
-    const requesterResult = destinations.length
-      ? await sendNotification(notifyPayload)
+    const requesterResult = extras.length
+      ? await sendNotification({
+          subject,
+          message,
+          destinations: extras,
+          fromName: "Sistema de Citas",
+          meta: { proveedorId: payload.proveedorId, servicioId: payload.servicioId, tipo: "create" },
+        })
       : { ok: true };
 
     /* 💌 Fixer (solo si tiene email) */
     const fixerEmail: string | undefined = (proveedor as any)?.email;
-    const fixerNombre: string = (proveedor as any)?.nombre ?? "Proveedor";
+    const fixerNombre: string =
+      firstNonEmpty(
+        (proveedor as any)?.nombre,
+        resolveNombreDesdeExtras((payload as any)?.meta, { phone: (proveedor as any)?.telefono ?? (proveedor as any)?.phone })
+      ) ?? "Proveedor";
 
     if (fixerEmail) {
       const fixerSubject = "Nueva cita confirmada";
@@ -247,7 +324,7 @@ export async function createAndNotify(payload: CreateAppointmentPayload) {
         `🛠️ *Servicio:* ${servicioNombre}`,
         `👤 *Cliente:* ${clienteNombre}`,
         `📍 *Dirección:* ${direccion}`,
-        citaId ? `🆔 *ID de cita:* ${citaId}` : "",
+        citaId ? `🆔 *ID de Cita:* ${citaId}` : "",
         "",
         "Asegúrate de estar disponible en el horario indicado.",
         "Si necesitas modificar la cita, podrás coordinarlo con el cliente.",
@@ -264,7 +341,7 @@ export async function createAndNotify(payload: CreateAppointmentPayload) {
           meta: {
             proveedorId: payload.proveedorId,
             servicioId: payload.servicioId,
-            tipo: "booking_fixer",
+            tipo: "create_fixer",
           },
         }),
       ]);
@@ -281,7 +358,7 @@ export async function createAndNotify(payload: CreateAppointmentPayload) {
 }
 
 /* ===========================================================
-   📧 UPDATE — Requester + Fixer
+   📧 UPDATE — Requester (+extras) y Fixer
    =========================================================== */
 
 export async function updateAndNotify(
@@ -303,32 +380,49 @@ export async function updateAndNotify(
     const horaFin = safeStr(payload.horario?.fin);
     const direccion = payload.ubicacion?.direccion ?? "No especificada";
     const servicioNombre = (servicio as any)?.nombre ?? payload.servicioId;
-    const proveedorNombre = (proveedor as any)?.nombre ?? "tu proveedor";
-    const clienteNombre = (cliente as any)?.nombre ?? "Cliente";
+
+    const clienteEmail = payload?.cliente?.email ?? (cliente as any)?.email;
+    const clientePhone = payload?.cliente?.phone ?? (cliente as any)?.phone ?? (cliente as any)?.telefono;
+
+    const proveedorNombre =
+      firstNonEmpty(
+        (proveedor as any)?.nombre,
+        resolveNombreDesdeExtras((payload as any)?.meta, { phone: (proveedor as any)?.telefono ?? (proveedor as any)?.phone })
+      ) ?? "tu proveedor";
+
+    const clienteNombre =
+      firstNonEmpty(
+        payload?.cliente?.nombre,
+        (cliente as any)?.nombre,
+        resolveNombreDesdeExtras((payload as any)?.meta, { email: clienteEmail, phone: clientePhone })
+      ) ?? "Cliente";
+
     const citaId =
       payload.citaId ||
       (payload as any)?._id ||
       (payload as any)?.id ||
       "";
+
     const cambiosTexto =
       payload.cambios?.length
         ? `🔄 *Cambios realizados:* ${payload.cambios.join(", ")}`
         : "Se han actualizado los detalles de tu cita.";
 
-    /* 📨 Requester */
-    const destinos: Destination[] = [];
-    if (cliente && (cliente as any).email) {
-      destinos.push({
-        email: (cliente as any).email,
-        name: clienteNombre,
-      });
+    /* 📨 Requester + extras */
+    const base: Destination[] = [];
+    if (cliente && clienteEmail) {
+      base.push({ email: clienteEmail, name: clienteNombre });
     }
+    const destinosFinal = dedupeEmailDests([
+      ...base,
+      ...normalizeEmailExtras((payload as any).meta),
+    ]);
 
     const subject = `Actualización de tu cita con ${proveedorNombre}`;
     const message = [
       "✨ *ACTUALIZACIÓN DE CITA* ✨",
       "",
-      `Hola *Juan Perez*,`,
+      `Hola *${clienteNombre}*,`,
       "Tu cita ha sido modificada correctamente.",
       "",
       cambiosTexto,
@@ -345,11 +439,11 @@ export async function updateAndNotify(
       .filter(Boolean)
       .join("\n");
 
-    const requesterResult = destinos.length
+    const requesterResult = destinosFinal.length
       ? await sendNotification({
           subject,
           message,
-          destinations: destinos,
+          destinations: destinosFinal,
           fromName: "Sistema de Citas",
           meta: { proveedorId: payload.proveedorId, tipo: "update" },
         })
@@ -357,7 +451,12 @@ export async function updateAndNotify(
 
     /* 💌 Fixer */
     const fixerEmail: string | undefined = (proveedor as any)?.email;
-    const fixerNombre: string = (proveedor as any)?.nombre ?? "Proveedor";
+    const fixerNombre: string =
+      firstNonEmpty(
+        (proveedor as any)?.nombre,
+        resolveNombreDesdeExtras((payload as any)?.meta, { phone: (proveedor as any)?.telefono ?? (proveedor as any)?.phone })
+      ) ?? "Proveedor";
+
     const motivoUpdate =
       payload.ubicacion?.notas ||
       (payload.cambios?.length
@@ -373,12 +472,10 @@ export async function updateAndNotify(
         "La cita con tu cliente ha sido actualizada.",
         "",
         `📅 *Nueva fecha:* ${fechaLocal}`,
-        `🕒 *Nueva hora:* ${horaInicio}${
-          horaFin && horaFin !== "—" ? ` - ${horaFin}` : ""
-        }`,
-        `👤 *Cliente:* Juan Perez`,
+        `🕒 *Nueva hora:* ${horaInicio}${horaFin && horaFin !== "—" ? ` - ${horaFin}` : ""}`,
+        `👤 *Cliente:* ${clienteNombre}`,
         `🛠️ *Servicio:* ${servicioNombre}`,
-        citaId ? `🆔 *ID de cita:* ${citaId}` : "",
+        citaId ? `🆔 *ID de Cita:* ${citaId}` : "",
         `📝 *Motivo:* ${motivoUpdate}`,
         "",
         "Si el nuevo horario no te conviene, puedes proponer otro.",
@@ -411,7 +508,7 @@ export async function updateAndNotify(
 }
 
 /* ===========================================================
-   📧 CANCEL — Requester + Fixer
+   📧 CANCEL — Requester (+extras) y Fixer
    =========================================================== */
 
 export async function cancelAndNotify(payload: CreateAppointmentPayload) {
@@ -428,23 +525,38 @@ export async function cancelAndNotify(payload: CreateAppointmentPayload) {
 
     const fechaLocal = formatearFechaLarga(payload.fecha);
     const servicioNombre = (servicio as any)?.nombre ?? payload.servicioId;
-    const proveedorNombre = (proveedor as any)?.nombre ?? "tu proveedor";
-    const clienteNombre = (cliente as any)?.nombre ?? "Cliente";
 
-    /* 📨 Requester */
-    const destinos: Destination[] = [];
-    if (cliente && (cliente as any).email) {
-      destinos.push({
-        email: (cliente as any).email,
-        name: clienteNombre,
-      });
+    const clienteEmail = payload?.cliente?.email ?? (cliente as any)?.email;
+    const clientePhone = payload?.cliente?.phone ?? (cliente as any)?.phone ?? (cliente as any)?.telefono;
+
+    const proveedorNombre =
+      firstNonEmpty(
+        (proveedor as any)?.nombre,
+        resolveNombreDesdeExtras((payload as any)?.meta, { phone: (proveedor as any)?.telefono ?? (proveedor as any)?.phone })
+      ) ?? "tu proveedor";
+
+    const clienteNombre =
+      firstNonEmpty(
+        payload?.cliente?.nombre,
+        (cliente as any)?.nombre,
+        resolveNombreDesdeExtras((payload as any)?.meta, { email: clienteEmail, phone: clientePhone })
+      ) ?? "Cliente";
+
+    /* 📨 Requester + extras */
+    const base: Destination[] = [];
+    if (cliente && clienteEmail) {
+      base.push({ email: clienteEmail, name: clienteNombre });
     }
+    const destinosFinal = dedupeEmailDests([
+      ...base,
+      ...normalizeEmailExtras((payload as any).meta),
+    ]);
 
     const subject = `Cancelación de cita con ${proveedorNombre}`;
     const message = [
       "❌ *CANCELACIÓN DE CITA* ❌",
       "",
-      `Hola *Juan Perez*,`,
+      `Hola *${clienteNombre}*,`,
       `Tu cita programada con *${proveedorNombre}* ha sido cancelada.`,
       "",
       `📅 *Fecha original:* ${fechaLocal}`,
@@ -454,11 +566,11 @@ export async function cancelAndNotify(payload: CreateAppointmentPayload) {
       "— *Sistema de Citas*",
     ].join("\n");
 
-    const requesterResult = destinos.length
+    const requesterResult = destinosFinal.length
       ? await sendNotification({
           subject,
           message,
-          destinations: destinos,
+          destinations: destinosFinal,
           fromName: "Sistema de Citas",
           meta: { proveedorId: payload.proveedorId, tipo: "cancel" },
         })
@@ -466,7 +578,12 @@ export async function cancelAndNotify(payload: CreateAppointmentPayload) {
 
     /* 💌 Fixer */
     const fixerEmail: string | undefined = (proveedor as any)?.email;
-    const fixerNombre: string = (proveedor as any)?.nombre ?? "Proveedor";
+    const fixerNombre: string =
+      firstNonEmpty(
+        (proveedor as any)?.nombre,
+        resolveNombreDesdeExtras((payload as any)?.meta, { phone: (proveedor as any)?.telefono ?? (proveedor as any)?.phone })
+      ) ?? "Proveedor";
+
     const clienteLabel = clienteNombre || "Cliente";
 
     if (fixerEmail) {
@@ -475,10 +592,9 @@ export async function cancelAndNotify(payload: CreateAppointmentPayload) {
         "❌ *Cita cancelada*",
         "",
         `👋 Hola *${fixerNombre}*,`,
-        "Tu cita con el cliente ha sido cancelada.",
+        `Tu cita con el cliente *${clienteLabel}* ha sido cancelada.`,
         "",
         `📅 *Fecha original:* ${fechaLocal}`,
-        `👤 *Cliente:* Juan Perez`,
         `🛠️ *Servicio:* ${servicioNombre}`,
         "📝 *Motivo:* el cliente presentó un problema y no podrá asistir.",
         "",
