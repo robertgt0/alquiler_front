@@ -45,6 +45,7 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Encabezado azul con título y empresa */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-white">
         <h2 className="text-2xl font-bold mb-1">{title}</h2>
+        <p className="text-blue-100 text-sm mb-2">{company}</p>
         <p className="text-blue-100 text-sm">{service}</p>
       </div>
 
