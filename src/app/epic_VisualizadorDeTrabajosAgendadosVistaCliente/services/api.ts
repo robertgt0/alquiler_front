@@ -15,7 +15,7 @@ interface BackendTrabajo {
   hora_fin: string;     // formato HH:mm
   estado: string;       // "Pendiente", "Confirmado", etc.
   descripcion?: string;
-  costo?: number;
+  costo?: number; //costo
 }
 
 // 🔹 Obtener trabajos del cliente desde el backend real
