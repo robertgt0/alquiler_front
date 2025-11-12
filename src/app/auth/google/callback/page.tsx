@@ -39,6 +39,20 @@ function Inner() {
 
         if (!data.success) {
           if (data.message === 'usuario ya registrado') {
+            if (typeof window !== 'undefined' && window.opener && window.opener !== window) {
+  const emailFromBackend: string | undefined =
+    data?.data?.user?.email ?? data?.data?.user?.correo ?? data?.data?.email;
+  window.opener.postMessage(
+    {
+      type: 'google-auth-success',
+      email: emailFromBackend,
+    },
+    window.location.origin
+  );
+  window.close();
+  return; // no seguir con el flujo normal
+}
+//
             if(data.data.user.authProvider=='local'){
               throw new Error("metodo de autenticacion no activado para este correo");
               
@@ -69,7 +83,21 @@ function Inner() {
         const user = data.data.user;
         const accessToken = data.data.accessToken;
         const refreshToken = data.data.refreshToken;
-
+          // >>> Añadir: soporte POPUP (linkear método)
+// Si este callback fue abierto en popup, devolvemos SOLO el email y cerramos.
+if (typeof window !== 'undefined' && window.opener && window.opener !== window) {
+  const emailFromProfile: string | undefined = user?.email ?? user?.correo;
+  window.opener.postMessage(
+    {
+      type: 'google-auth-success',
+      email: emailFromProfile,
+    },
+    window.location.origin
+  );
+  window.close();
+  return; // no continuar con guardados ni redirecciones normales
+}
+// <<< Fin añadido
         //  Guardar token y usuario
         localStorage.setItem('userToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);

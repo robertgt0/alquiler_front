@@ -129,7 +129,7 @@ export async function verifyTwoFactor(token: string, secret: string, code: strin
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ secret, token: code }),
+    body: JSON.stringify({ token: code,secret }),
   });
 
   const data = await res.json();
@@ -193,7 +193,7 @@ export async function agregarAutenticacion(usuario:string,provider:string,passwo
 
 export async function eliminarAutenticacion(usuario:string,provider:string) {
   const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
-    method: "POST",
+    method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: `{"provider":"${provider}"}`
   });
