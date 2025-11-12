@@ -36,14 +36,27 @@ function normalizeToItems(arr: unknown): ResultItem[] {
   return arr
     .map((raw) => {
       if (raw && typeof raw === "object") {
-        const o = raw as Record<string, unknown>;
+        const o = raw as Record<string, any>;
         const id = o["id"] ?? o["id_servicio"] ?? o["_id"];
-        if (id !== undefined) return { id, ...o };
+        if (!id) return null;
+
+        // Aquí normalizamos la zona
+        let zonaNombre = "";
+        if (o.zona) {
+          if (typeof o.zona === "string") {
+            zonaNombre = o.zona;
+          } else if (typeof o.zona === "object" && o.zona.nombre) {
+            zonaNombre = o.zona.nombre;
+          }
+        }
+
+        return { ...o, id, zona: zonaNombre } as ResultItem;
       }
       return null;
     })
     .filter((x): x is ResultItem => x !== null);
 }
+
 
 function intersectById(lists: ResultItem[][]): ResultItem[] {
   if (lists.length === 0) return [];
@@ -61,6 +74,8 @@ function intersectById(lists: ResultItem[][]): ResultItem[] {
 
   return commonIds.map((id) => index.get(id)!).filter(Boolean);
 }
+
+
 
 async function getDatos(endpoint: string, params?: Record<string, string | number>) {
   const searchParams = new URLSearchParams();
@@ -85,17 +100,25 @@ function normalizeText(str: string) {
     .toLowerCase();
 }
 
+function capitalize(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
 /* BÚSQUEDA CON COINCIDENCIA */
 async function buscarConInterseccion(f: Filtros): Promise<ResultItem[]> {
   const requests: Array<Promise<unknown>> = [];
 
-  if (f.tipoServicio) {
+  // Solo enviar tipoServicio si tiene contenido
+  if (f.tipoServicio?.trim()) {
     const servicioNormalizado = normalizeText(f.tipoServicio);
     requests.push(getDatos(API_SERVICIOS, { servicio: servicioNormalizado }));
   }
 
   if (f.horario) requests.push(getDatos(API_DISPONIBILIDAD, { turno: f.horario }));
-  if (f.zona && f.zona.trim().length > 1) requests.push(getDatos(API_ZONA, { zona: f.zona }));
+ 
+if (f.zona && f.zona.trim()) {
+  const zonaCapitalizada = capitalize(f.zona.trim());
+  requests.push(getDatos(API_ZONA, { zona: zonaCapitalizada }));
+}
 
   if (f.experiencia) {
     const match = f.experiencia.match(/(\d+)\s*a\s*(\d+)/);
@@ -115,24 +138,26 @@ async function buscarConInterseccion(f: Filtros): Promise<ResultItem[]> {
 
   if (f.fechaInicio) requests.push(getDatos(API_FECHA, { fecha_exacta: f.fechaInicio }));
 
+  // Si no hay filtros, devolvemos todos los servicios
   if (requests.length === 0) {
-    throw new Error("Debes seleccionar al menos un filtro para buscar.");
+    const serviciosRes = await getDatos(API_SERVICIOS);
+    return normalizeToItems(serviciosRes?.data || serviciosRes || []);
   }
 
   const responses = await Promise.all(requests);
   const listas: ResultItem[][] = responses.map((r) => {
-    if (Array.isArray(r)) return normalizeToItems(r);
-    if (r && typeof r === "object") {
-      const arr = Object.values(r).find((v) => Array.isArray(v));
-      if (arr) return normalizeToItems(arr);
-    }
-    return [];
-  });
+  if (r && typeof r === "object") {
+    const dataArr = (r as any).data;
+    if (Array.isArray(dataArr)) return normalizeToItems(dataArr);
+  }
+  return [];
+});
+
 
   let resultadoFinal = intersectById(listas);
 
   // FILTRADO NORMALIZADO PARA TILDES Y MAYÚSCULAS
-  if (f.tipoServicio) {
+  if (f.tipoServicio?.trim()) {
     const busqueda = normalizeText(f.tipoServicio);
     const resultadoNormalizado = resultadoFinal.map((item) => ({
       ...item,
@@ -148,6 +173,7 @@ async function buscarConInterseccion(f: Filtros): Promise<ResultItem[]> {
   return resultadoFinal;
 }
 
+/* =================== COMPONENTE =================== */
 const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
   onAplicarFiltros,
   onLimpiarFiltros,
@@ -219,11 +245,6 @@ const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
   };
 
   const aplicar = async () => {
-    if (!Object.values(filtros).some((v) => v !== "" && v !== undefined)) {
-      setError("Debes seleccionar al menos un filtro.");
-      return;
-    }
-
     if (
       filtros.precioMin !== undefined &&
       filtros.precioMax !== undefined &&
@@ -235,7 +256,14 @@ const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
 
     setError(null);
     try {
-      const resultados = await buscarConInterseccion(filtros);
+       // Llamamos a la función que hace las consultas
+    const respuestas = await buscarConInterseccion(filtros);
+
+    // Normalizamos los resultados para asegurarnos que zona sea string
+    const resultados: ResultItem[] = normalizeToItems(respuestas);
+
+    // Mostramos la zona en consola para verificar
+    console.log("Zonas encontradas:", resultados.map(r => r.zona));
 
       // Actualizamos tipoServicio con el nombre real desde el primer resultado si existe
       if (filtros.tipoServicio && resultados.length > 0) {

@@ -265,50 +265,79 @@ function BusquedaContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]); // Solo depende de currentPage para evitar bucles.
 
+
+
   // --- Handlers ---
 
   const handleAdvancedFilters = (filtros: any) => {
-    console.log(" Filtros aplicados:", filtros);
+  console.log(" Filtros aplicados:", filtros);
 
-    // *IMPORTANTE: Al aplicar filtros, la búsqueda debe hacerse sobre 'allJobs' o el estado actual de la data.
-    // Usamos 'allJobs' para aplicar filtros sobre el set completo, asumiendo que el filtro avanzado es independiente del término de búsqueda.
-    let filtrados = allJobs.filter((job: Job) => { 
-      let match = true;
+  const filtrados = allJobs.filter((job: Job) => {
+    let match = true;
 
-      // *Error Corregido: La comparación `job.title.toLowerCase() === filtros.tipoServicio.toLowerCase()` es muy estricta.
-      // Un filtro de servicio probablemente debería buscar si el título *incluye* la palabra clave.
-      if (filtros.tipoServicio)
-        match &&= job.title.toLowerCase().includes(filtros.tipoServicio.toLowerCase());
+    // Tipo de servicio
+    if (filtros.tipoServicio) {
+      match &&=
+        job.title?.toLowerCase().includes(filtros.tipoServicio.toLowerCase()) ||
+        job.service?.toLowerCase().includes(filtros.tipoServicio.toLowerCase());
+    }
 
-      if (filtros.zona)
-        match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
+    // Zona
+    if (filtros.zona) {
+      match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
+    }
 
-      if (filtros.precioMin || filtros.precioMax) {
-        // *Error Corregido: La lógica para obtener el precio de `job.salaryRange` no es robusta.
-        // Asumiendo que `job.salaryRange` es una cadena como "1000 - 2000 USD", necesitamos un número.
-        // Si el precio está en un rango (ej: 1000-2000), solo tomaremos el valor mínimo/máximo para la comparación.
-        // Mejorar esta lógica si el formato de `salaryRange` es diferente.
-        const salaryRangeText = job.salaryRange || "0";
-        const numeros = salaryRangeText.match(/\d+(\.\d+)?/g) || ["0"];
-        // Tomamos el primer número encontrado como valor de referencia
-        const precioNum = parseFloat(numeros[0]); 
-        
-        if (filtros.precioMin) match &&= precioNum >= filtros.precioMin;
-        if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
+    // Precio (rango salarial)
+    if (filtros.precioMin || filtros.precioMax) {
+      const salaryRangeText = job.salaryRange || "0";
+      const numeros = salaryRangeText.match(/\d+(\.\d+)?/g) || ["0"];
+      const precioNum = parseFloat(numeros[0]);
+
+      if (filtros.precioMin) match &&= precioNum >= filtros.precioMin;
+      if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
+    }
+
+    // Horario o tipo de empleo
+    if (filtros.horario) {
+      match &&= job.employmentType?.toLowerCase() === filtros.horario.toLowerCase();
+    }
+
+    // Disponibilidad (si existe en tus datos, ej. "Full time" o "Part time")
+    if (filtros.disponibilidad) {
+      match &&= job.employmentType?.toLowerCase().includes(
+        filtros.disponibilidad.toLowerCase()
+      );
+    }
+
+    // Experiencia (asumiendo que existe campo `experienceYears` o similar)
+    if (filtros.experiencia) {
+      const experienciaNum = parseInt((job as any).experienceYears || "0", 10);
+      match &&= experienciaNum >= parseInt(filtros.experiencia, 10);
+    }
+
+    // Fecha (asumiendo que el filtro tiene un rango o una fecha mínima)
+    if (filtros.fechaDesde || filtros.fechaHasta) {
+      const fechaJob = new Date(job.postedDate);
+      if (filtros.fechaDesde) {
+        const fechaMin = new Date(filtros.fechaDesde);
+        match &&= fechaJob >= fechaMin;
       }
+      if (filtros.fechaHasta) {
+        const fechaMax = new Date(filtros.fechaHasta);
+        match &&= fechaJob <= fechaMax;
+      }
+    }
 
-      if (filtros.horario)
-        match &&= job.employmentType.toLowerCase() === filtros.horario.toLowerCase();
+    return match;
+  });
 
-      return match;
-    });
+  setFiltrosAplicados(true);
+  setSearchResults(filtrados);
+  setModoVista("jobs");
+  setFiltersNoResults(filtrados.length === 0);
+  handlePageChange(1);
+};
 
-    setFiltrosAplicados(true);
-    setSearchResults(filtrados);
-    setModoVista("jobs"); // El filtro avanzado se aplica solo a los trabajos
-    setFiltersNoResults(filtrados.length === 0);
-    handlePageChange(1); // Restablecer la página a 1 al aplicar nuevos filtros
-  };
 
   const handleSearchResults = (
     termino: string,
@@ -396,11 +425,6 @@ function BusquedaContent() {
     filtersNoResults; // Corregido: `usuariosFiltrados.length === 0` es redundante si `modoVista` es "jobs"
 
   const mostrarErrorCaracteres = errorCaracteres && !buscando;
-  
-  // ... Resto del componente de renderizado (sin cambios importantes)
-
-
-
 
 
   return (
