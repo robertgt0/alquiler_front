@@ -85,7 +85,6 @@ function BusquedaContent() {
     }
     return sorted;
   };
-
   const ordenarUsuarios = (opcion: string, lista: UsuarioResumen[]) => {
     const sorted = [...lista];
     switch (opcion) {
@@ -345,6 +344,9 @@ function BusquedaContent() {
         
         // *Importante: Si se aplica una nueva búsqueda, se eliminan los filtros avanzados
         setFiltrosAplicados(false); 
+        
+        // Reinicia la paginación a la página 1
+        handlePageChange(1);
 
         if (actualizarUrl) actualizarURL(termino, 1); // Actualiza URL y va a la página 1
         setEstadoBusqueda("success");
@@ -396,6 +398,10 @@ function BusquedaContent() {
   const mostrarErrorCaracteres = errorCaracteres && !buscando;
   
   // ... Resto del componente de renderizado (sin cambios importantes)
+
+
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 to-white">

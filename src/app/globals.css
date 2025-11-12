@@ -5,6 +5,14 @@
 
 @import "mapbox-gl/dist/mapbox-gl.css";
 
+<<<<<<< HEAD
+=======
+
+/* VS Code CSS validation doesn't recognize Tailwind v4 @theme directive */
+/* @theme is a valid Tailwind CSS v4 at-rule */
+
+
+>>>>>>> a5fd5a8713fd84678e6cfc8960c07a8518f3569f
 /* Variables CSS personalizadas */
 :root {
   --background: #ffffff;

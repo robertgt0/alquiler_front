@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 "use client";
 import { useState } from "react";
 import "./UbicacionForm.css";
@@ -32,15 +31,3 @@ export default function UbicacionForm() {
     </form>
   );
 }
-=======
-'use client';
-
-export default function UbicacionForm() {
-  return (
-    <div>
-      <h1>Formulario de Ubicación</h1>
-      <p>Componente de formulario de ubicación</p>
-    </div>
-  );
-}
->>>>>>> 0d3f19614c8a0153cb80a559e6d552ea9d75a0e2
