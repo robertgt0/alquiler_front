@@ -432,7 +432,7 @@ function BusquedaContent() {
             <FiltrosForm
               onResults={(usuarios: UsuarioResumen[]) => {
                 setUsuariosFiltrados(usuariosOrdenados); // Corrección: Usar el estado ordenado
-                setModoVista(usuarios.length > 0 ? "usuarios" : "jobs");
+                setModoVista("jobs"); // Siempre mostrar vista de jobs con JobCard
                 setFiltrosAplicados(true);
                 setFiltersNoResults(usuarios.length === 0); // Establecer filtersNoResults si no hay usuarios
               }}
