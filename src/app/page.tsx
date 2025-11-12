@@ -1,11 +1,14 @@
-import Mapa from "./components/mapa/MapaWrapper";
-import CarruselOfertas from "./components/CarruselOfertas/CarruselOfertas";
-import HomeFixer from "./components/ListaCategorias/HomeFixer";
-// import type { Categoria } from "./components/ListaCategorias/tipos"; // ← no se usa
-import Footer from "./components/Footer/Footer";
-import CarruselInspirador from "./components/CarruselInspirador/CarruselInspirador";
+// src/app/page.tsx
+import Mapa from "@/app/components/mapa/MapaWrapper";
+import CarruselOfertas from "@/app/components/CarruselOfertas/CarruselOfertas";
+import HomeFixer from "@/app/components/ListaCategorias/HomeFixer";
+// ❌ ELIMINADO: Ya no importamos 'Categoria' porque HomeFixer no lo necesita
+// import type { Categoria } from "./components/ListaCategorias/tipos";
+import Footer from "@/app/components/Footer/Footer";
+import CarruselInspirador from "@/app/components/CarruselInspirador/CarruselInspirador";
 import Link from "next/link";
-import categorias, { type CategoriaBase } from "./components/data/categoriasData";
+// ❌ ELIMINADO: Ya no importamos los datos estáticos de 'categoriasData'
+// import categorias, { type CategoriaBase } from "./components/data/categoriasData";
 
 export default function Home() {
   return (
@@ -22,8 +25,13 @@ export default function Home() {
 
       {/* Servicios / categorías */}
       <section id="servicios" className="my-5 w-full">
-        {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
-        <HomeFixer categorias={categorias as CategoriaBase[]} />
+        {/*
+          ✅ SOLUCIÓN:
+          Llamamos a HomeFixer SIN la prop 'categorias'.
+          HomeFixer (que adentro llama a ListaCategorias) 
+          se encargará de hacer el fetch por sí mismo.
+        */}
+        <HomeFixer />
       </section>
 
       {/* Trabajos recientes */}
@@ -32,6 +40,7 @@ export default function Home() {
       </section>
 
       {/* Acciones rápidas (contenido que tenías en el segundo Home) */}
+      {/* 👍 MANTENIDO: Todo tu código nuevo se queda intacto. */}
       <section className="my-10">
         <div className="min-h-[0] flex items-center justify-center">
           <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">

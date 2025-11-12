@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+// 👈 CORRECCIÓN 1: Importar 'Suspense' de React
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getOfferById, createOffer, updateOffer, type Offer } from '@/app/offers/services/offersService';
 
@@ -13,11 +14,15 @@ function fileToDataURL(file: File): Promise<string> {
   });
 }
 
-export default function NuevaOFertaOEditar() {
+// 👈 CORRECCIÓN 2: Renombramos tu componente. Quitamos el 'export default'.
+// Este componente AHORA será renderizado por el cliente.
+function NuevaOFertaOEditar() {
   const router = useRouter();
-  const search = useSearchParams();
-  const editId = search.get('edit'); // <-- si viene, estamos en modo edición
+  const search = useSearchParams(); // 👈 Ahora esto es seguro
+  const editId = search.get('edit'); 
 
+  // ... (Todo tu código de 'useState', 'useEffect', 'onSubmit' va aquí)
+  // ... (No he cambiado nada de tu lógica interna)
   // estado del formulario
   const [descripcion, setDescripcion] = useState('');
   const [categoria, setCategoria] = useState('Seleccionar categoría');
@@ -90,7 +95,7 @@ export default function NuevaOFertaOEditar() {
           description: descripcion,
           category: categoria,
           images,
-          contact: { whatsapp: '555-000-0000' }, // opcional
+          contact: { whatsapp: '555-000-000' }, // opcional
         });
 
         setMensaje('Oferta creada exitosamente ✅');
@@ -203,5 +208,18 @@ export default function NuevaOFertaOEditar() {
         </form>
       </section>
     </main>
+  );
+}
+
+// 👈 CORRECCIÓN 3: Creamos un nuevo componente 'Page' que es el export default
+export default function AddNewJobOfferPage() {
+  
+  // 👈 CORRECCIÓN 4: Envolvemos el componente en <Suspense>
+  //    Esto le dice a Next.js que muestre "Cargando..." y espere
+  //    a que el cliente renderice el formulario.
+  return (
+    <Suspense fallback={<main className="p-6">Cargando...</main>}>
+      <NuevaOFertaOEditar />
+    </Suspense>
   );
 }
