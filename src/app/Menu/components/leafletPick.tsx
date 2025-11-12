@@ -1,7 +1,14 @@
 'use client';
 
-import React from 'react';
-import { MapContainer, TileLayer, Marker, Circle, useMapEvents } from 'react-leaflet';
+import React, { useEffect } from 'react';
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Circle,
+  useMapEvents,
+  useMap,
+} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 export type LatLng = { lat: number; lng: number };
@@ -15,10 +22,21 @@ function ClickHandler({ onChange }: { onChange: (c: LatLng) => void }) {
   return null;
 }
 
+// 🔹 NUEVO: para que el mapa se re-centre cuando cambia "center"
+function MapAutoCenter({ center }: { center: LatLng }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView([center.lat, center.lng], map.getZoom());
+  }, [center, map]);
+
+  return null;
+}
+
 export default function LeafletPick({
   value,
   onChange,
-  zoom = 16,
+  zoom = 15,
   radius = 100,
 }: {
   value?: LatLng;
@@ -29,7 +47,14 @@ export default function LeafletPick({
   const center: LatLng = value ?? { lat: -17.3895, lng: -66.1568 };
 
   return (
-    <div style={{ height: 320, width: '100%', borderRadius: 16, overflow: 'hidden' }}>
+    <div
+      style={{
+        height: 320,
+        width: '100%',
+        borderRadius: 16,
+        overflow: 'hidden',
+      }}
+    >
       <MapContainer
         center={[center.lat, center.lng]}
         zoom={zoom}
@@ -37,7 +62,11 @@ export default function LeafletPick({
         scrollWheelZoom
       >
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
         <ClickHandler onChange={onChange} />
+        {/* 🔹 centra el mapa en el center actual */}
+        <MapAutoCenter center={center} />
+
         {value && (
           <>
             <Marker position={[value.lat, value.lng]} />

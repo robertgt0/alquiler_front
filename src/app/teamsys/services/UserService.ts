@@ -288,115 +288,63 @@ export async function actualizarUbicacionBack(id: string, lat: string, long: str
 
 // === Cerrar sesiones en todos los dispositivos excepto el actual ===
 // === Cerrar sesiones en todos los dispositivos excepto el actual (con fallbacks y verificación real) ===
-export async function cerrarSesionesRemotas(): Promise<{ ok: boolean; message: string }> {
-  const token = getAccessToken();
-  if (!token) return { ok: false, message: "No hay sesión activa." };
+export async function cerrarSesionesRemotas(
+  accessToken: string
+): Promise<{ ok: boolean; message: string }> {
+  if (!accessToken) {
+    return { ok: false, message: "Token de sesión no proporcionado." };
+  }
 
-  const base = API_URL.replace(/\/+$/, "");
+  // Limpia la URL para evitar problemas por "/", espacios, etc.
+  const base = (API_URL ?? "").trim().replace(/\/+$/, "");
+  const url = `${base}/api/teamsys/sessions/user/all-except-current`;
 
-  // Variantes típicas de path
-  const candidatePaths = [
-    "/api/teamsys/sessions/user/all-except-current", // plural + /user
-    "/api/teamsys/session/user/all-except-current",  // singular + /user
-    "/api/teamsys/sessions/all-except-current",      // plural sin /user
-    "/api/teamsys/session/all-except-current",       // singular sin /user
-  ];
-
-  const methods: Array<"POST" | "DELETE"> = ["POST", "DELETE"];
-  let lastError = "Ruta no encontrada.";
-
-  // Helper para decidir si hubo éxito REAL
   const isRealSuccess = (res: Response, data: any) => {
-    // 204 No Content suele ser éxito en endpoints "acción"
     if (res.status === 204) return true;
-    // Contratos comunes de éxito
     if (data?.success === true) return true;
     if (typeof data?.closed === "number" && data.closed > 0) return true;
     if (typeof data?.closedCount === "number" && data.closedCount > 0) return true;
-    // Mensajes típicos del back
+
     const msg = (data?.message || "").toString().toLowerCase();
     if (/cerraron|cerradas|closed/.test(msg)) return true;
+
     return false;
   };
 
-  for (const p of candidatePaths) {
-    const url = `${base}${p}`;
-    for (const m of methods) {
-      try {
-        const res = await fetch(url, {
-          method: m,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  try {
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: Bearer ${accessToken},
+      },
+    });
 
-        // Puede no haber body (204). Safe parse:
-        let data: any = null;
-        try { data = await res.json(); } catch { data = null; }
-
-        if (res.ok && isRealSuccess(res, data)) {
-          // éxito real
-          const message =
-            (data && data.message) ||
-            "Se cerraron las demás sesiones.";
-          return { ok: true, message };
-        }
-
-        // Si 404, prueba siguiente variante
-        if (res.status === 404) {
-          console.warn(`404 en ${m} ${url} — probando siguiente variante…`);
-          lastError = (data && data.message) || `HTTP 404 en ${m} ${url}`;
-          continue;
-        }
-
-        // Si 2xx pero sin éxito real, seguimos buscando otra variante
-        if (res.ok) {
-          lastError =
-            (data && data.message) ||
-            `Endpoint ${m} ${url} respondió 2xx pero no confirmó cierre de sesiones.`;
-          console.warn(lastError);
-          continue;
-        }
-
-        // Otros códigos (401/403/500…): devolvemos el error
-        lastError = (data && data.message) || `HTTP ${res.status} en ${m} ${url}`;
-        console.error(`Fallo ${m} ${url}:`, lastError);
-        return { ok: false, message: lastError };
-      } catch (e: any) {
-        lastError = e?.message || `Error de red en ${m} ${url}`;
-        console.error(lastError);
-        // probar siguiente variante
-      }
+    let data: any = null;
+    try {
+      data = await res.json();
+    } catch {
+      data = null; // Puede ser 204 sin body
     }
-  }
 
-  // Ninguna variante confirmó éxito
-  return { ok: false, message: lastError || "No se pudieron cerrar las otras sesiones." };
-}
+    if (res.ok && isRealSuccess(res, data)) {
+      const message =
+        data?.message ||
+        data?.msg ||
+        "Se cerraron las demás sesiones correctamente.";
 
-export async function obtenerPerfilActual(accessToken: string) {
-  const res = await fetch(`${API_URL}/api/teamsys/me`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-  });
+      return { ok: true, message };
+    }
 
-  const json = await res.json().catch(() => ({}));
+    const errorMessage =
+      data?.message ||
+      data?.error ||
+      Error HTTP ${res.status} al cerrar las sesiones remotas.;
 
-  if (!res.ok || json?.success === false) {
-    throw new Error(json?.message || `Error /me (${res.status})`);
-  }
-
-  return json /*as {
-    success: true;
-    data: {
-      correo: string;
-      authProvider?: string;
-      password?: string; // ⚠️ si el back la manda, no la guardes ni muestres
-      [k: string]: any;
+    return { ok: false, message: errorMessage };
+  } catch (e: any) {
+    return {
+      ok: false,
+      message: e?.message ?? "Error de red al cerrar sesiones remotas.",
     };
-  };*/
-}
+  }}

@@ -14,14 +14,22 @@ export const CerrarSesiones: React.FC<CerrarSesionesProps> = ({ onCancel }) => {
   const [result, setResult] = React.useState<null | { ok: boolean; text: string }>(null);
 
   const ejecutar = async () => {
+    try {
+      
     setLoading(true);
-    const res = await cerrarSesionesRemotas();
+    const token=sessionStorage.getItem("authToken")
+    if(token==null)throw new Error("no existe accesstoken");
+    
+    const res = await cerrarSesionesRemotas(token);
     setLoading(false);
 
     if (res.ok) {
       setResult({ ok: true, text: 'Sesiones cerradas exitosamente.' });
     } else {
       setResult({ ok: false, text: res.message || 'No se pudieron cerrar las sesiones.' });
+    }
+    } catch (error) {
+      setResult({ ok: false, text: "error en el servidor" })
     }
   };
 
