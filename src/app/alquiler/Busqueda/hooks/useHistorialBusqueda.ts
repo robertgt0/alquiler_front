@@ -81,7 +81,45 @@ export function useSearchHistory({
   const [indiceSeleccionado, setIndiceSeleccionado] = useState<number>(-1);
 
   // ✅ Cargar historial del backend o localStorage
-  const cargarHistorialBackend = useCallback(async () => {
+const cargarHistorialBackend = useCallback(async () => {
+
+    // ✅ LÓGICA PARA USAR SOLO LOCALSTORAGE
+    if (!apiConfig?.endpoint) { 
+        console.log("📚 [HISTORIAL] No hay API config, usando localStorage.");
+        setCargandoHistorial(true); // <-- Faltaba esto
+        try {
+            const localHistorial = localStorage.getItem("historialBusquedas");
+            
+            // --- ESTA ES LA LÓGICA QUE FALTABA ---
+            if (localHistorial) {
+                const historialParseado: string[] = JSON.parse(localHistorial);
+                
+                // Normalizar por si acaso
+                const historialUnico: string[] = Array.from(
+                  new Set(
+                    historialParseado
+                      .map((term: string) => term.trim())
+                      .filter((term: string) => term.length > 0)
+                  )
+                ).slice(0, 10);
+
+                setHistorial(historialUnico);
+                console.log('📚 [HISTORIAL] Historial cargado desde localStorage:', historialUnico);
+            } else {
+                setHistorial([]); // Asegurarse de que esté vacío si no hay nada
+            }
+            // --- FIN DE LA LÓGICA ---
+
+        } catch (localError) {
+            console.error("Error al cargar desde localStorage:", localError);
+            setHistorial([]); // En caso de error, vaciarlo
+        } finally {
+            setCargandoHistorial(false); // <-- Faltaba esto
+            historialCargado.current = true; // <-- Faltaba esto
+        }
+        return; // No continúa
+    }
+
     if (!mostrarHistorial) return;
 
     setCargandoHistorial(true);

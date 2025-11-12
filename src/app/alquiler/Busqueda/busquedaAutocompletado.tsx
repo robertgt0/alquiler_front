@@ -1557,7 +1557,7 @@ export default function BusquedaAutocompletado({
                 {/* ✅ HISTORIAL ✅ */}
                 {mostrarHistorialLocal && (
                     <ul className="caja-sugerencias">
-                        <li className="sugerencias-header">
+                        <li className="sugerencias-header"onMouseDown={(e) => e.preventDefault()}>
                             Búsquedas recientes
                             {cargandoHistorial && (
                                 <span className="cargando-indicador">Cargando...</span>
@@ -1570,7 +1570,7 @@ export default function BusquedaAutocompletado({
                                 No hay búsquedas recientes
                             </li>
                         ) : (
-                            historial.map((item, i) => (
+                            historial.slice(0,5).map((item, i) => (
                                 <li
                                     key={i}
                                     className={`item-historial ${i === indiceSeleccionado ? 'seleccionado' : ''}`}
@@ -1583,6 +1583,7 @@ export default function BusquedaAutocompletado({
 
                                     <button
                                         className="boton-eliminar-historial"
+                                        onMouseDown={(e) => e.preventDefault()}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             eliminarDelHistorial(item);
@@ -1599,6 +1600,7 @@ export default function BusquedaAutocompletado({
                         {historial.length > 0 && (
                             <li
                                 className="item-limpiar-todo"
+                                onMouseDown={(e) => e.preventDefault()}
                                 onClick={limpiarHistorialBackend}
                             >
                                 <Trash2 size={14} />
