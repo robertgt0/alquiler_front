@@ -17,7 +17,6 @@ export interface Filtros {
   horario?: string;
   experiencia?: string;
   fechaInicio?: string;
-  fechaFin?: string;
 }
 
 export type ResultItem = {
@@ -31,8 +30,6 @@ const API_ZONA = `${API_BASE}/zona`;
 const API_EXPERIENCIA = `${API_BASE}/experiencia`;
 const API_PRECIO = `${API_BASE}/precio`;
 const API_FECHA = `${API_BASE}/fecha`;
-
-
 
 function normalizeToItems(arr: unknown): ResultItem[] {
   if (!Array.isArray(arr)) return [];
@@ -80,12 +77,23 @@ async function getDatos(endpoint: string, params?: Record<string, string | numbe
   return data;
 }
 
-/*  BÚSQUEDA CON COINCIDENCIA  */
+/* NORMALIZAR TEXTO PARA BUSQUEDAS SIN QUE AFECTEN TILDES Y MAYÚSCULAS */
+function normalizeText(str: string) {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
 
+/* BÚSQUEDA CON COINCIDENCIA */
 async function buscarConInterseccion(f: Filtros): Promise<ResultItem[]> {
   const requests: Array<Promise<unknown>> = [];
 
-  if (f.tipoServicio) requests.push(getDatos(API_SERVICIOS, { servicio: f.tipoServicio }));
+  if (f.tipoServicio) {
+    const servicioNormalizado = normalizeText(f.tipoServicio);
+    requests.push(getDatos(API_SERVICIOS, { servicio: servicioNormalizado }));
+  }
+
   if (f.horario) requests.push(getDatos(API_DISPONIBILIDAD, { turno: f.horario }));
   if (f.zona && f.zona.trim().length > 1) requests.push(getDatos(API_ZONA, { zona: f.zona }));
 
@@ -105,8 +113,7 @@ async function buscarConInterseccion(f: Filtros): Promise<ResultItem[]> {
     requests.push(getDatos(API_PRECIO, precioParams));
   }
 
-  if (f.fechaInicio) requests.push(getDatos(API_FECHA, { fecha_inicio: f.fechaInicio }));
-  if (f.fechaFin) requests.push(getDatos(API_FECHA, { fecha_fin: f.fechaFin }));
+  if (f.fechaInicio) requests.push(getDatos(API_FECHA, { fecha_exacta: f.fechaInicio }));
 
   if (requests.length === 0) {
     throw new Error("Debes seleccionar al menos un filtro para buscar.");
@@ -124,18 +131,22 @@ async function buscarConInterseccion(f: Filtros): Promise<ResultItem[]> {
 
   let resultadoFinal = intersectById(listas);
 
+  // FILTRADO NORMALIZADO PARA TILDES Y MAYÚSCULAS
   if (f.tipoServicio) {
-    const busqueda = f.tipoServicio.toLowerCase();
-    resultadoFinal = resultadoFinal.filter((item) => {
-      const nombre = String(item.nombre || item.tipoServicio || "").toLowerCase();
-      return nombre.includes(busqueda);
-    });
+    const busqueda = normalizeText(f.tipoServicio);
+    const resultadoNormalizado = resultadoFinal.map((item) => ({
+      ...item,
+      nombre_normalizado: normalizeText(
+        String(item.nombre || item.tipoServicio || item.servicio || "")
+      ),
+    }));
+    resultadoFinal = resultadoNormalizado.filter((item) =>
+      item.nombre_normalizado.includes(busqueda)
+    );
   }
 
   return resultadoFinal;
 }
-
-
 
 const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
   onAplicarFiltros,
@@ -149,37 +160,32 @@ const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandido, setExpandido] = useState(false);
+  const [fecha, setFecha] = useState<string>(filtros.fechaInicio || "");
 
-  const [fechaInicio, setFechaInicio] = useState<string>(filtros.fechaInicio || "");
-  const [fechaFin, setFechaFin] = useState<string>(filtros.fechaFin || "");
-
-  
   useEffect(() => {
     const filtrosGuardados = localStorage.getItem("busquedaAvanzadaFiltros");
     if (filtrosGuardados) {
       const parsed = JSON.parse(filtrosGuardados);
       setFiltros(parsed);
-      setFechaInicio(parsed.fechaInicio || "");
-      setFechaFin(parsed.fechaFin || "");
+      setFecha(parsed.fechaInicio || "");
     }
   }, []);
 
-  /* ======================= CARGAR CATÁLOGOS ======================= */
   useEffect(() => {
     const cargarCatalogos = async () => {
       try {
-        const [serviciosRes, zonasRes] = await Promise.all([getDatos(API_SERVICIOS), getDatos(API_ZONA)]);
+        const [serviciosRes, zonasRes] = await Promise.all([
+          getDatos(API_SERVICIOS),
+          getDatos(API_ZONA),
+        ]);
         if (serviciosRes?.data && Array.isArray(serviciosRes.data))
           setTiposDeServicio(serviciosRes.data.map((s: any) => s.nombre || s));
         if (zonasRes?.data && Array.isArray(zonasRes.data)) setZonas(zonasRes.data);
-      } catch {
-        
-      }
+      } catch {}
     };
     cargarCatalogos();
   }, []);
 
-  /*  MANEJAR CAMBIO DE FILTRO */
   const handleChange = (campo: keyof Filtros, valor: string) => {
     setFiltros((prev) => {
       const nuevo = {
@@ -191,53 +197,27 @@ const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
     });
   };
 
-  /*  CAMBIO DE FECHA  */
-  const validarFecha = (fecha: string) => /^\d{4}-\d{2}-\d{2}$/.test(fecha);
-
-  const handleFechaChange = (tipo: "inicio" | "fin", valor: string) => {
-    if (!validarFecha(valor)) {
+  const handleFechaChange = (valor: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
       setError("Formato de fecha inválido (YYYY-MM-DD).");
       return;
     }
     setError(null);
-
-    if (tipo === "inicio") {
-      setFechaInicio(valor);
-      setFiltros(prev => {
-        const nuevo = { ...prev, fechaInicio: valor };
-        localStorage.setItem("busquedaAvanzadaFiltros", JSON.stringify(nuevo));
-        return nuevo;
-      });
-      if (fechaFin && valor > fechaFin) {
-        setFechaFin("");
-        setFiltros(prev => {
-          const nuevo = { ...prev, fechaFin: "" };
-          localStorage.setItem("busquedaAvanzadaFiltros", JSON.stringify(nuevo));
-          return nuevo;
-        });
-      }
-    } else {
-      setFechaFin(valor);
-      setFiltros(prev => {
-        const nuevo = { ...prev, fechaFin: valor };
-        localStorage.setItem("busquedaAvanzadaFiltros", JSON.stringify(nuevo));
-        return nuevo;
-      });
-    }
+    setFecha(valor);
+    const nuevoFiltro = { ...filtros, fechaInicio: valor };
+    setFiltros(nuevoFiltro);
+    localStorage.setItem("busquedaAvanzadaFiltros", JSON.stringify(nuevoFiltro));
   };
 
-  /* LIMPIAR  */
   const limpiar = () => {
     setFiltros({});
-    setFechaInicio("");
-    setFechaFin("");
+    setFecha("");
     localStorage.removeItem("busquedaAvanzadaFiltros");
     setMensaje(null);
     setError(null);
     onLimpiarFiltros?.();
   };
 
-  /* APLICAR FILTROS */
   const aplicar = async () => {
     if (!Object.values(filtros).some((v) => v !== "" && v !== undefined)) {
       setError("Debes seleccionar al menos un filtro.");
@@ -256,7 +236,21 @@ const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
     setError(null);
     try {
       const resultados = await buscarConInterseccion(filtros);
-      onAplicarFiltros(filtros, resultados);
+
+      // Actualizamos tipoServicio con el nombre real desde el primer resultado si existe
+      if (filtros.tipoServicio && resultados.length > 0) {
+        const servicioReal =
+          resultados[0].servicios_coincidentes?.[0]?.nombre ||
+          resultados[0].nombre ||
+          filtros.tipoServicio;
+        const nuevosFiltros = { ...filtros, tipoServicio: servicioReal };
+        setFiltros(nuevosFiltros);
+        localStorage.setItem("busquedaAvanzadaFiltros", JSON.stringify(nuevosFiltros));
+        onAplicarFiltros(nuevosFiltros, resultados);
+      } else {
+        onAplicarFiltros(filtros, resultados);
+      }
+
       setMensaje("Búsqueda realizada correctamente.");
       setTimeout(() => setMensaje(null), 3000);
     } catch (err: any) {
@@ -264,10 +258,9 @@ const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
     }
   };
 
-  const hayFiltros = Object.values(filtros).some((v) => v !== "" && v !== undefined);
-fechaInicio !== "" ||
-  fechaFin !== "";
-  
+  const hayFiltros =
+    Object.values(filtros).some((v) => v !== "" && v !== undefined) || fecha !== "";
+
   return (
     <div className="w-full bg-white rounded-xl shadow p-4">
       <div className="flex justify-end items-center border-b pb-3">
@@ -338,19 +331,11 @@ fechaInicio !== "" ||
                 onChange={(e) => {
                   const val = Number(e.target.value);
                   const minPermitido = (filtros.precioMin ?? 0) + 2;
-                  if (val < minPermitido) {
-                    setFiltros(prev => {
-                      const nuevo = { ...prev, precioMax: minPermitido };
-                      localStorage.setItem("busquedaAvanzadaFiltros", JSON.stringify(nuevo));
-                      return nuevo;
-                    });
-                  } else {
-                    setFiltros(prev => {
-                      const nuevo = { ...prev, precioMax: val };
-                      localStorage.setItem("busquedaAvanzadaFiltros", JSON.stringify(nuevo));
-                      return nuevo;
-                    });
-                  }
+                  setFiltros((prev) => {
+                    const nuevo = { ...prev, precioMax: val < minPermitido ? minPermitido : val };
+                    localStorage.setItem("busquedaAvanzadaFiltros", JSON.stringify(nuevo));
+                    return nuevo;
+                  });
                 }}
               />
             </div>
@@ -373,8 +358,6 @@ fechaInicio !== "" ||
             </select>
           </div>
 
-          
-
           {/* Experiencia */}
           <div className="flex flex-col w-[30%] min-w-[180px]">
             <label className="text-sm font-medium mb-1">Experiencia</label>
@@ -392,27 +375,15 @@ fechaInicio !== "" ||
             </datalist>
           </div>
 
-          {/* Fecha Inicio */}
+          {/* Fecha exacta */}
           <div className="flex flex-col w-[30%] min-w-[180px]">
-            <label className="text-sm font-medium mb-1">Fecha inicio</label>
+            <label className="text-sm font-medium mb-1">Fecha</label>
             <input
               type="date"
               className="p-2 border rounded-lg"
-              value={fechaInicio}
+              value={fecha}
               min={new Date().toISOString().split("T")[0]}
-              onChange={(e) => handleFechaChange("inicio", e.target.value)}
-            />
-          </div>
-
-          {/* Fecha Fin */}
-          <div className="flex flex-col w-[30%] min-w-[180px]">
-            <label className="text-sm font-medium mb-1">Fecha fin</label>
-            <input
-              type="date"
-              className="p-2 border rounded-lg"
-              value={fechaFin}
-              min={fechaInicio || new Date().toISOString().split("T")[0]}
-              onChange={(e) => handleFechaChange("fin", e.target.value)}
+              onChange={(e) => handleFechaChange(e.target.value)}
             />
           </div>
 
