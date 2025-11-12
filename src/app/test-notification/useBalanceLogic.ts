@@ -4,17 +4,19 @@ export interface BalanceLogic {
   balance: number;
   logs: string[];
   isLoading: boolean;
+  userEmail: string;
   updateBalance: (amount: number) => void;
   clearLogs: () => void;
   resetBalance: () => void;
+  setUserEmail: (email: string) => void;
 }
 
-// Servicio de notificaciones integrado
-const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Promise<boolean> => {
+// Servicio de notificaciones integrado - MODIFICADO para recibir email
+const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number, userEmail: string): Promise<boolean> => {
   try {
     const userData = {
-      name: 'Cristhian Calizaya',
-      email: 'cristhiancalizaya165@gmail.com'
+      name: 'Usuario Fixer', // Nombre genérico
+      email: userEmail // ← Ahora usa el email del usuario
     };
 
     const date = new Date().toLocaleDateString("es-BO", {
@@ -93,7 +95,7 @@ const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Prom
       fromName: 'Sistema de Billetera Fixer'
     };
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+    const backendUrl = 'http://localhost:5000';
     
     console.log('📤 Enviando petición al backend:', `${backendUrl}/api/gmail-notifications`);
     
@@ -117,8 +119,6 @@ const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Prom
     const data = await response.json();
     console.log('✅ Respuesta del backend:', data);
     
-    // CORRECCIÓN: El backend puede estar retornando éxito de diferentes formas
-    // Verificamos varias formas posibles de éxito
     if (data.success === true || data.status === 'success' || data.message?.includes('enviado') || response.status === 200) {
       return true;
     } else {
@@ -136,8 +136,8 @@ export const useBalanceLogic = (): BalanceLogic => {
   const [balance, setBalance] = useState<number>(100);
   const [logs, setLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string>(''); // ← NUEVO: estado para email
   
-  // Usar useRef para evitar duplicados - más confiable que useState
   const lastNotifiedRef = useRef<{ type: 'HU5' | 'HU6' | null; balance: number }>({ 
     type: null, 
     balance: 100 
@@ -149,63 +149,59 @@ export const useBalanceLogic = (): BalanceLogic => {
   }, []);
 
   const sendNotification = useCallback(async (type: 'HU5' | 'HU6', currentBalance: number): Promise<void> => {
-    // ✅ CORRECCIÓN: Prevención robusta de duplicados
+    // Verificar que el usuario haya ingresado un email
+    if (!userEmail) {
+      addLog('❌ Error: No se ha configurado un email destino');
+      return;
+    }
+
     const notificationKey = `${type}_${currentBalance}`;
     
-    // Si ya estamos enviando una notificación para este tipo y balance, ignorar
     if (lastNotifiedRef.current.type === type && lastNotifiedRef.current.balance === currentBalance) {
       console.log(`🛑 Notificación ${notificationKey} ya enviada, ignorando...`);
       return;
     }
     
-    // Marcar como enviando inmediatamente
     lastNotifiedRef.current = { type, balance: currentBalance };
     setIsLoading(true);
 
     try {
-      addLog(`📧 Enviando ${type} a cristhiancalizaya165@gmail.com...`);
+      addLog(`📧 Enviando ${type} a ${userEmail}...`);
       
-      const success = await sendEmailNotification(type, currentBalance);
+      const success = await sendEmailNotification(type, currentBalance, userEmail); // ← Pasa el email
       
       if (success) {
-        addLog(`✅ ${type} ENVIADO CORRECTAMENTE a cristhiancalizaya165@gmail.com`);
+        addLog(`✅ ${type} ENVIADO CORRECTAMENTE a ${userEmail}`);
         addLog(`📨 Revisa tu bandeja de entrada (y spam)`);
       } else {
         addLog(`⚠️ ${type}: Backend respondió pero sin confirmación clara de éxito`);
-        // Si falla, permitir reintento resetando la referencia
         lastNotifiedRef.current = { type: null, balance: 100 };
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       addLog(`❌ FALLO ENVÍO ${type}: ${errorMessage}`);
-      
-      // Si falla, permitir reintento resetando la referencia
       lastNotifiedRef.current = { type: null, balance: 100 };
       
-      // Si es error de red, sugerir verificar backend
       if (errorMessage.includes('fetch') || errorMessage.includes('network')) {
         addLog('🔌 Verifica que el backend esté corriendo en puerto 5000');
       }
     } finally {
       setIsLoading(false);
     }
-  }, [addLog]);
+  }, [addLog, userEmail]); // ← Agrega userEmail como dependencia
 
   const updateBalance = useCallback((amount: number): void => {
     setBalance(prev => {
       const newBalance = prev + amount;
       
-      // Log del cambio
       addLog(`Balance actualizado: ${prev.toFixed(2)} → ${newBalance.toFixed(2)}`);
       
-      // ✅ CORRECCIÓN: Lógica mejorada de detección sin duplicados
       const shouldNotifyHU5 = newBalance === 0 && 
         !(lastNotifiedRef.current.type === 'HU5' && lastNotifiedRef.current.balance === 0);
         
       const shouldNotifyHU6 = newBalance < 0 && 
         !(lastNotifiedRef.current.type === 'HU6' && lastNotifiedRef.current.balance === newBalance);
       
-      // Detección automática de HU5 y HU6
       if (shouldNotifyHU5) {
         addLog('🎯 HU5 DETECTADO: Saldo en cero - Enviando notificación...');
         sendNotification('HU5', newBalance);
@@ -213,7 +209,6 @@ export const useBalanceLogic = (): BalanceLogic => {
         addLog(`⚠️ HU6 DETECTADO: Saldo negativo (Bs. ${newBalance.toFixed(2)}) - Enviando notificación...`);
         sendNotification('HU6', newBalance);
       } else if (newBalance === 0 || newBalance < 0) {
-        // Solo log si ya fue notificado
         const alertType = newBalance === 0 ? 'HU5' : 'HU6';
         addLog(`ℹ️ ${alertType} ya fue notificado para este balance, evitando duplicado`);
       }
@@ -229,7 +224,6 @@ export const useBalanceLogic = (): BalanceLogic => {
 
   const resetBalance = useCallback((): void => {
     setBalance(100);
-    // Resetear la referencia de notificaciones también
     lastNotifiedRef.current = { type: null, balance: 100 };
     addLog('🔄 Balance reiniciado a Bs. 100.00 - Notificaciones reseteadas');
   }, [addLog]);
@@ -238,8 +232,10 @@ export const useBalanceLogic = (): BalanceLogic => {
     balance,
     logs,
     isLoading,
+    userEmail, // ← Exporta el email
     updateBalance,
     clearLogs,
-    resetBalance
+    resetBalance,
+    setUserEmail // ← Exporta la función para cambiar el email
   };
 };
