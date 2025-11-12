@@ -267,3 +267,62 @@ export async function cerrarSesionesRemotas(): Promise<{ ok: boolean; message: s
   // Ninguna variante confirmó éxito
   return { ok: false, message: lastError || "No se pudieron cerrar las otras sesiones." };
 }
+export async function solicitarEnlaceAcceso(email: string) {
+  const res = await fetch(`${API_URL}/api/teamsys/magic-link/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  // Si el correo no está registrado:
+  if (res.status === 404) {
+    return {
+      ok: false,
+      notFoundEmail: true,
+      message:
+        "No existe este correo en nuestro sistema. Por favor, ingresa un correo electrónico registrado",
+    };
+  }
+
+  // Intentamos parsear JSON
+  const data = await res.json();
+  
+  if (!res.ok) {
+    throw new Error(
+      `HTTP ${res.status}: ${data?.message || "No se pudo enviar el enlace"}`
+    );
+  }
+
+  return {
+    ok: true,
+    message:
+      data?.message ||
+      "Te enviamos un enlace de acceso a tu correo electrónico. Válido solo por 5 minutos.",
+    data, // puede incluir { magicLink } para pruebas
+  };
+}
+export async function obtenerPerfilActual(accessToken: string) {
+  const res = await fetch(`${API_URL}/api/teamsys/me`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok || json?.success === false) {
+    throw new Error(json?.message || `Error /me (${res.status})`);
+  }
+
+  return json /*as {
+    success: true;
+    data: {
+      correo: string;
+      authProvider?: string;
+      password?: string; // ⚠️ si el back la manda, no la guardes ni muestres
+      [k: string]: any;
+    };
+  };*/
+}
