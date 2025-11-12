@@ -95,31 +95,6 @@ export async function solicitarEnlaceAcceso(email: string) {
  * Obtiene el perfil del usuario autenticado (usa Bearer accessToken).
  * Se usa después del verify para extraer correo y authProvider desde /me.
  */
-export async function obtenerPerfilActual(accessToken: string) {
-  const res = await fetch(`${API_URL}/api/teamsys/me`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-  });
-
-  const json = await res.json().catch(() => ({}));
-
-  if (!res.ok || json?.success === false) {
-    throw new Error(json?.message || `Error /me (${res.status})`);
-  }
-
-  return json /*as {
-    success: true;
-    data: {
-      correo: string;
-      authProvider?: string;
-      password?: string; // ⚠️ si el back la manda, no la guardes ni muestres
-      [k: string]: any;
-    };
-  };*/
-}
 
 export async function obtenerMetodoAutenticacion(usuario: string) {
     const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
@@ -197,6 +172,7 @@ async function safeJson(res: Response) {
   try { return await res.json(); } catch { return null; }
 }
 export async function agregarAutenticacion(usuario:string,provider:string,password:string) {
+  if(provider=='local'){
   const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -204,6 +180,15 @@ export async function agregarAutenticacion(usuario:string,provider:string,passwo
   });
   //console.log("Respuesta del servidor:", res.body);
   return res.json();
+  }else{
+    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: `{"provider":"${provider}","email":"${password}"}`
+  });
+  //console.log("Respuesta del servidor:", res.body);
+  return res.json();
+  }
 }
 
 export async function eliminarAutenticacion(usuario:string,provider:string) {
@@ -213,14 +198,6 @@ export async function eliminarAutenticacion(usuario:string,provider:string) {
     body: `{"provider":"${provider}"}`
   });
   //console.log("Respuesta del servidor:", res.body);
-  return res.json();
-}
-export async function obtenerMetodoAutenticacion(usuario: string) {
-    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
-    method: "GET"
-  });
-  console.log("Respuesta del servidor:", res.body);
-  if (!res.ok) throw new Error("datos Incorrectos");
   return res.json();
 }
 /* ============================
@@ -397,40 +374,7 @@ export async function cerrarSesionesRemotas(): Promise<{ ok: boolean; message: s
   // Ninguna variante confirmó éxito
   return { ok: false, message: lastError || "No se pudieron cerrar las otras sesiones." };
 }
-export async function solicitarEnlaceAcceso(email: string) {
-  const res = await fetch(`${API_URL}/api/teamsys/magic-link/request`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
 
-  // Si el correo no está registrado:
-  if (res.status === 404) {
-    return {
-      ok: false,
-      notFoundEmail: true,
-      message:
-        "No existe este correo en nuestro sistema. Por favor, ingresa un correo electrónico registrado",
-    };
-  }
-
-  // Intentamos parsear JSON
-  const data = await res.json();
-  
-  if (!res.ok) {
-    throw new Error(
-      `HTTP ${res.status}: ${data?.message || "No se pudo enviar el enlace"}`
-    );
-  }
-
-  return {
-    ok: true,
-    message:
-      data?.message ||
-      "Te enviamos un enlace de acceso a tu correo electrónico. Válido solo por 5 minutos.",
-    data, // puede incluir { magicLink } para pruebas
-  };
-}
 export async function obtenerPerfilActual(accessToken: string) {
   const res = await fetch(`${API_URL}/api/teamsys/me`, {
     method: "GET",
