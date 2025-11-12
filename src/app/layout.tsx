@@ -20,22 +20,7 @@ const geistMono = Geist_Mono({
 
 export default function RootLayout({
   children,
-<<<<<<< HEAD
-}: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en">
-      <head>
-        {/* Carga las fuentes por <link> en runtime (no en build) */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      {/* La clase antialiased se mantiene, y el font-family sale de globals.css */}
-      <body className="antialiased">{children}</body>
-=======
+
 }: Readonly<{
   children: React.ReactNode;
 }>) {
@@ -90,7 +75,6 @@ export default function RootLayout({
           {children}
         </div>
       </body>
->>>>>>> dev/bitcrew-sprint2
     </html>
   );
 }
