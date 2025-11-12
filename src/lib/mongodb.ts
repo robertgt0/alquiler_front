@@ -1,3 +1,4 @@
+/*
 // src/lib/mongodb.ts
 import { MongoClient } from "mongodb";
 
@@ -19,3 +20,4 @@ if (!uri) {
 }
 
 export default clientPromise;
+*/

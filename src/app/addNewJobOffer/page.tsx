@@ -1,3 +1,4 @@
+/*
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -127,7 +128,7 @@ export default function NuevaOFertaOEditar() {
 
       <section className="flex justify-center p-5">
         <form onSubmit={(e) => e.preventDefault()} className="flex flex-col w-[960px] space-y-6">
-          {/* DESCRIPCIÓN */}
+          {/* DESCRIPCIÓN /}
           <div className="p-4 max-w-[480px]">
             <label className="block mb-2 text-gray-900 font-medium">Descripción</label>
             <input
@@ -142,7 +143,7 @@ export default function NuevaOFertaOEditar() {
             <div className="text-right text-xs text-gray-500 mt-1">{descripcion.length}/100</div>
           </div>
 
-          {/* CATEGORÍA */}
+          {/* CATEGORÍA /}
           <div className="p-4 max-w-[480px]">
             <label className="block mb-2 text-gray-900 font-medium">Categoría</label>
             <select
@@ -159,12 +160,12 @@ export default function NuevaOFertaOEditar() {
             </select>
           </div>
 
-          {/* IMAGEN */}
+          {/* IMAGEN /}
           <div className="p-4 max-w-[480px]">
             <label className="block mb-2 text-gray-900 font-medium">
               {esEdicion ? 'Imagen (opcional — si subes, reemplaza)' : 'Imagen (opcional)'}
             </label>
-            {/* Si ya hay imagenes (edición), muéstralas */}
+            {/* Si ya hay imagenes (edición), muéstralas /}
             {esEdicion && imagenesExistentes?.length > 0 && (
               <div className="mb-2 text-sm text-gray-600">
                 Actualmente: {imagenesExistentes.length} imagen(es) cargada(s).
@@ -179,10 +180,10 @@ export default function NuevaOFertaOEditar() {
             />
           </div>
 
-          {/* MENSAJE */}
+          {/* MENSAJE /}
           {mensaje && <p className="text-sm text-red-500">{mensaje}</p>}
 
-          {/* BOTONES */}
+          {/* BOTONES /}
           <div className="flex justify-between p-4">
             <button
               type="button"
@@ -205,3 +206,26 @@ export default function NuevaOFertaOEditar() {
     </main>
   );
 }
+*/
+
+
+'use client'; 
+
+import React from 'react';
+
+// 2. Definición del Componente: El nombre DEBE comenzar con mayúscula
+function AddNewJobOfferPage() {
+  
+  // Aquí puedes usar hooks de cliente si incluiste 'use client';
+  // Por ejemplo: const searchParams = useSearchParams();
+
+  return (
+    <div>
+      <h1>Página de Nueva Oferta de Trabajo (Temporal)</h1>
+      <p>Este es un componente de React válido.</p>
+    </div>
+  );
+}
+
+// 3. Exportación: DEBE ser el exportación por defecto
+export default AddNewJobOfferPage;
