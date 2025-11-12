@@ -1,10 +1,9 @@
 /* stylelint-disable at-rule-no-unknown */
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import "mapbox-gl/dist/mapbox-gl.css";
-
-/* VS Code CSS validation doesn't recognize Tailwind v4 @theme directive */
-/* @theme is a valid Tailwind CSS v4 at-rule */
-
 
 /* Variables CSS personalizadas */
 :root {
