@@ -51,5 +51,5 @@ export default function ConfirmationModal({
         </div>
       </div>
     </Dialog>
-  );
+  );
 }
