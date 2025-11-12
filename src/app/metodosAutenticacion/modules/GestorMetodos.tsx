@@ -156,40 +156,76 @@ export default function GestorMetodos({
   };
 
   const activarMetodoGoogle = async () => {
-    try {
-      setCargandoGoogle(true);
-      limpiarError();
-      
-      // 📌 OBTENER USERDATA DESDE SESSIONSTORAGE
-      const userDataString = sessionStorage.getItem('userData');
-      
-      if (!userDataString) {
-        throw new Error("No se encontraron datos de usuario en sessionStorage");
-      }
-      
-      // 📌 CONVERTIR JSON A OBJETO
-      const userData = JSON.parse(userDataString);
-      const userEmail = userData.email;
-      
-      if (!userEmail) {
-        throw new Error("No se pudo obtener el correo del usuario desde sessionStorage");
-      }
-      
-      console.log('📧 Activando Google con email:', userEmail);
-      
-      // 📌 ENVIAR SOLO EL EMAIL AL BACKEND
-      /*await apiService.setupGoogleAuth(userEmail);
-      await activarMetodo('google');*/
-      
-      setCargandoGoogle(false);
-      desactivarModos();
-      
-    } catch (err) {
-      console.error('Error en activarMetodoGoogle:', err);
-      setError(`Error al configurar Google: ${err instanceof Error ? err.message : 'Error desconocido'}`);
-      setCargandoGoogle(false);
+  try {
+    setCargandoGoogle(true);
+    limpiarError();
+
+    // 1) lee userData del sessionStorage
+    const userDataString = sessionStorage.getItem('userData');
+    if (!userDataString) throw new Error('No se encontraron datos de usuario en sessionStorage');
+
+    const userData = JSON.parse(userDataString);
+    const appEmail: string | undefined = userData.email;
+    const userId: string | undefined = userData._id ?? userData.id;
+
+    if (!appEmail || !userId) throw new Error('Faltan email o id del usuario');
+
+    // 2) abre popup de OAuth Google del backend
+    const backend = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
+    const popup = window.open(
+      `${backend}/api/teamsys/google/auth`,
+      'google_oauth',
+      'width=500,height=650,menubar=no,toolbar=no,status=no,resizable=yes,scrollbars=yes'
+    );
+    if (!popup) throw new Error('No se pudo abrir la ventana de Google');
+
+    // 3) espera el email que envía la página callback via postMessage
+    const googleEmail: string = await new Promise((resolve, reject) => {
+      const onMessage = (ev: MessageEvent) => {
+        // valida el payload
+        if (!ev.data || ev.data.type !== 'google-auth') return;
+
+        // opcional: valida origen si tu app/front y callback comparten el mismo origen
+        // if (ev.origin !== window.location.origin) return;
+
+        window.removeEventListener('message', onMessage);
+        resolve(String(ev.data.email));
+      };
+
+      window.addEventListener('message', onMessage);
+
+      // si el usuario cierra el popup antes de terminar
+      const timer = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(timer);
+          window.removeEventListener('message', onMessage);
+          reject(new Error('La ventana de Google se cerró antes de completar el proceso'));
+        }
+      }, 500);
+    });
+
+    // 4) compara correos
+    if (googleEmail.trim().toLowerCase() !== appEmail.trim().toLowerCase()) {
+      throw new Error('El correo de Google debe coincidir con el correo de tu cuenta');
     }
-  };
+
+    // 5) llama al MISMO back que usarías en manejarConfirmacionContrasena,
+    //    pero enviando el email en lugar del password
+    //    (tu función ya existente: agregarAutenticacion(userId, provider, valor))
+    const resp = await agregarAutenticacion(userId, 'google', googleEmail);
+    if (!resp.success) throw new Error(resp.message ?? 'No se pudo activar Google');
+
+    // 6) refresca UI
+    if (recargarMetodos) await recargarMetodos();
+    desactivarModos();
+  } catch (err) {
+    console.error('Error en activarMetodoGoogle:', err);
+    setError(err instanceof Error ? err.message : 'Error desconocido');
+  } finally {
+    setCargandoGoogle(false);
+  }
+};
+
 
   const manejarConfirmacionContrasena = async (contrasena: string) => {
     try {

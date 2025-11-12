@@ -1,40 +1,84 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { setupTwoFactor, verifyTwoFactor } from '@/app/teamsys/services/UserService';
 
 export const ProteccionQr: React.FC = () => {
   const router = useRouter();
   const [codigo, setCodigo] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [mostrarInputCodigo, setMostrarInputCodigo] = useState(false);
+  const [qrData, setQrData] = useState<string>(''); // estado para la imagen QR
+  const [secretData, setSecretData] = useState<string>('');
+  const [codes, setCodes] = useState<string>('');
 
+  
+// 🔹 Cargar el QR automáticamente al iniciar el componente
+  useEffect(() => {
+    const cargarQR = async () => {
+      try {
+        const raw = sessionStorage.getItem('authToken');
+      if (!raw) throw new Error("No existe token de sesión");
+
+      // quita comillas si el token quedó guardado como string JSON
+      const Token = raw.replace(/^"(.+)"$/, '$1');
+        if (!Token) throw new Error("No existe token de sesión");
+        console.log(JSON.stringify(Token))
+        const qr = await setupTwoFactor(Token);
+        setQrData(qr.qrCode);
+        setSecretData(qr.secret);
+        setCodes(qr.backupCodes);
+        try {
+  sessionStorage.setItem('twofactor_secret', qr.secret);
+  // si backupCodes es array/objeto:
+  //sessionStorage.setItem('twofactor_backup', JSON.stringify(qr.backupCodes));
+} catch (e) {
+  console.error('No se pudo guardar en sessionStorage', e);
+}
+      } catch (err: unknown) {
+        console.error("Error al generar el QR:", err);
+        setError("Error al generar el código QR. Intenta nuevamente.");
+      }
+    };
+
+    cargarQR();
+  }, []);
+
+  // 🔹 Manejo del Submit (solo validación del código)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
 
-    if (!codigo.trim()) {
-      setError('Por favor ingresa el código de verificación');
-      setIsLoading(false);
+    if (!/^\d{6}$/.test(codigo)) {
+      setError('El código debe tener 6 dígitos numéricos.');
       return;
     }
 
+    const Token = sessionStorage.getItem('authToken');
+    if (!Token) {
+      setError("No existe token de sesión.");
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      // Simulación de verificación
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const llamada = await verifyTwoFactor(Token, secretData, codigo);
+      if (!llamada.success) throw new Error(llamada.message);
+
+      // Si la verificación es correcta, redirige
       router.push('/');
-    } catch (error) {
-      setError('Código incorrecto. Inténtalo de nuevo.');
+    } catch (err) {
+      if(typeof err ==='string'){
+        setError("error en el servidor")
+      }else{
+        setError('error en el servidor');
+      }
+      
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const manejarProblemasAutenticacion = () => {
-    setMostrarInputCodigo(true);
   };
 
   return (
@@ -51,18 +95,32 @@ export const ProteccionQr: React.FC = () => {
              </div>
 
         {/* Sección del código QR */}
-        <div className="mb-6 sm:mb-8 flex justify-center">
-          <div className="w-48 h-48 sm:w-56 sm:h-56 bg-gray-100 rounded-2xl border border-gray-300 shadow-inner flex flex-col items-center justify-center hover:scale-105 transition-transform duration-200">
-            <div className="text-4xl mb-2">📱</div>
-            <p className="text-xs text-gray-500 text-center px-4">
-              Código QR simulado para demostración
-            </p>
-          </div>
-        </div>
+         <div className="mb-6 sm:mb-8 flex flex-col items-center">
+  {qrData ? (
+    <img
+      src={qrData}
+      alt="Código QR"
+      className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 max-w-full object-contain rounded-2xl shadow-inner border border-gray-300"
+    />
+  ) : (
+    <div className="w-48 h-48 sm:w-56 sm:h-56 bg-gray-100 rounded-2xl border border-gray-300 shadow-inner flex flex-col items-center justify-center">
+      <div className="text-4xl mb-2">📱</div>
+      <p className="text-xs text-gray-500 text-center px-4">
+        Código QR cargando...
+      </p>
+    </div>
+  )}
+  <p className="text-xs text-gray-500 text-center px-4 mt-2">
+    Código QR simulado para demostración
+  </p>
+</div>
+
+       
 
         {/* Enlace de problemas */}
+ 
         <div className="text-center mb-6">
-         <Link href="/proteccionCodigo">
+         <Link href="/SeguridadCodigo">
          <span className="text-sm text-blue-600 hover:text-blue-500 hover:underline cursor-pointer transition-colors">
           ¿Tienes problemas de autentificación para escanear?
         </span>
@@ -108,17 +166,20 @@ export const ProteccionQr: React.FC = () => {
 
           {/* Botón de continuar */}
           <div className="mt-6 sm:mt-8 flex justify-center">
-            <button
+                        <button
               type="submit"
-              disabled={isLoading}
-              className={`w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 flex items-center justify-center gap-3 text-sm sm:text-base font-medium transition-colors duration-200 ${
+              disabled={isLoading || codigo.length !== 6}
+              className={`w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 border rounded-2xl focus:outline-none focus:ring-2 flex items-center justify-center gap-3 text-sm sm:text-base font-medium transition-colors duration-200 ${
                 isLoading
                   ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                  : 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-300'
+                  : codigo.length === 6
+                  ? 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-300'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
               {isLoading ? 'Verificando...' : 'Continuar'}
             </button>
+
           </div>
         </form>
       </div>

@@ -7,11 +7,15 @@ import { CerrarSesiones } from "./cerrarSesiones";
 import CambiarTelefono from "./cambiarTelefono";
 import PaginaMetodosAutenticacion from "../../metodosAutenticacion/metodosAuten/pagina";
 
+import { MessageSeguridad } from "./messageSeguridad";
+import { MensajeCerrarSesion } from "./mensajeCerrarSesion";
 
 export default function SimpleProfileMenu() {
   const [showCerrarSesionMessage, setShowCerrarSesionMessage] = useState(false);
   const [showCambiarTelefono, setShowCambiarTelefono] = useState(false);
   const [showMetodosAutenticacion, setShowMetodosAutenticacion] = useState(false);
+  const [showMessageSeguridad, setShowMessageSeguridad] = useState(false);
+  const [showMensajeCerrarSesion, setShowMensajeCerrarSesion] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [user, setUser] = useState<{
     id: string;
@@ -30,11 +34,24 @@ export default function SimpleProfileMenu() {
     localStorage.removeItem("userData");
     sessionStorage.removeItem("userData");
 
-    const eventLogout = new CustomEvent("logout-exitoso");
-    window.dispatchEvent(eventLogout);
-
-    router.push("/");
+    setShowMensajeCerrarSesion(true);
   };
+   useEffect(() => {
+  if (showMensajeCerrarSesion) {
+    // ⏳ Espera 2 segundos mientras se muestra el mensaje
+    const timer = setTimeout(() => {
+      // 🔔 Emitimos el evento de logout justo antes de redirigir
+      const eventLogout = new CustomEvent("logout-exitoso");
+      window.dispatchEvent(eventLogout);
+
+      // 🚀 Ahora sí redirigimos
+      setShowMensajeCerrarSesion(false);
+      router.push("/");
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }
+}, [showMensajeCerrarSesion, router]);
 
   const handleContinue = () => setShowCerrarSesionMessage(false);
   const handleCancel = () => setShowCerrarSesionMessage(false);
@@ -125,9 +142,13 @@ export default function SimpleProfileMenu() {
       className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
         Métodos de autenticación
     </button>
-    <button className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left">
-      Seguridad
-    </button>
+        <button
+     onClick={() => setShowMessageSeguridad(true)}
+     className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left"
+    >
+     Seguridad
+     </button>
+
     <button
       onClick={handleCerrarSesionesClick}
       className="text-base sm:text-base font-semibold text-gray-800 hover:bg-gray-100 rounded-2xl px-4 py-3 text-left mt-2"
@@ -155,6 +176,15 @@ export default function SimpleProfileMenu() {
         userId={user?.id || ""}
         telefonoActual={user?.telefono || ""} />
       )}
+
+       {showMessageSeguridad && (
+       <MessageSeguridad onClose={() => setShowMessageSeguridad(false)} />
+       )}
+       {showMensajeCerrarSesion && (
+       <MensajeCerrarSesion onClose={() => setShowMensajeCerrarSesion(false)} />
+      )}
+
+
       {showMetodosAutenticacion && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
