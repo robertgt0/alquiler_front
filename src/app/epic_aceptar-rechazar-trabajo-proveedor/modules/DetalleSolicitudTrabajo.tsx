@@ -9,8 +9,11 @@ import { useGestionSolicitud } from "../hooks/useGestionSolicitud";
 function formatearFecha(fechaISO: string): string {
   const partes = fechaISO.split("-");
   const fecha = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
-  const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const meses = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+  ];
   return `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}`;
 }
 
@@ -18,7 +21,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
   const { loading, mensaje, setMensaje, confirmarTrabajo, rechazarTrabajo } = useGestionSolicitud();
   const botonesHabilitados = useMemo(() => data.estado === "Pendiente" && !loading, [data.estado, loading]);
 
-  // Medir tiempo de carga
+  // Métrica de carga
   useEffect(() => {
     const t0 = performance.now();
     const id = requestAnimationFrame(() => {
@@ -51,7 +54,13 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
   const volver = () => window.history.back();
 
   return (
-    <div className="w-full max-w-3xl mx-auto border border-white rounded-md p-6 sm:p-10 bg-white shadow-sm">
+    <div
+      className="
+        w-full max-w-3xl mx-auto 
+        bg-white border-none shadow-none rounded-none
+        p-6 sm:p-8 md:p-10
+      "
+    >
       {/* 🔹 Título */}
       <h1 className="text-[#0C4FE9] Poppins text-3xl sm:text-4xl font-bold text-center mb-6 sm:mb-8">
         Trabajo
@@ -61,7 +70,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
       <div className="text-[17px] sm:text-[19px] leading-8 Poppins">
         <div className="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-y-3 sm:gap-y-4 gap-x-4 sm:gap-x-6">
           <span className="font-bold">Cliente:</span>
-          <span className="font-normal break-words">{data.cliente}</span>
+          <span className="font-normal wrap-break-word">{data.cliente}</span>
 
           <span className="font-bold">Fecha:</span>
           <span className="font-normal">{formatearFecha(data.fechaISO)}</span>
@@ -70,7 +79,7 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
           <span className="font-normal">{data.horaInicio} - {data.horaFin}</span>
 
           <span className="font-bold">Descripción:</span>
-          <span className="font-normal break-words">{data.descripcion}</span>
+          <span className="font-normal wrap-break-word">{data.descripcion}</span>
 
           <span className="font-bold">Costo:</span>
           <span className="font-normal">{data.costo} Bs</span>
