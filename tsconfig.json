@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "target": "ES2017",
+=======
+    "target": "ESNext",
+>>>>>>> dev/bitcrew-sprint2
     "lib": [
       "dom",
       "dom.iterable",
@@ -22,6 +26,7 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
@@ -32,7 +37,15 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+<<<<<<< HEAD
     ".next/types/**/*.ts",
+=======
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next\\dev/types/**/*.ts",
+    ".next\\dev/types/**/*.ts",
+>>>>>>> dev/bitcrew-sprint2
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
