@@ -13,15 +13,15 @@ function buildFromParams(sp: URLSearchParams): SolicitudDetalle | null {
   const id = sp.get('id');
   if (!id) return null;
 
+  const fechaISO = sp.get('fecha') || sp.get('date') || '2025-11-25';
+
   return {
     id,
     cliente: sp.get('cliente') || 'Juan Pérez',
-    fechaISO: sp.get('fecha') || '2025-11-25',
+    fechaISO,
     horaInicio: sp.get('inicio') || '10:00',
     horaFin: sp.get('fin') || '11:00',
-    descripcion:
-      sp.get('descripcion') ||
-      'El trabajo es la construcción de un muro perimetral de 20 metros.',
+    descripcion: sp.get('descripcion') || 'El trabajo es la construcción de un muro perimetral de 20 metros.',
     costo: Number(sp.get('costo') || 250),
     estado: parseEstado(sp.get('estado')),
   };
@@ -37,14 +37,18 @@ export default function ProveedorPageClient() {
     fechaISO: '2025-11-25',
     horaInicio: '10:00',
     horaFin: '11:00',
-    descripcion:
-      'El trabajo es la construcción de un muro perimetral de 20 metros.',
+    descripcion: 'El trabajo es la construcción de un muro perimetral de 20 metros.',
     costo: 250,
     estado: 'Pendiente',
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-white px-4 py-10">
+    <div
+      className="
+        min-h-screen w-full flex items-center justify-center bg-white 
+        px-4 sm:px-6 md:px-8 py-8 sm:py-12
+      "
+    >
       <DetalleSolicitudTrabajo data={data ?? fallback} />
     </div>
   );

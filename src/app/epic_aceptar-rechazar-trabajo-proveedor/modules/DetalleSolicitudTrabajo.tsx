@@ -5,102 +5,94 @@ import EtiquetaEstado from "../components/EtiquetaEstado";
 import { SolicitudDetalle } from "../interfaces/Trabajo.interface";
 import { useGestionSolicitud } from "../hooks/useGestionSolicitud";
 
-//Formato de fecha literal (ej: Martes 25 de noviembre)
+// ✅ Formato de fecha local
 function formatearFecha(fechaISO: string): string {
-  const fecha = new Date(fechaISO);
-  const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  return `${dias[fecha.getUTCDay()]} ${fecha.getUTCDate()} de ${meses[fecha.getUTCMonth()]}`;
+  const partes = fechaISO.split("-");
+  const fecha = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+  const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const meses = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+  ];
+  return `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}`;
 }
 
 export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetalle }) {
-  // Hook SOLO front-end (no cambia estado real ni llama backend)
-  const { loading, mensaje, setMensaje, simularConfirmar, simularRechazar } =
-    useGestionSolicitud();
+  const { loading, mensaje, setMensaje, confirmarTrabajo, rechazarTrabajo } = useGestionSolicitud();
+  const botonesHabilitados = useMemo(() => data.estado === "Pendiente" && !loading, [data.estado, loading]);
 
-  //Botones habilitados solo si el estado es "Pendiente"
-  const botonesHabilitados = useMemo(
-    () => data.estado === "Pendiente" && !loading,
-    [data.estado, loading]
-  );
-
-  //medir tiempo de carga de la vista "Trabajo"
+  // Métrica de carga
   useEffect(() => {
     const t0 = performance.now();
     const id = requestAnimationFrame(() => {
       const elapsed = Math.round(performance.now() - t0);
       console.log(`[Métrica] Carga de "Trabajo": ${elapsed} ms`);
-      if (elapsed > 1000) console.warn("⚠️ La vista 'Trabajo' tardó > 1s en cargar.");
     });
     return () => cancelAnimationFrame(id);
   }, []);
 
-  //medir tiempo desde clic hasta fin de la acción de UI (simulada)
   const tAccionRef = useRef<number | null>(null);
 
   const handleConfirmar = async () => {
     if (!botonesHabilitados) return;
     setMensaje(null);
     tAccionRef.current = performance.now();
-    await simularConfirmar();
+    await confirmarTrabajo(data.id);
     const dt = Math.round(performance.now() - (tAccionRef.current ?? 0));
-    console.log(`[Métrica] Confirmar (UI) en ${dt} ms`);
-    if (dt > 1000) console.warn("⚠️ Confirmar (UI) tardó > 1s.");
-    tAccionRef.current = null;
+    console.log(`[Métrica] Confirmar (API) en ${dt} ms`);
   };
 
   const handleRechazar = async () => {
     if (!botonesHabilitados) return;
     setMensaje(null);
     tAccionRef.current = performance.now();
-    await simularRechazar();
+    await rechazarTrabajo(data.id);
     const dt = Math.round(performance.now() - (tAccionRef.current ?? 0));
-    console.log(`[Métrica] Rechazar (UI) en ${dt} ms`);
-    if (dt > 1000) console.warn("⚠️ Rechazar (UI) tardó > 1s.");
-    tAccionRef.current = null;
+    console.log(`[Métrica] Rechazar (API) en ${dt} ms`);
   };
 
-  const volver = () => window.history.back(); // CA4
+  const volver = () => window.history.back();
 
   return (
-    <div className="w-full max-w-3xl mx-auto border border-white rounded-md p-8 sm:p-10 bg-white">
-      {/* Título */}
-      <h1 className="text-[#0C4FE9] Poppins text-4xl font-bold text-center mb-8">
+    <div
+      className="
+        w-full max-w-3xl mx-auto 
+        bg-white border-none shadow-none rounded-none
+        p-6 sm:p-8 md:p-10
+      "
+    >
+      {/* 🔹 Título */}
+      <h1 className="text-[#0C4FE9] Poppins text-3xl sm:text-4xl font-bold text-center mb-6 sm:mb-8">
         Trabajo
       </h1>
 
-      {/* Campos visibles */}
-      <div className="text-[19px] leading-8 Poppins">
-        <div className="grid grid-cols-[120px_1fr] gap-y-3 gap-x-6">
+      {/* 🔹 Contenido principal responsivo */}
+      <div className="text-[17px] sm:text-[19px] leading-8 Poppins">
+        <div className="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-y-3 sm:gap-y-4 gap-x-4 sm:gap-x-6">
           <span className="font-bold">Cliente:</span>
-          <span className="font-normal">{data.cliente}</span>
+          <span className="font-normal wrap-break-word">{data.cliente}</span>
 
           <span className="font-bold">Fecha:</span>
           <span className="font-normal">{formatearFecha(data.fechaISO)}</span>
 
           <span className="font-bold">Horario:</span>
-          <span className="font-normal">
-            {data.horaInicio} - {data.horaFin}
-          </span>
+          <span className="font-normal">{data.horaInicio} - {data.horaFin}</span>
 
           <span className="font-bold">Descripción:</span>
-          <span className="font-normal">{data.descripcion}</span>
+          <span className="font-normal wrap-break-word">{data.descripcion}</span>
 
           <span className="font-bold">Costo:</span>
           <span className="font-normal">{data.costo} Bs</span>
 
           <span className="font-bold">Estado:</span>
-          <span>
-            {/*"Pendiente" en amarillo (lo maneja EtiquetaEstado) */}
-            <EtiquetaEstado estado={data.estado} />
-          </span>
+          <span><EtiquetaEstado estado={data.estado} /></span>
         </div>
       </div>
 
-      {/* Mensaje de acción (solo UI, centrado y con color por tipo) */}
+      {/* 🔹 Mensaje de acción */}
       {mensaje && (
         <div
-          className={`mt-6 w-full text-center text-[17px] font-medium Poppins rounded-md px-5 py-3 border ${
+          className={`mt-6 w-full text-center text-[15px] sm:text-[17px] font-medium Poppins rounded-md px-4 py-3 border ${
             mensaje.tipo === "confirmar"
               ? "bg-[#DFFFE3] border-[#3DD45E] text-[#0E5B1C]"
               : "bg-[#FFE3E3] border-[#FF4D4D] text-[#A10000]"
@@ -112,31 +104,31 @@ export default function DetalleSolicitudTrabajo({ data }: { data: SolicitudDetal
         </div>
       )}
 
-      {/* Botones */}
-      <div className="mt-9 flex items-center justify-between">
+      {/* 🔹 Botones responsivos */}
+      <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
         <button
           type="button"
           onClick={volver}
-          className="h-12 w-36 rounded-lg bg-[#0C4FE9] hover:brightness-110 text-white Poppins text-[17px] font-semibold"
+          className="h-11 sm:h-12 w-full sm:w-36 rounded-lg bg-[#0C4FE9] text-white Poppins text-[16px] sm:text-[17px] font-semibold hover:brightness-110 transition"
         >
           Atrás
         </button>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
           <button
             type="button"
             onClick={handleRechazar}
             disabled={!botonesHabilitados}
-            className="h-12 w-40 rounded-lg bg-[#E5E5E5] text-black Poppins text-[17px] font-semibold disabled:opacity-60"
+            className="h-11 sm:h-12 w-full sm:w-40 rounded-lg bg-[#E5E5E5] text-black Poppins text-[16px] sm:text-[17px] font-semibold disabled:opacity-60"
           >
             {loading === "rechazar" ? "Rechazando…" : "Rechazar"}
           </button>
 
-        <button
+          <button
             type="button"
             onClick={handleConfirmar}
             disabled={!botonesHabilitados}
-            className="h-12 w-40 rounded-lg bg-[#0C4FE9] hover:brightness-110 text-white Poppins text-[17px] font-semibold disabled:opacity-60"
+            className="h-11 sm:h-12 w-full sm:w-40 rounded-lg bg-[#0C4FE9] text-white Poppins text-[16px] sm:text-[17px] font-semibold hover:brightness-110 disabled:opacity-60"
           >
             {loading === "confirmar" ? "Confirmando…" : "Confirmar"}
           </button>
