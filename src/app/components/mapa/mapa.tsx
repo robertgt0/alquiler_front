@@ -68,7 +68,7 @@ function ActualizarVista({ ubicacion }: { ubicacion: Ubicacion | null }) {
 // ✅ NUEVO componente para manejar presión prolongada en el mapa (PC y móvil) - VERSIÓN COMPATIBLE
 function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: number) => void }) {
   const map = useMap();
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = React.useRef<number | null>(null);
 
   useEffect(() => {
     const handleContextMenu = (e: L.LeafletEvent) => {

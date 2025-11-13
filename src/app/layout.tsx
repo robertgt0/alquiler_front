@@ -75,7 +75,7 @@ export default function RootLayout({
           </main>
         </div>
         
-        <ModalGuiaUsuario isOpen={modalAbierto} onClose={cerrarModal} />
+        <ModalGuiaUsuario isOpen={modalAbierto} onClose={cerrarModal} onAccept={cerrarModal} />
       </body>
     </html>
   );

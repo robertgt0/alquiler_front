@@ -68,7 +68,14 @@ export default function ConvertirseFixerPage() {
         }
         if (Array.isArray(data.paymentMethods)) {
           setPayment((prev) => ({
-            methods: data.paymentMethods,
+            ...prev,
+            // ==================================================================
+            // AQUÍ ESTÁ LA CORRECCIÓN
+            // Usamos el operador `??` para asegurar que si `data.paymentMethods`
+            // es `null` o `undefined`, se use un array vacío como alternativa.
+            // Esto satisface el tipo `PaymentState` y elimina el error.
+            methods: data.paymentMethods ?? [],
+            // ==================================================================
             card: data.paymentAccounts?.card ?? prev.card ?? null,
             qr: data.paymentAccounts?.qr ?? prev.qr ?? null,
           }));

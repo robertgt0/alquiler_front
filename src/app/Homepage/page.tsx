@@ -16,7 +16,7 @@ export default function Home() {
         <CarruselInspirador />
       </section>
 
-      <HelpButton />
+
 
       {/* Mapa */}
       <section id="mapa" className="my-10">

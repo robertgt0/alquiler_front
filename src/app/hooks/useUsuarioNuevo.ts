@@ -12,7 +12,7 @@ export function useUsuarioNuevo() {
 
     if (!noMostrarGuia && !guiaVista) {
       setEsUsuarioNuevo(true);
-      setModalAbierto(true);
+      setModalAbierto(false);
     }
   }, []);
 
