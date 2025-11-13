@@ -2,9 +2,10 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react"; 
+
 
 // ------------------------------------
 // 1. Tipos y Datos Ficticios (Mock Data)
@@ -122,23 +123,20 @@ const StarRating: React.FC<{ score: number }> = ({ score }) => {
 };
 
 // Componente para una tarjeta individual de calificación
-const RatingCard: React.FC<{ rating: Rating }> = ({ rating }) => {
-  return (
-    <div className="py-4 border-b border-gray-200">
-      <p className="text-gray-700">
-        <strong className="text-blue-600">Cliente:</strong> {rating.client}
-      </p>
-      <div className="flex items-center mt-1">
-        <strong className="text-blue-600 mr-2">Calificación:</strong>
-        <StarRating score={rating.score} />
-      </div>
-      <p className="text-gray-700 mt-2">
-        <strong className="text-blue-600">Comentario:</strong>{" "}
-        {rating.comment}
-      </p>
+const RatingCard: React.FC<{ rating: Rating }> = ({ rating }) => (
+  <div className="py-4 border-b border-gray-200">
+    <p className="text-gray-700">
+      <strong className="text-blue-600">Cliente:</strong> {rating.client}
+    </p>
+    <div className="flex items-center mt-1">
+      <strong className="text-blue-600 mr-2">Calificación:</strong>
+      <StarRating score={rating.score} />
     </div>
-  );
-};
+    <p className="text-gray-700 mt-2">
+      <strong className="text-blue-600">Comentario:</strong> {rating.comment}
+    </p>
+  </div>
+);
 
 // ------------------------------------
 // 3. Componente Principal (VendorRatingsPage)
@@ -147,59 +145,103 @@ const RatingCard: React.FC<{ rating: Rating }> = ({ rating }) => {
 export default function VendorRatingsPage() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("Todos");
   const [currentPage, setCurrentPage] = useState(1);
+  const [ratings, setRatings] = useState<Rating[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const RATINGS_PER_PAGE = 6; // Máximo de calificaciones por página
   const REVIEWS_PER_VIEW = 3; // Número de calificaciones visibles en el scroll
 
+  const API_URL = "http://localhost:5000/api/los_vengadores/trabajos/proveedor/6902c43438df4e88b6680640/calificaciones";
+
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const res = await fetch(API_URL);
+        let data;
+        try {
+          data = await res.json();
+        } catch (err) {
+          console.error("No se pudo parsear JSON de la respuesta:", err);
+          data = {};
+        }
+
+        if (!res.ok) {
+          console.error("Error en la respuesta del servidor:", data);
+          throw new Error((data && data.message) || "Error al obtener calificaciones");
+        }
+  
+        // Si la API devuelve { success: false, message: "Ruta no encontrada" }
+        if (data.success === false) {
+          setError("No se encontraron calificaciones para este proveedor.");
+          return;
+        }
+  
+        // 🔹 Verificamos si el backend devuelve directamente un array o un objeto con datos
+        const calificaciones = Array.isArray(data)
+          ? data
+          : data.calificaciones || [];
+  
+        setRatings(calificaciones);
+      } catch (err) {
+        console.error("Error al obtener calificaciones:", err);
+        setError("No se pudieron cargar las calificaciones");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchRatings();
+  }, []);
+
   // Lógica de Filtrado y Ordenamiento (Memoizado para rendimiento)
   const filteredAndSortedRatings = useMemo(() => {
-    let result = [...MOCK_RATINGS];
+    let result = [...ratings];
 
-    // 1. Filtrado
     if (activeFilter === "Comentarios Positivos") {
-      // Positivos: 4 o 5 estrellas
       result = result.filter((r) => r.score >= 4);
     } else if (activeFilter === "Comentarios Negativos") {
-      // Negativos: 1, 2 o 3 estrellas
       result = result.filter((r) => r.score <= 3);
-    }
-
-    // 2. Ordenamiento
-    if (activeFilter === "Ordenados por fecha") {
-      // Más recientes a más antiguos (Fecha descendente)
-      result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    } else if (activeFilter === "Ordenados por fecha") {
+      result.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
     } else if (activeFilter === "Ordenados por calificacion") {
-      // Menor calificación a mayor calificación (Puntuación ascendente)
       result.sort((a, b) => a.score - b.score);
     }
-    
-    return result;
-  }, [activeFilter]);
 
-  // Cálculos de Paginación
-  const totalPages = Math.ceil(
-    filteredAndSortedRatings.length / RATINGS_PER_PAGE
-  );
+    return result;
+  }, [activeFilter, ratings]);
+
+  // Paginación
+  const totalPages = Math.ceil(filteredAndSortedRatings.length / RATINGS_PER_PAGE);
   const startIndex = (currentPage - 1) * RATINGS_PER_PAGE;
   const paginatedRatings = filteredAndSortedRatings.slice(
     startIndex,
     startIndex + RATINGS_PER_PAGE
   );
 
-  const handlePrevious = () => {
-    setCurrentPage((prev) => Math.max(1, prev - 1));
-  };
-
-  const handleNext = () => {
+  const handlePrevious = () => setCurrentPage((prev) => Math.max(1, prev - 1));
+  const handleNext = () =>
     setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-  };
 
-  // Clase de utilidad para los botones de filtro
   const getButtonClass = (filter: FilterType) =>
     `px-4 py-2 text-sm font-semibold rounded-lg transition-colors flex-shrink-0 ${
       activeFilter === filter
-        ? "bg-blue-600 text-white" 
-        : "bg-white text-blue-600 border border-blue-600 hover:bg-blue-50" 
+        ? "bg-blue-600 text-white"
+        : "bg-white text-blue-600 border border-blue-600 hover:bg-blue-50"
     }`;
+
+  // ------------------------------------
+  // Renderizado
+  // ------------------------------------
+  if (loading) {
+    return <p className="text-center mt-20 text-gray-600">Cargando calificaciones...</p>;
+  }
+
+  if (error) {
+    return <p className="text-center mt-20 text-red-500">{error}</p>;
+  }
 
   return (
     // Contenedor principal centrado vertical y horizontalmente
