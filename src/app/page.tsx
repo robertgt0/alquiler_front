@@ -66,12 +66,12 @@ export default function Home() {
                 Mis Trabajos (Vista-Cliente)
               </Link>
 
-              {/* ⭐️ Botón para acceder a la página de Calificaciones del proveedor */}
+              {/* Botón para acceder al perfil del proveedor */}
               <Link
-                href="/vendedor_ratings"
-                className="bg-blue-700 text-white py-3 px-6 rounded-lg hover:bg-purple-600 transition-colors text-center font-semibold"
+                href="/perfil_proveedor_provisional"
+                className="bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-purple-600 transition-colors text-center font-semibold"
               >
-                Calificaciones del proveedor
+                Perfil del proveedor
               </Link>
             </div>
           </div>
