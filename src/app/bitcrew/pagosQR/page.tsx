@@ -472,6 +472,7 @@ const RecargaQR: React.FC = () => {
 
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Correo electrónico</label>
+    
             
   <input
   type="text"
