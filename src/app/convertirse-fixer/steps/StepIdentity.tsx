@@ -79,7 +79,7 @@ export default function StepIdentity({ fixerId, userId, initialCI, onComplete }:
       }
       onComplete({ fixerId: currentId!, ci: trimmedCI });
     } catch (err: any) {
-      setError(String(err?.message || "No se pudo guardar la informacion"));
+      setError(String(err?.message || "No se pudo guardar la información"));
     } finally {
       setLoading(false);
     }

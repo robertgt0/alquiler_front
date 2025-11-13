@@ -9,8 +9,8 @@ import { STORAGE_KEYS, saveToStorage } from "../storage";
 import type { StepPaymentProps } from "./types";
 
 const METHODS: { key: PaymentMethodKey; label: string; needsAccount?: boolean }[] = [
-  { key: "card", label: "Tarjeta de credito / debito", needsAccount: true },
-  { key: "qr", label: "Codigo QR", needsAccount: true },
+  { key: "card", label: "Tarjeta de crédito / débito", needsAccount: true },
+  { key: "qr", label: "Código QR", needsAccount: true },
   { key: "cash", label: "Efectivo" },
 ];
 
@@ -61,7 +61,7 @@ export default function StepPayment({ fixerId, state, onBack, onComplete }: Step
 
   async function handleNext() {
     if (!canContinue) {
-      setError("Selecciona al menos un metodo de pago valido");
+      setError("Selecciona al menos un método de pago válido");
       return;
     }
 
@@ -81,7 +81,7 @@ export default function StepPayment({ fixerId, state, onBack, onComplete }: Step
       saveToStorage(STORAGE_KEYS.payment, formState);
       onComplete(formState);
     } catch (err: any) {
-      setError(String(err?.message || "No se pudieron guardar los metodos de pago"));
+      setError(String(err?.message || "No se pudieron guardar los métodos de pago"));
     } finally {
       setLoading(false);
     }
@@ -91,8 +91,8 @@ export default function StepPayment({ fixerId, state, onBack, onComplete }: Step
     <section className="mx-auto flex max-w-3xl flex-col gap-6">
       <header className="rounded-3xl bg-white p-8 shadow-lg">
         <StepProgress current={4} />
-        <h2 className="mt-2 text-2xl font-semibold text-slate-900">¿Como te gustaria que te paguen?</h2>
-        <p className="mt-2 text-sm text-slate-500">Selecciona los metodos que aceptas. Si eliges Tarjeta o Codigo QR, registra los datos del titular.</p>
+        <h2 className="mt-2 text-2xl font-semibold text-slate-900">¿Cómo te gustaría que te paguen?</h2>
+        <p className="mt-2 text-sm text-slate-500">Selecciona los métodos que aceptas. Si eliges Tarjeta o Código QR, registra los datos del titular.</p>
       </header>
 
       <div className="space-y-4">
@@ -164,7 +164,7 @@ export default function StepPayment({ fixerId, state, onBack, onComplete }: Step
 
       <PaymentAccountModal
         open={modalOpen}
-        title={editing === "card" ? "Tarjeta" : "Codigo QR"}
+        title={editing === "card" ? "Tarjeta" : "Código QR"}
         initial={editing === "card" ? formState.card ?? null : editing === "qr" ? formState.qr ?? null : null}
         onClose={closeModal}
         onConfirm={saveAccount}
