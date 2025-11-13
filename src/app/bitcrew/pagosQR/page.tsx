@@ -219,46 +219,28 @@ const RecargaQR: React.FC = () => {
         // Dibujar QR centrado con padding
         ctx.drawImage(img, qrX + 8, qrY + 8, qrSize - 16, qrSize - 16);
 
-        // Información (alineada a la izquierda)
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#374151';
-        
-        let yPos = 330;
-        
-        // Monto
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('Monto:', 50, yPos);
-        ctx.font = '16px Arial';
-        ctx.fillText(`${monto} Bs`, 180, yPos);
-        
-        yPos += 40;
-        
-        // Nombre
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('Nombre a facturar:', 50, yPos);
-        ctx.font = '16px Arial';
-        yPos += 25;
-        const nombreTexto = nombre.length > 30 ? nombre.substring(0, 30) + '...' : nombre;
-        ctx.fillText(nombreTexto, 50, yPos);
-        
-        yPos += 40;
-        
-        // Detalle
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('Detalle de Recarga:', 50, yPos);
-        ctx.font = '16px Arial';
-        yPos += 25;
-        const detalleTexto = detalle.length > 35 ? detalle.substring(0, 35) + '...' : detalle;
-        ctx.fillText(detalleTexto, 50, yPos);
+        // Información alineada a la izquierda
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#374151';
+            ctx.font = '16px Arial';
 
-        yPos += 40;
+            let yPos = 330;
 
-        // Fecha y hora
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('Fecha y hora:', 50, yPos);
-        ctx.font = '16px Arial';
-        yPos += 25;
-        ctx.fillText(fechaHoraQR, 50, yPos);
+            // Monto
+            ctx.fillText(`Monto: ${monto} Bs`, 50, yPos);
+            yPos += 35;
+
+            // Nombre
+            ctx.fillText(`Nombre: ${nombre}`, 50, yPos);
+            yPos += 35;
+
+            // Concepto
+            ctx.fillText(`Concepto: ${detalle}`, 50, yPos);
+            yPos += 35;
+
+            // Fecha y hora
+            ctx.fillText(`Fecha y hora: ${fechaHoraQR}`, 50, yPos);
+
 
 
         // Descargar
@@ -631,9 +613,10 @@ const RecargaQR: React.FC = () => {
                 <p><strong>Monto:</strong> {monto} Bs</p>
                 <p><strong>Nombre:</strong> {nombre}</p>
                 <p><strong>Concepto:</strong> {detalle}</p>
+                <p><strong>Fecha y hora:</strong> {fechaHoraQR}</p>
               </div>
 
-              <p><strong>Fecha y hora:</strong> {fechaHoraQR}</p>
+              
 
               <div className="mt-6 flex gap-3 justify-center">
                 <button
