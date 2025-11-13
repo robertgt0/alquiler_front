@@ -395,8 +395,16 @@ const RecargaQR: React.FC = () => {
               value={nombre}
               onChange={(e) => {
                 const val = e.target.value;
-                if (/^[a-zA-Z\s]*$/.test(val) && val.length <= 40) setNombre(val);
+
+                // Solo letras y espacios, máximo 40 caracteres
+                if (!/^[a-zA-Z\s]*$/.test(val) || val.length > 40) return;
+
+                // ❌ Bloquear nombres repetidos como "aaaaaaa", "bbbbbbb", etc.
+                if (/^([a-zA-Z])\1{2,}$/.test(val.replace(/\s+/g, ""))) return;
+
+                setNombre(val);
               }}
+
               placeholder="ingresar nombre"
             />
             {errores.nombre && <p className="text-red-500 text-sm mt-1">{errores.nombre}</p>}
@@ -572,9 +580,20 @@ const RecargaQR: React.FC = () => {
               className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
               rows={2}
               value={detalle}
-              onChange={(e) => {
-                if (e.target.value.length <= 40) setDetalle(e.target.value);
+             onChange={(e) => {
+                const val = e.target.value;
+
+                // Máximo 40 caracteres
+                if (val.length > 40) return;
+
+                // ❌ Bloquear texto donde todos los caracteres son iguales
+                // ejemplos: "aaaaaa", "111111", ".........", "///////"
+                const sinEspacios = val.replace(/\s+/g, "");  // ignorar espacios
+                if (sinEspacios.length > 2 && /^(\S)\1+$/.test(sinEspacios)) return;
+
+                setDetalle(val);
               }}
+
               placeholder="ingresar detalle de recarga..."
             ></textarea>
             {errores.detalle && <p className="text-red-500 text-sm mt-1">{errores.detalle}</p>}
