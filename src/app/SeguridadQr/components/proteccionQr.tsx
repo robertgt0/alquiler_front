@@ -80,6 +80,12 @@ export const ProteccionQr: React.FC = () => {
       setIsLoading(false);
     }
   };
+  // 🔹 Manejar el botón Cancelar
+  const handleCancel = () => {
+    sessionStorage.removeItem("checkSeguridad")
+    router.back(); // vuelve a la página anterior
+    // o podrías usar: router.push('/Seguridad') si tienes una ruta específica
+  };
 
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
@@ -165,7 +171,7 @@ export const ProteccionQr: React.FC = () => {
           </div>
 
           {/* Botón de continuar */}
-          <div className="mt-6 sm:mt-8 flex justify-center">
+          <div className="mt-6 sm:mt-8 flex flex-col items-center gap-3">
                         <button
               type="submit"
               disabled={isLoading || codigo.length !== 6}
@@ -179,7 +185,14 @@ export const ProteccionQr: React.FC = () => {
             >
               {isLoading ? 'Verificando...' : 'Continuar'}
             </button>
-
+            {/* Volver (azul) */}
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 rounded-2xl text-white bg-blue-500 hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-colors duration-200 text-sm sm:text-base font-medium"
+            >
+              Cancelar
+            </button>
           </div>
         </form>
       </div>

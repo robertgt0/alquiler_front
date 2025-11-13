@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { desactivar2FA } from "@/app/teamsys/services/UserService";
+import { Trochut } from "next/font/google";
 
 interface MessageSeguridadProps {
   redireccion?: string; // ruta a donde redirige al marcar el checkbox
@@ -14,6 +16,7 @@ export const MessageSeguridad: React.FC<MessageSeguridadProps> = ({
 }) => {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
+
 
   useEffect(() => {
     const saved = sessionStorage.getItem("checkSeguridad");
@@ -35,8 +38,20 @@ export const MessageSeguridad: React.FC<MessageSeguridadProps> = ({
         router.push(redireccion);
       }, 200);
     } else {
+      try{
+       const desactivar= sessionStorage.getItem("authToken")
+       if(desactivar== null  )
+        throw new Error("AcessToken no existente");
+       sessionStorage.setItem("desactivar2FA", "true")
+
+       router.push("/loginSeguridad")
+       return 
+      }catch(error){
+       console.log(error)
+      }
       // Si se desmarca, eliminamos la marca
-      sessionStorage.removeItem("checkSeguridad");
+      //sessionStorage.removeItem("checkSeguridad");
+      
     }
   };
 
@@ -73,5 +88,4 @@ export const MessageSeguridad: React.FC<MessageSeguridadProps> = ({
     </div>
   );
 };
-
 

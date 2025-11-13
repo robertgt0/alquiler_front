@@ -149,13 +149,26 @@ export async function verifyTwoFactorLogin(userId: string, code: string) {
 
   const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data.message || 'Error al verificar código en login');
-  }
+ // if (!res.ok) {
+  //  throw new Error(data.message || 'Error al verificar código en login');
+  //}
 
   return data;
 }
 
+export async function desactivar2FA(codigo: string, userToken: string) {
+  
+    const response = await fetch(`${API_URL}/api/teamsys/2fa/disable`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${userToken}` // Token en cabecera
+      },
+      body: JSON.stringify({ token: codigo }) // Código 2FA en body
+    });
+
+   return response.json()
+}
       
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
