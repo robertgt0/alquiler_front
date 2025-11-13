@@ -95,18 +95,30 @@ export async function sendWhatsAppNotification(payload: {
 /* ===========================================================
    ✨ CREAR CITA — Cliente + Proveedor
    =========================================================== */
+/* ===========================================================
+   💬 WHATSAPP — Creación de Cita (solo con datos locales)
+   =========================================================== */
+
 export async function createAndNotifyWhatsApp(payload: CreateAppointmentPayload) {
   try {
-    const [proveedorResp, servicioResp, clienteResp] = await Promise.all([
-      getProveedorById(payload.proveedorId),
-      getServicioById(payload.servicioId),
-      payload.cliente?.id ? getClienteById(payload.cliente.id) : null,
-    ]);
+    // 1️⃣ Recuperar datos desde localStorage
+    const storedData = localStorage.getItem("env_prueba");
+    const userData = storedData ? JSON.parse(storedData) : null;
 
-    const proveedor = proveedorResp ?? (payload as any).proveedor ?? null;
-    const servicio = servicioResp ?? (payload as any).servicio ?? null;
-    const cliente = clienteResp ?? payload.cliente ?? null;
+    if (!userData || !userData.request || !userData.fixer) {
+      console.warn("⚠️ No hay datos válidos en env_prueba (request/fixer)");
+      return { ok: false, message: "Faltan datos locales para enviar notificación WhatsApp." };
+    }
 
+    const { request, fixer } = userData;
+
+    // 2️⃣ Datos base
+    const clienteNombre = request.nombre || "Cliente";
+    const clienteNumero = request.numero || "";
+    const fixerNombre = fixer.nombre || "Proveedor";
+    const fixerNumero = fixer.numero || "";
+
+    // 3️⃣ Datos de la cita
     const fechaLocal = new Date(payload.fecha).toLocaleDateString("es-ES", {
       weekday: "long",
       day: "numeric",
@@ -116,16 +128,13 @@ export async function createAndNotifyWhatsApp(payload: CreateAppointmentPayload)
 
     const horaInicio = payload.horario?.inicio ?? "—";
     const horaFin = payload.horario?.fin ?? "—";
-    const servicioNombre = (servicio as any)?.nombre ?? payload.servicioId;
-    const proveedorNombre = (proveedor as any)?.nombre ?? "tu proveedor";
-    const clienteNombre = (cliente as any)?.nombre ?? "Cliente";
+    const servicioNombre = payload.servicioId ?? "Servicio no especificado";
     const direccion = payload.ubicacion?.direccion ?? "No especificada";
     const notas = payload.ubicacion?.notas ?? "Ninguna";
     const citaId = payload.citaId || (payload as any)?._id || "";
 
-    // --- Cliente ---
-    if (cliente?.telefono || cliente?.phone) {
-      const numeroCliente = cliente.telefono ?? cliente.phone;
+    // 🔹 Mensaje para el cliente (request)
+    if (clienteNumero) {
       const msgCliente = `
 *✨ CREACIÓN DE TU CITA ✨*
 
@@ -135,7 +144,7 @@ Tu cita ha sido creada exitosamente.
 📅 *Fecha:* ${fechaLocal}
 ⏰ *Horario:* ${horaInicio} - ${horaFin}
 🧾 *Servicio:* ${servicioNombre}
-👨‍⚕️ *Proveedor:* ${proveedorNombre}
+👨‍⚕️ *Proveedor:* ${fixerNombre}
 📍 *Dirección:* ${direccion}
 🗒️ *Notas:* ${notas}
 ${citaId ? `🆔 *ID de Cita:* ${citaId}` : ""}
@@ -146,19 +155,18 @@ Gracias por confiar en nosotros 💙
 
       await sendWhatsAppNotification({
         message: msgCliente,
-        destinations: [{ phone: numeroCliente, name: clienteNombre }],
+        destinations: [{ phone: clienteNumero, name: clienteNombre }],
         fromName: "Sistema de Citas",
         meta: { tipo: "create_client" },
       });
     }
 
-    // --- Proveedor ---
-    if (proveedor?.telefono || proveedor?.phone) {
-      const numeroProveedor = proveedor.telefono ?? proveedor.phone;
+    // 🔹 Mensaje para el fixer
+    if (fixerNumero) {
       const msgProveedor = `
 ✅ *Nueva cita confirmada*
 
-👋 Hola *${proveedorNombre}*,
+👋 Hola *${fixerNombre}*,
 Has recibido una nueva cita confirmada.
 
 📅 *Fecha:* ${fechaLocal}
@@ -173,7 +181,7 @@ Asegúrate de estar disponible en el horario indicado.
 
       await sendWhatsAppNotification({
         message: msgProveedor,
-        destinations: [{ phone: numeroProveedor, name: proveedorNombre }],
+        destinations: [{ phone: fixerNumero, name: fixerNombre }],
         fromName: "Sistema de Citas",
         meta: { tipo: "create_provider" },
       });
@@ -186,23 +194,36 @@ Asegúrate de estar disponible en el horario indicado.
   }
 }
 
+
 /* ===========================================================
    🌀 ACTUALIZACIÓN — Cliente + Proveedor
    =========================================================== */
+/* ===========================================================
+   💬 WHATSAPP — Actualización de Cita (solo con datos locales)
+   =========================================================== */
+
 export async function updateAndNotifyWhatsApp(
   payload: CreateAppointmentPayload & { cambios?: string[] }
 ) {
   try {
-    const [proveedorResp, servicioResp, clienteResp] = await Promise.all([
-      getProveedorById(payload.proveedorId),
-      getServicioById(payload.servicioId),
-      payload.cliente?.id ? getClienteById(payload.cliente.id) : null,
-    ]);
+    // 1️⃣ Recuperar datos desde localStorage
+    const storedData = localStorage.getItem("env_prueba");
+    const userData = storedData ? JSON.parse(storedData) : null;
 
-    const proveedor = proveedorResp ?? (payload as any).proveedor ?? null;
-    const servicio = servicioResp ?? (payload as any).servicio ?? null;
-    const cliente = clienteResp ?? payload.cliente ?? null;
+    if (!userData || !userData.request || !userData.fixer) {
+      console.warn("⚠️ No hay datos válidos en env_prueba (request/fixer)");
+      return { ok: false, message: "Faltan datos locales para enviar notificación WhatsApp." };
+    }
 
+    const { request, fixer } = userData;
+
+    // 2️⃣ Datos base
+    const clienteNombre = request.nombre || "Cliente";
+    const clienteNumero = request.numero || "";
+    const fixerNombre = fixer.nombre || "Proveedor";
+    const fixerNumero = fixer.numero || "";
+
+    // 3️⃣ Datos de la cita
     const fechaLocal = new Date(payload.fecha).toLocaleDateString("es-ES", {
       weekday: "long",
       day: "numeric",
@@ -215,18 +236,15 @@ export async function updateAndNotifyWhatsApp(
     const cambiosTexto = payload.cambios?.length
       ? `🔄 *Cambios realizados:* ${payload.cambios.join(", ")}`
       : "Se han actualizado los detalles de tu cita.";
-    const servicioNombre = (servicio as any)?.nombre ?? payload.servicioId;
-    const proveedorNombre = (proveedor as any)?.nombre ?? "tu proveedor";
-    const clienteNombre = (cliente as any)?.nombre ?? "Cliente";
+    const servicioNombre = payload.servicioId ?? "Servicio no especificado";
     const citaId = payload.citaId || (payload as any)?._id || "";
 
-    // --- Cliente ---
-    if (cliente?.telefono || cliente?.phone) {
-      const numeroCliente = cliente.telefono ?? cliente.phone;
+    // 🔹 Mensaje para el cliente (request)
+    if (clienteNumero) {
       const msgCliente = `
 *✨ ACTUALIZACIÓN DE CITA ✨*
 
-Hola *Juan Perez*,
+Hola *${clienteNombre}*,
 Tu cita ha sido modificada correctamente.
 
 ${cambiosTexto}
@@ -234,7 +252,7 @@ ${cambiosTexto}
 📅 *Fecha:* ${fechaLocal}
 ⏰ *Horario:* ${horaInicio} - ${horaFin}
 🧾 *Servicio:* ${servicioNombre}
-👨‍⚕️ *Proveedor:* ${proveedorNombre}
+👨‍⚕️ *Proveedor:* ${fixerNombre}
 ${citaId ? `🆔 *ID de Cita:* ${citaId}` : ""}
 
 — *Sistema de Citas*
@@ -242,24 +260,23 @@ ${citaId ? `🆔 *ID de Cita:* ${citaId}` : ""}
 
       await sendWhatsAppNotification({
         message: msgCliente,
-        destinations: [{ phone: numeroCliente, name: clienteNombre }],
+        destinations: [{ phone: clienteNumero, name: clienteNombre }],
         fromName: "Sistema de Citas",
         meta: { tipo: "update_client" },
       });
     }
 
-    // --- Proveedor ---
-    if (proveedor?.telefono || proveedor?.phone) {
-      const numeroProveedor = proveedor.telefono ?? proveedor.phone;
+    // 🔹 Mensaje para el fixer (proveedor)
+    if (fixerNumero) {
       const msgProveedor = `
 ⚠️ *Cita actualizada*
 
-👋 Hola *${proveedorNombre}*,
+👋 Hola *${fixerNombre}*,
 La cita con tu cliente ha sido actualizada.
 
 📅 *Nueva fecha:* ${fechaLocal}
 🕒 *Nueva hora:* ${horaInicio} - ${horaFin}
-👤 *Cliente:* Juan Perez
+👤 *Cliente:* ${clienteNombre}
 🛠️ *Servicio:* ${servicioNombre}
 ${citaId ? `🆔 *ID de Cita:* ${citaId}` : ""}
 
@@ -268,7 +285,7 @@ Si el nuevo horario no te conviene, puedes coordinar con el cliente.
 
       await sendWhatsAppNotification({
         message: msgProveedor,
-        destinations: [{ phone: numeroProveedor, name: proveedorNombre }],
+        destinations: [{ phone: fixerNumero, name: fixerNombre }],
         fromName: "Sistema de Citas",
         meta: { tipo: "update_provider" },
       });
@@ -281,21 +298,34 @@ Si el nuevo horario no te conviene, puedes coordinar con el cliente.
   }
 }
 
+
 /* ===========================================================
    ❌ CANCELACIÓN — Cliente + Proveedor
    =========================================================== */
+/* ===========================================================
+   💬 WHATSAPP — Cancelación de Cita (solo con datos locales)
+   =========================================================== */
+
 export async function cancelAndNotifyWhatsApp(payload: CreateAppointmentPayload) {
   try {
-    const [proveedorResp, servicioResp, clienteResp] = await Promise.all([
-      getProveedorById(payload.proveedorId),
-      getServicioById(payload.servicioId),
-      payload.cliente?.id ? getClienteById(payload.cliente.id) : null,
-    ]);
+    // 1️⃣ Recuperar datos locales desde el storage
+    const storedData = localStorage.getItem("env_prueba");
+    const userData = storedData ? JSON.parse(storedData) : null;
 
-    const proveedor = proveedorResp ?? (payload as any).proveedor ?? null;
-    const servicio = servicioResp ?? (payload as any).servicio ?? null;
-    const cliente = clienteResp ?? payload.cliente ?? null;
+    if (!userData || !userData.request || !userData.fixer) {
+      console.warn("⚠️ No hay datos válidos en env_prueba (request/fixer)");
+      return { ok: false, message: "Faltan datos locales para enviar notificación WhatsApp." };
+    }
 
+    const { request, fixer } = userData;
+
+    // 2️⃣ Datos base
+    const clienteNombre = request.nombre || "Cliente";
+    const clienteNumero = request.numero || "";
+    const fixerNombre = fixer.nombre || "Proveedor";
+    const fixerNumero = fixer.numero || "";
+
+    // 3️⃣ Información de la cita
     const fechaLocal = new Date(payload.fecha).toLocaleDateString("es-ES", {
       weekday: "long",
       day: "numeric",
@@ -303,18 +333,15 @@ export async function cancelAndNotifyWhatsApp(payload: CreateAppointmentPayload)
       year: "numeric",
     });
 
-    const servicioNombre = (servicio as any)?.nombre ?? payload.servicioId;
-    const proveedorNombre = (proveedor as any)?.nombre ?? "tu proveedor";
-    const clienteNombre = (cliente as any)?.nombre ?? "Cliente";
+    const servicioNombre = payload.servicioId ?? "Servicio no especificado";
 
-    // --- Cliente ---
-    if (cliente?.telefono || cliente?.phone) {
-      const numeroCliente = cliente.telefono ?? cliente.phone;
+    // 🔹 Mensaje para el cliente (request)
+    if (clienteNumero) {
       const msgCliente = `
 *❌ CANCELACIÓN DE CITA ❌*
 
-Hola *Juan Perez*,
-Tu cita con *${proveedorNombre}* ha sido cancelada.
+Hola *${clienteNombre}*,
+Tu cita con *${fixerNombre}* ha sido cancelada.
 
 📅 *Fecha original:* ${fechaLocal}
 🧾 *Servicio:* ${servicioNombre}
@@ -325,20 +352,19 @@ Si fue un error, puedes volver a programarla cuando desees.
 
       await sendWhatsAppNotification({
         message: msgCliente,
-        destinations: [{ phone: numeroCliente, name: clienteNombre }],
+        destinations: [{ phone: clienteNumero, name: clienteNombre }],
         fromName: "Sistema de Citas",
         meta: { tipo: "cancel_client" },
       });
     }
 
-    // --- Proveedor ---
-    if (proveedor?.telefono || proveedor?.phone) {
-      const numeroProveedor = proveedor.telefono ?? proveedor.phone;
+    // 🔹 Mensaje para el fixer (proveedor)
+    if (fixerNumero) {
       const msgProveedor = `
 ❌ *Cita cancelada*
 
-👋 Hola *${proveedorNombre}*,
-Tu cita con el cliente *Juan Perez* ha sido cancelada.
+👋 Hola *${fixerNombre}*,
+Tu cita con el cliente *${clienteNombre}* ha sido cancelada.
 
 📅 *Fecha original:* ${fechaLocal}
 🛠️ *Servicio:* ${servicioNombre}
@@ -348,7 +374,7 @@ Te notificaremos si solicita una reprogramación.
 
       await sendWhatsAppNotification({
         message: msgProveedor,
-        destinations: [{ phone: numeroProveedor, name: proveedorNombre }],
+        destinations: [{ phone: fixerNumero, name: fixerNombre }],
         fromName: "Sistema de Citas",
         meta: { tipo: "cancel_provider" },
       });
