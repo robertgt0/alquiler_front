@@ -938,7 +938,7 @@ export default function BusquedaAutocompletado({
                 clearTimeout(debounceSugerenciasLocalesRef.current);
             }
         };
-    }, [query, inputFocused, datos, onSearch]);
+    }, [query, inputFocused, datos]);
 
     // ============================================================================
     // 🔥 NUEVO: useEffect PARA RESULTADOS LOCALES EN TIEMPO REAL  
@@ -1028,9 +1028,21 @@ export default function BusquedaAutocompletado({
 
     // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
     const manejarCambioInput = useCallback((nuevoValor: string) => {
+        // ✅ NUEVO: Validar que empiece con mayúscula (si tiene contenido)
+        if (nuevoValor.length > 0 && nuevoValor[0] !== ' ' && nuevoValor[0] !== nuevoValor[0].toUpperCase()) {
+            // Convertir primer carácter a mayúscula
+            nuevoValor = nuevoValor.charAt(0).toUpperCase() + nuevoValor.slice(1);
+        }
+        
         setQuery(nuevoValor);
 
         const textoLimpio = nuevoValor.trim();
+
+        // ✅ VALIDAR PRIMER CARÁCTER DE BÚSQUEDA
+        if (textoLimpio.length > 0 && textoLimpio[0] !== textoLimpio[0].toUpperCase()) {
+            setMensajeNoResultados("La búsqueda debe comenzar con mayúscula");
+            return;
+        }
 
         // 🔥 SOLO MOSTRAR MENSAJE INFORMATIVO, NO BLOQUEAR
         const analisis = analizarCaracteresQuery(textoLimpio);
@@ -1137,12 +1149,16 @@ export default function BusquedaAutocompletado({
 
         const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
         const tieneTextoParaSugerencias = textoNormalizado.length >= 1;
+        
+        // ✅ VALIDAR PRIMER CARÁCTER DEBE SER MAYÚSCULA
+        const comienzaConMayuscula = texto.length > 0 && /^[A-Z]/.test(texto);
 
         console.log('🔍 [SUGERENCIAS] Comparación CORREGIDA:', {
             textoOriginal: JSON.stringify(texto),
             textoNormalizado: JSON.stringify(textoNormalizado),
             textoSoloEspacios,
             tieneTextoParaSugerencias,
+            comienzaConMayuscula,
             inputFocused
         });
 
@@ -1151,7 +1167,7 @@ export default function BusquedaAutocompletado({
             setEstadoSugerencias("idle");
             setMostrarSugerencias(false);
             terminoBusquedaAnteriorSugerencias.current = texto;
-        } else if (tieneTextoParaSugerencias && inputFocused) {
+        } else if (tieneTextoParaSugerencias && inputFocused && comienzaConMayuscula) {
             // 🔥 Si llegamos aquí, es porque el texto cambió y hay que buscar
             console.log('🚀 [SUGERENCIAS] Buscando sugerencias para:', textoNormalizado);
 
@@ -1243,19 +1259,24 @@ export default function BusquedaAutocompletado({
 
         const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
         const tieneTextoParaResultados = textoNormalizado.length >= 2;
+        
+        // ✅ VALIDAR PRIMER CARÁCTER DEBE SER MAYÚSCULA
+        const comienzaConMayuscula = texto.length > 0 && /^[A-Z]/.test(texto);
 
         console.log('🔍 [RESULTADOS] Comparación CORREGIDA:', {
             textoOriginal: JSON.stringify(texto),
             textoNormalizado: JSON.stringify(textoNormalizado),
             textoSoloEspacios,
             tieneTextoParaResultados,
+            comienzaConMayuscula,
             busquedaEnCurso: busquedaEnCurso.current
         });
 
-        // 🔥 MODIFICADO: Usar textoNormalizado para la búsqueda
+        // 🔥 MODIFICADO: Usar textoNormalizado para la búsqueda Y VALIDAR MAYÚSCULA
         if (!textoSoloEspacios &&
             tieneTextoParaResultados &&
             inputFocused &&
+            comienzaConMayuscula &&
             !busquedaEnCurso.current) {
 
             console.log('🚀 [RESULTADOS] Programando búsqueda automática para:', textoNormalizado);

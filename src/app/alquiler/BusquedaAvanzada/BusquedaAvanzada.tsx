@@ -34,20 +34,20 @@ const API_FECHA = `${API_BASE}/fecha`;
 function normalizeToItems(arr: unknown): ResultItem[] {
   if (!Array.isArray(arr)) return [];
   return arr
-    .map((raw) => {
+    .map((raw, index) => {
       if (raw && typeof raw === "object") {
         const o = raw as Record<string, any>;
-        const id = o["id"] ?? o["id_servicio"] ?? o["_id"];
-        if (!id) return null;
+        const id = o["id"] ?? o["id_servicio"] ?? o["_id"] ?? index;
 
-        // Aquí normalizamos la zona
         let zonaNombre = "";
+        // primero buscamos zona en proveedor/usuario
         if (o.zona) {
-          if (typeof o.zona === "string") {
-            zonaNombre = o.zona;
-          } else if (typeof o.zona === "object" && o.zona.nombre) {
-            zonaNombre = o.zona.nombre;
-          }
+          zonaNombre = typeof o.zona === "string" ? o.zona : o.zona.nombre ?? "";
+        } 
+        // si no existe, buscar en el servicio (por si viene de servicios)
+        else if (o.servicios && o.servicios.length > 0 && o.servicios[0].zona) {
+          const z = o.servicios[0].zona;
+          zonaNombre = typeof z === "string" ? z : z.nombre ?? "";
         }
 
         return { ...o, id, zona: zonaNombre } as ResultItem;
@@ -56,6 +56,8 @@ function normalizeToItems(arr: unknown): ResultItem[] {
     })
     .filter((x): x is ResultItem => x !== null);
 }
+
+
 
 
 function intersectById(lists: ResultItem[][]): ResultItem[] {
@@ -87,14 +89,18 @@ async function getDatos(endpoint: string, params?: Record<string, string | numbe
       }
     }
   }
+
   const url = searchParams.toString() ? `${endpoint}?${searchParams.toString()}` : endpoint;
+    console.log("🌐 Solicitando datos desde:", url);
   const { data } = await axios.get(url);
+  console.log("📦 Respuesta recibida desde", endpoint, ":", data);
   return data;
 }
 
 /* NORMALIZAR TEXTO PARA BUSQUEDAS SIN QUE AFECTEN TILDES Y MAYÚSCULAS */
 function normalizeText(str: string) {
   return str
+    .trim() 
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
@@ -106,25 +112,32 @@ function capitalize(str: string) {
 /* BÚSQUEDA CON COINCIDENCIA */
 async function buscarConInterseccion(f: Filtros): Promise<ResultItem[]> {
   const requests: Array<Promise<unknown>> = [];
+  console.log("🧩 Filtros aplicados:", f);
 
   // Solo enviar tipoServicio si tiene contenido
   if (f.tipoServicio?.trim()) {
     const servicioNormalizado = normalizeText(f.tipoServicio);
+    console.log("🔍 Filtro tipoServicio:", servicioNormalizado);
     requests.push(getDatos(API_SERVICIOS, { servicio: servicioNormalizado }));
   }
 
-  if (f.horario) requests.push(getDatos(API_DISPONIBILIDAD, { turno: f.horario }));
- 
-if (f.zona && f.zona.trim()) {
-  const zonaCapitalizada = capitalize(f.zona.trim());
-  requests.push(getDatos(API_ZONA, { zona: zonaCapitalizada }));
-}
+  if (f.horario) {
+    console.log("🕒 Filtro horario:", f.horario);
+    requests.push(getDatos(API_DISPONIBILIDAD, { turno: f.horario }));
+  }
+
+  if (f.zona && f.zona.trim()) {
+    const zonaCapitalizada = capitalize(f.zona.trim());
+    console.log("📍 Filtro zona:", zonaCapitalizada);
+    requests.push(getDatos(API_ZONA, { zona: zonaCapitalizada }));
+  }
 
   if (f.experiencia) {
     const match = f.experiencia.match(/(\d+)\s*a\s*(\d+)/);
     if (match) {
       const años_min = Number(match[1]);
       const años_max = Number(match[2]);
+      console.log("💼 Filtro experiencia:", { años_min, años_max });
       requests.push(getDatos(API_EXPERIENCIA, { años_min, años_max }));
     }
   }
@@ -133,45 +146,64 @@ if (f.zona && f.zona.trim()) {
     const precioParams: Record<string, number> = {};
     if (f.precioMin !== undefined) precioParams.precio_min = f.precioMin;
     if (f.precioMax !== undefined) precioParams.precio_max = f.precioMax;
+    console.log("💰 Filtro precios:", precioParams);
     requests.push(getDatos(API_PRECIO, precioParams));
   }
 
-  if (f.fechaInicio) requests.push(getDatos(API_FECHA, { fecha_exacta: f.fechaInicio }));
-
+  if (f.fechaInicio){
+     requests.push(getDatos(API_FECHA, { fecha_exacta: f.fechaInicio }));
+    console.log("📅 Filtro fecha:", f.fechaInicio);
+  }
   // Si no hay filtros, devolvemos todos los servicios
   if (requests.length === 0) {
+    console.log("⚠️ Sin filtros: recuperando todos los servicios...");
     const serviciosRes = await getDatos(API_SERVICIOS);
     return normalizeToItems(serviciosRes?.data || serviciosRes || []);
   }
 
   const responses = await Promise.all(requests);
-  const listas: ResultItem[][] = responses.map((r) => {
+
+  console.log("📊 Respuestas combinadas:", responses);
+ const listas: ResultItem[][] = responses.map((r) => {
   if (r && typeof r === "object") {
-    const dataArr = (r as any).data;
-    if (Array.isArray(dataArr)) return normalizeToItems(dataArr);
+    const obj = r as any;
+    let items: unknown[] = [];
+    if (Array.isArray(obj.servicios_encontrados)) {
+      items = obj.servicios_encontrados;
+    } else if (Array.isArray(obj.data)) {
+      items = obj.data;
+    }
+    return normalizeToItems(items);
   }
   return [];
 });
 
-
   let resultadoFinal = intersectById(listas);
 
-  // FILTRADO NORMALIZADO PARA TILDES Y MAYÚSCULAS
+  // 🔍 AJUSTE: búsqueda parcial por nombre del servicio (insensible a mayúsculas y tildes)
   if (f.tipoServicio?.trim()) {
-    const busqueda = normalizeText(f.tipoServicio);
-    const resultadoNormalizado = resultadoFinal.map((item) => ({
-      ...item,
-      nombre_normalizado: normalizeText(
-        String(item.nombre || item.tipoServicio || item.servicio || "")
-      ),
-    }));
-    resultadoFinal = resultadoNormalizado.filter((item) =>
-      item.nombre_normalizado.includes(busqueda)
-    );
-  }
+  const busqueda = normalizeText(f.tipoServicio);
+
+  resultadoFinal = resultadoFinal.filter((item) => {
+    // Si existe array de servicios, buscar ahí
+    if (Array.isArray(item.servicios) && item.servicios.length > 0) {
+      return item.servicios.some((s: any) =>
+        normalizeText(s.nombre || "").includes(busqueda)
+      );
+    }
+
+    // Si no existe, buscar en nombre general o nombre del servicio en backend
+    const nombreServicio = item.nombre || item.servicio || "";
+    return normalizeText(String(nombreServicio)).includes(busqueda);
+  });
+  console.log("🔹 Antes del filtro final, items:", resultadoFinal.map(i => i.nombre));
+
+}
+
 
   return resultadoFinal;
 }
+
 
 /* =================== COMPONENTE =================== */
 const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
@@ -266,18 +298,8 @@ const BusquedaAvanzada: React.FC<BusquedaAvanzadaProps> = ({
     console.log("Zonas encontradas:", resultados.map(r => r.zona));
 
       // Actualizamos tipoServicio con el nombre real desde el primer resultado si existe
-      if (filtros.tipoServicio && resultados.length > 0) {
-        const servicioReal =
-          resultados[0].servicios_coincidentes?.[0]?.nombre ||
-          resultados[0].nombre ||
-          filtros.tipoServicio;
-        const nuevosFiltros = { ...filtros, tipoServicio: servicioReal };
-        setFiltros(nuevosFiltros);
-        localStorage.setItem("busquedaAvanzadaFiltros", JSON.stringify(nuevosFiltros));
-        onAplicarFiltros(nuevosFiltros, resultados);
-      } else {
-        onAplicarFiltros(filtros, resultados);
-      }
+      onAplicarFiltros(filtros, resultados);
+
 
       setMensaje("Búsqueda realizada correctamente.");
       setTimeout(() => setMensaje(null), 3000);
