@@ -1,28 +1,76 @@
 // src/modules/epic_aceptar-rechazar-trabajo-proveedor/services/solicitudProveedorService.ts
 
-const BASE_URL = "http://localhost:5000/api/los_vengadores_trabajos/trabajos"; 
-// 👆 Cambiado a puerto 5000, según tu backend (.env)
+/**
+ * Servicio para que el proveedor confirme o rechace trabajos (HU1)
+ */
 
-export async function confirmarSolicitud(id: string): Promise<void> {
-  const res = await fetch(`${BASE_URL}/${id}/confirmar`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-  });
+const BASE_URL = "http://localhost:5000/api/los_vengadores/trabajos";
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || "Error al confirmar trabajo");
+// 🔹 Tipo esperado desde el backend
+export interface TrabajoResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    _id: string;
+    estado: string;
+    [key: string]: unknown; // permite campos extra sin romper tipado
+  };
+}
+
+/**
+ * ✅ Confirmar trabajo
+ * PUT /api/los_vengadores_trabajos/trabajos/:id/confirmar
+ */
+export async function confirmarSolicitud(id: string): Promise<TrabajoResponse> {
+  try {
+    const res = await fetch(`${BASE_URL}/${id}/confirmar`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data: TrabajoResponse = await res.json().catch(() => ({
+      success: false,
+      message: "Error inesperado del servidor",
+    }));
+
+    if (!res.ok) {
+      console.error("❌ Error al confirmar trabajo:", data);
+      throw new Error(data.message || "Error al confirmar trabajo");
+    }
+
+    console.log("✅ Trabajo confirmado:", data);
+    return data;
+  } catch (error) {
+    console.error("❌ Excepción en confirmarSolicitud:", error);
+    throw error;
   }
 }
 
-export async function rechazarSolicitud(id: string): Promise<void> {
-  const res = await fetch(`${BASE_URL}/${id}/rechazar`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-  });
+/**
+ * ❌ Rechazar trabajo
+ * PUT /api/los_vengadores_trabajos/trabajos/:id/rechazar
+ */
+export async function rechazarSolicitud(id: string): Promise<TrabajoResponse> {
+  try {
+    const res = await fetch(`${BASE_URL}/${id}/rechazar`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+    });
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || "Error al rechazar trabajo");
+    const data: TrabajoResponse = await res.json().catch(() => ({
+      success: false,
+      message: "Error inesperado del servidor",
+    }));
+
+    if (!res.ok) {
+      console.error("❌ Error al rechazar trabajo:", data);
+      throw new Error(data.message || "Error al rechazar trabajo");
+    }
+
+    console.log("🚫 Trabajo rechazado:", data);
+    return data;
+  } catch (error) {
+    console.error("❌ Excepción en rechazarSolicitud:", error);
+    throw error;
   }
 }
