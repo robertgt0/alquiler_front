@@ -1,6 +1,6 @@
 import React from "react";
 import { TransactionListProps } from "../types";
-import TransactionItem from "./TransactionItem";
+import TransactionItem from "./TransactionItem.tsx";
 
 export default function TransactionList({ transactions }: TransactionListProps) {
   return (
@@ -13,7 +13,13 @@ export default function TransactionList({ transactions }: TransactionListProps) 
       </div>
 
       {transactions.length > 0 ? (
-        <ul className="space-y-3">
+        // --- MODIFICACIÓN AQUÍ ---
+        // 1. max-h-[28rem]: (448px) Limita la altura para mostrar aprox 5 ítems.
+        // 2. overflow-y-auto: Muestra el scroll vertical solo si es necesario.
+        // 3. pr-2: Añade un padding a la derecha para que el scroll no se pegue.
+        // 4. scrollbar-*: Clases opcionales para estilizar el scroll.
+        <ul className="space-y-3 max-h-[28rem] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 scrollbar-thumb-rounded-md">
+        {/* --- FIN DE LA MODIFICACIÓN --- */}
           {transactions.map((tx) => (
             <TransactionItem key={tx.id} transaction={tx} />
           ))}
