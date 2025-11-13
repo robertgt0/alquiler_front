@@ -19,7 +19,7 @@ export default function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSald
         </button>
       </div>
 
-      <p className="font-medium text-blue-100">Balance Total</p>
+      <p className="font-medium text-blue-100">Saldo Total</p>
       <div className="mt-2 text-4xl font-bold">
         {showSaldo ? <span>{moneda} {saldoFormateado}</span> : <span>{moneda} ****.**</span>}
       </div>
