@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { solicitarEnlaceAcceso } from "../../teamsys/services/UserService"; // ajusta si tu ruta real es distinta
+import { useRouter } from "next/navigation";  
 
 const isValidEmail = (v: string) => {
   const s = v.trim();
@@ -10,6 +11,7 @@ const isValidEmail = (v: string) => {
 };
 
 export default function IniLinkPage() {
+  const router = useRouter();
   const [email, setEmail] = React.useState("");
   const [fieldError, setFieldError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -80,16 +82,16 @@ export default function IniLinkPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow">
-        <h1 className="mb-2 text-center text-2xl font-semibold text-gray-800">Acceso rápido por enlace</h1>
+    <div className="flex min-h-screen items-center justify-center bg-[#4F6BFF] px-4">
+      <div className="w-full max-w-md rounded-4xl bg-white p-5 shadow">
+        <h1 className="mb-2 text-center text-2xl font-semibold text-blue-600">Inicio de session sin contraseña</h1>
         <p className="mb-6 text-center text-sm text-gray-600">
-          Ingresa tu correo y te enviaremos un enlace para ingresar a servineo
+          Ingresa tu correo electrónico registrado 
         </p>
 
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Correo electrónico</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700"></label>
             <input
               id="email"
               type="email"
@@ -107,13 +109,40 @@ export default function IniLinkPage() {
             {fieldError && <p id="email-error" className="mt-1 text-xs text-red-600">{fieldError}</p>}
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-blue-600 px-4 py-2 font-medium text-white shadow hover:bg-blue-700 disabled:opacity-60"
-          >
-            {loading ? "Enviando…" : "Enviar enlace de acceso"}
-          </button>
+          {/* Botones al estilo mock: Cancelar / Aceptar */}
+<div className="mt-6 flex justify-end gap-4">
+  <button
+    type="button"
+    onClick={() => router.push("/login")} // 👈 ruta de tu login
+    className="
+    rounded-full
+    px-6 py-2
+    text-sm font-semibold
+    bg-blue-600
+    text-white
+    hover:bg-blue-700
+    "
+  >
+    Cancelar
+  </button>
+
+  <button
+    type="submit"
+    disabled={loading}
+    className="
+      rounded-full
+      bg-blue-600
+      px-6 py-2
+      text-sm font-semibold
+      text-white
+      shadow
+      hover:bg-blue-700
+      disabled:opacity-60
+    "
+  >
+    {loading ? "Enviando…" : "Aceptar"}
+  </button>
+</div>
         </form>
 
         {banner.type === "err" && (
@@ -123,23 +152,58 @@ export default function IniLinkPage() {
         )}
       </div>
 
-      {/* Modal emergente de éxito */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-green-700 mb-2">¡Listo!</h3>
-            <p className="text-sm text-gray-700 mb-4">{banner.text}</p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={closeOrHide}
-                className="rounded px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
+{/* Modal emergente de éxito – estilo “pastilla” */}
+{showModal && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
+    onClick={closeOrHide}
+  >
+    <div
+      className="relative"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Pastilla completa (incluye icono adentro) */}
+      <div
+        className="
+          max-w-[300px]
+          rounded-full
+          border-4 border-gray-400
+          bg-white
+          px-6 py-1 
+          shadow-md
+          text-center
+          flex flex-col items-center
+          gap-3
+        "
+      >
+
+        {/* ICONO VERDE ADENTRO — igual a tu imagen */}
+        <div className="w-10 h-10 flex items-center justify-center rounded-full bg-green-500">
+          <span className="text-white text-xl font-bold">✓</span>
         </div>
-      )}
+
+        {/* TEXTO */}
+        <p className="text-sm font-medium text-gray-800">
+          Te enviamos un link de acceso a tu correo electrónico.
+        </p>
+        <p className="text-xs text-gray-600 font-semibold">
+          Válido solo por 5 minutos.
+        </p>
+
+        {/* BOTÓN CERRAR */}
+        <button
+          onClick={closeOrHide}
+          className="mt-1 text-xs font-semibold text-violet-600 hover:underline"
+        >
+          Cerrar
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
+
+
     </div>
   );
 }
