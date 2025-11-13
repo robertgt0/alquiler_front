@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build --no-lint",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -43,35 +43,58 @@
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "critters": "^0.0.23",
     "date-fns": "^4.1.0",
+    "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3",
     "lightningcss": "^1.30.2",
     "lucide-react": "^0.545.0",
     "mapbox-gl": "^3.15.0",
     "maplibre-gl": "^5.9.0",
-    "mongodb": "6.5",
-    "next": "15.5.4",
+    "mongodb": "^6.20.0",
+    "next": "^16.0.0",
     "next-auth": "4.24",
     "react": "19.1.0",
     "react-day-picker": "^9.11.1",
     "react-dom": "19.1.0",
     "react-icons": "^5.5.0",
+    "react-leaflet": "^5.0.0",
+    "react-leaflet-markercluster": "^5.0.0-rc.0",
     "react-map-gl": "^8.1.0",
+    "react-modal": "^3.16.3",
     "swr": "^2.3.6",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@tailwindcss/postcss": "^4.1.16",
+    "@types/leaflet": "^1.9.6",
+    "@types/leaflet.markercluster": "^1.5.3",
+    "@types/mongodb": "^4.0.6",
+    "@types/node": "20.19.23",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@types/react-modal": "^3.16.3",
     "autoprefixer": "^10.4.22",
     "eslint": "^9.38.0",
-    "eslint-config-next": "^15.5.4",
+    "eslint-config-next": "15.5.4",
     "postcss": "^8.5.6",
     "sharp": "^0.34.4",
-    "tailwindcss": "3.4",
+    "tailwindcss": "4.1.16",
     "tw-animate-css": "^1.4.0",
-    "typescript": "^5"
-  }
+    "typescript": "5.9.3"
+  },
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robertgt0/alquiler_front.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/robertgt0/alquiler_front/issues"
+  },
+  "homepage": "https://github.com/robertgt0/alquiler_front#readme"
 }
