@@ -1,40 +1,58 @@
 // src/app/components/MapaWrapper.tsx
 "use client";
 
-// ⬇️ NUEVO: Importa useRef
 import { useState, useEffect, useCallback, useRef } from "react";
 import BuscadorUbicaciones from "./BuscadorUbicaciones";
 import FixersHeader from "./FixersHeader";
 import PermisoGeolocalizacion from "./PermisoGeolocalizacion";
 import { Ubicacion, Fixer, UserLocation, UbicacionFromAPI } from "../../types";
 import { UbicacionManager } from "./UbicacionManager";
-import { ubicacionesRespaldo, fixersRespaldo, fixersDefinidos } from "../data/fixersData";
-
 import Mapa from "./MapaClient";
+
+// Ubicación por defecto para cuando no hay geolocalización
+const PLAZA_PRINCIPAL: Ubicacion = {
+  id: 1,
+  nombre: "Plaza 14 de Septiembre",
+  posicion: [-17.394211, -66.156376] as [number, number],
+};
+
+// Interfaz para la estructura REAL de tu API
+interface FixerFromAPI {
+  _id: string;
+  fixerId: string;
+  userId: string;
+  name: string;
+  photoUrl: string;
+  whatsapp: string;
+  location?: { lat: number; lng: number };
+  categories: string[];
+  rating?: number;
+  verified?: boolean;
+  termsAccepted: boolean;
+  jobsCount: number;
+  ratingAvg: number;
+  ratingCount: number;
+  memberSince: string;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
 
 export default function MapaWrapper() {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
   const [fixers, setFixers] = useState<Fixer[]>([]);
   const [fixersFiltrados, setFixersFiltrados] = useState<Fixer[]>([]);
 
-  const [ubicacionSeleccionada, setUbicacionSeleccionada] =
-    useState<Ubicacion | null>(ubicacionesRespaldo[0]);
-
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [cargando, setCargando] = useState(true); // Se mantiene en true para la carga inicial
-
+  const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState<Ubicacion | null>(PLAZA_PRINCIPAL);
+  const [, setUserLocation] = useState<UserLocation | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [permisoDecidido, setPermisoDecidido] = useState(false);
-  const [usandoRespaldo, setUsandoRespaldo] = useState(false);
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const ubicacionManager = UbicacionManager.getInstancia();
-
-  // ⬇️ NUEVO: Esta "bandera" persistirá entre renders y no causará re-renders
-  // Nos dice si ya pasó la primera carga.
   const isInitialLoad = useRef(true);
 
-  // (El resto de funciones como obtenerUbicacion y useEffect de eventos se mantienen igual)
   const obtenerUbicacion = useCallback(() => {
     if (!navigator.geolocation) {
       console.log("Geolocalización no soportada");
@@ -65,8 +83,8 @@ export default function MapaWrapper() {
       },
       () => {
         console.log("Ubicación rechazada - Enfocando en Plaza Principal");
-        ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
-        setUbicacionSeleccionada(ubicacionesRespaldo[0]);
+        ubicacionManager.setUbicacion(PLAZA_PRINCIPAL);
+        setUbicacionSeleccionada(PLAZA_PRINCIPAL);
         setUserLocation(null);
         setPermisoDecidido(true);
       },
@@ -97,14 +115,10 @@ export default function MapaWrapper() {
     };
   }, [obtenerUbicacion]);
 
-
-  // --- Inicio de la corrección ---
-
   const cargarDatos = useCallback(async () => {
-    
-    // ⬇️ MODIFICADO: Solo ponemos 'cargando' si es la carga inicial
     if (isInitialLoad.current) {
       setCargando(true);
+      setError(null);
     }
 
     try {
@@ -119,81 +133,76 @@ export default function MapaWrapper() {
         }),
       ]);
 
-      if (resUbicaciones.ok && resFixers.ok) {
-        // ... (lógica de fetch exitoso sin cambios)
-        const dataUbicaciones = await resUbicaciones.json();
-        const dataFixers = await resFixers.json();
-
-        console.log("✅ Backend conectado - Usando datos reales");
-
-        if (dataUbicaciones.success) {
-          const ubicacionesTransformadas: Ubicacion[] =
-            dataUbicaciones.data.map(
-              (item: UbicacionFromAPI, index: number) => ({
-                id: index + 1,
-                nombre: item.nombre,
-                posicion: [item.posicion.lat, item.posicion.lng] as [number, number],
-              })
-            );
-          setUbicaciones(ubicacionesTransformadas);
-        }
-
-        if (dataFixers.success) {
-          const fixersConImagen: Fixer[] = dataFixers.data.map((fixer: Fixer) => ({
-            ...fixer,
-            imagenPerfil: fixer.imagenPerfil || "/imagenes_respaldo/perfil-default.jpg"
-          }));
-          
-          setFixers(fixersConImagen);
-          const cercanos = ubicacionManager.filtrarFixersCercanos(fixersConImagen);
-          setFixersFiltrados(cercanos);
-        }
-
-        setUsandoRespaldo(false);
-
-      } else {
-        throw new Error("Error en respuesta del servidor");
+      if (!resUbicaciones.ok) {
+        throw new Error(`Error al obtener ubicaciones: ${resUbicaciones.status} ${resUbicaciones.statusText}`);
       }
+
+      if (!resFixers.ok) {
+        throw new Error(`Error al obtener fixers: ${resFixers.status} ${resFixers.statusText}`);
+      }
+
+      const dataUbicaciones = await resUbicaciones.json();
+      const dataFixers = await resFixers.json();
+
+      console.log("✅ Backend conectado - Usando datos reales");
+
+      // Transformar ubicaciones
+      if (dataUbicaciones.success && Array.isArray(dataUbicaciones.data)) {
+        const ubicacionesTransformadas: Ubicacion[] = dataUbicaciones.data.map(
+          (item: UbicacionFromAPI, index: number) => ({
+            id: index + 1,
+            nombre: item.nombre,
+            posicion: [item.posicion.lat, item.posicion.lng] as [number, number],
+          })
+        );
+        setUbicaciones(ubicacionesTransformadas);
+      }
+
+      // TRANSFORMAR FIXERS - ESTA ES LA PARTE CLAVE CORREGIDA
+      if (dataFixers.success && Array.isArray(dataFixers.data)) {
+        const fixersTransformados: Fixer[] = dataFixers.data.map((fixer: FixerFromAPI) => {
+          // Si no tiene ubicación, usar una por defecto en Cochabamba
+          const posicionDefault = { lat: -17.3895, lng: -66.1568 };
+          
+          return {
+            _id: fixer._id,
+            nombre: fixer.name, // name → nombre
+            posicion: fixer.location || posicionDefault, // location → posicion
+            especialidad: fixer.categories?.join(', ') || 'Servicios generales', // categories → especialidad
+            descripcion: `Profesional en ${fixer.categories?.join(', ') || 'servicios varios'}`, // Generar descripción
+            rating: fixer.rating || 4.5, // rating se mantiene
+            verified: fixer.verified || false, // verified se mantiene
+            whatsapp: fixer.whatsapp, // whatsapp se mantiene
+            imagenPerfil: fixer.photoUrl || '/imagenes_respaldo/perfil-default.jpg' // photoUrl → imagenPerfil
+          };
+        });
+        
+        console.log(`🔧 Fixers transformados: ${fixersTransformados.length}`);
+        setFixers(fixersTransformados);
+        const cercanos = ubicacionManager.filtrarFixersCercanos(fixersTransformados);
+        setFixersFiltrados(cercanos);
+      }
+
     } catch (error) {
-      console.log("❌ Backend no disponible - Usando datos de respaldo", error);
-
-      // ... (lógica de datos de respaldo sin cambios)
-      const todosLosFixers: Fixer[] = [...fixersRespaldo, ...fixersDefinidos].map(fixer => ({
-        ...fixer,
-        imagenPerfil: fixer.imagenPerfil || "/imagenes_respaldo/image2.png"
-      }));
-      
-      setUbicaciones(ubicacionesRespaldo);
-      setFixers(todosLosFixers);
-      setUsandoRespaldo(true);
-
-      const cercanos = ubicacionManager.filtrarFixersCercanos(todosLosFixers);
-      setFixersFiltrados(cercanos);
-
+      console.error("❌ Error conectando con el backend:", error);
+      const errorMessage = error instanceof Error ? error.message : "Error desconocido al conectar con el servidor";
+      setError(errorMessage);
     } finally {
-      // ⬇️ MODIFICADO: Siempre ponemos 'cargando' en false
-      // y marcamos que la carga inicial ya pasó.
       setCargando(false);
-      isInitialLoad.current = false; 
+      isInitialLoad.current = false;
     }
-  }, [ubicacionManager, ubicacionesRespaldo, fixersRespaldo, fixersDefinidos]);
-
+  }, [ubicacionManager]);
 
   useEffect(() => {
     if (!permisoDecidido) {
-      ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
+      ubicacionManager.setUbicacion(PLAZA_PRINCIPAL);
     }
 
     console.log("Ejecutando efecto de carga de datos...");
     cargarDatos();
-
   }, [permisoDecidido, ubicacionManager, cargarDatos]);
 
-  // --- Fin de la corrección ---
-
-
   const handleMarcadorAgregado = (lat: number, lng: number) => {
-    // ... (sin cambios)
     const nuevaUbicacion: Ubicacion = {
       id: Date.now(),
       nombre: "📍 Ubicación seleccionada",
@@ -206,7 +215,7 @@ export default function MapaWrapper() {
     setUbicacionSeleccionada(nuevaUbicacion);
   };
 
-  if (cargando)
+  if (cargando) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-lg sm:text-xl font-bold text-[#2a87ff]">
@@ -214,16 +223,27 @@ export default function MapaWrapper() {
         </p>
       </div>
     );
+  }
 
-  // ... (El resto del JSX se mantiene exactamente igual)
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center">
+          <h2 className="text-xl font-bold text-red-800 mb-2">Error de conexión</h2>
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={cargarDatos}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors"
+          >
+            Reintentar conexión
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center">
-      {usandoRespaldo && (
-        <div className="w-full max-w-6xl px-4 mb-4">
-          {/* Mensaje de respaldo si es necesario */}
-        </div>
-      )}
-
       <BuscadorUbicaciones
         ubicaciones={ubicaciones}
         onBuscar={(u) => {
