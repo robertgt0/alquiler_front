@@ -75,7 +75,7 @@ const router = useRouter();
 
     const metodo = metodos.find(m => m.id === metodoId);
     if (metodo?.activo) {
-      setError('Este método ya está activo');
+      //setError('Este método ya está activo');
       return;
     }
 
@@ -127,7 +127,7 @@ const router = useRouter();
 
       const metodo = metodos.find(m => m.id === metodoId);
       if (metodo?.activo) {
-        setError('Este método ya está activo');
+        //setError('Este método ya está activo');
         return;
       }
 
