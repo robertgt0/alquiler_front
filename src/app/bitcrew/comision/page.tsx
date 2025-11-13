@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import Link from "next/link"; // ⬅️ Usamos Link de Next.js
+import Link from "next/link"; 
 
 // --- 1. CONSTANTE DE COMISIÓN ---
 const TASA_COMISION = 0.05; // 5%
@@ -15,14 +15,14 @@ interface ITrabajo {
   fixer_id: string;
 }
 
-// --- 3. INTERFACES DEL MODAL ---
-type ModalView = 'closed' | 'options' | 'confirm_cash';
+// --- 3. INTERFACES DEL MODAL (¡MODIFICADA!) ---
+// Añadimos la nueva vista 'insufficient_funds'
+type ModalView = 'closed' | 'options' | 'confirm_cash' | 'insufficient_funds';
 
-// --- 4. COMPONENTE SIDEBAR (MODIFICADO) ---
-// Recibe el 'usuario' para habilitar/deshabilitar el Link
-function Sidebar({ usuario }: { usuario: string }) {
+// --- 4. COMPONENTE SIDEBAR (Sin cambios) ---
+function Sidebar({ usuario }: { usuario: string | null }) {
   
-  const hasUser = !!usuario; // true si el string no está vacío
+  const hasUser = !!usuario; 
 
   return (
     <aside className="w-full md:w-64 lg:w-72 bg-white p-6 shadow-lg md:shadow-none md:border-r md:border-gray-200 flex-shrink-0">
@@ -46,30 +46,27 @@ function Sidebar({ usuario }: { usuario: string }) {
           <span>Trabajos Activos</span>
         </a>
         
-        {/* Historial (Deshabilitado si no hay usuario) */}
         {!hasUser ? (
            <span className="flex items-center space-x-3 p-3 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed">
              <span>Historial de Trabajos</span>
            </span>
         ) : (
           <Link
-            href={`/bitcrew/historial?usuario=${usuario}`} // Asumiendo una ruta
+            href={`/bitcrew/historial?usuario=${usuario}`} 
             className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
+            target="_blank"
           >
             <span>Historial de Trabajos</span>
           </Link>
         )}
 
-        {/* Billetera (LÓGICA REQUERIDA) */}
         {!hasUser ? (
-           // Versión deshabilitada
            <span className="flex items-center space-x-3 p-3 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed" title="Debe buscar un usuario primero">
              <span>Mi Billetera</span>
            </span>
         ) : (
-          // Versión habilitada (Link de Next.js)
           <Link
-            href={`/bitcrew/wallet?usuario=${usuario}`} // ⬅️ Pasa el usuario como query param
+            href={`/bitcrew/wallet?usuario=${usuario}`} 
             className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
           >
             <span>Mi Billetera</span>
@@ -87,7 +84,7 @@ function Sidebar({ usuario }: { usuario: string }) {
   );
 }
 
-// --- 5. COMPONENTE TARJETA DE TRABAJO ---
+// --- 5. COMPONENTE TARJETA DE TRABAJO (Sin cambios) ---
 interface TrabajoCardProps {
   trabajo: ITrabajo;
   onClick: (trabajo: ITrabajo) => void;
@@ -147,9 +144,9 @@ function TrabajoCard({ trabajo, onClick }: TrabajoCardProps) {
   );
 }
 
-// --- 6. COMPONENTE MODAL ---
+// --- 6. COMPONENTE MODAL (¡MODIFICADO!) ---
 interface ModalProps {
-  view: 'options' | 'confirm_cash';
+  view: 'options' | 'confirm_cash' | 'insufficient_funds'; // ⬅️ Actualizado
   setView: (view: ModalView) => void;
   onConfirm: () => Promise<void>;
   isConfirming: boolean;
@@ -166,6 +163,7 @@ function CompletadoModal({ view, setView, onConfirm, isConfirming, error }: Moda
         {/* VISTA 1: OPCIONES DE PAGO */}
         {view === 'options' && (
           <>
+            {/* ... (código de Opciones de Pago sin cambios) ... */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-900">Método de Pago</h2>
             </div>
@@ -207,11 +205,13 @@ function CompletadoModal({ view, setView, onConfirm, isConfirming, error }: Moda
               <p className="text-lg">¿Está seguro que desea marcar este trabajo como pagado en efectivo?</p>
               <p className="text-sm text-gray-500">El sistema descontará la comisión (5%) de su billetera y marcará el trabajo como "Pagado".</p>
             </div>
+            
             {error && (
               <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
                 <strong>Error:</strong> {error}
               </div>
             )}
+
             <div className="mt-6 flex justify-end space-x-4">
               <button
                 onClick={() => setView('options')}
@@ -230,48 +230,77 @@ function CompletadoModal({ view, setView, onConfirm, isConfirming, error }: Moda
             </div>
           </>
         )}
+
+        {/*  --- 7. NUEVA VISTA: SALDO INSUFICIENTE --- */}
+        {view === 'insufficient_funds' && (
+          <>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-red-600">Saldo Insuficiente</h2>
+            </div>
+            
+            <div className="space-y-4 text-gray-700">
+              {/* 'error' ahora contiene el mensaje "No se puede continuar..." */}
+              <p className="text-lg">{error}</p>
+            </div>
+
+            <div className="mt-6 flex justify-end space-x-4">
+              <button
+                onClick={() => setView('closed')} // Cierra el modal
+                className="py-2 px-5 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition duration-300"
+              >
+                Entendido
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-// --- 7. COMPONENTE DE PÁGINA PRINCIPAL ---
+// --- 8. COMPONENTE DE PÁGINA PRINCIPAL ---
 export default function FixerJobsPage() {
-  // --- Estados ---
-  const [usuario, setUsuario] = useState(""); // ⬅️ Este es el estado clave
+  // --- Estados (Sin cambios) ---
+  const [usuario, setUsuario] = useState(""); 
   const [trabajos, setTrabajos] = useState<ITrabajo[]>([]);
   const [loading, setLoading] = useState(false); 
   const [message, setMessage] = useState("Busca un usuario para ver sus trabajos.");
-
-  // Estados del Modal
   const [modalView, setModalView] = useState<ModalView>('closed');
   const [selectedTrabajo, setSelectedTrabajo] = useState<ITrabajo | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
-  // --- Carga de Datos ---
+  // Efecto para bloquear scroll
+  useEffect(() => {
+    if (modalView !== 'closed') {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [modalView]); 
+
+
+  // --- Carga de Datos (Sin cambios) ---
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!usuario) {
       setMessage("Por favor, ingrese un usuario.");
       return;
     }
-
     setLoading(true);
     setMessage("Buscando trabajos...");
     setTrabajos([]); 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-
     try {
       const trabajosRes = await fetch(`${API_URL}/bitCrew/trabajos/${usuario}`);
-
       if (!trabajosRes.ok) {
         const errData = await trabajosRes.json();
         throw new Error(errData.message || 'No se pudieron cargar los trabajos');
       }
-      
       const trabajosData = await trabajosRes.json();
-      
       if (Array.isArray(trabajosData) && trabajosData.length > 0) {
         setTrabajos(trabajosData);
         setMessage(""); 
@@ -279,7 +308,6 @@ export default function FixerJobsPage() {
         setTrabajos([]);
         setMessage(`No se encontraron trabajos para el usuario "${usuario}".`);
       }
-
     } catch (err: any) {
       console.error("Error en fetch:", err);
       setMessage(err.message || "Error de conexión.");
@@ -297,6 +325,7 @@ export default function FixerJobsPage() {
     }
   };
 
+  // --- 9. LÓGICA DE CONFIRMACIÓN (¡CORREGIDA!) ---
   const handleConfirmCashPayment = async () => {
     if (!selectedTrabajo) {
       setModalError("No hay un trabajo seleccionado.");
@@ -318,6 +347,7 @@ export default function FixerJobsPage() {
         throw new Error(data.message || 'Error en el servidor');
       }
 
+      // Éxito:
       setTrabajos(prevTrabajos =>
         prevTrabajos.map(t =>
           t._id === selectedTrabajo._id
@@ -325,28 +355,35 @@ export default function FixerJobsPage() {
             : t
         )
       );
-      
       setModalView('closed');
       setSelectedTrabajo(null);
 
     } catch (err: any) {
       console.error("Error al confirmar pago:", err);
-      setModalError(err.message);
+      
+      //  --- ¡AQUÍ ESTÁ LA LÓGICA CORREGIDA! --- 
+      if (err.message && err.message.includes('No se puede continuar el pago por falta de saldo')) {
+        setModalError(err.message); 
+        //  El error era 'setView', lo cambiamos a 'setModalView'
+        setModalView('insufficient_funds'); //  Cambiamos a la nueva vista
+      } else {
+        // Si es cualquier otro error (ej. 500), lo mostramos en la vista de confirmación
+        setModalError(err.message);
+      }
+      
     } finally {
-      setIsConfirming(false);
+      setIsConfirming(false); 
     }
   };
 
+  // --- RENDERIZADO (Sin cambios) ---
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
       
-      {/* Sidebar (Columna Izquierda) */}
-      <Sidebar usuario={usuario} /> {/* ⬅️ Le pasamos el usuario al Sidebar */}
+      <Sidebar usuario={usuario} />
 
-      {/* Contenido Principal (Columna Derecha) */}
       <main className="flex-1 p-6 md:p-10">
         
-        {/* Título y Formulario de Búsqueda */}
         <h1 className="text-3xl font-bold text-gray-900">Trabajos</h1>
         <p className="mt-2 text-gray-600">
           Busca un fixer por su nombre de usuario para ver sus trabajos.
@@ -361,7 +398,7 @@ export default function FixerJobsPage() {
               type="text"
               id="usuario"
               value={usuario}
-              onChange={(e) => setUsuario(e.target.value)} // ⬅️ Actualiza el estado
+              onChange={(e) => setUsuario(e.target.value)} 
               placeholder="Escribe el usuario (ej. tmolina)"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             />
@@ -374,10 +411,7 @@ export default function FixerJobsPage() {
             {loading ? 'Buscando...' : 'Buscar'}
           </button>
         </form>
-        {/* --- FIN DEL FORMULARIO --- */}
 
-
-        {/* --- Lista de Trabajos --- */}
         <div className="mt-8">
           
           {loading && (
@@ -411,7 +445,7 @@ export default function FixerJobsPage() {
       {/* Modal (renderizado condicional) */}
       {modalView !== 'closed' && (
         <CompletadoModal
-          view={modalView as 'options' | 'confirm_cash'}
+          view={modalView as 'options' | 'confirm_cash' | 'insufficient_funds'} 
           setView={setModalView}
           onConfirm={handleConfirmCashPayment}
           isConfirming={isConfirming}
