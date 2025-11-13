@@ -19,6 +19,7 @@ export interface IFrontendTransaction {
   date: string;
   amount: number;
   descripcion: string;
+  currency: string;
 }
 
 export interface BalanceCardProps {
@@ -32,6 +33,10 @@ export interface BalanceCardProps {
 
 export interface TransactionListProps {
   transactions: IFrontendTransaction[];
+}
+
+export interface TransactionItemProps {
+  transaction: IFrontendTransaction;
 }
 
 export interface TransactionItemProps {
