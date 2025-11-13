@@ -1,17 +1,13 @@
 // components/Footer/Footer.tsx
-// components/Footer/Footer.tsx
 
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-// ELIMINADO: Ya no se usa Image
-// import Image from 'next/image';
-import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaFacebookF, FaInstagram } from 'react-icons/fa';
+import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaFacebookF, FaInstagram, FaBookOpen } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
 import Modal from '../reutilizables/Modal';
-// AÑADIDO: Importamos tu componente de icono
 import Icono from '../Header/Icono';
 
 // Contenido para cada modal (sin cambios)
@@ -56,7 +52,7 @@ const modalContents = {
         <p>El incumplimiento de estas condiciones puede derivar en la suspensión o eliminación de la cuenta, sin perjuicio de otras acciones legales que procedan.</p>
         <p>En caso de disputas entre usuarios, Servineo actúa únicamente como plataforma de intermediación y podrá facilitar mecanismos de resolución, pero no asume responsabilidad directa por acuerdos privados entre partes.</p>
         <p>Para garantizar una experiencia segura, recomendamos mantener actualizada tu información de contacto y reportar inmediatamente cualquier actividad sospechosa a nuestro equipo de soporte.</p>
-  <p>Estos términos pueden ser actualizados; la fecha de &quot;Última actualización&quot; indica la versión vigente.</p>
+        <p>Estos términos pueden ser actualizados; la fecha de &quot;Última actualización&quot; indica la versión vigente.</p>
       </>
     )
   },
@@ -193,11 +189,20 @@ const Footer = () => {
 
             <div className="space-y-4">
               <h4 className="text-xl font-semibold font-heading">Categorías</h4>
+              {/* ===== SECCIÓN "CATEGORÍAS" ACTUALIZADA (SIN MANUAL) ===== */}
               <nav className="flex flex-col space-y-2 items-center md:items-start">
-                <a href="#trabajos-recientes" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
-                <a href="#mapa" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
-                <a href="#servicios" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
-                <a href="#carrusel" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Sección carrusel</a>
+                <a href="#trabajos-recientes" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                  Trabajos recientes
+                </a>
+                <a href="#mapa" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                  Mapa
+                </a>
+                <a href="#servicios" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                  Lista de servicios
+                </a>
+                <a href="#carrusel" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                  Sección carrusel
+                </a>
               </nav>
             </div>
 
@@ -213,6 +218,7 @@ const Footer = () => {
 
             <div className="space-y-4">
               <h4 className="text-xl font-semibold font-heading">Soporte</h4>
+              {/* ===== SECCIÓN "SOPORTE" ACTUALIZADA (CON MANUAL) ===== */}
               <ul className="space-y-3">
                 <li className="flex items-center justify-center md:justify-start">
                   <a href="https://wa.me/59160379823" target="_blank" rel="noopener noreferrer" className="flex items-center transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
@@ -232,36 +238,21 @@ const Footer = () => {
                     <span className="text-sm">Cochabamba, Cercado</span>
                   </a>
                 </li>
+                <li className="flex items-center justify-center md:justify-start">
+                  <a href="/panel" className="flex items-center transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                    <FaBookOpen className="mr-3 text-[#52abff]" />
+                    <span className="text-sm">Ver manual usuario</span>
+                  </a>
+                </li>
               </ul>
-              {/* Social icons placed below support links */}
               <div className="flex items-center gap-6 mt-4 justify-center md:justify-start">
-                <a
-                  href="https://www.facebook.com/share/1CympwHFao/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Servineo en Facebook"
-                  className="text-[#52abff] hover:text-[#89c9ff] transition transform duration-150 ease-in-out hover:scale-110 p-1.5 rounded"
-                >
+                <a href="https://www.facebook.com/share/1CympwHFao/" target="_blank" rel="noopener noreferrer" aria-label="Servineo en Facebook" className="text-[#52abff] hover:text-[#89c9ff] transition transform duration-150 ease-in-out hover:scale-110 p-1.5 rounded">
                   <FaFacebookF size={24} />
                 </a>
-
-                <a
-                  href="https://www.tiktok.com/@servineobol?_r=1&_t=ZM-91DYkqESBGi"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Servineo en TikTok"
-                  className="text-[#52abff] hover:text-[#89c9ff] transition transform duration-150 ease-in-out hover:scale-110 p-1.5 rounded"
-                >
+                <a href="https://www.tiktok.com/@servineobol?_r=1&_t=ZM-91DYkqESBGi" target="_blank" rel="noopener noreferrer" aria-label="Servineo en TikTok" className="text-[#52abff] hover:text-[#89c9ff] transition transform duration-150 ease-in-out hover:scale-110 p-1.5 rounded">
                   <SiTiktok size={26} />
                 </a>
-
-                <a
-                  href="https://www.instagram.com/servineobol?igsh=Z2U2c3hpZmp5ODQ2"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Servineo en Instagram"
-                  className="text-[#52abff] hover:text-[#89c9ff] transition transform duration-150 ease-in-out hover:scale-110 p-1.5 rounded"
-                >
+                <a href="https://www.instagram.com/servineobol?igsh=Z2U2c3hpZmp5ODQ2" target="_blank" rel="noopener noreferrer" aria-label="Servineo en Instagram" className="text-[#52abff] hover:text-[#89c9ff] transition transform duration-150 ease-in-out hover:scale-110 p-1.5 rounded">
                   <FaInstagram size={24} />
                 </a>
               </div>
