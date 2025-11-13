@@ -24,30 +24,31 @@ export default function SimpleProfileMenu() {
 
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    sessionStorage.removeItem("authToken");
-    localStorage.removeItem("userData");
-    sessionStorage.removeItem("userData");
+   // Cuando presiona el botón del menú "Cerrar sesión"
+const handleLogout = () => {
+  setShowMensajeCerrarSesion(true); // Solo mostramos el mensaje, no borramos nada aún
+};
 
-    setShowMensajeCerrarSesion(true);
-  };
-   useEffect(() => {
-  if (showMensajeCerrarSesion) {
-    // ⏳ Espera 2 segundos mientras se muestra el mensaje
-    const timer = setTimeout(() => {
-      // 🔔 Emitimos el evento de logout justo antes de redirigir
-      const eventLogout = new CustomEvent("logout-exitoso");
-      window.dispatchEvent(eventLogout);
+// Si presiona "Aceptar" en el mensaje de confirmación
+const handleConfirmLogout = () => {
+  // Eliminamos datos de sesión y emitimos el evento de logout
+  localStorage.removeItem("authToken");
+  sessionStorage.removeItem("authToken");
+  localStorage.removeItem("userData");
+  sessionStorage.removeItem("userData");
 
-      // 🚀 Ahora sí redirigimos
-      setShowMensajeCerrarSesion(false);
-      router.push("/");
-    }, 2000);
+  const eventLogout = new CustomEvent("logout-exitoso");
+  window.dispatchEvent(eventLogout);
 
-    return () => clearTimeout(timer);
-  }
-}, [showMensajeCerrarSesion, router]);
+  setShowMensajeCerrarSesion(false);
+  router.push("/"); // Redirigimos al inicio
+};
+
+// Si presiona "Cancelar"
+const handleCancelLogout = () => {
+  setShowMensajeCerrarSesion(false); // Solo cerramos el modal, sin tocar nada más
+};
+
 
   const handleContinue = () => setShowCerrarSesionMessage(false);
   const handleCancel = () => setShowCerrarSesionMessage(false);
@@ -171,7 +172,10 @@ export default function SimpleProfileMenu() {
        <MessageSeguridad onClose={() => setShowMessageSeguridad(false)} />
        )}
        {showMensajeCerrarSesion && (
-       <MensajeCerrarSesion onClose={() => setShowMensajeCerrarSesion(false)} />
+        <MensajeCerrarSesion
+          onContinue={handleConfirmLogout}
+          onCancel={handleCancelLogout}
+          />
       )}
 
 

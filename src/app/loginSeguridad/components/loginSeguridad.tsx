@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { verifyTwoFactorLogin } from '@/app/teamsys/services/UserService';
+import { desactivar2FA } from '@/app/teamsys/services/UserService';
 
 // Export default directamente al definir el componente
 export default function LoginSeguridad() {
@@ -56,16 +57,31 @@ const usuario = JSON.parse(usuarioRaw);
 const userId = String(usuario._id || '').trim();
 const token = String(codigo || '').trim();
 
+const desactivar= sessionStorage.getItem("desactivar2FA")
+let res;
+if(desactivar == "true"){
+const Token= sessionStorage.getItem("authToken")
+       if(Token== null  )
+        throw new Error("AcessToken no existente");
+       res=await desactivar2FA(token, Token)
+       
+
+}else{
 console.log('verify-login payload ->', { userId, token }); // 👈 revisa en consola
-const res = await verifyTwoFactorLogin(userId, token);
+ res = await verifyTwoFactorLogin(userId, token);
+}
 
       console.log(res)
       if (res.success==true) {
+
          // para que se guarde la sesion de seguridad
          // sessionStorage.setItem("checkSeguridad", "true");
           
-          const eventLogin = new CustomEvent("login-exitoso");
-          window.dispatchEvent(eventLogin);
+          if(desactivar==null){
+                       const eventLogin = new CustomEvent("login-exitoso");
+                      window.dispatchEvent(eventLogin);
+                       
+                      }
           router.push('/'); 
           return
     // Código correcto, redirige al home
