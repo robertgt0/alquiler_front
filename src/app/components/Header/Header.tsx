@@ -15,13 +15,17 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
 
+  //borbotones
+  //const [searchTerm, setSearchTerm] = useState('');
+
+
   useEffect(() => {
     setIsClient(true);
 
     // Verificar si hay un token de sesión y datos de usuario al cargar el componente
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     const storedUserData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
-    
+
     if (token && storedUserData) {
       setIsLoggedIn(true);
       try {
@@ -86,8 +90,19 @@ export default function Header() {
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      router.push('/404');
+      //router.push('/404');
+      /*const term = searchTerm.trim();
+      if (term) {
+        // Si hay un término, construye la URL y redirige a /alquiler
+        const params = new URLSearchParams();
+        params.set('q', term);
+        router.push(`/alquiler?${params.toString()}`);
+      } else {
+        // Si la barra está vacía, solo lleva a la página principal de alquiler
+        router.push('/alquiler/');
+      }*/
     }
+
   };
 
   const handleLogout = () => {
@@ -98,15 +113,15 @@ export default function Header() {
     sessionStorage.removeItem('userData');
     localStorage.removeItem('refreshToken');
     sessionStorage.removeItem('refreshToken');
-    
+
     // Actualizar estado
     setIsLoggedIn(false);
     setUserData(null);
-    
+
     // Disparar evento de logout
     const eventLogout = new CustomEvent("logout-exitoso");
     window.dispatchEvent(eventLogout);
-    
+
     // Redirigir a home
     router.push('/');
   };
@@ -126,6 +141,7 @@ export default function Header() {
         </div>
 
         {/* BARRA DE BÚSQUEDA - Solo mostrar si no estamos en login/registro */}
+        {/** 
         {shouldShowSearchBar && (
           <div className="grow mx-8">
             <div className="relative">
@@ -152,11 +168,21 @@ export default function Header() {
             </div>
           </div>
         )}
-
+        */}
         {/* Si estamos en login/registro, centrar los elementos */}
         {!shouldShowSearchBar && <div className="grow"></div>}
 
         {/* ELEMENTOS DEL HEADER */}
+
+        {/** elemento del buscador */}
+        {shouldShowSearchBar && (
+          <Link href="/alquiler/paginacion" className="text-[#11255A] p-2 rounded-full hover:bg-[#D8ECFF] transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </Link>
+        )}
+
         <div className="flex items-center space-x-4">
           {!isLoggedIn ? (
             <>
@@ -185,7 +211,7 @@ export default function Header() {
                   Ser Fixer
                 </button>
               </Link>
-              
+
               {/* USUARIO LOGUEADO - Mostrar nombre y foto */}
               <div className="flex items-center space-x-3">
                 <span className="font-semibold text-[#11255A]">
@@ -233,6 +259,13 @@ export default function Header() {
           </Link>
           {/* BARRA DE BÚSQUEDA MÓVIL - Solo mostrar si no estamos en login/registro */}
           {shouldShowSearchBar && (
+            <Link href="/alquiler" className="text-[#11255A] p-2 rounded-full hover:bg-[#D8ECFF] transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </Link>
+          )}
+          {/**shouldShowSearchBar && (
             <div className="flex-1 relative">
               <input
                 type="text"
@@ -255,7 +288,7 @@ export default function Header() {
                 ></path>
               </svg>
             </div>
-          )}
+          )*/}
           {/* Si estamos en login/registro, ocupar el espacio restante */}
           {!shouldShowSearchBar && <div className="flex-1"></div>}
         </div>
@@ -291,7 +324,7 @@ export default function Header() {
                   Ser Fixer
                 </button>
               </Link>
-              
+
               {/* USUARIO LOGUEADO MÓVIL */}
               <div className="flex items-center space-x-1 flex-1 justify-end">
                 <span className="text-[#11255A] text-xs font-semibold truncate max-w-20">

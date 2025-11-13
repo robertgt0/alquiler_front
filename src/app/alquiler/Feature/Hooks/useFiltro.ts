@@ -7,8 +7,8 @@ import {
   getCiudadesPorDepartamento,
   getUsuariosPorEspecialidadId,
   getUsuariosPorCiudad,
-} from "app/alquiler/Feature/Services/filtro.api";
-import type { UsuarioResumen } from "app/alquiler/Feature/Types/filtroType";
+} from "@/app/alquiler/Feature/Services/filtro.api";
+import type { UsuarioResumen } from "@/app/alquiler/Feature/Types/filtroType";
 
 type Option = { value: string; label: string };
 
