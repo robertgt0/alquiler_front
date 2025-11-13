@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import Link from "next/link"; // ⬅️ Usamos Link de Next.js
+import { useState } from "react";
+import Link from "next/link";
 
 // --- 1. CONSTANTE DE COMISIÓN ---
 const TASA_COMISION = 0.05; // 5%
@@ -18,15 +18,70 @@ interface ITrabajo {
 // --- 3. INTERFACES DEL MODAL ---
 type ModalView = 'closed' | 'options' | 'confirm_cash';
 
-// --- 4. COMPONENTE SIDEBAR (MODIFICADO) ---
-// Recibe el 'usuario' para habilitar/deshabilitar el Link
+// --- 4. COMPONENTE HEADER (NAVBAR) ---
+function NavBar() {
+  return (
+    <header className="bg-white shadow-sm border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex items-center space-x-3">
+            <div className="bg-blue-600 text-white font-bold rounded-lg p-2 flex items-center justify-center h-10 w-10">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Servineo</h1>
+          </div>
+
+          {/* Buscador */}
+          <div className="flex-1 max-w-md mx-8">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 absolute right-3 top-2.5 text-gray-400">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Botones */}
+          <div className="flex items-center space-x-3">
+            <Link
+              href="/bitcrew/comision"
+              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+            >
+              Ser Fixer
+            </Link>
+            <Link
+              href="/login"
+              className="px-4 py-2 text-blue-600 font-semibold hover:bg-blue-50 rounded-lg transition"
+            >
+              Iniciar Sesión
+            </Link>
+            <Link
+              href="/register"
+              className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+            >
+              Registrarse
+            </Link>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// --- 5. COMPONENTE SIDEBAR ---
 function Sidebar({ usuario }: { usuario: string }) {
-  
-  const hasUser = !!usuario; // true si el string no está vacío
+  const hasUser = !!usuario;
 
   return (
     <aside className="w-full md:w-64 lg:w-72 bg-white p-6 shadow-lg md:shadow-none md:border-r md:border-gray-200 flex-shrink-0">
-      {/* Logo */}
+      {/* Logo del Panel */}
       <div className="flex items-center space-x-3 mb-8">
         <div className="bg-blue-600 text-white font-bold rounded-lg p-3 flex items-center justify-center h-12 w-12">
           FX
@@ -39,55 +94,53 @@ function Sidebar({ usuario }: { usuario: string }) {
 
       {/* Navegación */}
       <nav className="space-y-3">
-        <a
-          href="#"
+        <Link
+          href="/bitcrew/comision"
           className="flex items-center space-x-3 p-3 rounded-lg bg-blue-100 text-blue-700 font-semibold"
         >
           <span>Trabajos Activos</span>
-        </a>
+        </Link>
         
-        {/* Historial (Deshabilitado si no hay usuario) */}
+        {/* Historial */}
         {!hasUser ? (
            <span className="flex items-center space-x-3 p-3 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed">
              <span>Historial de Trabajos</span>
            </span>
         ) : (
           <Link
-            href={`/bitcrew/historial?usuario=${usuario}`} // Asumiendo una ruta
+            href={`/bitcrew/historial?usuario=${usuario}`}
             className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
           >
             <span>Historial de Trabajos</span>
           </Link>
         )}
 
-        {/* Billetera (LÓGICA REQUERIDA) */}
+        {/* Billetera */}
         {!hasUser ? (
-           // Versión deshabilitada
            <span className="flex items-center space-x-3 p-3 rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed" title="Debe buscar un usuario primero">
              <span>Mi Billetera</span>
            </span>
         ) : (
-          // Versión habilitada (Link de Next.js)
           <Link
-            href={`/bitcrew/wallet?usuario=${usuario}`} // ⬅️ Pasa el usuario como query param
+            href={`/bitcrew/wallet?usuario=${usuario}`}
             className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
           >
             <span>Mi Billetera</span>
           </Link>
         )}
 
-        <a
+        <Link
           href="#"
           className="flex items-center space-x-3 p-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium"
         >
           <span>Configuración</span>
-        </a>
+        </Link>
       </nav>
     </aside>
   );
 }
 
-// --- 5. COMPONENTE TARJETA DE TRABAJO ---
+// --- 6. COMPONENTE TARJETA DE TRABAJO ---
 interface TrabajoCardProps {
   trabajo: ITrabajo;
   onClick: (trabajo: ITrabajo) => void;
@@ -147,7 +200,7 @@ function TrabajoCard({ trabajo, onClick }: TrabajoCardProps) {
   );
 }
 
-// --- 6. COMPONENTE MODAL ---
+// --- 7. COMPONENTE MODAL ---
 interface ModalProps {
   view: 'options' | 'confirm_cash';
   setView: (view: ModalView) => void;
@@ -207,9 +260,18 @@ function CompletadoModal({ view, setView, onConfirm, isConfirming, error }: Moda
               <p className="text-lg">¿Está seguro que desea marcar este trabajo como pagado en efectivo?</p>
               <p className="text-sm text-gray-500">El sistema descontará la comisión (5%) de su billetera y marcará el trabajo como "Pagado".</p>
             </div>
+            {/* ✅ SOLUCIÓN BUG 2: Mostrar error específico con formato mejorado */}
             {error && (
-              <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                <strong>Error:</strong> {error}
+              <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-500 text-red-800 rounded-lg">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm">No se puede procesar el pago</p>
+                    <p className="text-sm mt-1 whitespace-pre-line">{error}</p>
+                  </div>
+                </div>
               </div>
             )}
             <div className="mt-6 flex justify-end space-x-4">
@@ -235,10 +297,10 @@ function CompletadoModal({ view, setView, onConfirm, isConfirming, error }: Moda
   );
 }
 
-// --- 7. COMPONENTE DE PÁGINA PRINCIPAL ---
+// --- 8. COMPONENTE DE PÁGINA PRINCIPAL ---
 export default function FixerJobsPage() {
   // --- Estados ---
-  const [usuario, setUsuario] = useState(""); // ⬅️ Este es el estado clave
+  const [usuario, setUsuario] = useState("");
   const [trabajos, setTrabajos] = useState<ITrabajo[]>([]);
   const [loading, setLoading] = useState(false); 
   const [message, setMessage] = useState("Busca un usuario para ver sus trabajos.");
@@ -297,6 +359,7 @@ export default function FixerJobsPage() {
     }
   };
 
+  // ✅ SOLUCIÓN BUG 2: Función actualizada con manejo específico de errores
   const handleConfirmCashPayment = async () => {
     if (!selectedTrabajo) {
       setModalError("No hay un trabajo seleccionado.");
@@ -315,9 +378,19 @@ export default function FixerJobsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Error en el servidor');
+        // ✅ SOLUCIÓN: Manejo específico del error de saldo insuficiente
+        if (data.errorCode === 'SALDO_INSUFICIENTE') {
+          // Mensaje mejorado para el usuario
+          throw new Error(
+            `${data.message}\n\nPor favor recarga tu billetera para continuar con el cobro.`
+          );
+        }
+        
+        // Otros errores de validación
+        throw new Error(data.message || 'Error al procesar el pago');
       }
 
+      // ✅ Pago exitoso
       setTrabajos(prevTrabajos =>
         prevTrabajos.map(t =>
           t._id === selectedTrabajo._id
@@ -338,77 +411,87 @@ export default function FixerJobsPage() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
-      
-      {/* Sidebar (Columna Izquierda) */}
-      <Sidebar usuario={usuario} /> {/* ⬅️ Le pasamos el usuario al Sidebar */}
+    <div className="min-h-screen bg-gray-50">
+      {/* ✅ HEADER CON SERVINEO */}
+      <NavBar />
 
-      {/* Contenido Principal (Columna Derecha) */}
-      <main className="flex-1 p-6 md:p-10">
+      {/* CONTENIDO PRINCIPAL */}
+      <div className="flex flex-col md:flex-row">
         
-        {/* Título y Formulario de Búsqueda */}
-        <h1 className="text-3xl font-bold text-gray-900">Trabajos</h1>
-        <p className="mt-2 text-gray-600">
-          Busca un fixer por su nombre de usuario para ver sus trabajos.
-        </p>
+        {/* Sidebar */}
+        <Sidebar usuario={usuario} />
 
-        <form onSubmit={handleSearchSubmit} className="mt-6 flex items-end space-x-4 bg-white p-4 rounded-lg shadow-sm border">
-          <div className="flex-grow">
-            <label htmlFor="usuario" className="block text-sm font-medium text-gray-700">
-              Usuario del Fixer
-            </label>
-            <input
-              type="text"
-              id="usuario"
-              value={usuario}
-              onChange={(e) => setUsuario(e.target.value)} // ⬅️ Actualiza el estado
-              placeholder="Escribe el usuario (ej. tmolina)"
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 disabled:opacity-50 h-11"
-          >
-            {loading ? 'Buscando...' : 'Buscar'}
-          </button>
-        </form>
-        {/* --- FIN DEL FORMULARIO --- */}
-
-
-        {/* --- Lista de Trabajos --- */}
-        <div className="mt-8">
+        {/* Área de trabajo */}
+        <main className="flex-1 p-6 md:p-10">
           
-          {loading && (
-            <p className="text-gray-500">Cargando trabajos...</p>
-          )}
+          {/* Título */}
+          <h1 className="text-3xl font-bold text-gray-900">Trabajos</h1>
+          <p className="mt-2 text-gray-600">
+            Busca un fixer por su nombre de usuario para ver sus trabajos.
+          </p>
 
-          {!loading && message && (
-            <p className="text-gray-500">{message}</p>
-          )}
+          {/* Formulario de Búsqueda */}
+          <form onSubmit={handleSearchSubmit} className="mt-6 bg-white p-6 rounded-lg shadow-sm border">
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="usuario" className="block text-sm font-medium text-gray-700 mb-2">
+                  Usuario del Fixer
+                </label>
+                <input
+                  type="text"
+                  id="usuario"
+                  value={usuario}
+                  onChange={(e) => setUsuario(e.target.value)}
+                  placeholder="Escribe el usuario (ej. tmolina)"
+                  className="block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-base"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 disabled:opacity-50 transition"
+              >
+                {loading ? 'Buscando...' : 'Buscar'}
+              </button>
+            </div>
+            <p className="mt-3 text-sm text-gray-500">
+              Busca un usuario para ver sus trabajos.
+            </p>
+          </form>
 
-          {!loading && !message && (
-            <>
-              {trabajos.length === 0 ? (
-                <p className="text-gray-500">Este usuario no tiene ningún trabajo registrado.</p> 
-              ) : (
-                <ul className="space-y-4">
-                  {trabajos.map(trabajo => (
-                    <TrabajoCard
-                      key={trabajo._id}
-                      trabajo={trabajo}
-                      onClick={handleTrabajoClick}
-                    />
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </div>
-      </main>
+          {/* Lista de Trabajos */}
+          <div className="mt-8">
+            
+            {loading && (
+              <p className="text-gray-500">Cargando trabajos...</p>
+            )}
 
-      {/* Modal (renderizado condicional) */}
+            {!loading && message && (
+              <p className="text-gray-500">{message}</p>
+            )}
+
+            {!loading && !message && (
+              <>
+                {trabajos.length === 0 ? (
+                  <p className="text-gray-500">Este usuario no tiene ningún trabajo registrado.</p> 
+                ) : (
+                  <ul className="space-y-4">
+                    {trabajos.map(trabajo => (
+                      <TrabajoCard
+                        key={trabajo._id}
+                        trabajo={trabajo}
+                        onClick={handleTrabajoClick}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {/* Modal */}
       {modalView !== 'closed' && (
         <CompletadoModal
           view={modalView as 'options' | 'confirm_cash'}

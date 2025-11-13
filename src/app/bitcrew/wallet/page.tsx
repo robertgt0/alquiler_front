@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import WalletAlert from "./components/walletAlert"; // ✅ agregado
+import WalletAlert from "./components/walletAlert";
 
 // --- 1. DEFINICIÓN DE INTERFACES ---
 interface IBilletera {
@@ -29,7 +29,7 @@ interface IFrontendTransaction {
 }
 
 interface BalanceCardProps {
-  saldo: number | undefined;
+  saldo: number;
   moneda: string;
   showSaldo: boolean;
   onToggleShowSaldo: () => void;
@@ -73,7 +73,7 @@ const TransactionIcon = ({ className = "w-6 h-6 text-blue-500" }: { className?: 
 
 // --- 3. COMPONENTES HIJOS ---
 function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSaldo, onRefresh, loading }: BalanceCardProps) {
-  const saldoFormateado = (saldo || 0).toLocaleString("es-BO", {
+  const saldoFormateado = saldo.toLocaleString("es-BO", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -161,7 +161,31 @@ function TransactionList({ transactions }: TransactionListProps) {
   );
 }
 
-// --- 4. LÓGICA DE BILLETERA ---
+// --- 4. COMPONENTE DE LOADING SKELETON ---
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 p-6 rounded-2xl shadow-lg animate-pulse">
+        <div className="h-4 bg-gray-400 rounded w-1/4 mb-4"></div>
+        <div className="h-10 bg-gray-400 rounded w-1/2 mb-4"></div>
+        <div className="h-3 bg-gray-400 rounded w-1/3"></div>
+      </div>
+      <div className="mt-10">
+        <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div className="space-y-3">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- 5. LÓGICA DE BILLETERA ---
 function WalletLogic() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -258,20 +282,33 @@ function WalletLogic() {
             </div>
           )}
 
-          {/* ✅ Alerta de saldo o estado */}
-          <WalletAlert balance={balanceData?.saldo ?? 0} estado={balanceData?.estado} />
+          {/* Skeleton mientras carga */}
+          {loading && <LoadingSkeleton />}
 
-          <BalanceCard
-            saldo={balanceData?.saldo}
-            moneda={balanceData?.moneda || "Bs."}
-            showSaldo={showSaldo}
-            onToggleShowSaldo={() => setShowSaldo(!showSaldo)}
-            onRefresh={loadData}
-            loading={loading}
-          />
+          {/* ✅ SOLUCIÓN BUG 1: Solo mostrar alerta cuando ya cargó Y tiene datos */}
+          {!loading && balanceData && (
+            <>
+              <WalletAlert balance={balanceData.saldo} estado={balanceData.estado} />
 
-          {loading && !error && <p className="text-center py-10 text-gray-500">Cargando transacciones...</p>}
+              <BalanceCard
+                saldo={balanceData.saldo}
+                moneda={balanceData.moneda || "Bs."}
+                showSaldo={showSaldo}
+                onToggleShowSaldo={() => setShowSaldo(!showSaldo)}
+                onRefresh={loadData}
+                loading={loading}
+              />
+            </>
+          )}
 
+          {/* Mensaje cuando no hay datos */}
+          {!loading && !balanceData && !error && (
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+              <p>No se encontraron datos de billetera para este usuario.</p>
+            </div>
+          )}
+
+          {/* Lista de transacciones */}
           {!loading && !error && <TransactionList transactions={transactions} />}
         </main>
       </div>
@@ -279,7 +316,7 @@ function WalletLogic() {
   );
 }
 
-// --- 5. WRAPPER DE SUSPENSE ---
+// --- 6. WRAPPER DE SUSPENSE ---
 export default function WalletPage() {
   return (
     <Suspense fallback={<div>Cargando billetera...</div>}>
