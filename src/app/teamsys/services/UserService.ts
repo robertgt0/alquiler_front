@@ -183,15 +183,15 @@ export async function verifyTwoFactorLogin(userId: string, code: string) {
 
   const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data.message || 'Error al verificar código en login');
-  }
+ // if (!res.ok) {
+    //throw new Error(data.message || 'Error al verificar código en login');
+  //}
 
   return data;
 }
 export async function desactivar2FA(codigo: string, userToken: string) {
-  try {
-    const response = await fetch("/api/2fa/disable", {
+  
+    const response = await fetch(`${API_URL}/api/teamsys/2fa/disable`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -200,13 +200,5 @@ export async function desactivar2FA(codigo: string, userToken: string) {
       body: JSON.stringify({ token: codigo }) // Código 2FA en body
     });
 
-    const data = await response.json();
-    if (response.ok) {
-      console.log("✅ 2FA deshabilitado:", data.message);
-    } else {
-      console.error("❌ Error:", data.message);
-    }
-  } catch (error) {
-    console.error("🚨 Error de red:", error);
-  }
+   return response.json()
 }

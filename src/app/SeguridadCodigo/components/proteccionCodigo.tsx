@@ -90,7 +90,12 @@ export const ProteccionCodigo: React.FC = () => {
     setIsLoading(false);
   }
 };
-
+ // 🔹 Manejar el botón Cancelar
+  const handleCancel = () => {
+    sessionStorage.removeItem("checkSeguridad")
+    router.push("/")
+    // o podrías usar: router.push('/Seguridad') si tienes una ruta específica
+  };
 
   return (
     
@@ -144,7 +149,7 @@ export const ProteccionCodigo: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 sm:mt-8 flex justify-center">
+          <div className="mt-6 sm:mt-8 flex flex-col items-center gap-3">
                         <button
               type="submit"
               disabled={isLoading || codigo.length !== 6}
@@ -157,6 +162,14 @@ export const ProteccionCodigo: React.FC = () => {
               }`}
             >
               {isLoading ? 'Verificando...' : 'Continuar'}
+            </button>
+              {/* Volver (azul) */}
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 rounded-2xl text-white bg-blue-500 hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-colors duration-200 text-sm sm:text-base font-medium"
+            >
+              Cancelar
             </button>
 
           </div>

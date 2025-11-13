@@ -81,6 +81,9 @@ console.log('verify-login payload ->', { userId, token }); // 👈 revisa en con
                        const eventLogin = new CustomEvent("login-exitoso");
                       window.dispatchEvent(eventLogin);
                        
+                      }else{
+                        sessionStorage.removeItem("desactivar2FA")
+                        sessionStorage.removeItem("checkSeguridad")
                       }
           router.push('/'); 
           return
@@ -108,6 +111,12 @@ console.log('verify-login payload ->', { userId, token }); // 👈 revisa en con
     }
   };
 
+ // 🔹 Manejar el botón Cancelar
+  const handleCancel = () => {
+    sessionStorage.clear()
+    router.back(); // vuelve a la página anterior
+    // o podrías usar: router.push('/Seguridad') si tienes una ruta específica
+  };
 
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-6 px-3 sm:px-6 lg:px-8">
@@ -150,21 +159,34 @@ console.log('verify-login payload ->', { userId, token }); // 👈 revisa en con
             </div>
           </div>
 
-          <div className="mt-6 sm:mt-8 flex justify-center">
+         
+            {/* Botones: Continuar + Volver */}
+<div className="mt-6 sm:mt-8 flex flex-col items-center gap-3">
+  <button
+    type="submit"
+    disabled={isLoading || codigo.length !== 6}
+    className={`w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 border rounded-2xl focus:outline-none focus:ring-2 transition-colors duration-200 flex items-center justify-center gap-3 text-sm sm:text-base font-medium ${
+      isLoading
+        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+        : codigo.length === 6
+        ? 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-300'
+        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+    }`}
+  >
+    {isLoading ? 'Verificando...' : 'Continuar'}
+  </button>
+
+ {/* Volver (azul) */}
             <button
-              type="submit"
-              disabled={isLoading || codigo.length !== 6}
-              className={`w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 border rounded-2xl focus:outline-none focus:ring-2 transition-colors duration-200 flex items-center justify-center gap-3 text-sm sm:text-base font-medium ${
-                isLoading
-                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                  : codigo.length === 6
-                  ? 'bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-300'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+              type="button"
+              onClick={handleCancel}
+              className="w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 rounded-2xl text-white bg-blue-500 hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition-colors duration-200 text-sm sm:text-base font-medium"
             >
-              {isLoading ? 'Verificando...' : 'Continuar'}
+              Volver
             </button>
-          </div>
+</div>
+
+          
         </form>
       </div>
     </div>

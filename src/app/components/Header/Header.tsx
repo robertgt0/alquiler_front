@@ -16,6 +16,15 @@ export default function Header() {
 
   const lastScrollY = useRef(0);
   const router = useRouter();
+  // Detectar si es móvil
+const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const checkSize = () => setIsMobile(window.innerWidth < 640);
+  checkSize();
+  window.addEventListener("resize", checkSize);
+  return () => window.removeEventListener("resize", checkSize);
+}, []);
 
   useEffect(() => {
     setIsClient(true);
@@ -221,10 +230,11 @@ export default function Header() {
 
       {/* FOOTER MÓVIL INFERIOR */}
       <footer
-        className={`sm:hidden fixed bottom-0 left-0 w-full px-3 py-2 bg-[#EEF7FF] shadow-md z-50 
-        transform transition-transform duration-300 ease-in-out
-        ${areButtonsVisible ? 'translate-y-0' : 'translate-y-full'}`}
-      >
+  className={`sm:hidden fixed left-0 w-full px-3 py-2 bg-[#EEF7FF] shadow-md z-50
+    transition-all duration-300 ease-in-out
+    ${areButtonsVisible ? 'bottom-0' : '-bottom-24'}`}
+>
+
         <div className="flex flex-col items-center space-y-1">
           <span className="text-[#11255A] font-bold text-sm">Servineo</span>
 
@@ -260,11 +270,19 @@ export default function Header() {
                   <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
                 </svg>
 
-                {menuVisible && (
-                  <div className="absolute right-0 top-full mt-2 z-50">
-                    <SimpleProfileMenu /> {/* 👈 Tu menú aquí también */}
-                  </div>
-                )}
+                {/* Escritorio: menú cae hacia abajo */}
+{menuVisible && !isMobile && (
+  <div className="absolute right-0 top-full mt-2 z-50">
+    <SimpleProfileMenu />
+  </div>
+)}
+
+{/* Móvil: menú sube hacia arriba */}
+{menuVisible && isMobile && (
+  <div className="absolute right-0 bottom-full mb-2 z-50">
+    <SimpleProfileMenu />
+  </div>
+)}
               </div>
             </div>
           )}
