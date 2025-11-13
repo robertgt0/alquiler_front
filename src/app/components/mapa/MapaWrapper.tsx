@@ -1,8 +1,8 @@
 // src/app/components/MapaWrapper.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import dynamic from "next/dynamic";
+// ⬇️ NUEVO: Importa useRef
+import { useState, useEffect, useCallback, useRef } from "react";
 import BuscadorUbicaciones from "./BuscadorUbicaciones";
 import FixersHeader from "./FixersHeader";
 import PermisoGeolocalizacion from "./PermisoGeolocalizacion";
@@ -10,7 +10,7 @@ import { Ubicacion, Fixer, UserLocation, UbicacionFromAPI } from "../../types";
 import { UbicacionManager } from "./UbicacionManager";
 import { ubicacionesRespaldo, fixersRespaldo, fixersDefinidos } from "../data/fixersData";
 
-const Mapa = dynamic(() => import("./mapa"), { ssr: false });
+import Mapa from "./MapaClient";
 
 export default function MapaWrapper() {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
@@ -21,7 +21,7 @@ export default function MapaWrapper() {
     useState<Ubicacion | null>(ubicacionesRespaldo[0]);
 
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [cargando, setCargando] = useState(true);
+  const [cargando, setCargando] = useState(true); // Se mantiene en true para la carga inicial
 
   const [permisoDecidido, setPermisoDecidido] = useState(false);
   const [usandoRespaldo, setUsandoRespaldo] = useState(false);
@@ -30,6 +30,11 @@ export default function MapaWrapper() {
 
   const ubicacionManager = UbicacionManager.getInstancia();
 
+  // ⬇️ NUEVO: Esta "bandera" persistirá entre renders y no causará re-renders
+  // Nos dice si ya pasó la primera carga.
+  const isInitialLoad = useRef(true);
+
+  // (El resto de funciones como obtenerUbicacion y useEffect de eventos se mantienen igual)
   const obtenerUbicacion = useCallback(() => {
     if (!navigator.geolocation) {
       console.log("Geolocalización no soportada");
@@ -92,82 +97,103 @@ export default function MapaWrapper() {
     };
   }, [obtenerUbicacion]);
 
+
+  // --- Inicio de la corrección ---
+
+  const cargarDatos = useCallback(async () => {
+    
+    // ⬇️ MODIFICADO: Solo ponemos 'cargando' si es la carga inicial
+    if (isInitialLoad.current) {
+      setCargando(true);
+    }
+
+    try {
+      console.log("🔄 Intentando conectar con el backend...");
+
+      const [resUbicaciones, resFixers] = await Promise.all([
+        fetch("http://localhost:5000/api/ubicaciones", {
+          signal: AbortSignal.timeout(5000),
+        }),
+        fetch("http://localhost:5000/api/fixers", {
+          signal: AbortSignal.timeout(5000),
+        }),
+      ]);
+
+      if (resUbicaciones.ok && resFixers.ok) {
+        // ... (lógica de fetch exitoso sin cambios)
+        const dataUbicaciones = await resUbicaciones.json();
+        const dataFixers = await resFixers.json();
+
+        console.log("✅ Backend conectado - Usando datos reales");
+
+        if (dataUbicaciones.success) {
+          const ubicacionesTransformadas: Ubicacion[] =
+            dataUbicaciones.data.map(
+              (item: UbicacionFromAPI, index: number) => ({
+                id: index + 1,
+                nombre: item.nombre,
+                posicion: [item.posicion.lat, item.posicion.lng] as [number, number],
+              })
+            );
+          setUbicaciones(ubicacionesTransformadas);
+        }
+
+        if (dataFixers.success) {
+          const fixersConImagen: Fixer[] = dataFixers.data.map((fixer: Fixer) => ({
+            ...fixer,
+            imagenPerfil: fixer.imagenPerfil || "/imagenes_respaldo/perfil-default.jpg"
+          }));
+          
+          setFixers(fixersConImagen);
+          const cercanos = ubicacionManager.filtrarFixersCercanos(fixersConImagen);
+          setFixersFiltrados(cercanos);
+        }
+
+        setUsandoRespaldo(false);
+
+      } else {
+        throw new Error("Error en respuesta del servidor");
+      }
+    } catch (error) {
+      console.log("❌ Backend no disponible - Usando datos de respaldo", error);
+
+      // ... (lógica de datos de respaldo sin cambios)
+      const todosLosFixers: Fixer[] = [...fixersRespaldo, ...fixersDefinidos].map(fixer => ({
+        ...fixer,
+        imagenPerfil: fixer.imagenPerfil || "/imagenes_respaldo/image2.png"
+      }));
+      
+      setUbicaciones(ubicacionesRespaldo);
+      setFixers(todosLosFixers);
+      setUsandoRespaldo(true);
+
+      const cercanos = ubicacionManager.filtrarFixersCercanos(todosLosFixers);
+      setFixersFiltrados(cercanos);
+
+    } finally {
+      // ⬇️ MODIFICADO: Siempre ponemos 'cargando' en false
+      // y marcamos que la carga inicial ya pasó.
+      setCargando(false);
+      isInitialLoad.current = false; 
+    }
+  }, [ubicacionManager, ubicacionesRespaldo, fixersRespaldo, fixersDefinidos]);
+
+
   useEffect(() => {
     if (!permisoDecidido) {
       ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
     }
 
-    const cargarDatos = async () => {
-      try {
-        console.log("🔄 Intentando conectar con el backend...");
-
-        const [resUbicaciones, resFixers] = await Promise.all([
-          fetch("http://localhost:5000/api/ubicaciones", {
-            signal: AbortSignal.timeout(5000),
-          }),
-          fetch("http://localhost:5000/api/fixers", {
-            signal: AbortSignal.timeout(5000),
-          }),
-        ]);
-
-        if (resUbicaciones.ok && resFixers.ok) {
-          const dataUbicaciones = await resUbicaciones.json();
-          const dataFixers = await resFixers.json();
-
-          console.log("✅ Backend conectado - Usando datos reales");
-
-          if (dataUbicaciones.success) {
-            const ubicacionesTransformadas: Ubicacion[] =
-              dataUbicaciones.data.map(
-                (item: UbicacionFromAPI, index: number) => ({
-                  id: index + 1,
-                  nombre: item.nombre,
-                  posicion: [item.posicion.lat, item.posicion.lng] as [number, number],
-                })
-              );
-            setUbicaciones(ubicacionesTransformadas);
-          }
-
-          if (dataFixers.success) {
-            // ✅ SOLO AQUÍ procesamos las imágenes
-            const fixersConImagen: Fixer[] = dataFixers.data.map((fixer: Fixer) => ({
-              ...fixer,
-              imagenPerfil: fixer.imagenPerfil || "/imagenes_respaldo/perfil-default.jpg"
-            }));
-            
-            setFixers(fixersConImagen);
-            const cercanos = ubicacionManager.filtrarFixersCercanos(fixersConImagen);
-            setFixersFiltrados(cercanos);
-          }
-
-          setUsandoRespaldo(false);
-        } else {
-          throw new Error("Error en respuesta del servidor");
-        }
-      } catch (error) {
-        console.log("❌ Backend no disponible - Usando datos de respaldo", error);
-
-        // ✅ Aplicar mismo procesamiento a datos de respaldo
-        const todosLosFixers: Fixer[] = [...fixersRespaldo, ...fixersDefinidos].map(fixer => ({
-          ...fixer,
-          imagenPerfil: fixer.imagenPerfil || "/imagenes_respaldo/imagen2.jpg"
-        }));
-        
-        setUbicaciones(ubicacionesRespaldo);
-        setFixers(todosLosFixers);
-        setUsandoRespaldo(true);
-
-        const cercanos = ubicacionManager.filtrarFixersCercanos(todosLosFixers);
-        setFixersFiltrados(cercanos);
-      } finally {
-        setCargando(false);
-      }
-    };
-
+    console.log("Ejecutando efecto de carga de datos...");
     cargarDatos();
-  }, [userLocation, permisoDecidido, ubicacionManager]);
+
+  }, [permisoDecidido, ubicacionManager, cargarDatos]);
+
+  // --- Fin de la corrección ---
+
 
   const handleMarcadorAgregado = (lat: number, lng: number) => {
+    // ... (sin cambios)
     const nuevaUbicacion: Ubicacion = {
       id: Date.now(),
       nombre: "📍 Ubicación seleccionada",
@@ -189,6 +215,7 @@ export default function MapaWrapper() {
       </div>
     );
 
+  // ... (El resto del JSX se mantiene exactamente igual)
   return (
     <div className="flex flex-col items-center">
       {usandoRespaldo && (

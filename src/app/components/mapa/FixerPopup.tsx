@@ -17,6 +17,18 @@ export interface Fixer {
 }
 
 const FixerPopup: FC<{ fixer: Fixer }> = ({ fixer }) => {
+  const tieneWhatsapp = fixer.whatsapp && fixer.whatsapp.trim() !== '';
+
+  const handleWhatsappClick = () => {
+    if (!tieneWhatsapp) return;
+    
+    const numeroLimpio = fixer.whatsapp!.replace(/[^\d]/g, '');
+    const mensaje = `Hola ${fixer.nombre}, vi tu perfil en FixItNow y me interesa tus servicios de ${fixer.especialidad}`;
+    const url = `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(mensaje)}`;
+    
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="w-[220px] p-2">
       <div className="flex justify-center mb-2">
@@ -42,7 +54,7 @@ const FixerPopup: FC<{ fixer: Fixer }> = ({ fixer }) => {
         {fixer.descripcion || "Especialista disponible"}
       </p>
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-2">
         <span className="text-green-600 text-xs sm:text-sm">
           ⭐ {fixer.rating || 4.5}/5
         </span>
@@ -52,6 +64,21 @@ const FixerPopup: FC<{ fixer: Fixer }> = ({ fixer }) => {
           </span>
         )}
       </div>
+
+      {/* Botón WhatsApp - SOLO ESTA PARTE NUEVA */}
+      {/* Botón WhatsApp - versión mejorada */}
+      <button
+        onClick={handleWhatsappClick}
+        disabled={!tieneWhatsapp}
+        className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+          tieneWhatsapp
+            ? "bg-green-500 hover:bg-green-600 text-white cursor-pointer shadow-md"
+            : "bg-gray-200 text-gray-400 cursor-not-allowed border border-gray-300"
+        }`}
+      >
+        <span>📱</span>
+        {tieneWhatsapp ? "Contactar por WhatsApp" : "Sin contacto"}
+      </button>
     </div>
   );
 };

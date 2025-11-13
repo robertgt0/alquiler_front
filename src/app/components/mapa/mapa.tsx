@@ -109,7 +109,6 @@ function LongPressHandler({ onLongPress }: { onLongPress: (lat: number, lng: num
 }
 
 export default function Mapa({
-  isLoggedIn,
   fixers = [],
   ubicacionSeleccionada,
   onUbicacionClick,
@@ -128,7 +127,6 @@ export default function Mapa({
     });
 
   const fixerMarkers = fixers.map((f) => {
-    const tieneWhatsApp = f.whatsapp && f.whatsapp.trim() !== '';
 
     const especialidades =
       f.especialidad
