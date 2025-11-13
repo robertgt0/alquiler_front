@@ -6,7 +6,6 @@ import { useWallet } from "./hooks/useWallet";
 import WalletAlert from "./components/walletAlert";
 import BalanceCard from "./components/BalanceCard";
 import TransactionList from "./components/TransactionList";
-// --- FIN DE LA CORRECCIÓN ---
 
 function WalletLogic() {
   const router = useRouter();
@@ -19,10 +18,8 @@ function WalletLogic() {
   return (
     <div className="bg-gray-50 min-h-screen">
       
-      {/* (Mantenemos la corrección de padding que hicimos) */}
       <div className="max-w-4xl mx-auto px-4 pb-4 pt-0 md:px-8 md:pb-8 md:pt-0">
 
-        {/* (Mantenemos la corrección de margen que hicimos) */}
         <header className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
             <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-800 p-2" title="Volver">
@@ -50,6 +47,7 @@ function WalletLogic() {
         </header>
 
         <main>
+          {/* Mensajes de error */}
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6" role="alert">
               <strong className="font-bold">Error: </strong>
@@ -57,18 +55,54 @@ function WalletLogic() {
             </div>
           )}
 
-          <WalletAlert balance={balanceData?.saldo ?? 0} estado={balanceData?.estado} />
+          {/* Skeleton mientras carga */}
+          {loading && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 p-6 rounded-2xl shadow-lg animate-pulse">
+                <div className="h-4 bg-gray-400 rounded w-1/4 mb-4"></div>
+                <div className="h-10 bg-gray-400 rounded w-1/2 mb-4"></div>
+                <div className="h-3 bg-gray-400 rounded w-1/3"></div>
+              </div>
+              <div className="mt-10">
+                <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                <div className="space-y-3">
+                  <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                  <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-          <BalanceCard
-            saldo={balanceData?.saldo}
-            moneda={balanceData?.moneda || "Bs."}
-            showSaldo={showSaldo}
-            onToggleShowSaldo={() => setShowSaldo(!showSaldo)}
-            onRefresh={reload}
-            loading={loading}
-          />
+          {/* ✅ SOLUCIÓN BUG 1: Solo mostrar alerta cuando ya cargó Y el saldo es bajo o cuenta restringida */}
+          {!loading && balanceData && (balanceData.saldo <= 0 || balanceData.estado === "restringido") && (
+            <WalletAlert balance={balanceData.saldo} estado={balanceData.estado} />
+          )}
 
-          <TransactionList transactions={transactions} />
+          {/* ✅ Solo mostrar balance card cuando ya cargó Y hay datos */}
+          {!loading && balanceData && (
+            <BalanceCard
+              saldo={balanceData.saldo}
+              moneda={balanceData.moneda || "Bs."}
+              showSaldo={showSaldo}
+              onToggleShowSaldo={() => setShowSaldo(!showSaldo)}
+              onRefresh={reload}
+              loading={loading}
+            />
+          )}
+
+          {/* Mensaje cuando no hay datos */}
+          {!loading && !balanceData && !error && (
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+              <p>No se encontraron datos de billetera para este usuario.</p>
+            </div>
+          )}
+
+          {/* Lista de transacciones */}
+          {!loading && <TransactionList transactions={transactions} />}
         </main>
       </div>
     </div>

@@ -1,7 +1,7 @@
-// src/app/bitcrew/components/Wallet.tsx
+// src/app/bitcrew/wallet/components/walletAlert.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "./walletAlert.css"; 
 
 interface WalletAlertProps {
@@ -10,17 +10,14 @@ interface WalletAlertProps {
 }
 
 export default function WalletAlert({ balance, estado }: WalletAlertProps) {
-  const [showAlert, setShowAlert] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
-  useEffect(() => {
-    if (balance <= 0 || estado === "restringido") {
-      setShowAlert(true);
-    } else {
-      setShowAlert(false);
-    }
-  }, [balance, estado]);
+  
+  if (dismissed) return null;
 
-  if (!showAlert) return null;
+  
+  const shouldShow = balance <= 0 || estado === "restringido";
+  if (!shouldShow) return null;
 
   return (
     <div className="alert-overlay">
@@ -32,7 +29,7 @@ export default function WalletAlert({ balance, estado }: WalletAlertProps) {
         <p className="alert-message">
           Tu saldo actual es{" "}
           <span className="alert-balance">
-            Bs. {balance?.toFixed(2) ?? "0.00"}
+            Bs. {balance.toFixed(2)}
           </span>
           .
         </p>
@@ -41,7 +38,7 @@ export default function WalletAlert({ balance, estado }: WalletAlertProps) {
         </p>
         <button
           className="alert-button"
-          onClick={() => setShowAlert(false)}
+          onClick={() => setDismissed(true)}
         >
           Cerrar
         </button>
