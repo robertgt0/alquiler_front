@@ -13,6 +13,7 @@ import { updateAndNotifyWhatsApp } from "@/lib/appointments_whatsapp";
 
 import LocationForm from "./LocationForms";
 import ModalConfirmacion from "./ModalConfirmacion";
+import TopNotificationAlert from "@/components/TopNotificationAlert";
 
 type UISlot = { label: string; startISO: string; endISO: string };
 
@@ -76,6 +77,10 @@ export function AppointmentModal({
   // Confirmación
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertType, setAlertType] = useState<"success" | "error">("success");
+  const [alertMessage, setAlertMessage] = useState("");
+
   const isEdit = false;
 
   // Días feriados
@@ -405,6 +410,9 @@ export function AppointmentModal({
       onOpenChange(false);
       setSelectedTime(null);
       setSelectedSlot(null);
+      setAlertType("success");
+      setAlertMessage("Cita creada correctamente");
+      setShowAlert(true);
 
     } catch (err) {
       console.error(err);
@@ -416,6 +424,7 @@ export function AppointmentModal({
 
 
   return (
+  <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!w-[50vw] !max-w-none !sm:max-w-none bg-white rounded-xl shadow-2xl overflow-x-auto max-h-[90vh] overflow-y-auto p-0">
         <div className="p-6 border-b">
@@ -638,6 +647,16 @@ export function AppointmentModal({
         onClose={() => setShowConfirmationModal(false)} 
       />
     </Dialog>
+
+    {/* 🔔 ALERTA SUPERIOR */}
+    <TopNotificationAlert
+      show={showAlert}
+      type={alertType}
+      message={alertMessage}
+      onClose={() => setShowAlert(false)}
+      duration={4000}
+    />
+  </>
   );
 }
 
