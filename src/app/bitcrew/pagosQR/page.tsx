@@ -290,26 +290,35 @@ const RecargaQR: React.FC = () => {
 
 
   const validarDocumento = (valor: string) => {
-    // Solo permitir números
-    if (!/^\d*$/.test(valor)) return;
+  // Solo permitir números
+  if (!/^\d*$/.test(valor)) return;
 
-    // Validar longitud según tipo
-    if (tipoDocumento === "CI") {
-      if (valor.length <= 7) {
-        setNumeroDocumento(valor);
-        setMensajeError("");
-      } else {
-        setMensajeError("El CI debe tener 7 dígitos");
-      }
-    } else if (tipoDocumento === "NIT") {
-      if (valor.length <= 12) {
-        setNumeroDocumento(valor);
-        setMensajeError("");
-      } else {
-        setMensajeError("El NIT debe tener 12 dígitos");
-      }
+  // ❌ Bloquear números repetidos: 00000000, 1111111, etc.
+  if (/^(\d)\1+$/.test(valor)) return;
+
+  if (tipoDocumento === "CI") {
+    // CI: máximo 7 dígitos
+    if (valor.length <= 7) {
+      setNumeroDocumento(valor);
+      setMensajeError("");
+    } else {
+      setMensajeError("El CI debe tener 7 dígitos");
     }
-  };
+  } 
+  else if (tipoDocumento === "NIT") {
+    // NIT: DEBE EMPEZAR EN 1
+    if (valor.length === 1 && valor !== "1") return;
+
+    // NIT: máximo 12 dígitos
+    if (valor.length <= 12) {
+      setNumeroDocumento(valor);
+      setMensajeError("");
+    } else {
+      setMensajeError("El NIT debe tener 12 dígitos");
+    }
+  }
+};
+
 
 
   return (
