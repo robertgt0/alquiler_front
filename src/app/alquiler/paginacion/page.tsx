@@ -501,9 +501,16 @@ function BusquedaContent() {
             ) : (
               <>
                 <div className="text-xl text-blue-700 font-semibold mb-6">
-                  {mostrarSinResultadosFiltros
-                    ? "No se encontraron ofertas"
-                    : `Mostrando ${currentItems.length} de ${totalItems} Ofertas Disponibles`}
+                  {mostrarSinResultadosFiltros ? (
+                    "No se encontraron ofertas"
+                  ) : (
+                    (() => {
+                      // Calcula el rango mostrado: desde - hasta
+                      const desde = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+                      const hasta = desde === 0 ? 0 : desde + currentItems.length - 1;
+                      return `Mostrando ${desde}${hasta ? ` - ${hasta}` : ''} de ${totalItems} Ofertas Disponibles`;
+                    })()
+                  )}
                 </div>
 
                 <div className="results-area mt-6">

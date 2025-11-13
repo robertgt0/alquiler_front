@@ -29,13 +29,27 @@ export const usePagination = (items: Job[], itemsPerPage: number = 10) => { // 1
   // Mantener la página actual cuando los items cambian, solo resetear si es necesario
   useEffect(() => {
     const currentUrlPage = parseInt(searchParams.get('page') || '1', 10);
-    
+
     if (items.length > 0) {
-      // Solo resetear a página 1 si:
-      // 1. No hay página en la URL
-      // 2. La página actual es inválida
-      if (!searchParams.get('page') || currentUrlPage > Math.ceil(items.length / itemsPerPage)) {
+      const maxPage = Math.max(1, Math.ceil(items.length / itemsPerPage));
+
+      // Si no hay parámetro 'page' en la URL, inicializamos en 1
+      if (!searchParams.get('page')) {
         updateUrlAndPage(1);
+        return;
+      }
+
+      // Si la página en la URL excede el máximo, redirigimos a la última página válida
+      if (currentUrlPage > maxPage) {
+        updateUrlAndPage(maxPage);
+      }
+      // Si la página en la URL es menor que 1, redirigimos a la primera página
+      else if (currentUrlPage < 1) {
+        updateUrlAndPage(1);
+      }
+      // En cualquier otro caso (dentro de rango) sincronizamos el estado local
+      else {
+        setCurrentPage(currentUrlPage);
       }
     }
   }, [items, searchParams, itemsPerPage]);
