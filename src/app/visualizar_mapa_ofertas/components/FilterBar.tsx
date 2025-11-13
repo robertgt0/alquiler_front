@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getMarkerIcon } from '../config/markerIcons';
 
 interface FilterBarProps {
@@ -24,26 +24,49 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   totalOffers,
   filteredCount
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  // Leer estado inicial desde localStorage
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('filterBarExpanded');
+      return saved !== null ? saved === 'true' : true;
+    }
+    return true;
+  });
+
+  // Guardar estado en localStorage cuando cambie
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('filterBarExpanded', String(isExpanded));
+    }
+  }, [isExpanded]);
 
   return (
-    <div className="absolute top-20 left-4 z-[1001] bg-white rounded-lg shadow-2xl max-w-xs">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-blue-600 text-white rounded-t-lg">
-        <h3 className="font-bold text-lg flex items-center gap-2">
+    <div className="absolute top-4 left-4 z-[1001] bg-white rounded-lg shadow-2xl max-w-xs">
+      {/* Header con indicador de estado */}
+      <div className="flex items-center justify-between p-3 bg-blue-600 text-white rounded-t-lg">
+        <h3 className="font-bold text-base flex items-center gap-2">
           <span>🔍</span>
           Filtros
+          {!isExpanded && (
+            <span className="text-xs bg-blue-700 px-2 py-1 rounded">
+              {filteredCount}/{totalOffers}
+            </span>
+          )}
         </h3>
         <div className="flex items-center gap-2">
-          <button
-            onClick={onClearFilters}
-            className="text-xs bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded font-semibold transition"
-          >
-            Limpiar
-          </button>
+          {isExpanded && (
+            <button
+              onClick={onClearFilters}
+              className="text-xs bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded font-semibold transition"
+              title="Limpiar filtros"
+            >
+              Limpiar
+            </button>
+          )}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-white hover:bg-blue-700 rounded p-1 transition"
+            className="text-white hover:bg-blue-700 rounded p-2 transition"
+            title={isExpanded ? "Contraer panel" : "Expandir panel"}
           >
             {isExpanded ? '▼' : '▶'}
           </button>
@@ -52,13 +75,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
       {/* Body expandible */}
       {isExpanded && (
-        <div className="p-4">
+        <div className="p-4 max-h-[70vh] overflow-y-auto">
           {/* Filtro por Categoría */}
           <div className="mb-4">
             <label className="block text-sm font-bold text-gray-800 mb-2">
               📋 Categorías:
             </label>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+            <div className="space-y-2">
               {allCategories.map(category => {
                 const emoji = getMarkerIcon(category);
                 const isSelected = selectedCategories.includes(category);
