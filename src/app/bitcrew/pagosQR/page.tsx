@@ -383,8 +383,8 @@ const RecargaQR: React.FC = () => {
                 BS
               </span>
             </div>
-            {montoError && <span className="text-red-500 text-sm">{montoError}</span>}
-            {errores.monto && <p className="text-red-500 text-sm mt-1">{errores.monto}</p>}
+            {montoError && <span className="text-gray-400 text-sm mt-1">{montoError}</span>}
+            {errores.monto && <p className="text-gray-400 text-sm mt-1">{errores.monto}</p>}
           </div>
 
           <div>
@@ -407,7 +407,7 @@ const RecargaQR: React.FC = () => {
 
               placeholder="ingresar nombre"
             />
-            {errores.nombre && <p className="text-red-500 text-sm mt-1">{errores.nombre}</p>}
+            {errores.nombre && <p className="text-gray-400 text-sm mt-1">{errores.nombre}</p>}
           </div>
 
           {/* Fila: Tipo de documento y Nro. teléfono */}
@@ -444,10 +444,10 @@ const RecargaQR: React.FC = () => {
               </div>
 
               {mensajeError && (
-                <p className="text-red-500 text-sm mt-1">{mensajeError}</p>
+                <p className="text-gray-400 text-sm mt-1">{mensajeError}</p>
               )}
               {errores.documento && (
-                <p className="text-red-500 text-sm mt-1">{errores.documento}</p>
+                <p className="text-gray-400 text-sm mt-1">{errores.documento}</p>
               )}
             </div>
 
@@ -483,7 +483,7 @@ const RecargaQR: React.FC = () => {
               </div>
 
               {errores.telefono && (
-                <p className="text-red-500 text-sm mt-1">{errores.telefono}</p>
+                <p className="text-gray-400 text-sm mt-1">{errores.telefono}</p>
               )}
             </div>
           </div>
@@ -569,9 +569,9 @@ const RecargaQR: React.FC = () => {
 
 
             {correoError && (
-              <p className="text-red-500 text-sm mt-1">{correoError}</p>
+              <p className="text-gray-400 text-sm mt-1">{correoError}</p>
             )}
-            {errores.correo && <p className="text-red-500 text-sm mt-1">{errores.correo}</p>}
+            {errores.correo && <p className="text-gray-400 text-sm mt-1">{errores.correo}</p>}
           </div>
 
           <div className="sm:col-span-2">
@@ -596,7 +596,7 @@ const RecargaQR: React.FC = () => {
 
               placeholder="ingresar detalle de recarga..."
             ></textarea>
-            {errores.detalle && <p className="text-red-500 text-sm mt-1">{errores.detalle}</p>}
+            {errores.detalle && <p className="text-gray-400 text-sm mt-1">{errores.detalle}</p>}
           </div>
         </form>
 
