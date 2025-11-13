@@ -35,6 +35,12 @@ function Stars({ value }: { value: number }) {
 }
 
 function FixerListCard({ fixer }: { fixer: FixerCard }) {
+  // Bug 3.1.4 CORREGIDO: Validar ciudad vacía o null
+  const displayCity = fixer.city?.trim() || "Ciudad no registrada";
+  
+  // Bug 3.1.2 CORREGIDO: Validar bio vacía o null
+  const displayBio = fixer.bio?.trim() || "Sin descripción disponible";
+  
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
       <div className="flex flex-col gap-2">
@@ -49,11 +55,11 @@ function FixerListCard({ fixer }: { fixer: FixerCard }) {
           </div>
           <div>
             <div className="text-base font-semibold text-slate-900">{fixer.name ?? "Fixer"}</div>
-            <div className="text-xs text-slate-500">{fixer.city ?? "Ciudad no registrada"}</div>
+            <div className="text-xs text-slate-500">{displayCity}</div>
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <Stars value={Number(fixer.ratingAvg ?? 0)} />
               <span>
-                {(fixer.ratingAvg ?? 0).toFixed(1)} ({fixer.ratingCount ?? 0} resenas)
+                {(fixer.ratingAvg ?? 0).toFixed(1)} ({fixer.ratingCount ?? 0} reseñas)
               </span>
             </div>
           </div>
@@ -68,14 +74,15 @@ function FixerListCard({ fixer }: { fixer: FixerCard }) {
             </span>
           ))}
         </div>
-        {fixer.bio && <p className="text-sm text-slate-600">{fixer.bio}</p>}
+        {/* Bug 3.1.2 CORREGIDO: Siempre mostrar descripción */}
+        <p className="text-sm text-slate-600">{displayBio}</p>
       </div>
       <div className="flex justify-end md:items-center">
         <Link
           href={`/fixers/${fixer.id}`}
           className="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
         >
-          Saber mas
+          Saber más
         </Link>
       </div>
     </div>
@@ -160,35 +167,67 @@ export default function FixersByCategoryView() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <header className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-8">
-        <nav className="flex flex-wrap items-center justify-between gap-4 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
-            <Link href="/" className="hover:text-slate-800">
+    // ✅ Bug 3.1.1 RESUELTO: Usar mismo estilo que /offers (fondo blanco, padding compacto)
+    <main style={{ background: '#ffffff', minHeight: '100dvh', padding: '24px 20px' }}>
+      {/* ✅ Header consistente con /offers */}
+      <header style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+        <span 
+          style={{ width: 10, height: 10, borderRadius: '50%', background: '#0c4fe9', display: 'inline-block' }} 
+          aria-hidden="true" 
+        />
+        <strong style={{ color: '#11255a' }}>Servineo</strong>
+      </header>
+
+      {/* ✅ Contenedor principal con mismo ancho máximo */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Breadcrumbs y botón - más compactos */}
+        <nav style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Link href="/" style={{ color: '#64748b', textDecoration: 'none' }}>
               Home
             </Link>
             <span>/</span>
-            <Link href="/offers" className="hover:text-slate-800">
+            <Link href="/offers" style={{ color: '#64748b', textDecoration: 'none' }}>
               Ofertas publicadas
             </Link>
             <span>/</span>
-            <span className="text-slate-900 font-medium">Ver fixers por trabajo</span>
+            <span style={{ color: '#0f172a', fontWeight: 500 }}>Ver fixers por trabajo</span>
           </div>
           <Link
             href="/convertirse-fixer"
-            className="inline-flex items-center rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: '12px',
+              background: '#2563eb',
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#ffffff',
+              textDecoration: 'none',
+              transition: 'background 0.2s'
+            }}
           >
             Registrarme como Fixer
           </Link>
         </nav>
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold text-slate-900">Busca Fixers</h1>
-          <p className="text-sm text-slate-500">
-            Explora las categorias disponibles y encuentra al fixer ideal segun sus habilidades declaradas.
+
+        {/* Título y descripción - más compactos */}
+        <div style={{ marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#0f172a', marginBottom: '8px' }}>
+            Busca Fixers
+          </h1>
+          <p style={{ fontSize: '14px', color: '#64748b' }}>
+            Explora las categorías disponibles y encuentra al fixer ideal según sus habilidades declaradas.
           </p>
         </div>
-        <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="search-fixer">
+
+        {/* Buscador - más compacto */}
+        <div style={{ marginBottom: '16px' }}>
+          <label 
+            style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#334155', marginBottom: '8px' }} 
+            htmlFor="search-fixer"
+          >
             Busca por nombre
           </label>
           <input
@@ -196,85 +235,174 @@ export default function FixersByCategoryView() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Escribe el nombre del fixer"
-            className="h-11 rounded-xl border border-slate-300 px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            style={{
+              width: '100%',
+              height: '40px',
+              borderRadius: '12px',
+              border: '1px solid #cbd5e1',
+              padding: '0 16px',
+              fontSize: '14px',
+              outline: 'none',
+              transition: 'border-color 0.2s, box-shadow 0.2s'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#3b82f6';
+              e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#cbd5e1';
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
-        <div className="text-sm text-slate-500">
+
+        {/* Contador de resultados */}
+        <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>
           {loading ? "Cargando resultados..." : `${totalResults} resultado${totalResults === 1 ? "" : "s"}`}
         </div>
-        {error && <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
-      </header>
 
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-10 md:flex-row">
-        <aside className="md:w-64">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-slate-900">Categoras</h2>
-            <ul className="mt-4 flex flex-col gap-2 text-sm text-slate-600">
-              {data.map((group) => (
-                <li key={group.category.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleCategorySelect(group.category.id)}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition ${
-                      selectedCategoryId === group.category.id
-                        ? "border border-blue-200 bg-blue-50 text-blue-700"
-                        : "border border-transparent hover:bg-slate-100"
-                    }`}
-                    aria-pressed={selectedCategoryId === group.category.id}
-                  >
-                    <span>{group.category.name}</span>
-                    <span className="text-xs text-slate-500">({group.total})</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+        {error && (
+          <div style={{ 
+            borderRadius: '12px', 
+            background: '#fef2f2', 
+            padding: '12px 16px', 
+            fontSize: '14px', 
+            color: '#dc2626',
+            marginBottom: '24px'
+          }}>
+            {error}
           </div>
-        </aside>
+        )}
 
-        <div className="flex-1 space-y-4">
-          {loading && (
-            <div className="rounded-xl bg-white px-4 py-3 text-sm text-slate-500 shadow">Cargando...</div>
-          )}
-          {!loading && displayedGroups.length === 0 && !error && (
-            <div className="rounded-xl bg-white px-4 py-3 text-sm text-slate-500 shadow">
-              No encontramos fixers con ese criterio.
+        {/* Layout con sidebar y contenido */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Sidebar de categorías */}
+          <aside style={{ width: '100%', maxWidth: '256px' }}>
+            <div style={{ 
+              borderRadius: '24px', 
+              border: '1px solid #e2e8f0', 
+              background: '#ffffff', 
+              padding: '20px',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+            }}>
+              <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', marginBottom: '16px' }}>
+                Categorías
+              </h2>
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px', color: '#475569', listStyle: 'none', padding: 0, margin: 0 }}>
+                {data.map((group) => (
+                  <li key={group.category.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleCategorySelect(group.category.id)}
+                      style={{
+                        display: 'flex',
+                        width: '100%',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        textAlign: 'left',
+                        transition: 'background 0.2s, border-color 0.2s',
+                        border: selectedCategoryId === group.category.id ? '1px solid #bfdbfe' : '1px solid transparent',
+                        background: selectedCategoryId === group.category.id ? '#eff6ff' : 'transparent',
+                        color: selectedCategoryId === group.category.id ? '#1d4ed8' : '#475569',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedCategoryId !== group.category.id) {
+                          e.currentTarget.style.background = '#f1f5f9';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedCategoryId !== group.category.id) {
+                          e.currentTarget.style.background = 'transparent';
+                        }
+                      }}
+                      aria-pressed={selectedCategoryId === group.category.id}
+                    >
+                      <span>{group.category.name}</span>
+                      <span style={{ fontSize: '12px', color: '#64748b' }}>({group.total})</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
+          </aside>
 
-          {displayedGroups.map((group) => {
-            const isCollapsed = collapsed[group.category.id] ?? false;
-            return (
-              <section key={group.category.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <header className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-slate-900">{group.category.name}</h3>
-                    <p className="text-xs text-slate-500">{group.total} fixer{group.total === 1 ? "" : "s"}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => toggleCategory(group.category.id)}
-                    className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-blue-500 hover:text-blue-600"
-                  >
-                    {isCollapsed ? "Expandir" : "Colapsar"}
-                  </button>
-                </header>
-                {!isCollapsed && (
-                  <div className="space-y-4">
-                    {group.fixers.map((fixer) => (
-                      <FixerListCard key={`${group.category.id}-${fixer.id}`} fixer={fixer} />
-                    ))}
-                  </div>
-                )}
-              </section>
-            );
-          })}
+          {/* Contenido principal */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {loading && (
+              <div style={{ borderRadius: '12px', background: '#ffffff', padding: '12px 16px', fontSize: '14px', color: '#64748b', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+                Cargando...
+              </div>
+            )}
+            {!loading && displayedGroups.length === 0 && !error && (
+              <div style={{ borderRadius: '12px', background: '#ffffff', padding: '12px 16px', fontSize: '14px', color: '#64748b', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+                No encontramos fixers con ese criterio.
+              </div>
+            )}
+
+            {displayedGroups.map((group) => {
+              const isCollapsed = collapsed[group.category.id] ?? false;
+              return (
+                <section 
+                  key={group.category.id} 
+                  style={{ 
+                    borderRadius: '24px', 
+                    border: '1px solid #e2e8f0', 
+                    background: '#ffffff', 
+                    padding: '24px',
+                    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                  }}
+                >
+                  <header style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', marginBottom: '4px' }}>
+                        {group.category.name}
+                      </h3>
+                      <p style={{ fontSize: '12px', color: '#64748b' }}>
+                        {group.total} fixer{group.total === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleCategory(group.category.id)}
+                      style={{
+                        borderRadius: '9999px',
+                        border: '1px solid #e2e8f0',
+                        padding: '4px 12px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#475569',
+                        background: '#ffffff',
+                        cursor: 'pointer',
+                        transition: 'border-color 0.2s, color 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#3b82f6';
+                        e.currentTarget.style.color = '#2563eb';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = '#e2e8f0';
+                        e.currentTarget.style.color = '#475569';
+                      }}
+                    >
+                      {isCollapsed ? "Expandir" : "Colapsar"}
+                    </button>
+                  </header>
+                  {!isCollapsed && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {group.fixers.map((fixer) => (
+                        <FixerListCard key={`${group.category.id}-${fixer.id}`} fixer={fixer} />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              );
+            })}
+          </div>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
-
-
-
-
-

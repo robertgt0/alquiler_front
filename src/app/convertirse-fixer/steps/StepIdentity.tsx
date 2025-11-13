@@ -11,6 +11,7 @@ const CI_REGEX = /^\d{6,10}$/;
 
 export default function StepIdentity({ fixerId, userId, initialCI, onComplete }: StepIdentityProps) {
   const [ci, setCi] = useState(initialCI);
+  const [city, setCity] = useState(""); // ✅ Nuevo estado para ciudad
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,15 +30,29 @@ export default function StepIdentity({ fixerId, userId, initialCI, onComplete }:
     event.preventDefault();
     setError(null);
 
-    const trimmed = ci.trim();
-    if (!CI_REGEX.test(trimmed)) {
+    const trimmedCI = ci.trim();
+    const trimmedCity = city.trim();
+
+    // Validar C.I.
+    if (!CI_REGEX.test(trimmedCI)) {
       setError("Ingresa un C.I. valido (solo numeros, 6-10 digitos)");
+      return;
+    }
+
+    // ✅ Validar ciudad
+    if (!trimmedCity) {
+      setError("El campo Ciudad es obligatorio");
+      return;
+    }
+
+    if (trimmedCity.length < 2) {
+      setError("La ciudad debe tener al menos 2 caracteres");
       return;
     }
 
     try {
       setLoading(true);
-      const ciCheck = await checkCI(trimmed, fixerId ?? undefined);
+      const ciCheck = await checkCI(trimmedCI, fixerId ?? undefined);
       if (!ciCheck.unique && !fixerId) {
         setError("Este C.I. ya esta registrado");
         setLoading(false);
@@ -46,20 +61,25 @@ export default function StepIdentity({ fixerId, userId, initialCI, onComplete }:
 
       let currentId = fixerId;
       if (!currentId) {
-        const created = await createFixer({ userId, ci: trimmed });
+        // ✅ Enviar ciudad al crear el fixer
+        const created = await createFixer({ 
+          userId, 
+          ci: trimmedCI,
+          city: trimmedCity 
+        });
         currentId = created.data.id;
       } else {
-        await updateIdentity(currentId, trimmed);
+        await updateIdentity(currentId, trimmedCI);
       }
 
-      saveToStorage(STORAGE_KEYS.ci, trimmed);
+      saveToStorage(STORAGE_KEYS.ci, trimmedCI);
       if (currentId) {
         saveToStorage(STORAGE_KEYS.fixerId, currentId);
         updateStoredUser({ fixerId: currentId });
       }
-      onComplete({ fixerId: currentId!, ci: trimmed });
+      onComplete({ fixerId: currentId!, ci: trimmedCI });
     } catch (err: any) {
-      setError(String(err?.message || "No se pudo guardar el C.I."));
+      setError(String(err?.message || "No se pudo guardar la informacion"));
     } finally {
       setLoading(false);
     }
@@ -89,10 +109,30 @@ export default function StepIdentity({ fixerId, userId, initialCI, onComplete }:
           onChange={(event) => setCi(event.target.value.replace(/[^0-9]/g, ""))}
           placeholder="Ingresa tu numero de C.I."
           className="h-12 rounded-xl border border-slate-200 px-4 text-center text-lg font-semibold tracking-wider outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          required
         />
         <p className="text-xs text-slate-400">Solo numeros, minimo 6 y maximo 10 digitos.</p>
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       </div>
+
+      {/* ✅ Nuevo campo: Ciudad */}
+      <div className="flex flex-col gap-3">
+        <label className="text-sm font-medium text-slate-700" htmlFor="city-input">
+          Ciudad
+        </label>
+        <input
+          id="city-input"
+          type="text"
+          value={city}
+          onChange={(event) => setCity(event.target.value)}
+          placeholder="Ej: Cochabamba, La Paz, Santa Cruz"
+          className="h-12 rounded-xl border border-slate-200 px-4 text-lg outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          maxLength={120}
+          required
+        />
+        <p className="text-xs text-slate-400">Ciudad donde ofreces tus servicios.</p>
+      </div>
+
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
       <div className="flex items-center justify-end gap-3">
         <button
@@ -106,7 +146,3 @@ export default function StepIdentity({ fixerId, userId, initialCI, onComplete }:
     </form>
   );
 }
-
-
-
-
