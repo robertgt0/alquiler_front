@@ -438,14 +438,7 @@ function AddOrEditOfferPageContent() {
 
   return (
     <main className="min-h-screen bg-white">
-      <header className="flex items-center justify-between border-b border-slate-200 px-10 py-4">
-        <div className="flex items-center gap-3">
-          <div className="h-4 w-4 rounded-sm bg-slate-900" />
-          <span className="text-lg font-semibold text-slate-900">Servineo</span>
-        </div>
-      </header>
-
-      <section className="flex justify-center px-4 py-10">
+      <section className="flex justify-center px-4 py-10 pt-16">
         <form className="w-full max-w-3xl space-y-8">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">

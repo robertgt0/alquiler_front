@@ -12,6 +12,45 @@ function formatDate(iso?: string) {
   return d.toLocaleDateString();
 }
 
+function calculateTimeSince(iso?: string) {
+  if (!iso) return "N/D";
+  const startDate = new Date(iso);
+  if (Number.isNaN(startDate.getTime())) return "N/D";
+
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - startDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  let years = now.getFullYear() - startDate.getFullYear();
+  let months = now.getMonth() - startDate.getMonth();
+  let days = now.getDate() - startDate.getDate();
+
+  if (days < 0) {
+    months--;
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  if (years > 0) {
+    return `Hace ${years} año${years > 1 ? "s" : ""}, ${months} mes${months > 1 ? "es" : ""} y ${days} día${days > 1 ? "s" : ""}`;
+  }
+  if (months > 0) {
+    return `Hace ${months} mes${months > 1 ? "es" : ""} y ${days} día${days > 1 ? "s" : ""}`;
+  }
+  if (diffDays > 1) {
+    return `Hace ${diffDays} días`;
+  }
+  if (diffDays === 1) {
+    return `Hace 1 día`;
+  }
+  return "Hoy";
+}
+
 function Stars({ value }: { value: number }) {
   const full = Math.floor(value);
   const half = value - full >= 0.5 ? 1 : 0;
@@ -134,7 +173,7 @@ type SkillDisplay = {
             <div className="text-2xl font-semibold text-slate-900">{jobsCount}</div>
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
-            <div className="text-sm text-slate-500">Calificacion</div>
+            <div className="text-sm text-slate-500">Calificación</div>
             <div className="flex items-center gap-2">
               <Stars value={rating} />
               <span className="text-slate-700">{rating.toFixed(1)}</span>
@@ -142,7 +181,7 @@ type SkillDisplay = {
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
             <div className="text-sm text-slate-500">En servicio desde</div>
-            <div className="text-slate-900">{formatDate(memberSince)}</div>
+            <div className="text-slate-900">{calculateTimeSince(memberSince)}</div>
           </div>
 
           <div className="rounded-xl border border-slate-200 p-4 md:col-span-3">
@@ -202,6 +241,7 @@ type SkillDisplay = {
           name: skill.name,
           general: skill.general,
           personal: skill.personal,
+          source: skill.source,
         }))}
       />
     </div>
