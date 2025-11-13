@@ -83,7 +83,7 @@ export default function StepCategories({ fixerId, selected, onBack, onComplete }
                       <div>
                         <h3 className="text-base font-semibold text-slate-900">{category.name}</h3>
                         <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Descripcion general
+                          Descripción general
                         </p>
                         <p className="text-sm text-slate-600">{general}</p>
                         <p className="mt-3 text-xs text-slate-500">

@@ -56,7 +56,7 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
                 {summary.categories.map((category) => {
                   const personal = (category.customDescription ?? "").trim();
                   const text = personal || category.description || "Sin descripcion disponible.";
-                  const badgeLabel = personal ? "Descripcion personalizada" : "Descripcion general";
+                  const badgeLabel = personal ? "Descripción personalizada" : "Descripción general";
                   const badgeClass = personal
                     ? "bg-purple-100 text-purple-700 border border-purple-200"
                     : "bg-slate-200 text-slate-700 border border-slate-300";

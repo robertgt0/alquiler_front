@@ -96,7 +96,7 @@ export default async function FixerDetailPage({ params }: PageProps) {
   const photoUrl =
     data?.photoUrl ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E5E7EB&color=111827&size=128`;
 
-  const defaultSkills = ["Carpinteria", "Albanil", "Plomero"];
+  const defaultSkills = ["Carpintería", "Albañil", "Plomero"];
   const skillsInfo = Array.isArray(data?.skillsInfo) ? data.skillsInfo : [];
   const categoriesInfo = Array.isArray(data?.categoriesInfo) ? data.categoriesInfo : [];
   const rawCategories = Array.isArray(data?.categories) && data.categories.length ? data.categories : defaultSkills;
@@ -115,7 +115,7 @@ type SkillDisplay = {
         return {
           id: skill?.category?.id ?? skill?.categoryId ?? skill?.id ?? "",
           name: skill?.category?.name ?? skill?.name ?? "Oficio",
-          general: (skill?.description ?? "").trim() || "Sin descripcion disponible.",
+          general: (skill?.description ?? "").trim() || "Sin descripción disponible.",
           personal: personal || undefined,
           source: personal ? "personal" : "general",
         };
@@ -124,14 +124,14 @@ type SkillDisplay = {
     ? categoriesInfo.map((category: any) => ({
         id: category?.id ?? "",
         name: category?.name ?? "Oficio",
-        general: (category?.description ?? "").trim() || "Sin descripcion disponible.",
+        general: (category?.description ?? "").trim() || "Sin descripción disponible.",
         personal: undefined,
         source: "general" as const,
       }))
     : rawCategories.map((name: string, index: number) => ({
         id: `${index}`,
         name,
-        general: "Descripcion no disponible.",
+        general: "Descripción no disponible.",
         personal: undefined,
         source: "general" as const,
       }));

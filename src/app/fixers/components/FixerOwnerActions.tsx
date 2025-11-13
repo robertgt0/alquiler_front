@@ -47,11 +47,11 @@ export default function FixerOwnerActions({ fixerId, skills }: Props) {
         const text = (skill.personal ?? '').trim();
         if (!text) return null;
         if (text.length < CUSTOM_MIN) {
-          validation[skill.id] = `Minimo ${CUSTOM_MIN} caracteres.`;
+          validation[skill.id] = `Mínimo ${CUSTOM_MIN} caracteres.`;
           return null;
         }
         if (text.length > CUSTOM_MAX) {
-          validation[skill.id] = `Maximo ${CUSTOM_MAX} caracteres.`;
+          validation[skill.id] = `Máximo ${CUSTOM_MAX} caracteres.`;
           return null;
         }
         return { categoryId: skill.id, customDescription: text };
@@ -126,12 +126,12 @@ export default function FixerOwnerActions({ fixerId, skills }: Props) {
                   <div key={skill.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                     <div className="flex flex-col gap-1">
                       <p className="text-base font-semibold text-slate-900">{skill.name}</p>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Descripcion general</p>
-                      <p className="text-sm text-slate-600">{skill.general || 'Sin descripcion general registrada.'}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Descripción general</p>
+                      <p className="text-sm text-slate-600">{skill.general || 'Sin descripción general registrada.'}</p>
                     </div>
 
                     <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500" htmlFor={`personal-${skill.id}`}>
-                      Mi descripcion personal
+                      Mi descripción personal
                     </label>
                     <textarea
                       id={`personal-${skill.id}`}
@@ -151,7 +151,7 @@ export default function FixerOwnerActions({ fixerId, skills }: Props) {
                         <p className="text-red-600">{message}</p>
                       ) : (
                         <p className="text-slate-500">
-                          Minimo {CUSTOM_MIN} caracteres si la defines. Dejala vacia para usar la descripcion general.
+                          Mínimo {CUSTOM_MIN} caracteres si la defines. Déjala vacía para usar la descripción general.
                         </p>
                       )}
                     </div>
