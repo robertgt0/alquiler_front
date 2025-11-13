@@ -26,6 +26,9 @@ const RecargaQR: React.FC = () => {
   const [correo, setCorreo] = useState("");
   const [correoError, setCorreoError] = useState("");
 
+  const [fechaHoraQR, setFechaHoraQR] = useState("");
+
+
     type ErroresType = {
     monto?: string;
     nombre?: string;
@@ -69,10 +72,11 @@ const RecargaQR: React.FC = () => {
     else if (value === "") setMonto("");
   };
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
   //Para el backend enviarRecarga
   const enviarRecarga = async (): Promise<void> => {
-    try {
-      const response = await axios.post("https://alquiler-back-5.onrender.com/api/devcode/recargar", {
+  try {
+    const response = await axios.post(`${API_URL}/bitCrew/recarga`, {
         nombre,
         detalle,
         monto,
@@ -85,11 +89,11 @@ const RecargaQR: React.FC = () => {
       console.log("✅ Respuesta del backend:", response.data);
 
       if (response.data.success) {
-        alert("Recarga registrada correctamente en el backend ✅");
-        setMostrarQR(true);
-      } else {
-        alert("Error: " + response.data.message);
-      }
+          setMostrarQR(true);
+        } else {
+          console.error("Error: " + response.data.message);
+        }
+
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         console.error("❌ Error de Axios:", error.response?.data || error.message);
@@ -138,6 +142,18 @@ const RecargaQR: React.FC = () => {
     if (!valido) return;
     // Enviar datos al backend
     await enviarRecarga();  
+    // Efecha------------
+
+    const ahora = new Date();
+    const fechaFormateada = ahora.toLocaleString("es-BO", {
+      dateStyle: "short",
+      timeStyle: "medium",
+    });
+
+    setFechaHoraQR(fechaFormateada);
+
+
+
     //alert("Recarga realizada con éxito!");
     setMostrarQR(true);
 
@@ -204,37 +220,29 @@ const RecargaQR: React.FC = () => {
         // Dibujar QR centrado con padding
         ctx.drawImage(img, qrX + 8, qrY + 8, qrSize - 16, qrSize - 16);
 
-        // Información (alineada a la izquierda)
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#374151';
-        
-        let yPos = 330;
-        
-        // Monto
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('Monto:', 50, yPos);
-        ctx.font = '16px Arial';
-        ctx.fillText(`${monto} Bs`, 180, yPos);
-        
-        yPos += 40;
-        
-        // Nombre
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('Nombre a facturar:', 50, yPos);
-        ctx.font = '16px Arial';
-        yPos += 25;
-        const nombreTexto = nombre.length > 30 ? nombre.substring(0, 30) + '...' : nombre;
-        ctx.fillText(nombreTexto, 50, yPos);
-        
-        yPos += 40;
-        
-        // Detalle
-        ctx.font = 'bold 16px Arial';
-        ctx.fillText('Detalle de Recarga:', 50, yPos);
-        ctx.font = '16px Arial';
-        yPos += 25;
-        const detalleTexto = detalle.length > 35 ? detalle.substring(0, 35) + '...' : detalle;
-        ctx.fillText(detalleTexto, 50, yPos);
+        // Información alineada a la izquierda
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#374151';
+            ctx.font = '16px Arial';
+
+            let yPos = 330;
+
+            // Monto
+            ctx.fillText(`Monto: ${monto} Bs`, 50, yPos);
+            yPos += 35;
+
+            // Nombre
+            ctx.fillText(`Nombre: ${nombre}`, 50, yPos);
+            yPos += 35;
+
+            // Concepto
+            ctx.fillText(`Concepto: ${detalle}`, 50, yPos);
+            yPos += 35;
+
+            // Fecha y hora
+            ctx.fillText(`Fecha y hora: ${fechaHoraQR}`, 50, yPos);
+
+
 
         // Descargar
         canvas.toBlob((blob) => {
@@ -265,26 +273,35 @@ const RecargaQR: React.FC = () => {
 
 
   const validarDocumento = (valor: string) => {
-    // Solo permitir números
-    if (!/^\d*$/.test(valor)) return;
+  // Solo permitir números
+  if (!/^\d*$/.test(valor)) return;
 
-    // Validar longitud según tipo
-    if (tipoDocumento === "CI") {
-      if (valor.length <= 7) {
-        setNumeroDocumento(valor);
-        setMensajeError("");
-      } else {
-        setMensajeError("El CI debe tener 7 dígitos");
-      }
-    } else if (tipoDocumento === "NIT") {
-      if (valor.length <= 12) {
-        setNumeroDocumento(valor);
-        setMensajeError("");
-      } else {
-        setMensajeError("El NIT debe tener 12 dígitos");
-      }
+  // ❌ Bloquear números repetidos: 00000000, 1111111, etc.
+  if (/^(\d)\1+$/.test(valor)) return;
+
+  if (tipoDocumento === "CI") {
+    // CI: máximo 7 dígitos
+    if (valor.length <= 7) {
+      setNumeroDocumento(valor);
+      setMensajeError("");
+    } else {
+      setMensajeError("El CI debe tener 7 dígitos");
     }
-  };
+  } 
+  else if (tipoDocumento === "NIT") {
+    // NIT: DEBE EMPEZAR EN 1
+    if (valor.length === 1 && valor !== "1") return;
+
+    // NIT: máximo 12 dígitos
+    if (valor.length <= 12) {
+      setNumeroDocumento(valor);
+      setMensajeError("");
+    } else {
+      setMensajeError("El NIT debe tener 12 dígitos");
+    }
+  }
+};
+
 
 
   return (
@@ -349,8 +366,8 @@ const RecargaQR: React.FC = () => {
                 BS
               </span>
             </div>
-            {montoError && <span className="text-red-500 text-sm">{montoError}</span>}
-            {errores.monto && <p className="text-red-500 text-sm mt-1">{errores.monto}</p>}
+            {montoError && <span className="text-gray-400 text-sm mt-1">{montoError}</span>}
+            {errores.monto && <p className="text-gray-400 text-sm mt-1">{errores.monto}</p>}
           </div>
 
           <div>
@@ -361,11 +378,19 @@ const RecargaQR: React.FC = () => {
               value={nombre}
               onChange={(e) => {
                 const val = e.target.value;
-                if (/^[a-zA-Z\s]*$/.test(val) && val.length <= 40) setNombre(val);
+
+                // Solo letras y espacios, máximo 40 caracteres
+                if (!/^[a-zA-Z\s]*$/.test(val) || val.length > 40) return;
+
+                // ❌ Bloquear nombres repetidos como "aaaaaaa", "bbbbbbb", etc.
+                if (/^([a-zA-Z])\1{2,}$/.test(val.replace(/\s+/g, ""))) return;
+
+                setNombre(val);
               }}
+
               placeholder="ingresar nombre"
             />
-            {errores.nombre && <p className="text-red-500 text-sm mt-1">{errores.nombre}</p>}
+            {errores.nombre && <p className="text-gray-400 text-sm mt-1">{errores.nombre}</p>}
           </div>
 
           {/* Fila: Tipo de documento y Nro. teléfono */}
@@ -402,10 +427,10 @@ const RecargaQR: React.FC = () => {
               </div>
 
               {mensajeError && (
-                <p className="text-red-500 text-sm mt-1">{mensajeError}</p>
+                <p className="text-gray-400 text-sm mt-1">{mensajeError}</p>
               )}
               {errores.documento && (
-                <p className="text-red-500 text-sm mt-1">{errores.documento}</p>
+                <p className="text-gray-400 text-sm mt-1">{errores.documento}</p>
               )}
             </div>
 
@@ -422,65 +447,140 @@ const RecargaQR: React.FC = () => {
                   className="flex-1 px-3 py-2 bg-transparent focus:outline-none text-black placeholder-gray-400"
                   value={telefono}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    // Solo números y máximo 8 dígitos
-                    if (/^\d*$/.test(val) && val.length <= 8) setTelefono(val);
-                  }}
+                        const val = e.target.value;
+
+                        // Solo números y máximo 8 dígitos
+                        if (!/^\d*$/.test(val) || val.length > 8) return;
+
+                        // Primer dígito obligatorio 6 o 7
+                        if (val.length === 1 && !/[67]/.test(val)) return;
+
+                        // ❌ Bloquear números como 00000000, 11111111, 22222222, etc.
+                        if (/^(\d)\1{7}$/.test(val)) return;
+
+                        setTelefono(val);
+                      }}
+
                   placeholder="ingresar nro telf."
                 />
               </div>
 
               {errores.telefono && (
-                <p className="text-red-500 text-sm mt-1">{errores.telefono}</p>
+                <p className="text-gray-400 text-sm mt-1">{errores.telefono}</p>
               )}
             </div>
           </div>
 
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Correo electrónico</label>
-            <input
-              type="text"
-              className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
-              value={correo}
-              onChange={(e) => {
-                const val = e.target.value;
-                // Solo permite letras, números, arroba, punto y guion bajo
-                if (/^[a-zA-Z0-9@._]*$/.test(val)) {
-                  setCorreo(val);
+    
+            
+  <input
+  type="text"
+  className="w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400"
+  value={correo}
+  onChange={(e) => {
+    let val = e.target.value;
 
-                  if (/@{2,}/.test(val)) {
-                    setCorreoError("Correo no válido: demasiadas arrobas (@).");
-                   } else if (
-                     val.length > 0 &&
-                     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
-                   ) {
-                     setCorreoError("Correo no válido: formato incorrecto.");
-                   } else {
-                     setCorreoError("");
-                   }
+    // ----------------------------------------------------
+    // 🔹 LÍMITE: máximo 30 caracteres antes del @gmail.com
+    // ----------------------------------------------------
+    if (val.includes("@gmail.com")) {
+      const localPartCheck = val.replace("@gmail.com", "");
+      if (localPartCheck.length > 30) return;
+    } else {
+      const localPartCheck = val.split("@")[0];
+      if (localPartCheck.length > 30) return;
+    }
 
-                }
-              }}
-              placeholder="ingresar correo"
-            />
+    // Bloquear caracteres no válidos
+    if (!/^[a-zA-Z0-9@._]*$/.test(val)) return;
+
+    // ----- 1. SI YA EXISTE @gmail.com -----
+    if (correo.endsWith("@gmail.com")) {
+      const localPart = correo.replace("@gmail.com", "");
+
+      // ⭐ PERMITIR EDITAR ANTES DEL DOMINIO ⭐
+      if (val.includes("@gmail.com")) {
+        const newLocal = val.replace("@gmail.com", "");
+        if (newLocal.length <= 30) {
+          setCorreo(newLocal + "@gmail.com");
+        }
+        setCorreoError("");
+        return;
+      }
+
+      // Caso: usuario está BORRANDO
+      if (val.length < correo.length) {
+        if (!val.endsWith("@gmail.com")) {
+          setCorreo(val.replace("@gmail.com", ""));
+        } else {
+          setCorreo(val);
+        }
+        setCorreoError("");
+        return;
+      }
+
+      // Caso: usuario intenta escribir después del dominio → BLOQUEADO
+      if (!val.startsWith(localPart)) return;
+
+      // Mantener dominio fijo
+      setCorreo(localPart + "@gmail.com");
+      return;
+    }
+
+    // ----- 2. SI EL USUARIO AÚN NO TERMINÓ DE ESCRIBIR EL @ -----
+    if (val.includes("@")) {
+      const partes = val.split("@");
+
+      if (partes.length > 2) return;
+
+      val = partes[0] + "@gmail.com";
+      setCorreo(val);
+      setCorreoError("");
+      return;
+    }
+
+    // ----- 3. TEXTO ANTES DEL ARROBA -----
+    setCorreo(val);
+    setCorreoError("");
+  }}
+  placeholder="ingresar correo"
+/>
+
+
+              
+
+
             {correoError && (
-              <p className="text-red-500 text-sm mt-1">{correoError}</p>
+              <p className="text-gray-400 text-sm mt-1">{correoError}</p>
             )}
-            {errores.correo && <p className="text-red-500 text-sm mt-1">{errores.correo}</p>}
+            {errores.correo && <p className="text-gray-400 text-sm mt-1">{errores.correo}</p>}
           </div>
 
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Detalle de Recarga</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Concepto</label>
             <textarea
               className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
               rows={2}
               value={detalle}
-              onChange={(e) => {
-                if (e.target.value.length <= 40) setDetalle(e.target.value);
+             onChange={(e) => {
+                const val = e.target.value;
+
+                // Máximo 40 caracteres
+                if (val.length > 40) return;
+
+                // ❌ Bloquear texto donde todos los caracteres son iguales
+                // ejemplos: "aaaaaa", "111111", ".........", "///////"
+                const sinEspacios = val.replace(/\s+/g, "");  // ignorar espacios
+                if (sinEspacios.length > 2 && /^(\S)\1+$/.test(sinEspacios)) return;
+
+                setDetalle(val);
               }}
+
               placeholder="ingresar detalle de recarga..."
             ></textarea>
-            {errores.detalle && <p className="text-red-500 text-sm mt-1">{errores.detalle}</p>}
+            {errores.detalle && <p className="text-gray-400 text-sm mt-1">{errores.detalle}</p>}
           </div>
         </form>
 
@@ -513,9 +613,12 @@ const RecargaQR: React.FC = () => {
 
               <div className="text-left text-gray-700 space-y-2">
                 <p><strong>Monto:</strong> {monto} Bs</p>
-                <p><strong>Nombre a facturar:</strong> {nombre}</p>
-                <p><strong>Detalle de Recarga:</strong> {detalle}</p>
+                <p><strong>Nombre:</strong> {nombre}</p>
+                <p><strong>Concepto:</strong> {detalle}</p>
+                <p><strong>Fecha y hora:</strong> {fechaHoraQR}</p>
               </div>
+
+              
 
               <div className="mt-6 flex gap-3 justify-center">
                 <button
