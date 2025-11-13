@@ -102,6 +102,7 @@ export default function CarruselOfertas() {
 
           {/* Carousel Container */}
           <div 
+            id="carrusel"
             className="relative"
             onMouseEnter={() => setIsAutoPlaying(false)}
             onMouseLeave={() => setIsAutoPlaying(true)}

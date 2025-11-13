@@ -1,6 +1,6 @@
 // src/app/components/guiaUsuarios/IntroGuide.tsx
 
-import { ArrowRightIcon, HomeHammerIcon } from './GuiaIcons';
+import { ArrowRightIcon, HomeHammerIcon } from './ManualIcons';
 
 interface IntroGuideProps {
   setVista: (vista: string) => void;

@@ -8,15 +8,16 @@ import CarruselInspirador from "../components/CarruselInspirador/CarruselInspira
 import Link from "next/link";
 import categorias, { type CategoriaBase } from "../components/data/categoriasData";
 import HelpButton from "../components/HelpButton/HelpButton";
+import GiaUsuariosNuevos from "../components/guiaUsuarios/GiaUsuariosNuevos";
 export default function Home() {
   return (
     <main>
       {/* Hero / inspiración */}
-      <section className="my-5">
+      <section id="carrusel" className="my-5">
         <CarruselInspirador />
       </section>
 
-
+      <HelpButton />
 
       {/* Mapa */}
       <section id="mapa" className="my-10">
@@ -74,7 +75,9 @@ export default function Home() {
         </div>
       </section>
      
-  
+   <section id="gia-usuarios-nuevos" className="my-5 w-full">
+        <GiaUsuariosNuevos />
+      </section>
 
       <Footer />
     </main>
