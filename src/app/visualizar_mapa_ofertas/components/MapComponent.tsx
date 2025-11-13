@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, Circle, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, Circle, useMap, ScaleControl } from 'react-leaflet';
 import L from 'leaflet';
 import { Offer, Location } from '../interfaces/types';
 import { calculateDistance, formatDistance } from '../utils/mapHelpers';
-import { getMarkerIcon } from '../config/markerIcons';
+import { getMarkerIcon, getMarkerColor } from '../config/markerIcons';
 import { OfferDetailModal } from './OfferDetailModal';
 import { useModal } from '../hooks/useModal';
 import 'leaflet/dist/leaflet.css';
@@ -25,40 +25,85 @@ interface MapComponentProps {
   onZoomChange?: (zoom: number) => void;
 }
 
-// MapController con key única para forzar re-render
-const MapController: React.FC<{ center: Location; zoom: number; trigger: number }> = ({ center, zoom, trigger }) => {
+// Límites de zoom
+const MIN_ZOOM = 3;
+const MAX_ZOOM = 18;
+
+// MapController con tracking de zoom
+const MapController: React.FC<{ 
+  center: Location; 
+  zoom: number; 
+  trigger: number;
+  onZoomChange: (zoom: number) => void;
+}> = ({ center, zoom, trigger, onZoomChange }) => {
   const map = useMap();
   
   useEffect(() => {
-    console.log('🎯 Centrando mapa en:', center);
     map.flyTo([center.lat, center.lng], zoom, {
       animate: true,
       duration: 1
     });
-  }, [trigger]); // CLAVE: Solo reacciona al trigger, no a center directamente
+  }, [trigger]);
+
+  useEffect(() => {
+    const handleZoomEnd = () => {
+      onZoomChange(map.getZoom());
+    };
+    
+    map.on('zoomend', handleZoomEnd);
+    return () => {
+      map.off('zoomend', handleZoomEnd);
+    };
+  }, [map, onZoomChange]);
   
   return null;
 };
 
-const createCategoryIcon = (category: string): L.Icon => {
-  const colorMap: Record<string, string> = {
-    'Plomería': 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-    'Electricidad': 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
-    'Carpintería': 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
-    'Limpieza': 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    'Pintura': 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
-    'Jardinería': 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png'
-  };
-
-  const iconUrl = colorMap[category] || 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
-
-  return new L.Icon({
-    iconUrl: iconUrl,
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+// Crear marcador personalizado con DivIcon
+const createCategoryIcon = (category: string): L.DivIcon => {
+  const color = getMarkerColor(category);
+  const emoji = getMarkerIcon(category);
+  
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="position: relative; width: 32px; height: 40px;">
+        <!-- Pin/Marcador -->
+        <div style="
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 16px solid transparent;
+          border-right: 16px solid transparent;
+          border-top: 32px solid ${color};
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        "></div>
+        
+        <!-- Círculo superior -->
+        <div style="
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 28px;
+          height: 28px;
+          background: ${color};
+          border: 3px solid white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        ">${emoji}</div>
+      </div>
+    `,
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
+    popupAnchor: [0, -40],
   });
 };
 
@@ -70,53 +115,101 @@ export const MapComponent: React.FC<MapComponentProps> = ({
   onZoomChange
 }) => {
   const [mapCenter, setMapCenter] = useState<Location>(userLocation);
-  const [mapZoom, setMapZoom] = useState<number>(15); // Zoom más cercano por defecto
-  const [centerTrigger, setCenterTrigger] = useState<number>(0); // Contador para forzar centrado
+  const [mapZoom, setMapZoom] = useState<number>(15);
+  const [currentZoom, setCurrentZoom] = useState<number>(15);
+  const [centerTrigger, setCenterTrigger] = useState<number>(0);
   const mapRef = useRef<L.Map | null>(null);
 
   const { isOpen, openModal, closeModal } = useModal();
-  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+  const [selectedOffers, setSelectedOffers] = useState<Offer[]>([]);
 
-  const handleOfferClick = (offer: Offer) => {
-    setSelectedOffer(offer);
+  const handleOfferClick = (offers: Offer[]) => {
+    setSelectedOffers(offers);
     openModal();
   };
 
   const activeOffers = offers.filter(offer => offer.isActive === true);
 
-  // Icono ROJO más grande para el usuario
-  const userIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-    iconSize: [35, 57],
-    iconAnchor: [17, 57],
-    popupAnchor: [1, -50],
-    shadowSize: [50, 50]
+  // Marcador del usuario con DivIcon personalizado
+  const userIcon = L.divIcon({
+    className: 'user-marker',
+    html: `
+      <div style="position: relative; width: 40px; height: 50px;">
+        <div style="
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 20px solid transparent;
+          border-right: 20px solid transparent;
+          border-top: 40px solid #EF4444;
+          filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+        "></div>
+        <div style="
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 36px;
+          height: 36px;
+          background: #EF4444;
+          border: 4px solid white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+          animation: pulse 2s infinite;
+        ">📍</div>
+      </div>
+      <style>
+        @keyframes pulse {
+          0%, 100% { transform: translateX(-50%) scale(1); }
+          50% { transform: translateX(-50%) scale(1.1); }
+        }
+      </style>
+    `,
+    iconSize: [40, 50],
+    iconAnchor: [20, 50],
+    popupAnchor: [0, -50],
   });
 
-  // SOLUCIÓN: Botón centrar que SIEMPRE funciona
   const handleCenterUser = () => {
-    console.log('🔴 Botón centrar presionado');
     setMapCenter(userLocation);
     setMapZoom(15);
-    setCenterTrigger(prev => prev + 1); // Incrementar trigger para forzar MapController
+    setCenterTrigger(prev => prev + 1);
   };
 
   const handleZoomIn = () => {
-    setMapZoom((prev) => Math.min(prev + 1, 18));
+    const newZoom = Math.min(currentZoom + 1, MAX_ZOOM);
+    setMapZoom(newZoom);
     setCenterTrigger(prev => prev + 1);
   };
 
   const handleZoomOut = () => {
-    setMapZoom((prev) => Math.max(prev - 1, 3));
+    const newZoom = Math.max(currentZoom - 1, MIN_ZOOM);
+    setMapZoom(newZoom);
     setCenterTrigger(prev => prev + 1);
   };
+
+  const handleZoomChangeFromMap = (zoom: number) => {
+    setCurrentZoom(zoom);
+    setMapZoom(zoom);
+  };
+
+  const isMaxZoom = currentZoom >= MAX_ZOOM;
+  const isMinZoom = currentZoom <= MIN_ZOOM;
 
   return (
     <div className="relative w-full h-full">
       <MapContainer
         center={[userLocation.lat, userLocation.lng]}
         zoom={15}
+        minZoom={MIN_ZOOM}
+        maxZoom={MAX_ZOOM}
         className="w-full h-full"
         zoomControl={false}
         style={{ height: '100%', width: '100%' }}
@@ -126,9 +219,15 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        <MapController center={mapCenter} zoom={mapZoom} trigger={centerTrigger} />
+        <ScaleControl position="bottomright" imperial={false} />
+        
+        <MapController 
+          center={mapCenter} 
+          zoom={mapZoom} 
+          trigger={centerTrigger}
+          onZoomChange={handleZoomChangeFromMap}
+        />
 
-        {/* Círculo azul mostrando el radio de distancia */}
         <Circle
           center={[userLocation.lat, userLocation.lng]}
           radius={maxDistance * 1000}
@@ -141,7 +240,6 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           }}
         />
 
-        {/* Marcador ROJO grande del usuario (ubicación GPS real) */}
         <Marker 
           position={[userLocation.lat, userLocation.lng]} 
           icon={userIcon}
@@ -163,123 +261,176 @@ export const MapComponent: React.FC<MapComponentProps> = ({
           </Popup>
         </Marker>
 
-        {/* Marcadores de ofertas */}
-        {activeOffers.map((offer) => {
-          const distance = calculateDistance(userLocation, offer.location);
-          const categoryIcon = createCategoryIcon(offer.category);
-          const emoji = getMarkerIcon(offer.category);
-          
-          return (
-            <Marker
-              key={offer.id}
-              position={[offer.location.lat, offer.location.lng]}
-              icon={categoryIcon}
-            >
-              <Tooltip 
-                direction="top" 
-                offset={[0, -35]} 
-                opacity={1}
-                permanent={false}
-              >
-                <div className="text-center font-semibold">
-                  <div className="text-base">{emoji} {offer.fixerName}</div>
-                  <div className="text-xs text-gray-600">{offer.category}</div>
-                </div>
-              </Tooltip>
+        {(() => {
+          // Agrupar ofertas por persona (usando nombre o ID único)
+          const groupedOffers = activeOffers.reduce((acc, offer) => {
+            const key = `${offer.fixerName}-${offer.location.lat}-${offer.location.lng}`;
+            if (!acc[key]) {
+              acc[key] = {
+                ...offer,
+                categories: [offer.category],
+                allOffers: [offer]
+              };
+            } else {
+              if (!acc[key].categories.includes(offer.category)) {
+                acc[key].categories.push(offer.category);
+                acc[key].allOffers.push(offer);
+              }
+            }
+            return acc;
+          }, {} as Record<string, any>);
 
-              <Popup maxWidth={300}>
-                <div className="p-2">
-                  <h3 className="font-bold text-lg mb-2">{emoji} {offer.fixerName}</h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    <strong>Categoria:</strong> {offer.category}
-                  </p>
-                  <p className="text-sm mb-2">{offer.description}</p>
-                  <p className="text-sm mb-2">
-                    <strong>Distancia:</strong> {formatDistance(distance)}
-                  </p>
-                  <p className="text-sm mb-2">
-                    <strong>Rating:</strong> {offer.rating}/5
-                  </p>
-                  <p className="text-sm mb-3">
-                    <strong>Precio:</strong> Bs. {offer.price}
-                  </p>
-                  
-                  <button
-                    onClick={() => handleOfferClick(offer)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm inline-block w-full text-center mb-2"
-                  >
-                    Ver mas detalles
-                  </button>
-                  
-                  <a
-                    href={`https://wa.me/${offer.whatsapp.replace('+', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm inline-block w-full text-center"
-                  >
-                    Contactar por WhatsApp
-                  </a>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+          return Object.values(groupedOffers).map((groupedOffer: any) => {
+            const distance = calculateDistance(userLocation, groupedOffer.location);
+            // Usar la primera categoría para el ícono, o crear uno multi-categoría
+            const primaryCategory = groupedOffer.categories[0];
+            const categoryIcon = createCategoryIcon(primaryCategory);
+            const emoji = getMarkerIcon(primaryCategory);
+            
+            return (
+              <Marker
+                key={`${groupedOffer.fixerName}-${groupedOffer.location.lat}`}
+                position={[groupedOffer.location.lat, groupedOffer.location.lng]}
+                icon={categoryIcon}
+              >
+                <Tooltip 
+                  direction="top" 
+                  offset={[0, -40]} 
+                  opacity={1}
+                  permanent={false}
+                >
+                  <div className="text-center font-semibold">
+                    <div className="text-base">{emoji} {groupedOffer.fixerName}</div>
+                    <div className="text-xs text-gray-600">
+                      {groupedOffer.categories.length} categoría{groupedOffer.categories.length > 1 ? 's' : ''}
+                    </div>
+                  </div>
+                </Tooltip>
+
+                <Popup maxWidth={320}>
+                  <div className="p-2">
+                    <h3 className="font-bold text-lg mb-2">{emoji} {groupedOffer.fixerName}</h3>
+                    
+                    <div className="text-sm text-gray-600 mb-2">
+                      <strong>Categorías:</strong>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {groupedOffer.categories.map((cat: string) => (
+                          <span 
+                            key={cat}
+                            className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
+                          >
+                            {getMarkerIcon(cat)} {cat}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm mb-2">{groupedOffer.description}</p>
+                    <p className="text-sm mb-2">
+                      <strong>Distancia:</strong> {formatDistance(distance)}
+                    </p>
+                    <p className="text-sm mb-2">
+                      <strong>Rating:</strong> {groupedOffer.rating}/5 ⭐
+                    </p>
+                    <p className="text-sm mb-3">
+                      <strong>Precio desde:</strong> Bs. {Math.min(...groupedOffer.allOffers.map((o: Offer) => o.price))}
+                    </p>
+                    
+                    <button
+                      onClick={() => handleOfferClick(groupedOffer.allOffers)}
+                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-sm inline-block w-full text-center mb-2"
+                    >
+                      Ver {groupedOffer.allOffers.length > 1 ? `todas las ofertas (${groupedOffer.allOffers.length})` : 'más detalles'}
+                    </button>
+                    
+                    <a
+                      href={`https://wa.me/${groupedOffer.whatsapp.replace('+', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 text-sm inline-block w-full text-center"
+                    >
+                      Contactar por WhatsApp
+                    </a>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          });
+        })()}
       </MapContainer>
 
-      {/* Botones de control */}
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+      <div className="absolute top-20 right-6 z-[1000] flex flex-col gap-3">
         <button
           onClick={handleCenterUser}
-          className="bg-red-600 text-white p-3 rounded-lg shadow-lg hover:bg-red-700 transition text-sm font-semibold flex items-center gap-2"
+          className="bg-red-600 text-white p-3 rounded-lg shadow-xl hover:bg-red-700 transition text-sm font-semibold flex items-center gap-2"
           title="Centrar en mi ubicación GPS"
         >
           📍 Centrar
         </button>
+        
+        <div className="bg-white rounded-lg shadow-xl p-2 text-center">
+          <div className="text-xs font-bold text-gray-600 mb-1">Zoom</div>
+          <div className="text-lg font-bold text-blue-600">{currentZoom}</div>
+          <div className="text-xs text-gray-500">
+            {MIN_ZOOM} - {MAX_ZOOM}
+          </div>
+        </div>
+        
         <button
           onClick={handleZoomIn}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition font-bold text-xl"
-          title="Acercar"
+          disabled={isMaxZoom}
+          className={`${
+            isMaxZoom 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          } text-white px-4 py-2 rounded-lg shadow-xl transition font-bold text-xl`}
+          title={isMaxZoom ? "Zoom máximo alcanzado" : "Acercar"}
         >
           +
         </button>
         <button
           onClick={handleZoomOut}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition font-bold text-xl"
-          title="Alejar"
+          disabled={isMinZoom}
+          className={`${
+            isMinZoom 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          } text-white px-4 py-2 rounded-lg shadow-xl transition font-bold text-xl`}
+          title={isMinZoom ? "Zoom mínimo alcanzado" : "Alejar"}
         >
           -
         </button>
       </div>
 
-      {/* Leyenda */}
+      {/* Leyenda actualizada con los colores reales */}
       <div className="absolute bottom-4 left-4 z-[1000] bg-gray-800 text-white p-3 rounded-lg shadow-lg max-w-[200px]">
         <h4 className="font-bold mb-2 text-sm border-b border-gray-600 pb-2">
-          Categorias
+          Categorías
         </h4>
         <div className="space-y-1 text-xs">
           <div className="flex items-center gap-2">
-            <span className="text-blue-400 text-lg">●</span>
-            <span className="font-medium">Plomeria</span>
+            <span style={{ color: '#3B82F6' }} className="text-lg">●</span>
+            <span className="font-medium">🔧 Plomería</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-yellow-400 text-lg">●</span>
-            <span className="font-medium">Electricidad</span>
+            <span style={{ color: '#EAB308' }} className="text-lg">●</span>
+            <span className="font-medium">⚡ Electricidad</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-orange-400 text-lg">●</span>
-            <span className="font-medium">Carpinteria</span>
+            <span style={{ color: '#8B4513' }} className="text-lg">●</span>
+            <span className="font-medium">🪚 Carpintería</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-green-400 text-lg">●</span>
-            <span className="font-medium">Limpieza</span>
+            <span style={{ color: '#10B981' }} className="text-lg">●</span>
+            <span className="font-medium">🧹 Limpieza</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-purple-400 text-lg">●</span>
-            <span className="font-medium">Pintura</span>
+            <span style={{ color: '#EC4899' }} className="text-lg">●</span>
+            <span className="font-medium">🎨 Pintura</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-gray-400 text-lg">●</span>
-            <span className="font-medium">Jardineria</span>
+            <span style={{ color: '#22C55E' }} className="text-lg">●</span>
+            <span className="font-medium">🌿 Jardinería</span>
           </div>
         </div>
         <div className="mt-3 pt-2 border-t border-gray-600 text-xs font-semibold text-green-400">
@@ -290,7 +441,7 @@ export const MapComponent: React.FC<MapComponentProps> = ({
       </div>
 
       <OfferDetailModal
-        offer={selectedOffer}
+        offers={selectedOffers}
         isOpen={isOpen}
         onClose={closeModal}
         userLocation={userLocation}
