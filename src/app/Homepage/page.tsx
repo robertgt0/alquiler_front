@@ -1,4 +1,5 @@
-//src/app/Homepage/page.tsx
+/// /src/app/Homepage/page.tsx
+
 import Mapa from "../components/mapa/MapaWrapper";
 import CarruselOfertas from "../components/CarruselOfertas/CarruselOfertas";
 import HomeFixer from "../components/ListaCategorias/HomeFixer";
@@ -8,35 +9,38 @@ import CarruselInspirador from "../components/CarruselInspirador/CarruselInspira
 import Link from "next/link";
 import categorias, { type CategoriaBase } from "../components/data/categoriasData";
 import HelpButton from "../components/HelpButton/HelpButton";
-//import GiaUsuariosNuevos from "../components/guiaUsuarios/GiaUsuariosNuevos";
+
+// 🔸 Línea relacionada con la guía de usuario (comentada)
+// import GiaUsuariosNuevos from "../components/guiaUsuarios/GiaUsuariosNuevos";
+
 export default function Home() {
   return (
     <main>
-      {/* Hero / inspiración */}
+      {/* --- Hero / inspiración --- */}
       <section id="carrusel" className="my-5">
         <CarruselInspirador />
       </section>
 
+      {/* Botón de ayuda flotante */}
       <HelpButton />
 
-      {/* Mapa */}
+      {/* --- Mapa --- */}
       <section id="mapa" className="my-10">
         <Mapa />
       </section>
 
-      {/* Servicios / categorías */}
+      {/* --- Servicios / categorías --- */}
       <section id="servicios" className="my-5 w-full">
         {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
         <HomeFixer categorias={categorias as CategoriaBase[]} />
       </section>
-       
 
-      {/* Trabajos recientes */}
+      {/* --- Trabajos recientes --- */}
       <section id="trabajos-recientes" className="my-5 w-full">
         <CarruselOfertas />
       </section>
 
-      {/* Acciones rápidas (contenido que tenías en el segundo Home) */}
+      {/* --- Acciones rápidas --- */}
       <section className="my-10">
         <div className="min-h-0 flex items-center justify-center">
           <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
@@ -74,9 +78,18 @@ export default function Home() {
           </div>
         </div>
       </section>
-     
-   
 
+      {/* 🔸 Sección de Guía de Usuarios Nuevos (comentada completamente)
+          Esta parte era donde se mostraba una guía o tutorial para nuevos usuarios,
+          pero se comenta para desactivar cualquier referencia a la guía. */}
+
+      {/*
+      <section id="gia-usuarios-nuevos" className="my-5 w-full">
+        <GiaUsuariosNuevos />
+      </section>
+      */}
+
+      {/* --- Pie de página --- */}
       <Footer />
     </main>
   );
