@@ -1,4 +1,4 @@
-
+// components/Footer/Footer.tsx
 // components/Footer/Footer.tsx
 
 'use client';
@@ -194,36 +194,11 @@ const Footer = () => {
             <div className="space-y-4">
               <h4 className="text-xl font-semibold font-heading">Categorías</h4>
               <nav className="flex flex-col space-y-2 items-center md:items-start">
-  <a
-    href="#trabajos-recientes"
-    className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded"
-  >
-    Trabajos recientes
-  </a>
-
-  <a
-    href="#mapa"
-    className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded"
-  >
-    Mapa
-  </a>
-
-  <a
-    href="#servicios"
-    className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded"
-  >
-    Lista de servicios
-  </a>
-
-  {/* 🔹 Nuevo botón agregado */}
- <a
-  href="/panel"
-  className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded"
->
-  Ver manual usuario
-</a>
-</nav>
-
+                <a href="#trabajos-recientes" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Trabajos recientes</a>
+                <a href="#mapa" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Mapa</a>
+                <a href="#servicios" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Lista de servicios</a>
+                <a href="#carrusel" className="transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">Sección carrusel</a>
+              </nav>
             </div>
 
             <div className="space-y-4">
@@ -240,9 +215,9 @@ const Footer = () => {
               <h4 className="text-xl font-semibold font-heading">Soporte</h4>
               <ul className="space-y-3">
                 <li className="flex items-center justify-center md:justify-start">
-                  <a href="https://wa.me/59173782241" target="_blank" rel="noopener noreferrer" className="flex items-center transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
+                  <a href="https://wa.me/59160379823" target="_blank" rel="noopener noreferrer" className="flex items-center transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] px-2 py-1 rounded">
                     <FaPhone className="mr-3 text-[#52abff]" />
-                    <span className="text-sm">+591 73782241</span>
+                    <span className="text-sm">+591 60379823</span>
                   </a>
                 </li>
                 <li className="flex items-center justify-center md:justify-start">
@@ -296,11 +271,11 @@ const Footer = () => {
           <div className="border-t border-[#1140bc] mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm text-[#89c9ff]">© {new Date().getFullYear()} Servineo. Todos los derechos reservados.</p>
             <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-              <div className="relative" ref={languageMenuRef}>
+              <div className="relative w-full md:w-auto" ref={languageMenuRef}>
                 <button
                   type="button"
                   onClick={() => setIsLanguageMenuOpen((prev) => !prev)}
-                  className="flex items-center gap-2 text-sm border border-[#1140bc] px-4 py-2 rounded-md transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] focus:ring-offset-2 focus:ring-offset-[#11255a]"
+                  className="w-full md:w-auto flex items-center justify-center gap-2 text-sm border border-[#1140bc] px-4 py-2 rounded-md transition transform duration-150 ease-in-out hover:text-[#52abff] hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#52abff] focus:ring-offset-2 focus:ring-offset-[#11255a]"
                   aria-haspopup="listbox"
                   aria-expanded={isLanguageMenuOpen}
                 >
@@ -315,7 +290,7 @@ const Footer = () => {
                   <span className="text-xs" aria-hidden>▾</span>
                 </button>
                 {isLanguageMenuOpen && (
-                  <div className="absolute left-0 bottom-full mb-2 w-40 rounded-md border border-[#1140bc] bg-[#0e2358] shadow-lg">
+                  <div className="absolute left-0 bottom-full mb-2 w-full md:w-40 rounded-md border border-[#1140bc] bg-[#0e2358] shadow-lg z-10">
                     <ul role="listbox" aria-label="Seleccionar idioma">
                       {languageOptions.map((option) => (
                         <li key={option.code}>
