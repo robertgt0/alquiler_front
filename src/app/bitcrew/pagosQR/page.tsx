@@ -73,17 +73,20 @@ const RecargaQR: React.FC = () => {
   };
 
   //Para el backend enviarRecarga
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  //Para el backend enviarRecarga
   const enviarRecarga = async (): Promise<void> => {
-    try {
-      const response = await axios.post("https://alquiler-back-5.onrender.com/api/devcode/recargar", {
-        nombre,
-        detalle,
-        monto,
-        correo,
-        telefono,
-        tipoDocumento,
-        numeroDocumento,
-      });
+  try {
+    const response = await axios.post(`${API_URL}/bitCrew/recarga`, {
+      nombre,
+      detalle,
+      monto,
+      correo,
+      telefono,
+      tipoDocumento,
+      numeroDocumento,
+    });
+
 
       console.log("✅ Respuesta del backend:", response.data);
 
