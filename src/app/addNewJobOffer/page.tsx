@@ -2,6 +2,7 @@
 
 // 👈 CORRECCIÓN 1: Importar 'Suspense' de React
 import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getOfferById, createOffer, updateOffer, type Offer } from '@/app/offers/services/offersService';
 
@@ -17,6 +18,7 @@ function fileToDataURL(file: File): Promise<string> {
 // 👈 CORRECCIÓN 2: Renombramos tu componente. Quitamos el 'export default'.
 // Este componente AHORA será renderizado por el cliente.
 function NuevaOFertaOEditar() {
+function NuevaOFertaOEditarContent() {
   const router = useRouter();
   const search = useSearchParams(); // 👈 Ahora esto es seguro
   const editId = search.get('edit'); 
@@ -208,6 +210,14 @@ function NuevaOFertaOEditar() {
         </form>
       </section>
     </main>
+  );
+}
+
+export default function NuevaOFertaOEditar() {
+  return (
+    <Suspense fallback={<main className="p-6">Cargando...</main>}>
+      <NuevaOFertaOEditarContent />
+    </Suspense>
   );
 }
 

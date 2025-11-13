@@ -19,6 +19,7 @@ export interface Ubicacion {
 }
 
 export interface Fixer {
+  imagenPerfil: string;
   _id: string;
   nombre: string;
   posicion: {

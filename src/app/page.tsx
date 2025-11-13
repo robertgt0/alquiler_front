@@ -9,6 +9,10 @@ import CarruselInspirador from "@/app/components/CarruselInspirador/CarruselInsp
 import Link from "next/link";
 // ❌ ELIMINADO: Ya no importamos los datos estáticos de 'categoriasData'
 // import categorias, { type CategoriaBase } from "./components/data/categoriasData";
+// src/app/page.tsx
+
+// 1. Importa la función 'redirect' de next/navigation
+import { redirect } from 'next/navigation';
 
 export default function Home() {
   return (
@@ -82,4 +86,8 @@ export default function Home() {
       <Footer />
     </main>
   );
+  
+  redirect('/Homepage');
+
+  return null;
 }

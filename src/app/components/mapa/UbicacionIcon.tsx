@@ -6,7 +6,7 @@ export default function UbicacionIcon({ onClick }: { onClick?: () => void }) {
     <button
       onClick={onClick}
       aria-label="Ubicación"
-      className="relative w-[40px] h-[40px] rounded-full bg-gradient-to-b from-[#1d6dfd] to-[#0e4cb8] border-[3px] border-white flex items-center justify-center shadow-[0_4px_8px_rgba(0,0,0,0.3)] hover:scale-110 transition-transform"
+      className="relative w-10 h-10 rounded-full bg-linear-to-b from-[#1d6dfd] to-[#0e4cb8] border-[3px] border-white flex items-center justify-center shadow-[0_4px_8px_rgba(0,0,0,0.3)] hover:scale-110 transition-transform"
     >
       <div className="absolute inset-0 rounded-full bg-white scale-[0.8] flex items-center justify-center shadow-inner">
         <svg

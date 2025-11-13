@@ -7,7 +7,8 @@ import AppleIcon from '../assets/icons8-apple-50.png';
 import { useRouter } from "next/navigation";
 import { checkEmailExists } from '../../teamsys/services/checkEmailExists';
 import { EmailExistsMessage } from './emailExistsMessage';
-import { Link } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export const RegistrationForm: React.FC = () => {
   const router = useRouter();
@@ -17,13 +18,13 @@ export const RegistrationForm: React.FC = () => {
     tocados,
     manejarCambio,
     manejarBlur,
-    validarFormulario
   } = useRegistrationForm();
 
   const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
-    await handleGoogleAuth();
+    // Para registro, usar tipo "register" específicamente
+    await handleGoogleAuth('register');
   };
 
   const formularioValido =
@@ -233,9 +234,12 @@ export const RegistrationForm: React.FC = () => {
               type="button"
               className="w-full max-w-xs sm:max-w-sm bg-white text-black py-2 sm:py-3 px-4 border border-gray-300 rounded-2xl hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors duration-200 flex items-center justify-center gap-3 text-xs sm:text-sm"
             >
-              <img
+              {/* ✅ CORRECCIÓN: Usar next/image */}
+              <Image
                 src={AppleIcon.src}
                 alt="Registrarse con Apple"
+                width={16}
+                height={16}
                 className="w-4 h-4 sm:w-5 sm:h-5"
               />
               Registrarse con Apple

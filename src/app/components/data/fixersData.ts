@@ -83,7 +83,7 @@ export const fixersDefinidos: Fixer[] = [
     descripcion: "Instalaciones y reparaciones eléctricas residenciales.",
     rating: 4.6,
     verified: true,
-    whatsapp: "+59171000001"
+    whatsapp: ""
   },
   {
     _id: "2",
