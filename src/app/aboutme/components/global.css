@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Opcional: afinar tipografía */
+:root { color-scheme: rgb(171, 148, 202); }
+html {
+  color-scheme: dark;
+  background-color: #eae3e3;
+  color: white;
+}
