@@ -277,7 +277,7 @@ export default function VendorRatingsPage() {
         {/* Pie de página con Navegación y Paginación */}
         <div className="flex justify-between items-center mt-6">
           <Link
-            href="/"
+            href="/perfil_proveedor_provisional"
             className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />
