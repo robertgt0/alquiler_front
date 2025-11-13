@@ -6,22 +6,24 @@ import { useWallet } from "./hooks/useWallet";
 import WalletAlert from "./components/walletAlert";
 import BalanceCard from "./components/BalanceCard";
 import TransactionList from "./components/TransactionList";
+// --- FIN DE LA CORRECCIÓN ---
 
 function WalletLogic() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const usuario = searchParams.get("usuario");
 
-  // Invocamos la lógica que movimos al hook
   const { balanceData, transactions, loading, error, reload } = useWallet(usuario);
-  
-  // Estado local de UI
   const [showSaldo, setShowSaldo] = useState(true);
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-4xl mx-auto p-4 md:p-8">
-        <header className="flex justify-between items-center mb-8">
+      
+      {/* (Mantenemos la corrección de padding que hicimos) */}
+      <div className="max-w-4xl mx-auto px-4 pb-4 pt-0 md:px-8 md:pb-8 md:pt-0">
+
+        {/* (Mantenemos la corrección de margen que hicimos) */}
+        <header className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
             <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-800 p-2" title="Volver">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -66,9 +68,7 @@ function WalletLogic() {
             loading={loading}
           />
 
-          {loading && !error && <p className="text-center py-10 text-gray-500">Cargando transacciones...</p>}
-
-          {!loading && !error && <TransactionList transactions={transactions} />}
+          <TransactionList transactions={transactions} />
         </main>
       </div>
     </div>
