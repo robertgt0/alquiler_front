@@ -447,10 +447,20 @@ const RecargaQR: React.FC = () => {
                   className="flex-1 px-3 py-2 bg-transparent focus:outline-none text-black placeholder-gray-400"
                   value={telefono}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    // Solo números y máximo 8 dígitos
-                    if (/^\d*$/.test(val) && val.length <= 8) setTelefono(val);
-                  }}
+                        const val = e.target.value;
+
+                        // Solo números y máximo 8 dígitos
+                        if (!/^\d*$/.test(val) || val.length > 8) return;
+
+                        // Primer dígito obligatorio 6 o 7
+                        if (val.length === 1 && !/[67]/.test(val)) return;
+
+                        // ❌ Bloquear números como 00000000, 11111111, 22222222, etc.
+                        if (/^(\d)\1{7}$/.test(val)) return;
+
+                        setTelefono(val);
+                      }}
+
                   placeholder="ingresar nro telf."
                 />
               </div>
