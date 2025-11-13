@@ -26,6 +26,9 @@ const RecargaQR: React.FC = () => {
   const [correo, setCorreo] = useState("");
   const [correoError, setCorreoError] = useState("");
 
+  const [fechaHoraQR, setFechaHoraQR] = useState("");
+
+
     type ErroresType = {
     monto?: string;
     nombre?: string;
@@ -138,6 +141,18 @@ const RecargaQR: React.FC = () => {
     if (!valido) return;
     // Enviar datos al backend
     await enviarRecarga();  
+    // Efecha------------
+
+    const ahora = new Date();
+    const fechaFormateada = ahora.toLocaleString("es-BO", {
+      dateStyle: "short",
+      timeStyle: "medium",
+    });
+
+    setFechaHoraQR(fechaFormateada);
+
+
+
     //alert("Recarga realizada con éxito!");
     setMostrarQR(true);
 
@@ -235,6 +250,16 @@ const RecargaQR: React.FC = () => {
         yPos += 25;
         const detalleTexto = detalle.length > 35 ? detalle.substring(0, 35) + '...' : detalle;
         ctx.fillText(detalleTexto, 50, yPos);
+
+        yPos += 40;
+
+        // Fecha y hora
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('Fecha y hora:', 50, yPos);
+        ctx.font = '16px Arial';
+        yPos += 25;
+        ctx.fillText(fechaHoraQR, 50, yPos);
+
 
         // Descargar
         canvas.toBlob((blob) => {
@@ -438,31 +463,84 @@ const RecargaQR: React.FC = () => {
 
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Correo electrónico</label>
-            <input
-              type="text"
-              className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
-              value={correo}
-              onChange={(e) => {
-                const val = e.target.value;
-                // Solo permite letras, números, arroba, punto y guion bajo
-                if (/^[a-zA-Z0-9@._]*$/.test(val)) {
-                  setCorreo(val);
+            
+  <input
+  type="text"
+  className="w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400"
+  value={correo}
+  onChange={(e) => {
+    let val = e.target.value;
 
-                  if (/@{2,}/.test(val)) {
-                    setCorreoError("Correo no válido: demasiadas arrobas (@).");
-                   } else if (
-                     val.length > 0 &&
-                     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)
-                   ) {
-                     setCorreoError("Correo no válido: formato incorrecto.");
-                   } else {
-                     setCorreoError("");
-                   }
+    // ----------------------------------------------------
+    // 🔹 LÍMITE: máximo 30 caracteres antes del @gmail.com
+    // ----------------------------------------------------
+    if (val.includes("@gmail.com")) {
+      const localPartCheck = val.replace("@gmail.com", "");
+      if (localPartCheck.length > 30) return;
+    } else {
+      const localPartCheck = val.split("@")[0];
+      if (localPartCheck.length > 30) return;
+    }
 
-                }
-              }}
-              placeholder="ingresar correo"
-            />
+    // Bloquear caracteres no válidos
+    if (!/^[a-zA-Z0-9@._]*$/.test(val)) return;
+
+    // ----- 1. SI YA EXISTE @gmail.com -----
+    if (correo.endsWith("@gmail.com")) {
+      const localPart = correo.replace("@gmail.com", "");
+
+      // ⭐ PERMITIR EDITAR ANTES DEL DOMINIO ⭐
+      if (val.includes("@gmail.com")) {
+        const newLocal = val.replace("@gmail.com", "");
+        if (newLocal.length <= 30) {
+          setCorreo(newLocal + "@gmail.com");
+        }
+        setCorreoError("");
+        return;
+      }
+
+      // Caso: usuario está BORRANDO
+      if (val.length < correo.length) {
+        if (!val.endsWith("@gmail.com")) {
+          setCorreo(val.replace("@gmail.com", ""));
+        } else {
+          setCorreo(val);
+        }
+        setCorreoError("");
+        return;
+      }
+
+      // Caso: usuario intenta escribir después del dominio → BLOQUEADO
+      if (!val.startsWith(localPart)) return;
+
+      // Mantener dominio fijo
+      setCorreo(localPart + "@gmail.com");
+      return;
+    }
+
+    // ----- 2. SI EL USUARIO AÚN NO TERMINÓ DE ESCRIBIR EL @ -----
+    if (val.includes("@")) {
+      const partes = val.split("@");
+
+      if (partes.length > 2) return;
+
+      val = partes[0] + "@gmail.com";
+      setCorreo(val);
+      setCorreoError("");
+      return;
+    }
+
+    // ----- 3. TEXTO ANTES DEL ARROBA -----
+    setCorreo(val);
+    setCorreoError("");
+  }}
+  placeholder="ingresar correo"
+/>
+
+
+              
+
+
             {correoError && (
               <p className="text-red-500 text-sm mt-1">{correoError}</p>
             )}
@@ -470,7 +548,7 @@ const RecargaQR: React.FC = () => {
           </div>
 
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Detalle de Recarga</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: "#11255A" }}>Concepto</label>
             <textarea
               className={`w-full border border-gray-300 rounded-md bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2 text-black placeholder-gray-400`}
               rows={2}
@@ -513,9 +591,11 @@ const RecargaQR: React.FC = () => {
 
               <div className="text-left text-gray-700 space-y-2">
                 <p><strong>Monto:</strong> {monto} Bs</p>
-                <p><strong>Nombre a facturar:</strong> {nombre}</p>
-                <p><strong>Detalle de Recarga:</strong> {detalle}</p>
+                <p><strong>Nombre:</strong> {nombre}</p>
+                <p><strong>Concepto:</strong> {detalle}</p>
               </div>
+
+              <p><strong>Fecha y hora:</strong> {fechaHoraQR}</p>
 
               <div className="mt-6 flex gap-3 justify-center">
                 <button
