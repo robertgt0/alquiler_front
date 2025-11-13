@@ -88,11 +88,11 @@ const RecargaQR: React.FC = () => {
       console.log("✅ Respuesta del backend:", response.data);
 
       if (response.data.success) {
-        alert("Recarga registrada correctamente en el backend ✅");
-        setMostrarQR(true);
-      } else {
-        alert("Error: " + response.data.message);
-      }
+          setMostrarQR(true);
+        } else {
+          console.error("Error: " + response.data.message);
+        }
+
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         console.error("❌ Error de Axios:", error.response?.data || error.message);
