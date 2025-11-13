@@ -1,4 +1,4 @@
-"use client";    
+"use client";     
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
@@ -13,7 +13,8 @@ const RecargaQR: React.FC = () => {
   const [numeroDocumento, setNumeroDocumento] = useState("");
   const [mensajeError, setMensajeError] = useState("");
 
-  const [saldo] = useState<number>(12730.5);
+  const [saldo, setSaldo] = useState<number>(12730.5);
+
   const [monto, setMonto] = useState<number | string>("");
   const [montoError, setMontoError] = useState<string>(""); //estado para manejar el error
   const [nombre, setNombre] = useState<string>("");
@@ -304,6 +305,22 @@ const RecargaQR: React.FC = () => {
   }
 };
 
+      const aceptarTransaccion = () => {
+        const montoNum = Number(monto);
+
+        if (isNaN(montoNum) || montoNum <= 0) {
+          alert("Monto inválido");
+          return;
+        }
+
+        setSaldo(prev => prev + montoNum);
+
+        setMostrarQR(false);
+
+        console.log("💰 Saldo actualizado:", saldo + montoNum);
+
+        alert("Transacción confirmada y saldo actualizado.");
+      };
 
 
   return (
@@ -484,9 +501,9 @@ const RecargaQR: React.FC = () => {
   onChange={(e) => {
     let val = e.target.value;
 
-    // ----------------------------------------------------
+    
     // 🔹 LÍMITE: máximo 30 caracteres antes del @gmail.com
-    // ----------------------------------------------------
+   
     if (val.includes("@gmail.com")) {
       const localPartCheck = val.replace("@gmail.com", "");
       if (localPartCheck.length > 30) return;
@@ -622,20 +639,30 @@ const RecargaQR: React.FC = () => {
 
               
 
-              <div className="mt-6 flex gap-3 justify-center">
+              <div className="mt-6 flex flex-col gap-3 justify-center">
                 <button
-                  onClick={descargarQR}
-                  className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
+                  onClick={aceptarTransaccion}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700"
                 >
-                  Descargar
+                  Aceptar transacción
                 </button>
-                <button
-                  onClick={() => setMostrarQR(false)}
-                  className="bg-[#11255A] text-white px-6 py-2 rounded-md hover:bg-blue-800"
-                >
-                  Cerrar
-                </button>
+
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={descargarQR}
+                    className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700"
+                  >
+                    Descargar
+                  </button>
+                  <button
+                    onClick={() => setMostrarQR(false)}
+                    className="bg-[#11255A] text-white px-6 py-2 rounded-md hover:bg-blue-800"
+                  >
+                    Cerrar
+                  </button>
+                </div>
               </div>
+
             </div>
           </div>
         )}        
