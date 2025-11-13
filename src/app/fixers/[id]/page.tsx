@@ -1,5 +1,6 @@
 import { getFixer } from "@/lib/api/fixer";
 import Link from "next/link";
+import { FaWhatsapp } from "react-icons/fa";
 import FixerOwnerActions from "../components/FixerOwnerActions";
 import FixerSkillsList from "../components/FixerSkillsList";
 
@@ -190,7 +191,7 @@ type SkillDisplay = {
           </div>
 
           <div className="rounded-xl border border-slate-200 p-4 md:col-span-3">
-            <div className="mb-1 text-sm text-slate-500">Metodos de pago</div>
+            <div className="mb-1 text-sm text-slate-500">Métodos  de pago</div>
             <div className="text-slate-900">
               {methods.length
                 ? methods.map((m) => (
@@ -223,8 +224,9 @@ type SkillDisplay = {
             href={wa}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 font-medium text-white shadow hover:brightness-95"
+            className="inline-flex items-center gap-3 rounded-full bg-[#25D366] px-8 py-4 text-lg font-bold text-white shadow-lg hover:brightness-95"
           >
+            <FaWhatsapp className="text-2xl" />
             <span>Enviar WhatsApp</span>
           </a>
         ) : (
