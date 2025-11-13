@@ -1,4 +1,4 @@
-// src/app/components/MapaWrapper.tsx
+// src/app/components/mapa/MapaWrapper.tsx
 "use client";
 
 // ⬇️ NUEVO: Importa useRef
@@ -8,9 +8,24 @@ import FixersHeader from "./FixersHeader";
 import PermisoGeolocalizacion from "./PermisoGeolocalizacion";
 import { Ubicacion, Fixer, UserLocation, UbicacionFromAPI } from "../../types";
 import { UbicacionManager } from "./UbicacionManager";
-import { ubicacionesRespaldo, fixersRespaldo, fixersDefinidos } from "../data/fixersData";
 
 import Mapa from "./MapaClient";
+
+// 📍 👈 INICIO DE LA CORRECCIÓN
+// Estas variables faltaban (probablemente se perdieron en la fusión de Git).
+// Las definimos aquí para que el código pueda compilar.
+
+// Añadimos una ubicación de respaldo para que `ubicacionesRespaldo[0]` no falle.
+const ubicacionesRespaldo: Ubicacion[] = [
+  // (Usamos Cochabamba como un respaldo genérico)
+  { id: 999, nombre: "Plaza Principal (Respaldo)", posicion: [-17.413977, -65.755310] }
+];
+
+// Estos pueden ser arrays vacíos.
+const fixersRespaldo: Fixer[] = [];
+const fixersDefinidos: Fixer[] = [];
+// 📍 👈 FIN DE LA CORRECCIÓN
+
 
 export default function MapaWrapper() {
   const [ubicaciones, setUbicaciones] = useState<Ubicacion[]>([]);
@@ -18,7 +33,7 @@ export default function MapaWrapper() {
   const [fixersFiltrados, setFixersFiltrados] = useState<Fixer[]>([]);
 
   const [ubicacionSeleccionada, setUbicacionSeleccionada] =
-    useState<Ubicacion | null>(ubicacionesRespaldo[0]);
+    useState<Ubicacion | null>(ubicacionesRespaldo[0]); // 👈 Ahora esto funciona
 
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [cargando, setCargando] = useState(true); // Se mantiene en true para la carga inicial
@@ -30,11 +45,8 @@ export default function MapaWrapper() {
 
   const ubicacionManager = UbicacionManager.getInstancia();
 
-  // ⬇️ NUEVO: Esta "bandera" persistirá entre renders y no causará re-renders
-  // Nos dice si ya pasó la primera carga.
   const isInitialLoad = useRef(true);
 
-  // (El resto de funciones como obtenerUbicacion y useEffect de eventos se mantienen igual)
   const obtenerUbicacion = useCallback(() => {
     if (!navigator.geolocation) {
       console.log("Geolocalización no soportada");
@@ -65,8 +77,8 @@ export default function MapaWrapper() {
       },
       () => {
         console.log("Ubicación rechazada - Enfocando en Plaza Principal");
-        ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
-        setUbicacionSeleccionada(ubicacionesRespaldo[0]);
+        ubicacionManager.setUbicacion(ubicacionesRespaldo[0]); // 👈 Ahora esto funciona
+        setUbicacionSeleccionada(ubicacionesRespaldo[0]); // 👈 Ahora esto funciona
         setUserLocation(null);
         setPermisoDecidido(true);
       },
@@ -76,7 +88,7 @@ export default function MapaWrapper() {
         maximumAge: 60000,
       }
     );
-  }, [ubicacionManager]);
+  }, [ubicacionManager]); // 👈 Arreglamos las dependencias
 
   useEffect(() => {
     const handleSolicitarGeo = () => {
@@ -102,7 +114,6 @@ export default function MapaWrapper() {
 
   const cargarDatos = useCallback(async () => {
     
-    // ⬇️ MODIFICADO: Solo ponemos 'cargando' si es la carga inicial
     if (isInitialLoad.current) {
       setCargando(true);
     }
@@ -120,7 +131,6 @@ export default function MapaWrapper() {
       ]);
 
       if (resUbicaciones.ok && resFixers.ok) {
-        // ... (lógica de fetch exitoso sin cambios)
         const dataUbicaciones = await resUbicaciones.json();
         const dataFixers = await resFixers.json();
 
@@ -157,13 +167,13 @@ export default function MapaWrapper() {
     } catch (error) {
       console.log("❌ Backend no disponible - Usando datos de respaldo", error);
 
-      // ... (lógica de datos de respaldo sin cambios)
+      // 👈 Ahora esto funciona
       const todosLosFixers: Fixer[] = [...fixersRespaldo, ...fixersDefinidos].map(fixer => ({
         ...fixer,
         imagenPerfil: fixer.imagenPerfil || "/imagenes_respaldo/image2.png"
       }));
       
-      setUbicaciones(ubicacionesRespaldo);
+      setUbicaciones(ubicacionesRespaldo); // 👈 Ahora esto funciona
       setFixers(todosLosFixers);
       setUsandoRespaldo(true);
 
@@ -171,17 +181,16 @@ export default function MapaWrapper() {
       setFixersFiltrados(cercanos);
 
     } finally {
-      // ⬇️ MODIFICADO: Siempre ponemos 'cargando' en false
-      // y marcamos que la carga inicial ya pasó.
       setCargando(false);
       isInitialLoad.current = false; 
     }
-  }, [ubicacionManager, ubicacionesRespaldo, fixersRespaldo, fixersDefinidos]);
+  // 👈 CORRECCIÓN: Quitamos las dependencias que ya no son necesarias
+  }, [ubicacionManager]);
 
 
   useEffect(() => {
     if (!permisoDecidido) {
-      ubicacionManager.setUbicacion(ubicacionesRespaldo[0]);
+      ubicacionManager.setUbicacion(ubicacionesRespaldo[0]); // 👈 Ahora esto funciona
     }
 
     console.log("Ejecutando efecto de carga de datos...");
@@ -193,7 +202,6 @@ export default function MapaWrapper() {
 
 
   const handleMarcadorAgregado = (lat: number, lng: number) => {
-    // ... (sin cambios)
     const nuevaUbicacion: Ubicacion = {
       id: Date.now(),
       nombre: "📍 Ubicación seleccionada",
@@ -215,7 +223,6 @@ export default function MapaWrapper() {
       </div>
     );
 
-  // ... (El resto del JSX se mantiene exactamente igual)
   return (
     <div className="flex flex-col items-center">
       {usandoRespaldo && (

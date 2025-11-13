@@ -46,7 +46,7 @@ export default function Home() {
       {/* Acciones rápidas (contenido que tenías en el segundo Home) */}
       {/* 👍 MANTENIDO: Todo tu código nuevo se queda intacto. */}
       <section className="my-10">
-        <div className="min-h-[0] flex items-center justify-center">
+        <div className="min-h-0 flex items-center justify-center">
           <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-2xl font-bold text-center mb-6">Acciones rápidas</h2>
 

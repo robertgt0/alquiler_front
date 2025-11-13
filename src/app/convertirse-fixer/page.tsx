@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
 import { useEffect, useMemo, useState } from "react";
+// 👈 (Asumo que estos tipos vienen de aquí)
 import type { CategoryDTO } from "@/lib/api/categories";
 import { getFixer } from "@/lib/api/fixer";
-import type { PaymentState } from "@/types/payment";
+import type { PaymentState, PaymentMethodKey } from "@/types/payment";
 import { getCategories as fetchCategories } from "@/lib/api/categories";
 import StepIdentity from "./steps/StepIdentity";
 import StepLocation from "./steps/StepLocation";
@@ -11,6 +12,7 @@ import StepCategories from "./steps/StepCategories";
 import StepPayment from "./steps/StepPayment";
 import StepTermsView from "./steps/StepTermsView";
 import { STORAGE_KEYS, loadFromStorage, removeFromStorage } from "./storage";
+import Link from "next/link"; // 👈 CORRECCIÓN 1: Importar Link
 
 const DEFAULT_USER_ID = "demo-user-001";
 const DEFAULT_PAYMENT_STATE: PaymentState = { methods: [] };
@@ -67,8 +69,11 @@ export default function ConvertirseFixerPage() {
           }
         }
         if (Array.isArray(data.paymentMethods)) {
+          
+          // 👈 CORRECCIÓN 2: Arreglamos el error de TypeScript
           setPayment((prev) => ({
-            methods: data.paymentMethods,
+            ...prev, // (Añadimos el ...prev que faltaba)
+            methods: data.paymentMethods as PaymentMethodKey[] || [], // (Añadimos '|| []' como fallback)
             card: data.paymentAccounts?.card ?? prev.card ?? null,
             qr: data.paymentAccounts?.qr ?? prev.qr ?? null,
           }));
@@ -117,12 +122,14 @@ export default function ConvertirseFixerPage() {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-2xl text-white">✓</div>
         <h1 className="text-3xl font-semibold text-slate-900">¡Listo! Ya eres Fixer</h1>
         <p className="max-w-md text-sm text-slate-500">Tu perfil quedo configurado con exito. Ahora puedes publicar tus ofertas y comenzar a recibir solicitudes.</p>
-        <a
+        
+        {/* 👈 CORRECCIÓN 3: Cambiamos <a> por <Link> */}
+        <Link
           href="/offers"
           className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
         >
           Ir a mis ofertas
-        </a>
+        </Link>
       </section>
     );
   }

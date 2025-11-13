@@ -6,9 +6,11 @@ import HomeFixer from "../components/ListaCategorias/HomeFixer";
 import Footer from "../components/Footer/Footer";
 import CarruselInspirador from "../components/CarruselInspirador/CarruselInspirador";
 import Link from "next/link";
-import categorias, { type CategoriaBase } from "../components/data/categoriasData";
+// ❌ CORRECCIÓN: Eliminamos la importación de 'categoriasData' porque ya no existe.
+// import categorias, { type CategoriaBase } from "../components/data/categoriasData";
 import HelpButton from "../components/HelpButton/HelpButton";
 //import GiaUsuariosNuevos from "../components/guiaUsuarios/GiaUsuariosNuevos";
+
 export default function Home() {
   return (
     <main>
@@ -26,10 +28,12 @@ export default function Home() {
 
       {/* Servicios / categorías */}
       <section id="servicios" className="my-5 w-full">
-        {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
-        <HomeFixer categorias={categorias as CategoriaBase[]} />
+        {/* ✅ CORRECCIÓN: Llamamos a HomeFixer SIN props.
+            El componente HomeFixer/ListaCategorias ahora
+            carga sus propios datos desde la API. */}
+        <HomeFixer />
       </section>
-       
+        
 
       {/* Trabajos recientes */}
       <section id="trabajos-recientes" className="my-5 w-full">
@@ -74,8 +78,8 @@ export default function Home() {
           </div>
         </div>
       </section>
-     
-   
+      
+    
 
       <Footer />
     </main>

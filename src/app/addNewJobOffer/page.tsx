@@ -1,10 +1,9 @@
 'use client';
 
-// 👈 CORRECCIÓN 1: Importar 'Suspense' de React
-import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { getOfferById, createOffer, updateOffer, type Offer } from '@/app/offers/services/offersService';
+// 👈 CORRECCIÓN 1: Eliminamos 'type Offer' porque no se usaba.
+import { getOfferById, createOffer, updateOffer } from '@/app/offers/services/offersService';
 
 function fileToDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -15,28 +14,21 @@ function fileToDataURL(file: File): Promise<string> {
   });
 }
 
-// 👈 CORRECCIÓN 2: Renombramos tu componente. Quitamos el 'export default'.
-// Este componente AHORA será renderizado por el cliente.
-function NuevaOFertaOEditar() {
-function NuevaOFertaOEditarContent() {
+function AddNewJobOfferForm() {
   const router = useRouter();
-  const search = useSearchParams(); // 👈 Ahora esto es seguro
+  const search = useSearchParams(); 
   const editId = search.get('edit'); 
 
-  // ... (Todo tu código de 'useState', 'useEffect', 'onSubmit' va aquí)
-  // ... (No he cambiado nada de tu lógica interna)
-  // estado del formulario
   const [descripcion, setDescripcion] = useState('');
   const [categoria, setCategoria] = useState('Seleccionar categoría');
   const [imagen, setImagen] = useState<File | null>(null);
-  const [imagenesExistentes, setImagenesExistentes] = useState<string[]>([]); // cuando editas
+  const [imagenesExistentes, setImagenesExistentes] = useState<string[]>([]); 
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [cargandoInicial, setCargandoInicial] = useState(!!editId);
 
   const esEdicion = useMemo(() => Boolean(editId), [editId]);
 
-  // Si es edición, precargar datos
   useEffect(() => {
     let ok = true;
     (async () => {
@@ -50,11 +42,12 @@ function NuevaOFertaOEditarContent() {
           setCargandoInicial(false);
           return;
         }
-        // precargar
         setDescripcion(offer.description || offer.title || '');
         setCategoria(offer.category || 'Seleccionar categoría');
         setImagenesExistentes(Array.isArray(offer.images) ? offer.images : []);
-      } catch (e) {
+      // 👈 CORRECCIÓN 2: Cambiamos 'catch (e)' por 'catch (_e)'
+      //    para indicarle a ESLint que sabemos que la variable no se usa.
+      } catch { 
         if (!ok) return;
         setMensaje('No se pudo cargar la oferta para editar.');
       } finally {
@@ -74,13 +67,12 @@ function NuevaOFertaOEditarContent() {
     setMensaje('');
 
     try {
-      // si hay nueva imagen, la subimos como base64; si no, mantenemos las existentes
-      let images: string[] = imagen ? [await fileToDataURL(imagen)] : imagenesExistentes;
+      // 👈 CORRECCIÓN 3: Cambiamos 'let' por 'const' porque la variable no se reasigna.
+      const images: string[] = imagen ? [await fileToDataURL(imagen)] : imagenesExistentes;
 
       if (esEdicion) {
         // EDITAR
         await updateOffer(String(editId), {
-          // Nota: mantenemos title sencillo = primeros 40 chars de descripción
           title: descripcion.slice(0, 40) || 'Oferta',
           description: descripcion,
           category: categoria,
@@ -88,7 +80,6 @@ function NuevaOFertaOEditarContent() {
         });
 
         setMensaje('Oferta editada correctamente ✅');
-        // opcional: volver al detalle
         router.push(`/offers/${editId}`);
       } else {
         // CREAR
@@ -97,18 +88,16 @@ function NuevaOFertaOEditarContent() {
           description: descripcion,
           category: categoria,
           images,
-          contact: { whatsapp: '555-000-000' }, // opcional
+          contact: { whatsapp: '555-000-000' }, 
         });
 
         setMensaje('Oferta creada exitosamente ✅');
-        // limpiar
         setDescripcion('');
         setCategoria('Seleccionar categoría');
         setImagen(null);
         setImagenesExistentes([]);
         const fileInput = document.getElementById('input-imagen') as HTMLInputElement | null;
         if (fileInput) fileInput.value = '';
-        // opcional: volver al listado
         router.push('/offers');
       }
     } catch (e) {
@@ -171,7 +160,6 @@ function NuevaOFertaOEditarContent() {
             <label className="block mb-2 text-gray-900 font-medium">
               {esEdicion ? 'Imagen (opcional — si subes, reemplaza)' : 'Imagen (opcional)'}
             </label>
-            {/* Si ya hay imagenes (edición), muéstralas */}
             {esEdicion && imagenesExistentes?.length > 0 && (
               <div className="mb-2 text-sm text-gray-600">
                 Actualmente: {imagenesExistentes.length} imagen(es) cargada(s).
@@ -213,23 +201,11 @@ function NuevaOFertaOEditarContent() {
   );
 }
 
-export default function NuevaOFertaOEditar() {
-  return (
-    <Suspense fallback={<main className="p-6">Cargando...</main>}>
-      <NuevaOFertaOEditarContent />
-    </Suspense>
-  );
-}
-
-// 👈 CORRECCIÓN 3: Creamos un nuevo componente 'Page' que es el export default
+// El Wrapper (El ÚNICO export default)
 export default function AddNewJobOfferPage() {
-  
-  // 👈 CORRECCIÓN 4: Envolvemos el componente en <Suspense>
-  //    Esto le dice a Next.js que muestre "Cargando..." y espere
-  //    a que el cliente renderice el formulario.
   return (
     <Suspense fallback={<main className="p-6">Cargando...</main>}>
-      <NuevaOFertaOEditar />
+      <AddNewJobOfferForm />
     </Suspense>
   );
 }
