@@ -5,6 +5,11 @@ import { useState, useEffect, useRef } from 'react';
 import Icono from './Icono';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
+//busqueda borbotones
+import BusquedaAutocompletado from '../../alquiler/Busqueda/busquedaAutocompletado';
+import { getJobs } from '../../alquiler/paginacion/services/jobService';
+import { Job } from '../../../types/job';
+
 
 export default function Header() {
   const [isClient, setIsClient] = useState(false);
@@ -16,7 +21,9 @@ export default function Header() {
   const pathname = usePathname();
 
   //borbotones
-  //const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [allJobs, setAllJobs] = useState<Job[]>([]);
+
 
 
   useEffect(() => {
@@ -67,6 +74,9 @@ export default function Header() {
       }
     };
 
+
+
+
     // Escuchar evento de logout
     const handleLogoutEvent = () => {
       setIsLoggedIn(false);
@@ -83,26 +93,43 @@ export default function Header() {
       window.removeEventListener('logout-exitoso', handleLogoutEvent);
     };
   }, []);
+  
+  useEffect(() => {
+    const loadJobsForAutocomplete = async () => {
+      try {
+        const jobs = await getJobs();
+        setAllJobs(jobs);
+      } catch (error) {
+        console.error("Error cargando jobs en Header:", error);
+      }
+    };
+    loadJobsForAutocomplete();
+  }, []);
+
+  useEffect(() => {
+    // Si el buscador está abierto Y navegamos a una ruta DIFERENTE a la de paginación...
+    if (isSearchOpen && pathname !== '/alquiler/paginacion') {
+      setIsSearchOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]); 
 
   // Ocultar barra de búsqueda en login y registro
   const shouldShowSearchBar = !['/login', '/registro'].includes(pathname);
 
-  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      //router.push('/404');
-      /*const term = searchTerm.trim();
-      if (term) {
-        // Si hay un término, construye la URL y redirige a /alquiler
-        const params = new URLSearchParams();
-        params.set('q', term);
-        router.push(`/alquiler?${params.toString()}`);
-      } else {
-        // Si la barra está vacía, solo lleva a la página principal de alquiler
-        router.push('/alquiler/');
-      }*/
-    }
 
+  // Esta función TOMA el término y REDIRIGE a la página de paginación
+  const handleHeaderSearch = (term: string) => {
+    if (!term.trim()) return;
+
+    const params = new URLSearchParams();
+    params.set('q', term.trim());
+
+    // Navegar a la página de paginación con la consulta
+    router.push(`/alquiler/paginacion?${params.toString()}`);
+
+    // Cerrar la barra de búsqueda después de buscar
+    //setIsSearchOpen(false);
   };
 
   const handleLogout = () => {
@@ -126,9 +153,39 @@ export default function Header() {
     router.push('/');
   };
 
+
   if (!isClient) return null;
 
+  if (isSearchOpen) {
+    return (
+      <header className="fixed top-0 left-0 w-full p-2 bg-[#EEF7FF] shadow-md z-50 flex items-center space-x-2">
+        {/* Botón de Volver (para cerrar la búsqueda) */}
+        <button
+          //onClick={() => setIsSearchOpen(false)}
+          onClick={() => router.push('/')}
+          className="p-2 rounded-full text-[#11255A] hover:bg-[#D8ECFF] transition-colors flex-shrink-0"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+
+        {/* Componente de Búsqueda (¡el tuyo!) */}
+        <div className="flex-1">
+          <BusquedaAutocompletado
+            onSearch={handleHeaderSearch} 
+            datos={allJobs} 
+            placeholder="Buscar en Servineo..."
+            valorInicial="" 
+            autoFocus={true} 
+          />
+        </div>
+      </header>
+    );
+  }
+
   return (
+
     <>
       {/* HEADER DESKTOP / TABLET */}
       <header className="hidden sm:flex items-center justify-between p-4 bg-[#EEF7FF] shadow-md fixed top-0 left-0 w-full z-50">
@@ -138,50 +195,31 @@ export default function Header() {
             <Icono size={40} />
           </Link>
           <span className="ml-2 text-xl font-bold text-[#11255A]">Servineo</span>
+
+          {shouldShowSearchBar && (
+          <button
+            onClick={() => {
+              setIsSearchOpen(true);
+              router.push('/alquiler/paginacion');
+            }}
+            className="text-[#11255A] p-2 rounded-full hover:bg-[#D8ECFF] transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </button>
+        )}
         </div>
 
         {/* BARRA DE BÚSQUEDA - Solo mostrar si no estamos en login/registro */}
-        {/** 
-        {shouldShowSearchBar && (
-          <div className="grow mx-8">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Buscar"
-                onKeyDown={handleSearch}
-                className="w-full px-4 py-2 pl-10 border border-[#D8ECFF] rounded-md focus:outline-none focus:ring-2 focus:ring-[#2a87ff] bg-white text-[#11255A]"
-              />
-              <svg
-                className="absolute w-5 h-5 text-[#89C9FF] left-3 top-1/2 transform -translate-y-1/2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                ></path>
-              </svg>
-            </div>
-          </div>
-        )}
-        */}
+
         {/* Si estamos en login/registro, centrar los elementos */}
         {!shouldShowSearchBar && <div className="grow"></div>}
 
         {/* ELEMENTOS DEL HEADER */}
 
         {/** elemento del buscador */}
-        {shouldShowSearchBar && (
-          <Link href="/alquiler/paginacion" className="text-[#11255A] p-2 rounded-full hover:bg-[#D8ECFF] transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-          </Link>
-        )}
+        
 
         <div className="flex items-center space-x-4">
           {!isLoggedIn ? (
@@ -197,7 +235,6 @@ export default function Header() {
                   Iniciar Sesión
                 </button>
               </Link>
-
               <Link href="/registro">
                 <button className="px-4 py-2 font-semibold text-white bg-[#2a87ff] rounded-md hover:bg-[#52ABFF] transition-colors">
                   Registrarse
@@ -232,6 +269,7 @@ export default function Header() {
                         target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiMyYTg3ZmYiLz4KPHBhdGggZD0iTTIwIDIyQzIyLjIwOTEgMjIgMjQgMjAuMjA5MSAyNCAxOEMyNCAxNS43OTA5IDIyLjIwOTEgMTQgMjAgMTRDMTcuNzkwOSAxNCAxNiAxNS43OTA5IDE2IDE4QzE2IDIwLjIwOTEgMTcuNzkwOSAyMiAyMCAyMloiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yMCAyNEMxNS41ODIyIDI0IDEyIDI2LjY4MjIgMTIgMzBWMzRIMjhWMzBDMjggMjYuNjgyMiAyNC40MTc4IDI0IDIwIDI0WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+';
                       }}
                     />
+
                   </div>
                   <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 border border-gray-200">
                     <button
@@ -249,56 +287,39 @@ export default function Header() {
             </>
           )}
         </div>
-      </header>
+      </header >
 
       {/* HEADER MÓVIL SUPERIOR */}
-      <header className="sm:hidden fixed top-0 left-0 w-full p-2 bg-[#EEF7FF] shadow-md z-50">
+      < header className="sm:hidden fixed top-0 left-0 w-full p-2 bg-[#EEF7FF] shadow-md z-50" >
         <div className="flex items-center space-x-2 w-full">
           <Link href="/">
             <Icono size={28} />
           </Link>
           {/* BARRA DE BÚSQUEDA MÓVIL - Solo mostrar si no estamos en login/registro */}
           {shouldShowSearchBar && (
-            <Link href="/alquiler" className="text-[#11255A] p-2 rounded-full hover:bg-[#D8ECFF] transition-colors">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-            </Link>
-          )}
-          {/**shouldShowSearchBar && (
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Buscar"
-                onKeyDown={handleSearch}
-                className="w-full px-3 py-1.5 pl-9 border border-[#D8ECFF] rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-[#2a87ff] bg-white text-[#11255A]"
-              />
-              <svg
-                className="absolute w-4 h-4 text-[#89C9FF] left-2.5 top-1/2 transform -translate-y-1/2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={() => setIsSearchOpen(true)} // <-- Abre la búsqueda
+                className="text-[#11255A] p-2 rounded-full hover:bg-[#D8ECFF] transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                ></path>
-              </svg>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+              </button>
             </div>
-          )*/}
+          )}
+
           {/* Si estamos en login/registro, ocupar el espacio restante */}
           {!shouldShowSearchBar && <div className="flex-1"></div>}
         </div>
-      </header>
+      </header >
 
       {/* FOOTER MÓVIL INFERIOR */}
-      <footer
+      < footer
         className={`sm:hidden fixed bottom-0 left-0 w-full px-3 py-2 bg-[#EEF7FF] shadow-md z-50 
         transform transition-transform duration-300 ease-in-out
-        ${areButtonsVisible ? 'translate-y-0' : 'translate-y-full'}`}
+        ${areButtonsVisible ? 'translate-y-0' : 'translate-y-full'}`
+        }
       >
         <div className="flex flex-col items-center space-y-1">
           <span className="text-[#11255A] font-bold text-sm">Servineo</span>
@@ -361,10 +382,10 @@ export default function Header() {
             </div>
           )}
         </div>
-      </footer>
+      </footer >
 
       {/* Espacio para el header fijo */}
-      <div className="h-16 sm:h-0"></div>
+      < div className="h-16 sm:h-0" ></div >
     </>
   );
 }

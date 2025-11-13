@@ -50,7 +50,7 @@ function BusquedaContent() {
   // const latestSearchIdRef = useRef(0); // No usado, se eliminó
   const itemsPerPage = 10;
   const [busquedaAvanzadaAbierta, setBusquedaAvanzadaAbierta] = useState(false);
-  
+
   // NUEVO: Estado para los filtros de trabajos (desde FiltrosForm)
   const [filtrosTrabajos, setFiltrosTrabajos] = useState<FiltrosJob>({
     ciudad: "",
@@ -114,7 +114,7 @@ function BusquedaContent() {
 
   const actualizarURL = (term: string, page?: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    
+
     // Si se proporciona el término, actualiza 'q'
     if (term.trim()) {
       params.set('q', term.trim());
@@ -132,7 +132,7 @@ function BusquedaContent() {
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     router.push(newUrl, { scroll: false });
   };
-  
+
   // --- Efectos de Estado ---
 
   // Efecto para cargar los trabajos (una sola vez)
@@ -184,7 +184,7 @@ function BusquedaContent() {
     if (urlQuery && allJobs.length > 0 && !filtrosAplicados) {
       handleSearchResults(urlQuery, allJobs, false); // No actualiza el URL, solo el estado
     }
-    
+
     // 3. Forzar la página si es necesario (manejar el hook de paginación)
     if (currentPage > 1) {
       // Se necesita una forma de comunicar la página inicial al hook usePagination
@@ -193,11 +193,11 @@ function BusquedaContent() {
     }
 
     // Nota: El ordenamiento podría inicializarse aquí si urlSort estuviera en uso
-    
+
   }, [urlQuery, allJobs, filtrosAplicados, router, urlPage]); // Dependencias importantes
 
   // --- Lógica de Filtrado y Ordenamiento ---
-  
+
   // Función de búsqueda y normalización de texto
   const normalizarBusqueda = (lista: Job[], term: string) => {
     if (!term || !term.trim()) return lista;
@@ -210,7 +210,7 @@ function BusquedaContent() {
       const title = normalizar(job.title || "");
       const company = normalizar(job.company || "");
       const servicio = normalizar(job.service || "");
-      
+
       // La búsqueda debe pasar por TODAS las palabras si están separadas por espacios
       return palabras.every(
         (palabra) =>
@@ -224,42 +224,42 @@ function BusquedaContent() {
   // Jobs para mostrar (Lógica centralizada de búsqueda y ordenamiento)
   const jobsToDisplay = useMemo(() => {
     let data = [...allJobs]; // Usar una copia
-    
+
     // 1. Aplicar filtros de trabajos (ciudad, disponibilidad, especialidad)
     const tieneFiltrActivos = Object.values(filtrosTrabajos).some(v => v && String(v).trim() !== "");
     if (tieneFiltrActivos) {
       console.log("🔍 Aplicando filtros de trabajos:", filtrosTrabajos);
       data = filtrarTrabajosAvanzado(data, filtrosTrabajos);
     }
-    
+
     // 2. Filtrar por búsqueda avanzada (solo si se aplicaron filtros avanzados)
     if (filtrosAplicados && modoVista === 'jobs') {
-        data = searchResults; // searchResults tiene los resultados de filtros avanzados
-    } 
+      data = searchResults; // searchResults tiene los resultados de filtros avanzados
+    }
     // 3. Filtrar por búsqueda de texto (solo si no se está aplicando un filtro avanzado y hay un término)
     else if (searchTerm && searchTerm.trim()) {
       data = normalizarBusqueda(data, searchTerm);
     }
-    
+
     // 4. Ordenar
     return ordenarItems(sortBy, data);
-    
+
   }, [searchResults, allJobs, sortBy, searchTerm, filtrosAplicados, modoVista, filtrosTrabajos]);
-  
+
   // Usuarios ordenados
   const usuariosOrdenados = useMemo(
     () => ordenarUsuarios(sortBy, usuariosFiltrados),
     [sortBy, usuariosFiltrados]
   );
-  
+
   // --- Hook de Paginación ---
-  
+
   // Ajuste: El hook de paginación necesita saber la página inicial
   const initialPage = useMemo(() => {
     const pageNum = parseInt(urlPage || '1', 10);
     return isNaN(pageNum) || pageNum < 1 ? 1 : pageNum;
   }, [urlPage]);
-  
+
   // Uso del hook de paginación
   const {
     currentPage,
@@ -270,12 +270,12 @@ function BusquedaContent() {
     handlePrevPage,
     totalItems,
   } = usePagination(jobsToDisplay, itemsPerPage);
-  
+
   // Efecto para actualizar la URL con el número de página después de la paginación
   useEffect(() => {
     // Solo actualiza si la página actual no es la inicial del URL
     if (currentPage !== initialPage) {
-        actualizarURL(searchTerm, currentPage);
+      actualizarURL(searchTerm, currentPage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]); // Solo depende de currentPage para evitar bucles.
@@ -285,73 +285,73 @@ function BusquedaContent() {
   // --- Handlers ---
 
   const handleAdvancedFilters = (filtros: any) => {
-  console.log(" Filtros aplicados:", filtros);
+    console.log(" Filtros aplicados:", filtros);
 
-  const filtrados = allJobs.filter((job: Job) => {
-    let match = true;
+    const filtrados = allJobs.filter((job: Job) => {
+      let match = true;
 
-    // Tipo de servicio
-    if (filtros.tipoServicio) {
-      match &&=
-        job.title?.toLowerCase().includes(filtros.tipoServicio.toLowerCase()) ||
-        job.service?.toLowerCase().includes(filtros.tipoServicio.toLowerCase());
-    }
-
-    // Zona
-    if (filtros.zona) {
-      match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
-    }
-
-    // Precio (rango salarial)
-    if (filtros.precioMin || filtros.precioMax) {
-      const salaryRangeText = job.salaryRange || "0";
-      const numeros = salaryRangeText.match(/\d+(\.\d+)?/g) || ["0"];
-      const precioNum = parseFloat(numeros[0]);
-
-      if (filtros.precioMin) match &&= precioNum >= filtros.precioMin;
-      if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
-    }
-
-    // Horario o tipo de empleo
-    if (filtros.horario) {
-      match &&= job.employmentType?.toLowerCase() === filtros.horario.toLowerCase();
-    }
-
-    // Disponibilidad (si existe en tus datos, ej. "Full time" o "Part time")
-    if (filtros.disponibilidad) {
-      match &&= job.employmentType?.toLowerCase().includes(
-        filtros.disponibilidad.toLowerCase()
-      );
-    }
-
-    // Experiencia (asumiendo que existe campo `experienceYears` o similar)
-    if (filtros.experiencia) {
-      const experienciaNum = parseInt((job as any).experienceYears || "0", 10);
-      match &&= experienciaNum >= parseInt(filtros.experiencia, 10);
-    }
-
-    // Fecha (asumiendo que el filtro tiene un rango o una fecha mínima)
-    if (filtros.fechaDesde || filtros.fechaHasta) {
-      const fechaJob = new Date(job.postedDate);
-      if (filtros.fechaDesde) {
-        const fechaMin = new Date(filtros.fechaDesde);
-        match &&= fechaJob >= fechaMin;
+      // Tipo de servicio
+      if (filtros.tipoServicio) {
+        match &&=
+          job.title?.toLowerCase().includes(filtros.tipoServicio.toLowerCase()) ||
+          job.service?.toLowerCase().includes(filtros.tipoServicio.toLowerCase());
       }
-      if (filtros.fechaHasta) {
-        const fechaMax = new Date(filtros.fechaHasta);
-        match &&= fechaJob <= fechaMax;
+
+      // Zona
+      if (filtros.zona) {
+        match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
       }
-    }
 
-    return match;
-  });
+      // Precio (rango salarial)
+      if (filtros.precioMin || filtros.precioMax) {
+        const salaryRangeText = job.salaryRange || "0";
+        const numeros = salaryRangeText.match(/\d+(\.\d+)?/g) || ["0"];
+        const precioNum = parseFloat(numeros[0]);
 
-  setFiltrosAplicados(true);
-  setSearchResults(filtrados);
-  setModoVista("jobs");
-  setFiltersNoResults(filtrados.length === 0);
-  handlePageChange(1);
-};
+        if (filtros.precioMin) match &&= precioNum >= filtros.precioMin;
+        if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
+      }
+
+      // Horario o tipo de empleo
+      if (filtros.horario) {
+        match &&= job.employmentType?.toLowerCase() === filtros.horario.toLowerCase();
+      }
+
+      // Disponibilidad (si existe en tus datos, ej. "Full time" o "Part time")
+      if (filtros.disponibilidad) {
+        match &&= job.employmentType?.toLowerCase().includes(
+          filtros.disponibilidad.toLowerCase()
+        );
+      }
+
+      // Experiencia (asumiendo que existe campo `experienceYears` o similar)
+      if (filtros.experiencia) {
+        const experienciaNum = parseInt((job as any).experienceYears || "0", 10);
+        match &&= experienciaNum >= parseInt(filtros.experiencia, 10);
+      }
+
+      // Fecha (asumiendo que el filtro tiene un rango o una fecha mínima)
+      if (filtros.fechaDesde || filtros.fechaHasta) {
+        const fechaJob = new Date(job.postedDate);
+        if (filtros.fechaDesde) {
+          const fechaMin = new Date(filtros.fechaDesde);
+          match &&= fechaJob >= fechaMin;
+        }
+        if (filtros.fechaHasta) {
+          const fechaMax = new Date(filtros.fechaHasta);
+          match &&= fechaJob <= fechaMax;
+        }
+      }
+
+      return match;
+    });
+
+    setFiltrosAplicados(true);
+    setSearchResults(filtrados);
+    setModoVista("jobs");
+    setFiltersNoResults(filtrados.length === 0);
+    handlePageChange(1);
+  };
 
 
   const handleSearchResults = useCallback(
@@ -362,14 +362,14 @@ function BusquedaContent() {
     ) => {
       // *Error Corregido: La validación de caracteres especiales debe hacerse aquí
       const tieneCaracteresProblema = /[@#$%^&*_+=[\]{}|\\<>]/.test(termino);
-      
+
       setBuscando(true);
       setEstadoBusqueda("idle");
       setErrorCaracteres("");
-      
+
       let actualizarUrl = true;
       if (typeof maybeIdOrActualizar === "boolean") {
-          actualizarUrl = maybeIdOrActualizar;
+        actualizarUrl = maybeIdOrActualizar;
       }
 
       try {
@@ -384,10 +384,10 @@ function BusquedaContent() {
           setSearchTerm(termino);
           setSearchResults(allJobs); // Restablecer searchResults al set completo para que `jobsToDisplay` haga el filtro de texto
           setErrorCaracteres("");
-          
+
           // *Importante: Si se aplica una nueva búsqueda, se eliminan los filtros avanzados
-          setFiltrosAplicados(false); 
-          
+          setFiltrosAplicados(false);
+
           // Reinicia la paginación a la página 1
           handlePageChange(1);
 
@@ -420,7 +420,7 @@ function BusquedaContent() {
     setUsuariosFiltrados([]);
     setModoVista("jobs");
     // *Corrección: Los resultados vuelven a ser `allJobs` para que `jobsToDisplay` funcione correctamente
-    setSearchResults(allJobs); 
+    setSearchResults(allJobs);
     setErrorCaracteres("");
     setSortBy("Fecha (Reciente)");
     setFiltrosTrabajos({ ciudad: "", disponibilidad: "", tipoEspecialidad: "" }); // Limpiar filtros de trabajos
@@ -456,7 +456,7 @@ function BusquedaContent() {
       setUsuariosFiltrados([]);
     }
   }, []);
-  
+
   const handleViewDetails = (id: string | number) => {
     // Guarda la página actual en sessionStorage antes de navegar
     sessionStorage.setItem('lastPage', String(currentPage));
@@ -464,7 +464,7 @@ function BusquedaContent() {
   };
 
   // --- Lógica de Renderizado ---
-  
+
   const mostrarSinResultadosFiltros =
     filtrosAplicados &&
     modoVista === "jobs" &&
@@ -479,15 +479,6 @@ function BusquedaContent() {
         <h1 className="text-4xl font-extrabold text-blue-600 mb-10 border-l-4 border-blue-600 pl-4 tracking-wide">
           Ofertas de Trabajo
         </h1>
-
-        {!busquedaAvanzadaAbierta && (
-          <BusquedaAutocompletado
-            onSearch={handleSearchResults}
-            datos={allJobs}
-            placeholder="Buscar por nombre parcial o encargado..."
-            valorInicial={urlQuery}
-          />
-        )}
 
         <div className="mt-8">
           <BusquedaAvanzada
@@ -522,7 +513,7 @@ function BusquedaContent() {
             <h2 className="text-2xl font-bold text-blue-600 mb-6">
               Resultados de Profesionales
             </h2>
-            {usuariosOrdenados.length > 0 ? ( 
+            {usuariosOrdenados.length > 0 ? (
               <>
                 <div className="UserProfilesContainer space-y-6">
                   {usuariosOrdenados.map((usuario: UsuarioResumen) => (

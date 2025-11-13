@@ -24,6 +24,7 @@ interface BusquedaAutocompletadoProps {
         endpoint: string;
         campoResultado: string;
     };
+    autoFocus?: boolean;
 }
 
 interface EspecialidadBackend {
@@ -618,7 +619,8 @@ export default function BusquedaAutocompletado({
     campoBusqueda = "all",
     maxResultados = 50,
     mostrarHistorial = true,
-    apiConfig
+    apiConfig,
+    autoFocus = false
 }: BusquedaAutocompletadoProps) {
     const [query, setQuery] = useState(valorInicial);
     const [sugerencias, setSugerencias] = useState<string[]>([]);
@@ -810,13 +812,13 @@ export default function BusquedaAutocompletado({
             setLoadingResultados(false);
             busquedaEnCurso.current = false;
         }
-    }, [datos, onSearch, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint,setMostrarSugerencias,
-    setMostrarHistorialLocal,
-    setLoadingResultados,
-    setEstadoBusqueda,
-    setMensajeNoResultados,
-    setResultados,
-    setMensaje]);
+    }, [datos, onSearch, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint, setMostrarSugerencias,
+        setMostrarHistorialLocal,
+        setLoadingResultados,
+        setEstadoBusqueda,
+        setMensajeNoResultados,
+        setResultados,
+        setMensaje]);
 
     // 🔥 CORREGIDO: Selección de sugerencia AHORA actualiza URL
     const seleccionarSugerencia = useCallback(async (texto: string) => {
@@ -1033,7 +1035,7 @@ export default function BusquedaAutocompletado({
             // Convertir primer carácter a mayúscula
             nuevoValor = nuevoValor.charAt(0).toUpperCase() + nuevoValor.slice(1);
         }
-        
+
         setQuery(nuevoValor);
 
         const textoLimpio = nuevoValor.trim();
@@ -1149,7 +1151,7 @@ export default function BusquedaAutocompletado({
 
         const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
         const tieneTextoParaSugerencias = textoNormalizado.length >= 1;
-        
+
         // ✅ VALIDAR PRIMER CARÁCTER DEBE SER MAYÚSCULA
         const comienzaConMayuscula = texto.length > 0 && /^[A-Z]/.test(texto);
 
@@ -1259,7 +1261,7 @@ export default function BusquedaAutocompletado({
 
         const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
         const tieneTextoParaResultados = textoNormalizado.length >= 2;
-        
+
         // ✅ VALIDAR PRIMER CARÁCTER DEBE SER MAYÚSCULA
         const comienzaConMayuscula = texto.length > 0 && /^[A-Z]/.test(texto);
 
@@ -1528,154 +1530,154 @@ export default function BusquedaAutocompletado({
     }, [seleccionarDelHistorial, ejecutarBusquedaCompleta, setIndiceSeleccionado]);
 
     return (
-        <div className="busqueda-container" ref={containerRef}>
-            <div className="contenedor-busqueda">
-                <div className="busqueda-barra">
-                    <Search className="icono-busqueda" size={20} />
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        placeholder={placeholder}
-                        value={query}
-                        onChange={(e) => {
-                            manejarCambioInput(e.target.value);
-                            setMostrarHistorialLocal(false);
-                        }}
-                        onKeyDown={manejarKeyDown}
-                        onFocus={manejarFocusInput}
-                        onBlur={() => {
-                            setTimeout(() => {
-                                setInputFocused(false);
-                            }, 200);
-                        }}
-                        maxLength={80}
-                        className="busqueda-input"
-                    />
-                    {query && (
-                        <button
-                            className="btn-limpiar"
-                            onClick={limpiarBusqueda}
-                            type="button"
-                        >
-                            <X size={16} />
-                        </button>
-                    )}
-                </div>
 
-                <div className={`contador-caracteres ${query.length > 70 ? 'alerta' : ''}`}>
-                    {query.length}/80 caracteres
-                    {tieneCaracteresProblema(query) && <span className="caracteres-invalidos"> - Caracteres especiales se ignoran</span>}
-                </div>
-
-                {/* Mostrar loading en área de resultados */}
-                {loadingResultados && (
-                    <div className="cargando">
-                        <div className="spinner"></div>
-                        <span>Buscando resultados...</span>
-                    </div>
-                )}
-
-                {/* ✅ HISTORIAL ✅ */}
-                {mostrarHistorialLocal && (
-                    <ul className="caja-sugerencias">
-                        <li className="sugerencias-header"onMouseDown={(e) => e.preventDefault()}>
-                            Búsquedas recientes
-                            {cargandoHistorial && (
-                                <span className="cargando-indicador">Cargando...</span>
-                            )}
-                        </li>
-
-                        {/* ✅ AQUÍ LA CONDICIÓN PARA MOSTRAR EL MENSAJE */}
-                        {!cargandoHistorial && historial.length === 0 ? (
-                            <li className="mensaje-historial" onMouseDown={(e) => e.preventDefault()}>
-                                No hay búsquedas recientes
-                            </li>
-                        ) : (
-                            historial.slice(0,5).map((item, i) => (
-                                <li
-                                    key={i}
-                                    className={`item-historial ${i === indiceSeleccionado ? 'seleccionado' : ''}`}
-                                    onClick={() => manejarSeleccionHistorial(item)}
-                                >
-                                    <div className="contenedor-texto-historial">
-                                        <Clock className="icono-historial" size={16} />
-                                        <span className="texto-historial">{item}</span>
-                                    </div>
-
-                                    <button
-                                        className="boton-eliminar-historial"
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            eliminarDelHistorial(item);
-                                        }}
-                                        title="Eliminar elemento"
-                                    >
-                                        ✕
-                                    </button>
-                                </li>
-                            ))
-                        )}
-
-                        {/* ✅ Solo mostrar limpiar si hay elementos */}
-                        {historial.length > 0 && (
-                            <li
-                                className="item-limpiar-todo"
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={limpiarHistorialBackend}
-                            >
-                                <Trash2 size={14} />
-                                Limpiar historial
-                            </li>
-                        )}
-                    </ul>
-                )}
-
-                {/* SUGERENCIAS */}
-                {mostrarSugerencias && (
-                    <>
-                        {estadoSugerencias === "loading" && (
-                            <div className="caja-sugerencias cargando">
-                                <div className="spinner"></div>
-                                Buscando sugerencias...
-                            </div>
-                        )}
-
-                        {estadoSugerencias !== "loading" && (
-                            <ul className="caja-sugerencias">
-                                <li className="sugerencias-header">
-                                    Sugerencias
-                                </li>
-                                {sugerencias.map((s, i) => (
-                                    <li
-                                        key={i}
-                                        onClick={() => seleccionarSugerencia(s)}
-                                        className={i === indiceSeleccionado ? 'seleccionado' : ''}
-                                    >
-                                        <Search className="icono-sugerencia" size={16} />
-                                        {s}
-                                    </li>
-                                ))}
-                                {sugerencias.length === 0 && mensajeNoResultados && (
-                                    <li className="mensaje-sugerencia">
-                                        <div className="icono-info">ℹ️</div>
-                                        {mensajeNoResultados}
-                                    </li>
-                                )}
-                            </ul>
-                        )}
-
-                        {estadoSugerencias === "error" && mensaje && (
-                            <ul className="caja-sugerencias">
-                                <li className="mensaje-error">
-                                    <Search className="icono-sugerencia" size={16} />
-                                    {mensaje}
-                                </li>
-                            </ul>
-                        )}
-                    </>
+        <div className="w-full relative" ref={containerRef}>
+            <div className="busqueda-barra">
+                <Search className="icono-busqueda" size={20} />
+                <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder={placeholder}
+                    value={query}
+                    onChange={(e) => {
+                        manejarCambioInput(e.target.value);
+                        setMostrarHistorialLocal(false);
+                    }}
+                    onKeyDown={manejarKeyDown}
+                    onFocus={manejarFocusInput}
+                    onBlur={() => {
+                        setTimeout(() => {
+                            setInputFocused(false);
+                        }, 200);
+                    }}
+                    maxLength={80}
+                    className="busqueda-input"
+                />
+                {query && (
+                    <button
+                        className="btn-limpiar"
+                        onClick={limpiarBusqueda}
+                        type="button"
+                    >
+                        <X size={16} />
+                    </button>
                 )}
             </div>
+
+            <div className={`contador-caracteres ${query.length > 70 ? 'alerta' : ''}`}>
+                {query.length}/80 caracteres
+                {tieneCaracteresProblema(query) && <span className="caracteres-invalidos"> - Caracteres especiales se ignoran</span>}
+            </div>
+
+            {/* Mostrar loading en área de resultados */}
+            {loadingResultados && (
+                <div className="cargando">
+                    <div className="spinner"></div>
+                    <span>Buscando resultados...</span>
+                </div>
+            )}
+
+            {/* ✅ HISTORIAL ✅ */}
+            {mostrarHistorialLocal && (
+                <ul className="caja-sugerencias">
+                    <li className="sugerencias-header" onMouseDown={(e) => e.preventDefault()}>
+                        Búsquedas recientes
+                        {cargandoHistorial && (
+                            <span className="cargando-indicador">Cargando...</span>
+                        )}
+                    </li>
+
+                    {/* ✅ AQUÍ LA CONDICIÓN PARA MOSTRAR EL MENSAJE */}
+                    {!cargandoHistorial && historial.length === 0 ? (
+                        <li className="mensaje-historial" onMouseDown={(e) => e.preventDefault()}>
+                            No hay búsquedas recientes
+                        </li>
+                    ) : (
+                        historial.slice(0, 5).map((item, i) => (
+                            <li
+                                key={i}
+                                className={`item-historial ${i === indiceSeleccionado ? 'seleccionado' : ''}`}
+                                onClick={() => manejarSeleccionHistorial(item)}
+                            >
+                                <div className="contenedor-texto-historial">
+                                    <Clock className="icono-historial" size={16} />
+                                    <span className="texto-historial">{item}</span>
+                                </div>
+
+                                <button
+                                    className="boton-eliminar-historial"
+                                    onMouseDown={(e) => e.preventDefault()}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        eliminarDelHistorial(item);
+                                    }}
+                                    title="Eliminar elemento"
+                                >
+                                    ✕
+                                </button>
+                            </li>
+                        ))
+                    )}
+
+                    {/* ✅ Solo mostrar limpiar si hay elementos */}
+                    {historial.length > 0 && (
+                        <li
+                            className="item-limpiar-todo"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={limpiarHistorialBackend}
+                        >
+                            <Trash2 size={14} />
+                            Limpiar historial
+                        </li>
+                    )}
+                </ul>
+            )}
+
+            {/* SUGERENCIAS */}
+            {mostrarSugerencias && (
+                <>
+                    {estadoSugerencias === "loading" && (
+                        <div className="caja-sugerencias cargando">
+                            <div className="spinner"></div>
+                            Buscando sugerencias...
+                        </div>
+                    )}
+
+                    {estadoSugerencias !== "loading" && (
+                        <ul className="caja-sugerencias">
+                            <li className="sugerencias-header">
+                                Sugerencias
+                            </li>
+                            {sugerencias.map((s, i) => (
+                                <li
+                                    key={i}
+                                    onClick={() => seleccionarSugerencia(s)}
+                                    className={i === indiceSeleccionado ? 'seleccionado' : ''}
+                                >
+                                    <Search className="icono-sugerencia" size={16} />
+                                    {s}
+                                </li>
+                            ))}
+                            {sugerencias.length === 0 && mensajeNoResultados && (
+                                <li className="mensaje-sugerencia">
+                                    <div className="icono-info">ℹ️</div>
+                                    {mensajeNoResultados}
+                                </li>
+                            )}
+                        </ul>
+                    )}
+
+                    {estadoSugerencias === "error" && mensaje && (
+                        <ul className="caja-sugerencias">
+                            <li className="mensaje-error">
+                                <Search className="icono-sugerencia" size={16} />
+                                {mensaje}
+                            </li>
+                        </ul>
+                    )}
+                </>
+            )}
         </div>
+
     );
 }
