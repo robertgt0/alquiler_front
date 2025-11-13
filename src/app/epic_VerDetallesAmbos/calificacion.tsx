@@ -2,26 +2,36 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation'; // useRouter ya no es estrictamente necesario para esta lógica, pero lo dejamos
+import { useRouter } from 'next/navigation';
 import { RatingModal } from './RatingModal';
 
 export default function VerDetallesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
   
-  // Eliminamos 'router' y 'redirectPath' si ya no se usan para redireccionar
-  // const router = useRouter(); 
-  // const redirectPath = '/epic_VisualizadorDeTrabajosAgendadosVistaCliente';
+  // Destino de la redirección
+  const redirectPath = '/epic_VisualizadorDeTrabajosAgendadosVistaCliente';
 
   // --- LÓGICA PARA LOS BOTONES DEL MODAL ---
 
+  /**
+   * 1. Botón "Atrás": Solo cierra el modal.
+   */
   const handleAtrasClick = () => {
     setIsModalOpen(false);
   };
 
+  /**
+   * 2. Botón "Omitir": Cierra el modal y redirige.
+   */
   const handleOmitirClick = () => {
     setIsModalOpen(false);
+    router.push(redirectPath);
   };
 
+  /**
+   * 3. Botón "Enviar": Envía datos al backend, luego cierra y redirige.
+   */
   const handleEnviarClick = async (rating: number, comment: string) => {
     console.log('Enviando al backend:', { rating, comment });
 
@@ -45,8 +55,7 @@ export default function VerDetallesPage() {
 
       const result = await response.json();
       console.log('Respuesta del backend:', result);
-
-      alert('Calificación enviada con éxito'); 
+      alert('¡Gracias por tu calificación!');
 
     } catch (error) {
       console.error('Error en handleEnviarClick:', error);
@@ -60,12 +69,9 @@ export default function VerDetallesPage() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     console.log('Calificación enviada (simulación)');
 
-    // Mensaje de confirmación
-    alert('Calificación enviada con éxito');
-
-    // --- ÉXITO: Solo cerramos el modal ---
+    // --- ÉXITO: Cerrar y redirigir ---
     setIsModalOpen(false);
-    // router.push(redirectPath); // <-- LÍNEA ELIMINADA
+    router.push(redirectPath);
   };
 
   // --- RENDERIZADO DE LA PÁGINA ---
@@ -78,20 +84,8 @@ export default function VerDetallesPage() {
       </div>
 
       <div className="flex gap-4">
-        {/* Si quieres que este botón "Volver" regrese a la lista, 
-          necesitarás 'useRouter' de nuevo. 
-          Lo re-activaré por si acaso.
-        */}
         <button
-          onClick={() => {
-             // Si descomentaste 'useRouter' arriba, esto funcionará
-             // router.back(); 
-             // O puedes forzarlo a ir a la lista:
-             // router.push('/epic_VisualizadorDeTrabajosAgendadosVistaCliente');
-             
-             // Por ahora, solo usamos el historial del navegador:
-             window.history.back();
-          }}
+          onClick={() => router.back()}
           className="px-6 py-2 bg-gray-500 text-white rounded-lg font-semibold shadow hover:bg-gray-600 transition-colors"
         >
           Volver
@@ -105,6 +99,7 @@ export default function VerDetallesPage() {
         </button>
       </div>
 
+      {/* --- ESTA ES LA PARTE CORREGIDA --- */}
       <RatingModal
         isOpen={isModalOpen}
         onCloseClick={handleAtrasClick}
