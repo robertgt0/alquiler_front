@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense, useRef } from "react";
+import { useState, useEffect, useMemo, Suspense, useRef, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import JobCard from "./components/jobCard";
 import UserProfileCard from "./components/UserProfileCard";
@@ -12,6 +12,7 @@ import BusquedaAutocompletado from "../Busqueda/busquedaAutocompletado";
 import FiltrosForm from "../Feature/Componentes/FiltroForm";
 import { UsuarioResumen } from "../Feature/Types/filtroType";
 import BusquedaAvanzada from "../BusquedaAvanzada/BusquedaAvanzada";
+import { filtrarTrabajosAvanzado, FiltrosJob } from "./services/jobFiltering";
 
 // Componente de fallback simple
 const LoadingFallback = () => (
@@ -49,6 +50,13 @@ function BusquedaContent() {
   // const latestSearchIdRef = useRef(0); // No usado, se eliminó
   const itemsPerPage = 10;
   const [busquedaAvanzadaAbierta, setBusquedaAvanzadaAbierta] = useState(false);
+  
+  // NUEVO: Estado para los filtros de trabajos (desde FiltrosForm)
+  const [filtrosTrabajos, setFiltrosTrabajos] = useState<FiltrosJob>({
+    ciudad: "",
+    disponibilidad: "",
+    tipoEspecialidad: "",
+  });
 
   // --- Funciones de utilidad ---
 
@@ -217,19 +225,26 @@ function BusquedaContent() {
   const jobsToDisplay = useMemo(() => {
     let data = [...allJobs]; // Usar una copia
     
-    // 1. Filtrar por búsqueda avanzada (solo si se aplicaron filtros avanzados)
+    // 1. Aplicar filtros de trabajos (ciudad, disponibilidad, especialidad)
+    const tieneFiltrActivos = Object.values(filtrosTrabajos).some(v => v && String(v).trim() !== "");
+    if (tieneFiltrActivos) {
+      console.log("🔍 Aplicando filtros de trabajos:", filtrosTrabajos);
+      data = filtrarTrabajosAvanzado(data, filtrosTrabajos);
+    }
+    
+    // 2. Filtrar por búsqueda avanzada (solo si se aplicaron filtros avanzados)
     if (filtrosAplicados && modoVista === 'jobs') {
         data = searchResults; // searchResults tiene los resultados de filtros avanzados
     } 
-    // 2. Filtrar por búsqueda de texto (solo si no se está aplicando un filtro avanzado y hay un término)
+    // 3. Filtrar por búsqueda de texto (solo si no se está aplicando un filtro avanzado y hay un término)
     else if (searchTerm && searchTerm.trim()) {
       data = normalizarBusqueda(data, searchTerm);
     }
     
-    // 3. Ordenar
+    // 4. Ordenar
     return ordenarItems(sortBy, data);
     
-  }, [searchResults, allJobs, sortBy, searchTerm, filtrosAplicados, modoVista]);
+  }, [searchResults, allJobs, sortBy, searchTerm, filtrosAplicados, modoVista, filtrosTrabajos]);
   
   // Usuarios ordenados
   const usuariosOrdenados = useMemo(
@@ -339,54 +354,55 @@ function BusquedaContent() {
 };
 
 
-  const handleSearchResults = (
-    termino: string,
-    // *Error Corregido: El argumento `resultados` no debería usarse directamente si se hace la lógica de filtrado en `jobsToDisplay`
-    // Solo actualizamos el `searchTerm` y dejamos que `jobsToDisplay` se encargue del filtrado.
-    _resultados: Job[], // Cambiado para ignorar el resultado de autocompletado si la lógica está en useMemo
-    maybeIdOrActualizar?: number | boolean
-  ) => {
-    // *Error Corregido: La validación de caracteres especiales debe hacerse aquí
-    const tieneCaracteresProblema = /[@#$%^&*_+=[\]{}|\\<>]/.test(termino);
-    
-    setBuscando(true);
-    setEstadoBusqueda("idle");
-    setErrorCaracteres("");
-    
-    let actualizarUrl = true;
-    if (typeof maybeIdOrActualizar === "boolean") {
-        actualizarUrl = maybeIdOrActualizar;
-    }
-
-    try {
-      if (tieneCaracteresProblema) {
-        setErrorCaracteres(`No se pueden realizar búsquedas con caracteres especiales como @, #, $, etc. en "${termino}"`);
-        setEstadoBusqueda("error");
-        setSearchResults([]); // Limpiar resultados para mostrar el error
-        setSearchTerm(termino);
-        handlePageChange(1);
-      } else {
-        // *Corrección: La lógica del filtro de texto se maneja en `jobsToDisplay`
-        setSearchTerm(termino);
-        setSearchResults(allJobs); // Restablecer searchResults al set completo para que `jobsToDisplay` haga el filtro de texto
-        setErrorCaracteres("");
-        
-        // *Importante: Si se aplica una nueva búsqueda, se eliminan los filtros avanzados
-        setFiltrosAplicados(false); 
-        
-        // Reinicia la paginación a la página 1
-        handlePageChange(1);
-
-        if (actualizarUrl) actualizarURL(termino, 1); // Actualiza URL y va a la página 1
-        setEstadoBusqueda("success");
+  const handleSearchResults = useCallback(
+    (
+      termino: string,
+      _resultados: Job[],
+      maybeIdOrActualizar?: number | boolean
+    ) => {
+      // *Error Corregido: La validación de caracteres especiales debe hacerse aquí
+      const tieneCaracteresProblema = /[@#$%^&*_+=[\]{}|\\<>]/.test(termino);
+      
+      setBuscando(true);
+      setEstadoBusqueda("idle");
+      setErrorCaracteres("");
+      
+      let actualizarUrl = true;
+      if (typeof maybeIdOrActualizar === "boolean") {
+          actualizarUrl = maybeIdOrActualizar;
       }
-    } catch (error) {
-      console.error("Error en búsqueda:", error);
-      setEstadoBusqueda("error");
-    } finally {
-      setBuscando(false);
-    }
-  };
+
+      try {
+        if (tieneCaracteresProblema) {
+          setErrorCaracteres(`No se pueden realizar búsquedas con caracteres especiales como @, #, $, etc. en "${termino}"`);
+          setEstadoBusqueda("error");
+          setSearchResults([]); // Limpiar resultados para mostrar el error
+          setSearchTerm(termino);
+          handlePageChange(1);
+        } else {
+          // *Corrección: La lógica del filtro de texto se maneja en `jobsToDisplay`
+          setSearchTerm(termino);
+          setSearchResults(allJobs); // Restablecer searchResults al set completo para que `jobsToDisplay` haga el filtro de texto
+          setErrorCaracteres("");
+          
+          // *Importante: Si se aplica una nueva búsqueda, se eliminan los filtros avanzados
+          setFiltrosAplicados(false); 
+          
+          // Reinicia la paginación a la página 1
+          handlePageChange(1);
+
+          if (actualizarUrl) actualizarURL(termino, 1); // Actualiza URL y va a la página 1
+          setEstadoBusqueda("success");
+        }
+      } catch (error) {
+        console.error("Error en búsqueda:", error);
+        setEstadoBusqueda("error");
+      } finally {
+        setBuscando(false);
+      }
+    },
+    [allJobs, handlePageChange, actualizarURL]
+  );
 
   const handleClearSearch = () => {
     setSearchTerm("");
@@ -407,9 +423,39 @@ function BusquedaContent() {
     setSearchResults(allJobs); 
     setErrorCaracteres("");
     setSortBy("Fecha (Reciente)");
+    setFiltrosTrabajos({ ciudad: "", disponibilidad: "", tipoEspecialidad: "" }); // Limpiar filtros de trabajos
     handlePageChange(1); // Restablecer la página a 1
     actualizarURL(searchTerm, 1); // Mantener el término de búsqueda si existe, pero restablecer la página
   };
+
+  // NUEVO: Handler para cambios en los filtros de trabajos
+  const handleFiltersChange = useCallback(
+    (filtros: { ciudad?: string; disponibilidad?: string; tipoEspecialidad?: string }) => {
+      console.log("🔄 Filtros de trabajos actualizados:", filtros);
+      setFiltrosTrabajos(filtros);
+      // Reiniciar la paginación a la página 1 cuando se aplican nuevos filtros
+      handlePageChange(1);
+    },
+    [handlePageChange]
+  );
+
+  // Memoizar el callback que recibe los resultados desde `FiltrosForm` para evitar
+  // que el componente hijo reciba una función nueva en cada render (causa de bucles)
+  const handleOnResults = useCallback((usuarios: UsuarioResumen[]) => {
+    setUsuariosFiltrados(usuarios);
+    setModoVista("jobs");
+    setFiltrosAplicados(true);
+    setFiltersNoResults(usuarios.length === 0);
+    handlePageChange(1);
+  }, [handlePageChange]);
+
+  const handleOnFilterNoResults = useCallback((noResults: boolean) => {
+    setFiltersNoResults(noResults);
+    setFiltrosAplicados(true);
+    if (noResults) {
+      setUsuariosFiltrados([]);
+    }
+  }, []);
   
   const handleViewDetails = (id: string | number) => {
     // Guarda la página actual en sessionStorage antes de navegar
@@ -454,20 +500,10 @@ function BusquedaContent() {
         {!busquedaAvanzadaAbierta && (
           <div className="mt-6">
             <FiltrosForm
-              onResults={(usuarios: UsuarioResumen[]) => {
-                setUsuariosFiltrados(usuariosOrdenados); // Corrección: Usar el estado ordenado
-                setModoVista("jobs"); // Siempre mostrar vista de jobs con JobCard
-                setFiltrosAplicados(true);
-                setFiltersNoResults(usuarios.length === 0); // Establecer filtersNoResults si no hay usuarios
-              }}
-              onFilterNoResults={(noResults: boolean) => {
-                setFiltersNoResults(noResults);
-                setFiltrosAplicados(true);
-                if (noResults) {
-                  setUsuariosFiltrados([]);
-                }
-              }}
+              onResults={handleOnResults}
+              onFilterNoResults={handleOnFilterNoResults}
               onClearFilters={handleClearFilters}
+              onFiltersChange={handleFiltersChange}
               sort={sortBy}
               setSort={setSortBy}
               opcionesOrdenamiento={opcionesOrdenamiento}

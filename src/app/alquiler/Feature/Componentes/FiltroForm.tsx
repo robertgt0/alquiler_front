@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useFiltros } from "app/alquiler/Feature/Hooks/useFiltro";
 import type { UsuarioResumen } from "app/alquiler/Feature/Types/filtroType";
@@ -17,6 +17,8 @@ interface FiltrosFormProps {
   onFilterNoResults?: (noResults: boolean) => void;
   // NUEVA PROP: Notifica cuando se limpian los filtros
   onClearFilters?: () => void;
+  // NUEVA PROP: Comunicar cambios en los filtros de trabajos
+  onFiltersChange?: (filtros: { ciudad?: string; disponibilidad?: string; tipoEspecialidad?: string }) => void;
   disabled?: boolean;
 }
 
@@ -35,6 +37,7 @@ export default function FiltrosForm({
   totalItems,
   onFilterNoResults,
   onClearFilters, // NUEVA PROP
+  onFiltersChange, // NUEVA PROP
   disabled = false, 
 }: FiltrosFormProps) {
   const router = useRouter();
@@ -58,20 +61,56 @@ export default function FiltrosForm({
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
  const [usuariosOrdenados, setUsuariosOrdenados] = useState<any[]>([]);
+  const prevUsuariosRef = useRef<any[] | null>(null);
+  const prevSinResultadosRef = useRef<boolean | null>(null);
 
+  // Efecto para notificar los cambios de filtro a page.tsx
+  useEffect(() => {
+    if (typeof onFiltersChange === 'function') {
+      onFiltersChange({
+        ciudad: filtro.ciudad || "",
+        disponibilidad: filtro.disponibilidad || "",
+        tipoEspecialidad: filtro.tipoEspecialidad || "",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtro.ciudad, filtro.disponibilidad, filtro.tipoEspecialidad]);
 
 
  
   useEffect(() => {
-    if (onResults) {
-      onResults(usuarios);
+    // Comparar con el valor previo para evitar notificaciones redundantes
+    const prev = prevUsuariosRef.current;
+    const same = (() => {
+      if (!prev || !usuarios) return false;
+      if (prev.length !== usuarios.length) return false;
+      const prevIds = new Set(prev.map((u: any) => u._id ?? u.id_usuario));
+      for (const u of usuarios) {
+        const id = u._id ?? u.id_usuario;
+        if (!prevIds.has(id)) return false;
+      }
+      return true;
+    })();
+
+    if (!same) {
+      if (onResults) {
+        onResults(usuarios);
+      }
+      prevUsuariosRef.current = usuarios ? [...usuarios] : null;
     }
+
     // Notificar a la página si los filtros no arrojaron resultados
-    if (typeof onFilterNoResults === 'function') {
-      console.log("🔄 Notificando estado de sin resultados:", sinResultados);
-      onFilterNoResults(Boolean(sinResultados));
+    // Solo notificar si `sinResultados` cambió respecto al valor previo
+    const prevSin = prevSinResultadosRef.current;
+    if (prevSin !== sinResultados) {
+      if (typeof onFilterNoResults === 'function') {
+        console.log("🔄 Notificando estado de sin resultados:", sinResultados);
+        onFilterNoResults(Boolean(sinResultados));
+      }
+      prevSinResultadosRef.current = sinResultados;
     }
-  }, [usuarios, onResults, sinResultados, onFilterNoResults]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuarios, sinResultados, onResults, onFilterNoResults]);
 
   return (
     <div className="w-full bg-white rounded-xl p-6 md:p-8 shadow-2xl shadow-gray-200/50 border border-gray-100">
