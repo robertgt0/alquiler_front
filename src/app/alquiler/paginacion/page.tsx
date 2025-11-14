@@ -32,21 +32,9 @@ function BusquedaContent() {
   const urlPage = searchParams.get("page");
   const urlSort = searchParams.get("sort");
 
-  // Función para capitalizar cada palabra (Title Case)
-  function capitalize(texto: string) {
-    if (!texto) return "";
-    return texto
-      .toString()
-      .trim()
-      .replace(/\s+/g, ' ')
-      .split(' ')
-      .map((w) => (w.length === 0 ? '' : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
-      .join(' ');
-  }
-
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [searchResults, setSearchResults] = useState<Job[]>([]);
-  const [searchTerm, setSearchTerm] = useState(capitalize(urlQuery));
+  const [searchTerm, setSearchTerm] = useState(urlQuery);
   const [isLoading, setIsLoading] = useState(true);
   const [buscando, setBuscando] = useState(false);
   const [estadoBusqueda, setEstadoBusqueda] = useState<"idle" | "success" | "error">("idle");
@@ -138,13 +126,18 @@ const parseFechaDDMMYYYY = (fechaStr: string) => {
         setAllJobs(jobs);
         setEstadoInicial(jobs);
 
-        // 🔹 SOLO hacer búsqueda desde URL si hay término
+        // 🔥 NUEVO: SIEMPRE ejecutar búsqueda local si hay término en URL
         if (urlQuery && urlQuery.trim() !== "") {
           console.log("🔍 Búsqueda desde URL (recarga):", urlQuery);
-          setIsFromURLLoad(true); // 🔹 Marcar que viene de URL
-          // Mostrar la versión capitalizada en el input y en el estado
-          setSearchTerm(capitalize(urlQuery));
-          performSearch(urlQuery, jobs);
+          setIsFromURLLoad(true);
+
+          // 🔥 EJECUTAR BÚSQUEDA LOCAL INMEDIATA con los datos recién cargados
+          const resultadosLocales = performSearch(urlQuery, jobs);
+          setSearchResults(resultadosLocales);
+          setSearchTerm(urlQuery);
+          setEstadoBusqueda("success");
+
+          console.log(`✅ ${resultadosLocales.length} resultados locales encontrados`);
         } else {
           setSearchResults(jobs);
         }
@@ -164,9 +157,8 @@ const parseFechaDDMMYYYY = (fechaStr: string) => {
     loadInitialData();
   }, []);
 
-  // 🔹 Función para realizar búsqueda
-  // 🔹 REEMPLAZA tu función performSearch con esta versión
-  const performSearch = (termino: string, baseData: Job[] = allJobs) => {
+  // 🔹 MODIFICA la función performSearch para que sea más precisa
+  const performSearch = (termino: string, baseData: Job[] = allJobs): Job[] => {
     if (termino.trim() === "") {
       setSearchResults(baseData);
       return baseData;
@@ -191,7 +183,7 @@ const parseFechaDDMMYYYY = (fechaStr: string) => {
       return [];
     }
 
-    // 🔥 ALGORITMO IDÉNTICO al del BusquedaAutocompletado
+    // 🔥 ALGORITMO MEJORADO: búsqueda más flexible pero manteniendo orden
     const resultados = baseData.filter(job => {
       const tituloNormalizado = job.title ? normalizarBusqueda(job.title) : "";
       const empresaNormalizada = job.company ? normalizarBusqueda(job.company) : "";
@@ -199,28 +191,15 @@ const parseFechaDDMMYYYY = (fechaStr: string) => {
 
       const campos = [tituloNormalizado, empresaNormalizada, serviciosNormalizados];
 
-      // 🔥 ORDEN EXACTO: todas las palabras deben aparecer en orden
-      return tokens.every((token, index) => {
-        // Buscar esta palabra específica en todos los campos
-        const palabraEncontrada = campos.some(campoTexto => {
-          if (!campoTexto) return false;
-
-          // Dividir el campo en palabras
-          const palabrasCampo = campoTexto.split(' ');
-
-          // Buscar la palabra token en la posición correcta
-          if (index < palabrasCampo.length) {
-            return palabrasCampo[index].startsWith(token);
-          }
-
-          return false;
-        });
-
-        return palabraEncontrada;
-      });
+      // 🔥 BÚSQUEDA FLEXIBLE: todos los tokens deben aparecer en algún campo (no necesariamente en orden exacto)
+      return tokens.every(token =>
+        campos.some(campoTexto =>
+          campoTexto && campoTexto.includes(token)
+        )
+      );
     });
 
-    setSearchResults(resultados);
+    console.log(`🔍 [LOCAL-SEARCH] "${termino}" → ${resultados.length} resultados`);
     return resultados;
   };
 
@@ -332,8 +311,6 @@ const jobsToDisplay = useMemo(() => {
     handleNextPage,
     handlePrevPage,
     totalItems,
-    startIndex,
-    endIndex,
   } = usePagination(jobsToDisplay, itemsPerPage);
 
   const handleViewDetails = (id: string | number) => {
@@ -342,7 +319,7 @@ const jobsToDisplay = useMemo(() => {
 
   const actualizarURL = (searchTerm: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (searchTerm.trim()) params.set('q', capitalize(searchTerm.trim()));
+    if (searchTerm.trim()) params.set('q', searchTerm.trim());
     else params.delete('q');
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     router.push(newUrl, { scroll: false });
@@ -350,6 +327,7 @@ const jobsToDisplay = useMemo(() => {
 
   // 🔹 MODIFICA handleSearchResults para prevenir duplicación
   // 🔹 REEMPLAZA handleSearchResults con esta versión
+  // 🔹 MODIFICA handleSearchResults para manejar mejor las búsquedas locales
   const handleSearchResults = (
     termino: string,
     resultados: Job[],
@@ -382,9 +360,10 @@ const jobsToDisplay = useMemo(() => {
     }
 
     // 🔹 Solo prevenir duplicación si NO es una limpieza y viene de URL
-    if (hasInitialized && termino === urlQuery && isFromURLLoad) {
+    // PERO permitir si es la primera carga
+    if (hasInitialized && termino === urlQuery && isFromURLLoad && !isLoading) {
       console.log("🚫 Evitando búsqueda duplicada desde URL:", termino);
-      setIsFromURLLoad(false); // 🔹 Resetear para próximas búsquedas
+      setIsFromURLLoad(false);
       return;
     }
 
@@ -400,18 +379,20 @@ const jobsToDisplay = useMemo(() => {
 
       const tieneCaracteresProblema = /[@#$%^&*_+=[\]{}|\\<>]/.test(termino);
       if (resultados.length === 0 && tieneCaracteresProblema) {
-      //  setErrorCaracteres(`No se pueden realizar búsquedas con caracteres especiales como @, #, $, etc. en "${termino}"`);
+        setErrorCaracteres("");
+        setSearchTerm(termino);
+        setSearchResults([]);
         setEstadoBusqueda("success");
+        setBuscando(false);
       } else {
         setErrorCaracteres("");
       }
 
-      const terminoCap = capitalize(termino);
-      setSearchTerm(terminoCap);
+      setSearchTerm(termino);
       setSearchResults(resultados);
       setFiltersNoResults(resultados.length === 0);
 
-      if (actualizarUrl) actualizarURL(terminoCap);
+      if (actualizarUrl) actualizarURL(termino);
       setEstadoBusqueda("success");
 
     } catch (error) {
@@ -419,7 +400,7 @@ const jobsToDisplay = useMemo(() => {
       setEstadoBusqueda("error");
     } finally {
       setBuscando(false);
-      setIsFromURLLoad(false); // 🔹 Resetear después de cualquier búsqueda manual
+      setIsFromURLLoad(false);
     }
   };
 
@@ -501,9 +482,8 @@ const jobsToDisplay = useMemo(() => {
           <BusquedaAutocompletado
             onSearch={handleSearchResults}
             datos={allJobs}
-            mostrarHistorial={true}
             placeholder="Buscar por nombre parcial o encargado..."
-            valorInicial={capitalize(urlQuery)} // 🔹 Siempre usar la URL como valor inicial (capitalizada)
+            valorInicial={urlQuery} // 🔹 Siempre usar la URL como valor inicial
           />
         )}
 
@@ -572,7 +552,7 @@ const jobsToDisplay = useMemo(() => {
             <button
               onClick={() => {
                 handleClearFilters();
-                //router.push('/alquiler');
+                router.push('/alquiler');
               }}
               className="inline-block mt-6 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
             >
@@ -586,9 +566,9 @@ const jobsToDisplay = useMemo(() => {
             ) : (
               <>
                 <div className="text-xl text-blue-700 font-semibold mb-6">
-                  {mostrarSinResultadosFiltros || totalItems === 0
+                  {mostrarSinResultadosFiltros
                     ? "No se encontraron ofertas"
-                    : `Mostrando ${startIndex} - ${endIndex} de ${totalItems} Ofertas Disponibles`}
+                    : `Mostrando ${currentItems.length} de ${totalItems} Ofertas Disponibles`}
                 </div>
 
                 <div className="results-area mt-6">
@@ -625,7 +605,7 @@ const jobsToDisplay = useMemo(() => {
                   ) : mostrarSinResultadosFiltros ? (
                     <div className="text-center py-8">
                       <p className="text-xl text-gray-600 mb-4">
-                        No se encontraron ofertas con los filtros seleccionados
+                        No se encontraron resultados
                       </p>
                       <button
                         onClick={handleClearFilters}
