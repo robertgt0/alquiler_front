@@ -106,18 +106,18 @@ export default function FixerOwnerActions({ fixerId, currentBio, skills }: Props
         skills: payload,
       });
 
-      const normalizedDrafts = drafts.map((skill) => {
+      const normalizedDrafts: SkillDisplay[] = drafts.map((skill) => {
         const text = (skill.personal ?? '').trim();
         return {
           ...skill,
           personal: text || undefined,
-          source: text ? 'personal' : 'general',
+          source: (text ? 'personal' : 'general') as SkillDisplay['source'],
         };
       });
 
       setBaseBio(bioText);
       setBaseSkills(normalizedDrafts);
-      setDrafts(normalizedDrafts);
+      setDrafts(normalizedDrafts.map((skill) => ({ ...skill, personal: skill.personal ?? '' })));
       setStatus({ type: 'success', message: '✅ Perfil actualizado correctamente.' });
       
       window.dispatchEvent(new CustomEvent('fixer-skills-updated', { detail: { skills: normalizedDrafts } }));

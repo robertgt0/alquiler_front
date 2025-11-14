@@ -89,6 +89,7 @@ export async function checkCI(ci: string, excludeId?: string) {
 export async function createFixer(payload: {
   userId: string;
   ci: string;
+  city?: string;
   location?: { lat: number; lng: number; address?: string };
 }): Promise<ApiSuccess<FixerDTO>> {
   return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}`, {
@@ -109,7 +110,10 @@ export async function getFixerByUser(userId: string): Promise<FixerDTO | null> {
   const payload = payloadText ? (JSON.parse(payloadText) as Partial<ApiSuccess<FixerDTO>>) : null;
   if (res.status === 404) return null;
   if (!res.ok) {
-    throw new Error(payload?.message || `Error HTTP ${res.status}`);
+    const message =
+      (payload && typeof (payload as any).message === "string" ? (payload as any).message : null) ||
+      `Error HTTP ${res.status}`;
+    throw new Error(message);
   }
   return payload?.data ?? null;
 }

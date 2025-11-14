@@ -28,6 +28,12 @@ function AddOrEditOfferPageContent() {
   const editId = search.get('edit');
   const { user, ready } = useClientSession();
   const currentFixerId = user?.fixerId ?? null;
+  const ownerWhatsapp = (
+    user?.telefono ??
+    (user as any)?.contact?.whatsapp ??
+    (user as any)?.whatsapp ??
+    ""
+  ).trim();
 
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<string>(PLACEHOLDER_CATEGORY);
@@ -359,7 +365,7 @@ function AddOrEditOfferPageContent() {
           description: trimmedDescription,
           category,
           images,
-          contact: { whatsapp: '555-000-0000' },
+          contact: ownerWhatsapp ? { whatsapp: ownerWhatsapp } : undefined,
           ownerId: currentFixerId,
         });
         setFeedback({ type: 'success', message: 'Oferta creada exitosamente.' });
