@@ -641,9 +641,13 @@ export default function BusquedaAutocompletado({
     const busquedaEnCurso = useRef(false);
     const desactivarBusquedaAutomatica = useRef(false);
 
+    const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const justFocusedRef = useRef(false);
+
     // 🔥 NUEVAS REFERENCIAS para búsqueda local - AÑADE ESTO
     const debounceSugerenciasLocalesRef = useRef<NodeJS.Timeout | null>(null);
     const debounceResultadosLocalesRef = useRef<NodeJS.Timeout | null>(null);
+
     // USAR HOOK DE HISTORIAL
     const {
         historial,
@@ -797,6 +801,10 @@ export default function BusquedaAutocompletado({
             } else {
                 setMensajeNoResultados(`No se encontraron resultados para "${textoLimpio}"`);
                 onSearch(textoLimpio, [], actualizarUrl);
+                if (mostrarHistorial) {
+                    console.log('💾 [HISTORIAL] Guardando término sin resultados (404) en historial:', textoLimpio);
+                    guardarEnHistorial(textoLimpio);
+                }
             }
 
         } catch (error) {
@@ -810,13 +818,13 @@ export default function BusquedaAutocompletado({
             setLoadingResultados(false);
             busquedaEnCurso.current = false;
         }
-    }, [datos, onSearch, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint,setMostrarSugerencias,
-    setMostrarHistorialLocal,
-    setLoadingResultados,
-    setEstadoBusqueda,
-    setMensajeNoResultados,
-    setResultados,
-    setMensaje]);
+    }, [datos, onSearch, guardarEnHistorial, mostrarHistorial, apiConfig?.endpoint, setMostrarSugerencias,
+        setMostrarHistorialLocal,
+        setLoadingResultados,
+        setEstadoBusqueda,
+        setMensajeNoResultados,
+        setResultados,
+        setMensaje]);
 
     // 🔥 CORREGIDO: Selección de sugerencia AHORA actualiza URL
     const seleccionarSugerencia = useCallback(async (texto: string) => {
@@ -857,7 +865,7 @@ export default function BusquedaAutocompletado({
     // 🔥 NUEVO: useEffect PARA SUGERENCIAS LOCALES EN TIEMPO REAL
     // ============================================================================
     useEffect(() => {
-
+        /** 
         if (busquedaEnCurso.current) {
             console.log('🚫 [SUGERENCIAS] Omitido, búsqueda completa en curso.');
             return;
@@ -937,14 +945,14 @@ export default function BusquedaAutocompletado({
             if (debounceSugerenciasLocalesRef.current) {
                 clearTimeout(debounceSugerenciasLocalesRef.current);
             }
-        };
+        };*/
     }, [query, inputFocused, datos, onSearch]);
 
     // ============================================================================
     // 🔥 NUEVO: useEffect PARA RESULTADOS LOCALES EN TIEMPO REAL  
     // ============================================================================
     useEffect(() => {
-
+        /** 
         if (busquedaEnCurso.current) {
             console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
             return;
@@ -1023,7 +1031,7 @@ export default function BusquedaAutocompletado({
             if (debounceResultadosLocalesRef.current) {
                 clearTimeout(debounceResultadosLocalesRef.current);
             }
-        };
+        };*/
     }, [query, inputFocused, datos, campoBusqueda]);
 
     // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
@@ -1333,11 +1341,18 @@ export default function BusquedaAutocompletado({
         // 🔥 PIERDE EL FOCUS AL EJECUTAR BÚSQUEDA
         inputRef.current?.blur();
         setInputFocused(false);
-        setMostrarSugerencias(true);
+        setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
 
+        busquedaEnCurso.current = false;
+
         await ejecutarBusquedaCompleta(query, true, false, true);
-    }, [query, ejecutarBusquedaCompleta]);
+    }, [
+        query,
+        ejecutarBusquedaCompleta,
+        setMostrarSugerencias,
+        setMostrarHistorialLocal
+    ]);
 
     // 🔥 MODIFICADO: Limpiar SÍ actualiza URL
     const limpiarBusqueda = useCallback(() => {
@@ -1505,7 +1520,14 @@ export default function BusquedaAutocompletado({
     }, [seleccionarDelHistorial, ejecutarBusquedaCompleta, setIndiceSeleccionado]);
 
     return (
-        <div className="busqueda-container" ref={containerRef}>
+        <div className="busqueda-container" ref={containerRef} onMouseDown={() => {
+            // Si el usuario hace clic EN CUALQUIER LUGAR
+            // dentro del componente, cancelamos el blur.
+            if (blurTimeoutRef.current) {
+                clearTimeout(blurTimeoutRef.current);
+                blurTimeoutRef.current = null;
+            }
+        }}>
             <div className="contenedor-busqueda">
                 <div className="busqueda-barra">
                     <Search className="icono-busqueda" size={20} />
@@ -1518,10 +1540,52 @@ export default function BusquedaAutocompletado({
                             manejarCambioInput(e.target.value);
                             setMostrarHistorialLocal(false);
                         }}
+                        onMouseDown={() => {
+                            if (!inputFocused) {
+                                console.log('🖱️ [MOUSE-DOWN] Forzando estado de foco desde el input.');
+                                
+                                if (blurTimeoutRef.current) {
+                                    clearTimeout(blurTimeoutRef.current);
+                                    blurTimeoutRef.current = null;
+                                }
+                                manejarFocusInput();
+                            }
+                        }}
                         onKeyDown={manejarKeyDown}
-                        onFocus={manejarFocusInput}
-                        onBlur={() => {
+                        onFocus={() => {
+                            // Limpia cualquier blur pendiente
+                            if (blurTimeoutRef.current) {
+                                clearTimeout(blurTimeoutRef.current);
+                                blurTimeoutRef.current = null;
+                            }
+
+
+                            justFocusedRef.current = true;
+                            manejarFocusInput();
                             setTimeout(() => {
+                                justFocusedRef.current = false;
+                            }, 100);
+                        }}
+                        onBlur={() => {
+
+                            if (justFocusedRef.current) {
+                                return;
+                            }
+
+
+                            if (blurTimeoutRef.current) {
+                                clearTimeout(blurTimeoutRef.current);
+                            }
+
+                            blurTimeoutRef.current = setTimeout(() => {
+
+                                if (document.activeElement === inputRef.current) {
+                                    console.log('🏁 [BLUR] Blur cancelado, el foco sigue en el input (scroll).');
+                                    return;
+                                }
+
+
+                                console.log('🏁 [BLUR] Blur real detectado. Cerrando menú.');
                                 setInputFocused(false);
                             }, 200);
                         }}
@@ -1554,8 +1618,17 @@ export default function BusquedaAutocompletado({
 
                 {/* ✅ HISTORIAL ✅ */}
                 {mostrarHistorialLocal && (
-                    <ul className="caja-sugerencias">
-                        <li className="sugerencias-header"onMouseDown={(e) => e.preventDefault()}>
+                    <ul className="caja-sugerencias" onMouseDown={(e) => {
+                        e.preventDefault(); // Mantiene el foco del navegador
+
+                        // Cancela el timeout de blur
+                        if (blurTimeoutRef.current) {
+                            clearTimeout(blurTimeoutRef.current);
+                            blurTimeoutRef.current = null;
+                        }
+                    }}>
+
+                        <li className="sugerencias-header" onMouseDown={(e) => e.preventDefault()}>
                             Búsquedas recientes
                             {cargandoHistorial && (
                                 <span className="cargando-indicador">Cargando...</span>
@@ -1568,7 +1641,7 @@ export default function BusquedaAutocompletado({
                                 No hay búsquedas recientes
                             </li>
                         ) : (
-                            historial.slice(0,5).map((item, i) => (
+                            historial.slice(0, 5).map((item, i) => (
                                 <li
                                     key={i}
                                     className={`item-historial ${i === indiceSeleccionado ? 'seleccionado' : ''}`}
@@ -1619,7 +1692,13 @@ export default function BusquedaAutocompletado({
                         )}
 
                         {estadoSugerencias !== "loading" && (
-                            <ul className="caja-sugerencias">
+                            <ul className="caja-sugerencias" onMouseDown={(e) => {
+                                e.preventDefault(); 
+                                if (blurTimeoutRef.current) {
+                                    clearTimeout(blurTimeoutRef.current);
+                                    blurTimeoutRef.current = null;
+                                }
+                            }}>
                                 <li className="sugerencias-header">
                                     Sugerencias
                                 </li>

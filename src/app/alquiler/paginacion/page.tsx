@@ -367,9 +367,9 @@ const jobsToDisplay = useMemo(() => {
             {usuariosFiltrados.length > 0 ? (
               <>
                 <div className="UserProfilesContainer space-y-6">
-                  {usuariosFiltrados.map((usuario) => (
+                  {usuariosFiltrados.map((usuario, index) => (
                     <UserProfileCard
-                      key={usuario.id_usuario}
+                      key={`${usuario.id_usuario}-${index}`} 
                       usuario={usuario}
                       onContactClick={() =>
                         router.push(`/alquiler/${usuario.id_usuario}`)
