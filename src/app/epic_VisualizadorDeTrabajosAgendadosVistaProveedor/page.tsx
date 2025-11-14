@@ -94,8 +94,8 @@ export default function TrabajosAgendadosPage() {
 
   if (!jobs) {
     return (
-      <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 500, color: C.text }}>
-        <h1 style={{ fontSize: 36, color: C.title }}>Trabajos Agendados</h1>
+      <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 500, color: C.text, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <h1 style={{ fontSize: 36, color: C.title, width: '660px' }}>Trabajos Agendados</h1>
         <div style={{ height: 1.5, width: '660px', background: C.line }} />
         <p style={{ textAlign: 'center' }}>Cargando trabajos...</p>
       </main>
@@ -103,8 +103,8 @@ export default function TrabajosAgendadosPage() {
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 400 }}>
-      <h1 style={{ fontSize: 36, color: C.title }}>Trabajos Agendados</h1>
+    <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 10 }}>
+      <h1 style={{ fontSize: 36, color: C.title, width: '660px', marginTop: 0 }}>Trabajos Agendados</h1>
       <div style={{ height: 1.5, width: '660px', background: C.line, marginBottom: 10 }} />
       <TabsComponent tab={tab} setTab={setTab} counts={counts} setCurrentPage={setCurrentPage} />
 
