@@ -194,13 +194,20 @@ class BackendService {
 
                 if (data.success) {
                     if (data.data && Array.isArray(data.data)) {
-                        const sugerencias = data.data
+                        // 🔥 FILTRAR: Solo sugerencias que empiecen con el query
+                        const sugerenciasFiltradas = data.data
                             .map((item: EspecialidadBackend) => item.nombre)
-                            .filter((nombre: string) => nombre && nombre.trim())
+                            .filter((nombre: string) => {
+                                if (!nombre || !nombre.trim()) return false;
+
+                                // 🔥 NUEVO: Verificar que empiece con el query (case insensitive)
+                                const nombreNormalizado = this.normalizarTexto(nombre);
+                                return nombreNormalizado.startsWith(queryNormalizado);
+                            })
                             .slice(0, 10);
 
-                        console.log('📋 [SUGERENCIAS-ORDEN-EXACTO] Sugerencias procesadas:', sugerencias);
-                        return sugerencias;
+                        console.log('📋 [SUGERENCIAS-ORDEN-EXACTO] Sugerencias filtradas:', sugerenciasFiltradas);
+                        return sugerenciasFiltradas;
                     } else {
                         console.log('ℹ️ [SUGERENCIAS-ORDEN-EXACTO] Backend: success=true pero data no es array');
                         return [];
@@ -218,6 +225,17 @@ class BackendService {
             console.log('❌ [SUGERENCIAS-ORDEN-EXACTO] Error:', error);
             throw error;
         }
+    }
+    // 🔥 AÑADE este método de normalización si no existe
+    private static normalizarTexto(texto: string): string {
+        if (!texto) return "";
+        return texto
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[´'"]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
     }
 }
 
@@ -370,144 +388,29 @@ class BusquedaService {
     private static API_BASE = getApiRoot();
 
     // 🔥 MODIFICADO: Calcular relevancia basada en ORDEN EXACTO
-    private static calcularRelevancia(job: Job, query: string): number {
-        const queryNormalizado = normalizarQueryBusqueda(query);
-        const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
-
-        let puntaje = 0;
-
-        if (!job.title) return puntaje;
-
-        const tituloNormalizado = this.normalizarTexto(job.title);
-        const empresaNormalizada = job.company ? this.normalizarTexto(job.company) : "";
-        const serviciosNormalizados = job.service ? this.normalizarTexto(job.service) : "";
-
-        console.log('🔍 [RELEVANCIA-ORDEN-EXACTO] Calculando para:', {
-            titulo: job.title,
-            query: query,
-            tituloNormalizado: tituloNormalizado,
-            queryNormalizado: queryNormalizado
-        });
-
-        // 🔥 MÁXIMA PRIORIDAD: Coincidencia EXACTA del nombre completo
-        if (tituloNormalizado === queryNormalizado) {
-            puntaje += 1000;
-            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Coincidencia EXACTA +1000');
-        }
-
-        // 🔥 ALTA PRIORIDAD: El query contiene el nombre completo
-        if (tituloNormalizado.includes(queryNormalizado)) {
-            puntaje += 500;
-            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Query contiene nombre completo +500');
-        }
-
-        // 🔥 ALTA PRIORIDAD: El nombre contiene el query completo
-        if (queryNormalizado.includes(tituloNormalizado)) {
-            puntaje += 400;
-            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Nombre contiene query +400');
-        }
-
-        // 🔥 NUEVO: Verificar ORDEN EXACTO de tokens en título
-        const ordenExactoTitulo = this.verificarOrdenExacto(tituloNormalizado, tokens);
-        if (ordenExactoTitulo) {
-            puntaje += 600; // 🔥 ALTA PRIORIDAD PARA ORDEN EXACTO
-            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Orden exacto en título +600');
-        }
-
-        // 🔥 NUEVO: Verificar ORDEN EXACTO en empresa
-        if (empresaNormalizada) {
-            const ordenExactoEmpresa = this.verificarOrdenExacto(empresaNormalizada, tokens);
-            if (ordenExactoEmpresa) {
-                puntaje += 300;
-                console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Orden exacto en empresa +300');
-            }
-        }
-
-        // 🔥 NUEVO: Verificar ORDEN EXACTO en servicios
-        if (serviciosNormalizados) {
-            const ordenExactoServicios = this.verificarOrdenExacto(serviciosNormalizados, tokens);
-            if (ordenExactoServicios) {
-                puntaje += 200;
-                console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Orden exacto en servicios +200');
-            }
-        }
-
-        // 🔥 COINCIDENCIA DE TODAS LAS PALABRAS EN ORDEN (ya no es necesario, se maneja arriba)
-        const palabrasTitulo = tituloNormalizado.split(' ');
-        const todasLasPalabrasCoinciden = tokens.every(token =>
-            palabrasTitulo.some(palabra => palabra.includes(token))
-        );
-
-        if (todasLasPalabrasCoinciden && !ordenExactoTitulo) {
-            puntaje += 100; // 🔥 REDUCIDO porque no es orden exacto
-            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Todas las palabras coinciden (sin orden) +100');
-        }
-
-        console.log(`📊 [RELEVANCIA-ORDEN-EXACTO] Puntaje final para "${job.title}": ${puntaje}`);
-        return puntaje;
-    }
-
-    // 🔥 NUEVO: Función para verificar orden exacto
-    private static verificarOrdenExacto(texto: string, tokens: string[]): boolean {
-        if (!texto || tokens.length === 0) return false;
-
-        let posicionActual = 0;
-
-        for (const token of tokens) {
-            const posicionToken = texto.indexOf(token, posicionActual);
-            if (posicionToken === -1) {
-                return false; // Token no encontrado
-            }
-            posicionActual = posicionToken + token.length;
-        }
-
-        return true; // Todos los tokens encontrados en orden
-    }
-
-    // 🔥 MODIFICADO: Ordenar resultados por relevancia con énfasis en orden exacto
+    // 🔥 SIMPLIFICADO: Ordenar resultados (sin relevancia)
     public static ordenarPorRelevancia(resultados: Job[], query: string): Job[] {
         if (!query.trim() || resultados.length === 0) {
             return resultados;
         }
 
-        console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Ordenando resultados por relevancia...');
+        console.log('📋 [SIN-RELEVANCIA] Ordenando resultados básicos...');
 
-        const resultadosConPuntaje = resultados.map(job => ({
-            job,
-            puntaje: this.calcularRelevancia(job, query)
-        }));
+        // 🔥 ORDEN SIMPLE: Por rating o alfabéticamente
+        return resultados.sort((a, b) => {
+            // 1. Priorizar mejor rating
+            const ratingA = a.rating || 0;
+            const ratingB = b.rating || 0;
 
-        // Orden descendente (mayor relevancia primero)
-        resultadosConPuntaje.sort((a, b) => {
-            if (b.puntaje !== a.puntaje) {
-                return b.puntaje - a.puntaje;
+            if (ratingB !== ratingA) {
+                return ratingB - ratingA;
             }
 
-            // 🔥 DESEMPATE: Si mismo puntaje, priorizar mejor rating
-            const ratingA = a.job.rating || 0;
-            const ratingB = b.job.rating || 0;
-            return ratingB - ratingA;
+            // 2. Desempate alfabético
+            const tituloA = a.title?.toLowerCase() || '';
+            const tituloB = b.title?.toLowerCase() || '';
+            return tituloA.localeCompare(tituloB);
         });
-
-        const resultadosOrdenados = resultadosConPuntaje.map(item => item.job);
-
-        console.log('📋 [RELEVANCIA-ORDEN-EXACTO] Resultados ordenados:');
-        resultadosConPuntaje.forEach((item, index) => {
-            console.log(`   ${index + 1}. "${item.job.title}" - Puntaje: ${item.puntaje}`);
-        });
-
-        return resultadosOrdenados;
-    }
-
-    private static normalizarTexto(texto: string): string {
-        if (!texto) return "";
-        return texto
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[´'"]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .toLowerCase();
     }
 
     // 🔥 MODIFICADO: Búsqueda optimizada con orden exacto
