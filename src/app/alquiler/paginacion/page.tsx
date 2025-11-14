@@ -1,3 +1,4 @@
+/*
 'use client';
 
 import { useState, useEffect, useMemo, Suspense } from "react";
@@ -244,7 +245,7 @@ function BusquedaContent() {
           Ofertas de Trabajo
         </h1>
 
-        {/* Búsqueda */}
+        {/* Búsqueda /}
         <BusquedaAutocompletado
           onSearch={handleSearchResults}
           datos={allJobs}
@@ -252,7 +253,7 @@ function BusquedaContent() {
           valorInicial={urlQuery}
         />
 
-        {/* Filtros */}
+        {/* Filtros /}
         <div className="mt-6">
           <FiltrosForm
             onResults={(usuarios: UsuarioResumen[]) => {
@@ -268,7 +269,7 @@ function BusquedaContent() {
           />
         </div>
 
-        {/* Vista Usuarios */}
+        {/* Vista Usuarios/}
         {modoVista === "usuarios" ? (
           <section className="mt-10">
             <h2 className="text-2xl font-bold text-blue-600 mb-6">
@@ -306,8 +307,8 @@ function BusquedaContent() {
             </a>
           </section>
         ) : (
-          /* Vista Jobs */
-            /* Vista Jobs */
+          /* Vista Jobs /
+            /* Vista Jobs /
             <section className="mt-10">
               {isLoading ? (
                 <p className="text-center text-gray-500 text-lg">Cargando ofertas...</p>
@@ -318,7 +319,7 @@ function BusquedaContent() {
                   </div>
 
                   <div className="results-area mt-6">
-                    {/* Mostrar loading mientras busca */}
+                    {/* Mostrar loading mientras busca /}
                     {buscando ? (
                       <div className="text-center py-8">
                         <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
@@ -386,3 +387,24 @@ export default function BusquedaPage() {
     </Suspense>
   );
 }
+*/
+'use client'; 
+
+import React from 'react';
+
+// 2. Definición del Componente: El nombre DEBE comenzar con mayúscula
+function AddNewJobOfferPage() {
+  
+  // Aquí puedes usar hooks de cliente si incluiste 'use client';
+  // Por ejemplo: const searchParams = useSearchParams();
+
+  return (
+    <div>
+      <h1>Página de Nueva Oferta de Trabajo (Temporal)</h1>
+      <p>Este es un componente de React válido.</p>
+    </div>
+  );
+}
+
+// 3. Exportación: DEBE ser el exportación por defecto
+export default AddNewJobOfferPage;

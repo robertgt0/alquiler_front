@@ -294,6 +294,7 @@ export default function FixerJobsPage() {
     setMessage("Buscando trabajos...");
     setTrabajos([]); 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+    //const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://wallletback.vercel.app/api";
     try {
       const trabajosRes = await fetch(`${API_URL}/bitCrew/trabajos/${usuario}`);
       if (!trabajosRes.ok) {
@@ -335,6 +336,7 @@ export default function FixerJobsPage() {
     setIsConfirming(true);
     setModalError(null);
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+    //const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://wallletback.vercel.app/api";
 
     try {
       const response = await fetch(`${API_URL}/bitCrew/trabajos/${selectedTrabajo._id}/pagar-efectivo`, {
