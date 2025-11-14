@@ -1060,7 +1060,7 @@ export default function BusquedaAutocompletado({
 
             if (textoNormalizado.length < 1) {
                 console.log('⏸️ [AMAZON-SUGERENCIAS] Texto muy corto');
-                return [];
+                
             }
 
             console.log('🔄 [AMAZON-SUGERENCIAS] Llamando al servicio...');
@@ -1128,12 +1128,17 @@ export default function BusquedaAutocompletado({
 
         // 🔥 CUARTO: Comparación con textos NORMALIZADOS
         const textoNoCambioNormalizado = textoNormalizado === textoAnteriorNormalizado;
-
-        if (textoNoCambioNormalizado) {
-            console.log('⚡ [SUGERENCIAS] Texto NORMALIZADO no cambió - Evitando búsqueda');
             terminoBusquedaAnteriorSugerencias.current = texto;
-            return;
-        }
+
+        //if (textoNoCambioNormalizado) {
+          //  console.log('⚡ [SUGERENCIAS] Texto NORMALIZADO no cambió - Evitando búsqueda');
+           // terminoBusquedaAnteriorSugerencias.current = texto;
+            //return;
+        //}
+
+        console.log('⚡ [SUGERENCIAS] Ejecutando búsqueda aunque texto normalizado sea igual');
+        onSearch(texto, resultados); // aquí disparas la búsqueda normalmente
+
 
         const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
         const tieneTextoParaSugerencias = textoNormalizado.length >= 1;
@@ -1232,14 +1237,7 @@ export default function BusquedaAutocompletado({
         const textoNormalizado = normalizarGoogle(texto, "sugerencias");
         const textoAnteriorNormalizado = normalizarGoogle(terminoBusquedaAnteriorResultados.current, "sugerencias");
 
-        // 🔥 PRIMERO: Comparación con textos NORMALIZADOS (incluyendo comas)
-        const textoNoCambioNormalizado = textoNormalizado === textoAnteriorNormalizado;
-
-        if (textoNoCambioNormalizado) {
-            console.log('⚡ [RESULTADOS] Texto NORMALIZADO no cambió - Evitando búsqueda');
-            terminoBusquedaAnteriorResultados.current = texto;
-            return;
-        }
+        
 
         const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
         const tieneTextoParaResultados = textoNormalizado.length >= 2;

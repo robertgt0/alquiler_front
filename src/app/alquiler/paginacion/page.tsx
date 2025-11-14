@@ -96,36 +96,58 @@ function BusquedaContent() {
     }
     return sorted;
   };
+  // 🔹 Función para normalizar texto
+  const normalizar = (texto: string) =>
+    texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  const handleAdvancedFilters = (filtros: any) => {
-    console.log(" Filtros aplicados:", filtros);
 
-    let filtrados = allJobs.filter((job) => {
-      let match = true;
 
-      if (filtros.tipoServicio)
-        match &&= job.title.toLowerCase() === filtros.tipoServicio.toLowerCase();
+ const handleAdvancedFilters = (filtros: any) => {
+  console.log(" Filtros aplicados:", filtros);
 
-      if (filtros.zona)
-        match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
+  // 🔹 Siempre partir de allJobs
+  let baseData = allJobs;
 
-      if (filtros.precioMin || filtros.precioMax) {
-        const precioNum = Number(job.salaryRange.replace(/[^0-9.-]+/g, ""));
-        if (filtros.precioMin) match &&= precioNum >= filtros.precioMin;
-        if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
-      }
+  // Aplicar filtros avanzados
+  let filtrados = baseData.filter((job) => {
+    let match = true;
 
-      if (filtros.horario)
-        match &&= job.employmentType.toLowerCase() === filtros.horario.toLowerCase();
+    if (filtros.tipoServicio)
+      match &&= job.title.toLowerCase().includes(filtros.tipoServicio.toLowerCase());
+    if (filtros.zona)
+      match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
+    if (filtros.precioMin || filtros.precioMax) {
+      const precioNum = Number(job.salaryRange.replace(/[^0-9.-]+/g, ""));
+      if (filtros.precioMin) match &&= precioNum >= filtros.precioMin;
+      if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
+    }
+    if (filtros.horario)
+      match &&= job.employmentType.toLowerCase() === filtros.horario.toLowerCase();
 
-      return match;
+    return match;
+  });
+
+  // 🔹 Reaplicar búsqueda sobre los resultados filtrados
+  if (searchTerm.trim() !== "") {
+    const palabras = normalizar(searchTerm).split(/\s+/).filter(Boolean);
+    filtrados = filtrados.filter((job) => {
+      const title = normalizar(job.title || "");
+      const company = normalizar(job.company || "");
+      const servicio = normalizar(job.service || "");
+      return palabras.some(
+        (palabra) =>
+          title.includes(palabra) || company.includes(palabra) || servicio.includes(palabra)
+      );
     });
+  }
 
-    setFiltrosAplicados(true);
-    setSearchResults(filtrados);
-    setModoVista("jobs");
-    setFiltersNoResults(filtrados.length === 0);
-  };
+  setFiltrosAplicados(true);
+  setSearchResults(filtrados);
+  setModoVista("jobs");
+  setFiltersNoResults(filtrados.length === 0);
+};
+
+
 
   const [busquedaAvanzadaAbierta, setBusquedaAvanzadaAbierta] = useState(false);
 
@@ -144,32 +166,14 @@ function BusquedaContent() {
     }
     return sorted;
   };
+const jobsToDisplay = useMemo(() => {
+  // SIEMPRE trabajar sobre searchResults
+  let data = searchResults;
 
-  const jobsToDisplay = useMemo(() => {
-    let data = allJobs;
+  return ordenarItems(sortBy, data);
+}, [searchResults, sortBy]);
 
-    if (searchResults.length > 0) {
-      data = searchResults;
-    } else if (searchTerm && searchTerm.trim()) {
-      const normalizar = (texto: string) =>
-        texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const palabras = normalizar(searchTerm).split(/\s+/).filter(Boolean);
 
-      data = data.filter((job) => {
-        const title = normalizar(job.title || "");
-        const company = normalizar(job.company || "");
-        const servicio = normalizar(job.service || "");
-        return palabras.some(
-          (palabra) =>
-            title.includes(palabra) ||
-            company.includes(palabra) ||
-            servicio.includes(palabra)
-        );
-      });
-    }
-
-    return ordenarItems(sortBy, data);
-  }, [searchResults, allJobs, sortBy, searchTerm]);
 
   const usuariosOrdenados = useMemo(
     () => ordenarUsuarios(sortBy, usuariosFiltrados),
@@ -238,7 +242,33 @@ function BusquedaContent() {
       }
 
       setSearchTerm(termino);
-      setSearchResults(resultados);
+
+
+
+     
+      // 🔹 Combinar resultados con filtros activos
+      let combinados = resultados;
+      if (filtrosAplicados && searchResults.length > 0) {
+        combinados = searchResults.filter((job) => resultados.includes(job));
+      }
+
+      // 🔹 Reaplicar búsqueda sobre resultados filtrados
+      if (termino.trim() !== "") {
+        const palabras = normalizar(termino).split(/\s+/).filter(Boolean);
+        combinados = combinados.filter((job) => {
+          const title = normalizar(job.title || "");
+          const company = normalizar(job.company || "");
+          const servicio = normalizar(job.service || "");
+          return palabras.some(
+            (palabra) =>
+              title.includes(palabra) || company.includes(palabra) || servicio.includes(palabra)
+          );
+        });
+      }
+
+      setSearchResults(combinados);
+      setFiltersNoResults(combinados.length === 0);
+
       if (actualizarUrl) actualizarURL(termino);
       setEstadoBusqueda("success");
     } catch (error) {
@@ -268,6 +298,9 @@ function BusquedaContent() {
     setSortBy("Fecha (Reciente)");
   };
 
+
+
+  
   const mostrarSinResultadosFiltros =
     filtrosAplicados &&
     modoVista === "jobs" &&
