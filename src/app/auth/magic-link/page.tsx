@@ -60,13 +60,18 @@ export default function MagicLinkPage() {
       // Disparar evento de login exitoso para que el Header se actualice
       const eventLogin = new CustomEvent("login-exitoso");
       window.dispatchEvent(eventLogin);
-      
-      // Redirigir a home
+      //verificar enlace
       router.push('/');
-      } catch (e: any) {
-        setStatus("error");
-        setMessage(e?.message || "Error al verificar el enlace.");
-      }
+     } catch (e: any) {
+  const msg = e?.message || "Error al verificar el enlace.";
+  setStatus("error");
+  setMessage(msg);
+
+  // 🔁 Después de 3 segundos redirige al login
+  setTimeout(() => {
+    router.push("/login");  // 👈 pon aquí la ruta real de tu login si es distinta
+  }, 3000);
+}
     };
 
     run();
@@ -84,9 +89,9 @@ export default function MagicLinkPage() {
         }`}
       >
         <h1 className="text-2xl font-semibold mb-2">
-          {status === "loading" ? "Verificando enlace…" : status === "ok" ? "¡Listo!" : "Error con el enlace"}
+          {status === "loading" ? "Verificando enlace…" : status === "ok" ? "¡Listo!" : "Error con el enlace Link expirado. Solicita uno nuevo”, "}
         </h1>
-        <p className="text-sm">{message}</p>
+       
       </div>
     </div>
   );
