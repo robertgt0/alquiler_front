@@ -3,7 +3,7 @@
 import React, { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useWallet } from "./hooks/useWallet";
-import WalletAlert from "./components/walletAlert";
+import WalletAlert from "./components/walletAlert"; // Respetando el nombre de tu archivo original
 import BalanceCard from "./components/BalanceCard";
 import TransactionList from "./components/TransactionList";
 
@@ -20,7 +20,9 @@ function WalletLogic() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-4xl mx-auto px-4 pb-4 pt-0 md:px-8 md:pb-8 md:pt-0">
+      {/* Contenedor principal con padding corregido */}
+      <div className="max-w-4xl mx-auto px-4 md:px-8 pt-4 md:pt-6 pb-4 md:pb-8">
+        
         <header className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-4">
             <button onClick={() => router.back()} className="text-gray-500 hover:text-gray-800 p-2" title="Volver">
@@ -55,22 +57,26 @@ function WalletLogic() {
             </div>
           )}
 
+          {/* Lógica de carga mejorada */}
           {!loading && balanceData && (
             <>
-          <WalletAlert balance={balanceData?.saldo ?? 0} estado={balanceData?.estado} />
+              <WalletAlert balance={balanceData?.saldo ?? 0} estado={balanceData?.estado} />
 
-          <BalanceCard
-            saldo={balanceData?.saldo}
-            moneda={balanceData?.moneda || "Bs."}
-            showSaldo={showSaldo}
-            onToggleShowSaldo={() => setShowSaldo(!showSaldo)}
-            onRefresh={reload}
-            loading={loading}
-          />
-          </>
+              <BalanceCard
+                saldo={balanceData?.saldo}
+                moneda={balanceData?.moneda || "Bs."}
+                showSaldo={showSaldo}
+                onToggleShowSaldo={() => setShowSaldo(!showSaldo)}
+                onRefresh={reload}
+                loading={loading}
+                walletId={balanceData?._id}
+              />
+            </>
           )}
 
-          <TransactionList transactions={transactions} />
+          {/* Lógica de carga para transacciones */}
+          {loading && !error && <p className="text-center py-10 text-gray-500">Cargando transacciones...</p>}
+          {!loading && !error && <TransactionList transactions={transactions} />}
         </main>
       </div>
     </div>
