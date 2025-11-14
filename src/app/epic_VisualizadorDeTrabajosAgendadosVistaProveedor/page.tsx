@@ -148,28 +148,26 @@ export default function TrabajosAgendadosPage() {
                 router.push(`/trabajo-terminado/${encodeURIComponent(job.id)}?from=${from}`);
                 break;
               }
-              case 'confirmed': {
-                router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+              case 'confirmed':  {
+                const parametro= new URLSearchParams({
+                  id: job.id,
+                  cliente: job.clientName ?? '',
+                  date: fechaISO,
+                  inicio: inicioHHMM,
+                  fin: finHHMM,
+                  servicio: job.service ?? '',
+                  estado: status,
+                  costo: job.costo !== undefined ? String(job.costo) : '',
+                  descripcion: job.description ?? '',
+                  from,
+                });
+                router.push(`/epic_VisualizadorDeTrabajosAgendadosVistaProveedor_CancelarTrabajo?${parametro.toString()}`);
                 break;
               }
               //aqui rediriges a tu ventana de cancelado
               case 'cancelled': {
-                const params = new URLSearchParams({
-                  id: job.id,
-                  proveedor: job.providerName ?? '',       // MISMO que pendiente
-                  date: fechaISO,                          // MISMO  
-                  inicio: inicioHHMM,                      // MISMO
-                  fin: finHHMM,                            // MISMO
-                  servicio: job.service ?? '',             // MISMO
-                  estado: 'Cancelado',                     // MISMO
-                  costo: job.costo !== undefined ? String(job.costo) : '', // MISMO
-                  descripcion: job.description ?? '',      // MISMO
-                  from,                            // MISMO
-                  // Solo estos 2 parámetros extra
-                  justificacion: job.cancelReason ?? '',
-                  cancelado_por: job.cancelledBy ?? '',
-                });
-                router.push(`/epic_VerDetallesEstadoCancelado?${params.toString()}`);
+                
+               router.push(`/epic_VerDetallesEstadoCancelado-VistaProveedor?id=${encodeURIComponent(job.id)}`);
                       break;
               }
               default: {

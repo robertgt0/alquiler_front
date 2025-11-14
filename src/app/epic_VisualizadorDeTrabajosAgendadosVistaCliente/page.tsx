@@ -162,27 +162,25 @@ export default function TrabajosAgendadosPage() {
         router.push(`/epic_trabajo-terminadoCliente/${encodeURIComponent(job.id)}?from=${from}`);
         break;
       }
-      case 'confirmed': {
-        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
-        break;
-      }
-      case 'cancelled': {
-        const params = new URLSearchParams({
+      case 'confirmed':  {
+        const parametro= new URLSearchParams({
           id: job.id,
           proveedor: job.providerName ?? '',
           date: fechaISO,
           inicio: inicioHHMM,
           fin: finHHMM,
           servicio: job.service ?? '',
-          estado: 'Cancelado',
+          estado: status,
           costo: job.costo !== undefined ? String(job.costo) : '',
           descripcion: job.description ?? '',
           from,
-          justificacion: job.cancelReason ?? '',
-          cancelado_por: job.cancelledBy ?? '',
         });
-        router.push(`/epic_VerDetallesEstadoCancelado?${params.toString()}`);
+        router.push(`/epic_VisualizadorDeTrabajosAgendadosVistaCliente_CancelarTrabajo?${parametro.toString()}`);
         break;
+      }
+      case 'cancelled': {
+        router.push(`/epic_VerDetallesEstadoCancelado-VistaCliente?id=${encodeURIComponent(job.id)}`);
+              break;
       }
       default: {
         router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);

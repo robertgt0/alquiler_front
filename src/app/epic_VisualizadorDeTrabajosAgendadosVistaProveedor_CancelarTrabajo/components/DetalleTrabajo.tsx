@@ -37,11 +37,14 @@ const DetallesTrabajo: React.FC<DetallesTrabajoProps> = ({ trabajo }) => {
         <span className="font-bold text-gray-800 w-32">Estado:</span>
         <span
           className={`px-4 py-1 rounded-md font-semibold ${
-            trabajo.estado === "Confirmado"
-              ? "bg-green-500 text-white"
-              : "bg-red-500 text-white"
-          }`}
-        >
+              trabajo.estado === "Confirmado"
+                ? "text-white"
+                : "bg-red-500 text-white"
+            }`}
+            style={{
+              backgroundColor: trabajo.estado === "Confirmado" ? "#1366FD" : undefined,
+            }}
+          >
           {trabajo.estado}
         </span>
       </div>
