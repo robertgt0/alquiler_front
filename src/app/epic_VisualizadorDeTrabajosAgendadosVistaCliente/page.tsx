@@ -131,8 +131,23 @@ export default function TrabajosAgendadosPage() {
         break;
       }
       case 'cancelled': {
-        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}&view=cancelled`);
-        break;
+        const params = new URLSearchParams({
+          id: job.id,
+          proveedor: job.providerName ?? '',       // MISMO que pendiente
+          date: fechaISO,                          // MISMO  
+          inicio: inicioHHMM,                      // MISMO
+          fin: finHHMM,                            // MISMO
+          servicio: job.service ?? '',             // MISMO
+          estado: 'Cancelado',                     // MISMO
+          costo: job.costo !== undefined ? String(job.costo) : '', // MISMO
+          descripcion: job.description ?? '',      // MISMO
+          from,                            // MISMO
+          // Solo estos 2 parámetros extra
+          justificacion: job.cancelReason ?? '',
+          cancelado_por: job.cancelledBy ?? '',
+        });
+        router.push(`/epic_VerDetallesEstadoCancelado?${params.toString()}`);
+              break;
       }
       default: {
         router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
