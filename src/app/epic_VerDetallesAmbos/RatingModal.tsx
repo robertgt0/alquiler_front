@@ -25,31 +25,21 @@ export function RatingModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commentError, setCommentError] = useState('');
 
-  if (!isOpen) {
-    return null;
-  }
+  if (!isOpen) return null;
 
   const handleSubmit = async () => {
-    if (rating === 0) {
-      alert('Por favor, selecciona una calificación.');
-      return;
-    }
-    
-    if (comment.length > MAX_COMMENT_LENGTH) {
-      setCommentError(`El máximo de caracteres es ${MAX_COMMENT_LENGTH}.`);
-      return;
-    }
-
-    setCommentError('');
+    if (rating === 0) return; // seguridad
     setIsSubmitting(true);
-    
+
     try {
-      await onSubmitClick(rating, comment);
+      await onSubmitClick(rating, comment); // <-- usamos la función que viene por props
       setRating(0);
       setHoverRating(0);
       setComment('');
-    } catch (error) {
-      console.error('Error reportado al modal:', error);
+      setCommentError('');
+    } catch (error: any) {
+      console.error("Error en handleSubmit:", error.message || error);
+      alert("Hubo un error al guardar la calificación");
     } finally {
       setIsSubmitting(false);
     }
@@ -66,11 +56,10 @@ export function RatingModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
       <div className="bg-white rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-md mx-4">
-        
         <h2 className="text-xl font-bold text-blue-700 text-center mb-2">
           ¡GRACIAS POR USAR LA APP!
         </h2>
-        
+
         <p className="text-gray-900 mb-4">
           ¿Como fue tu experiencia con el proveedor?
         </p>
@@ -93,11 +82,6 @@ export function RatingModal({
           })}
         </div>
 
-        <label htmlFor="comment" className="text-gray-900 text-sm mb-2 block">
-          Cuéntanos más sobre tu experiencia (Opcional)
-        </label>
-        
-        {/* --- AQUÍ ESTÁ EL CAMBIO --- */}
         <textarea
           id="comment"
           value={comment}
@@ -108,19 +92,14 @@ export function RatingModal({
             }
           }}
           placeholder="Escribe tu comentario aquí..."
-          className="w-full h-24 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900" // <-- Clase añadida
+          className="w-full h-24 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
           disabled={isSubmitting}
           aria-describedby="comment-helper"
         />
-        {/* --- FIN DEL CAMBIO --- */}
-        
+
         <div id="comment-helper" className="flex justify-between items-center mt-1 text-sm">
-          <span className="text-red-600 font-medium">
-            {commentError}
-          </span>
-          <span className={`
-            ${comment.length > MAX_COMMENT_LENGTH ? 'text-red-600 font-bold' : 'text-gray-500'}
-          `}>
+          <span className="text-red-600 font-medium">{commentError}</span>
+          <span className={comment.length > MAX_COMMENT_LENGTH ? 'text-red-600 font-bold' : 'text-gray-500'}>
             {comment.length} / {MAX_COMMENT_LENGTH}
           </span>
         </div>
@@ -134,7 +113,7 @@ export function RatingModal({
           >
             Atrás
           </button>
-          
+
           <button
             type="button"
             onClick={() => handleResetAndClose(onOmitClick)}
@@ -143,10 +122,10 @@ export function RatingModal({
           >
             Omitir
           </button>
-          
+
           <button
             type="button"
-            onClick={handleSubmit}
+            onClick={handleSubmit} // <-- usamos la función adaptada
             disabled={rating === 0 || isSubmitting}
             className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed w-full sm:w-auto"
           >
