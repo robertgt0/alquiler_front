@@ -284,17 +284,55 @@ export async function createAndNotify(payload: CreateAppointmentPayload) {
    =========================================================== */
 
 export async function updateAndNotify(
-payload: CreateAppointmentPayload & { cambios?: string[] }
+  payload: CreateAppointmentPayload & { cambios?: string[] }
 ) {
-  alert("🟦 [DEBUG] Cliente ID recibido (update): " + (payload.cliente?.id || payload.clienteId || "❌ No se envió clienteId"));
-
   try {
-    // 🔹 Buscar datos reales desde la API
+
+    /*
+
+    alert(`
+    ==== DEBUG PAYLOAD (ANTES DE API) ====
+
+    ProveedorId: ${payload.proveedorId}
+    ServicioId: ${payload.servicioId}
+    ClienteId: ${payload.clienteId ?? "NULL"}
+    Fecha: ${payload.fecha}
+
+    Horario:
+      Inicio: ${payload.horario?.inicio}
+      Fin:    ${payload.horario?.fin}
+
+    Ubicación:
+      Dirección: ${payload.ubicacion?.direccion}
+      Notas:     ${payload.ubicacion?.notas}
+
+    Cambios: ${payload.cambios?.join(", ") || "Ninguno"}
+
+    =====================================
+        `);
+    */
+
+    const clienteIdReal =
+      (payload.clienteId as any)?._id ||
+      (payload.clienteId as any)?.id ||
+      payload.clienteId;
+
+    // 🔹 Buscar datos reales desde la API (cliente ya NO sale del payload)
     const [proveedor, servicio, cliente] = await Promise.all([
       getProveedorById(payload.proveedorId),
       getServicioById(payload.servicioId),
-      getClienteById(payload.clienteId),
+      getClienteById(clienteIdReal), // ✅ <–– AQUÍ EL CAMBIO
     ]);
+
+    /*
+    alert(`
+    === DEBUG CLIENTE ===
+    Proveedor: ${proveedor?._id || proveedor?.id || "NULL"}
+    Servicio: ${servicio?._id || servicio?.id || "NULL"}
+    Cliente encontrado: ${cliente?._id || cliente?.id || "NULL"}
+    `);
+
+    */
 
     if (!proveedor) throw new Error("Proveedor no encontrado");
     if (!servicio) throw new Error("Servicio no encontrado");
@@ -316,17 +354,16 @@ payload: CreateAppointmentPayload & { cambios?: string[] }
     const proveedorNombre = (proveedor as any)?.nombre ?? "Proveedor";
     const clienteNombre = (cliente as any)?.nombre ?? "Cliente";
 
-    // 🔸 Texto de cambios
     const cambiosTexto = payload.cambios?.length
       ? `🔄 *Cambios realizados:* ${payload.cambios.join(", ")}`
       : "Se han actualizado los detalles de tu cita.";
 
-    /* ===============================
+    /* =====================================
        📨 Notificación al cliente
-       =============================== */
+       ===================================== */
     const clienteEmail = (cliente as any)?.correo ?? (cliente as any)?.email;
-    const destinosCliente: Destination[] = [];
 
+    const destinosCliente: Destination[] = [];
     if (clienteEmail)
       destinosCliente.push({ email: clienteEmail, name: clienteNombre });
 
@@ -367,10 +404,11 @@ payload: CreateAppointmentPayload & { cambios?: string[] }
         })
       : { ok: true };
 
-    /* ===============================
+    /* =====================================
        💌 Notificación al proveedor
-       =============================== */
+       ===================================== */
     const fixerEmail = (proveedor as any)?.email;
+
     if (fixerEmail) {
       const fixerSubject = "Cita actualizada";
       const motivoUpdate =
@@ -408,8 +446,6 @@ payload: CreateAppointmentPayload & { cambios?: string[] }
           tipo: "update_fixer",
         },
       });
-    } else {
-      console.warn("ℹ️ Proveedor sin email, no se envía notificación de actualización.");
     }
 
     return resultCliente.ok
@@ -428,11 +464,16 @@ payload: CreateAppointmentPayload & { cambios?: string[] }
 
 export async function cancelAndNotify(payload: CreateAppointmentPayload) {
   try {
+    const clienteIdReal =
+      (payload.clienteId as any)?._id ||
+      (payload.clienteId as any)?.id ||
+      payload.clienteId;
+
     // 🔹 Obtener los datos reales desde la base de datos
     const [proveedor, servicio, cliente] = await Promise.all([
       getProveedorById(payload.proveedorId),
       getServicioById(payload.servicioId),
-      getClienteById(payload.clienteId),
+      getClienteById(clienteIdReal),
     ]);
 
     if (!proveedor) throw new Error("Proveedor no encontrado");

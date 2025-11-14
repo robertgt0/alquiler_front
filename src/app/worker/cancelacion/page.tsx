@@ -121,7 +121,7 @@ export default function GestionCitas() {
           inicio: cita.horario?.inicio,
           fin: cita.horario?.fin,
         },
-        cliente: {
+        clienteId: {
           id: (cita.clienteId as any)?._id || (cita.clienteId as any),
           nombre: (cita.clienteId as any)?.nombre || "",
           phone: (cita.clienteId as any)?.phone || "",

@@ -217,11 +217,16 @@ export async function updateAndNotifyWhatsApp(
   payload: CreateAppointmentPayload & { cambios?: string[] }
 ) {
   try {
+    const clienteIdReal =
+      (payload.clienteId as any)?._id ||
+      (payload.clienteId as any)?.id ||
+      payload.clienteId;
+
     // 🔹 Buscar datos reales desde la API
     const [proveedor, servicio, cliente] = await Promise.all([
       getProveedorById(payload.proveedorId),
       getServicioById(payload.servicioId),
-      getClienteById(payload.clienteId),
+      getClienteById(clienteIdReal),
     ]);
 
     if (!proveedor) throw new Error("Proveedor no encontrado");
@@ -337,11 +342,16 @@ export async function updateAndNotifyWhatsApp(
    =========================================================== */
 export async function cancelAndNotifyWhatsApp(payload: CreateAppointmentPayload) {
   try {
+    const clienteIdReal =
+      (payload.clienteId as any)?._id ||
+      (payload.clienteId as any)?.id ||
+      payload.clienteId;
+
     // 🔹 Obtener datos reales desde la API
     const [proveedor, servicio, cliente] = await Promise.all([
       getProveedorById(payload.proveedorId),
       getServicioById(payload.servicioId),
-      getClienteById(payload.clienteId),
+      getClienteById(clienteIdReal),
     ]);
 
     if (!proveedor) throw new Error("Proveedor no encontrado");
