@@ -631,6 +631,7 @@ export default function BusquedaAutocompletado({
     const [estadoBusqueda, setEstadoBusqueda] = useState<EstadoBusqueda>("idle");
     const [mensaje, setMensaje] = useState("");
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+    const [mostrarLoadingSugerencias, setMostrarLoadingSugerencias] = useState(false);
     const [resultados, setResultados] = useState<Job[]>([]);
     const [loadingResultados, setLoadingResultados] = useState(false);
     const [mensajeNoResultados, setMensajeNoResultados] = useState("");
@@ -648,6 +649,7 @@ export default function BusquedaAutocompletado({
 
     const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const justFocusedRef = useRef(false);
+    const showLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // 🔥 NUEVAS REFERENCIAS para búsqueda local - AÑADE ESTO
     const debounceSugerenciasLocalesRef = useRef<NodeJS.Timeout | null>(null);
@@ -670,6 +672,24 @@ export default function BusquedaAutocompletado({
         mostrarHistorial,
         apiConfig
     });
+
+    // 🧹 LIMPIEZA: Cleanup de timeouts al desmontar el componente
+    useEffect(() => {
+        return () => {
+            if (showLoadingTimeoutRef.current) {
+                clearTimeout(showLoadingTimeoutRef.current);
+            }
+            if (debounceSugerenciasRef.current) {
+                clearTimeout(debounceSugerenciasRef.current);
+            }
+            if (debounceResultadosRef.current) {
+                clearTimeout(debounceResultadosRef.current);
+            }
+            if (blurTimeoutRef.current) {
+                clearTimeout(blurTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // 🔥 MODIFICADO: Flujo exacto solicitado - Primero analizarCaracteresQuery, luego normalizarGoogle
     const ejecutarBusquedaCompleta = useCallback(async (
@@ -1123,119 +1143,39 @@ export default function BusquedaAutocompletado({
         }
     }, [datos, apiConfig?.endpoint]);
 
-    // 🔥 CORREGIDO: useEffect de sugerencias para manejar backend + local automáticamente
+    // 🔥 useEffect: Sugerencias automáticas al escribir
     useEffect(() => {
-
-        if (busquedaEnCurso.current) {
-            console.log('🚫 [RESULTADOS-AUTO] Cancelado, la búsqueda completa ya empezó.');
-            return; // NO HAGAS NADA
+        if (!inputFocused || !query.trim()) {
+            setSugerencias([]);
+            setMensajeNoResultados("");
+            return;
         }
 
         if (debounceSugerenciasRef.current) {
             clearTimeout(debounceSugerenciasRef.current);
         }
 
-        const texto = query;
-
-        // 🔥 PRIMERO: Comparación rápida con texto ORIGINAL
-        const textoNoCambioOriginal = texto === terminoBusquedaAnteriorSugerencias.current;
-
-        if (textoNoCambioOriginal) {
-            console.log('⚡ [SUGERENCIAS] Texto ORIGINAL no cambió - Evitando procesamiento');
-            return;
-        }
-
-        // 🔍 SEGUNDO: Detección de caracteres problema
-        const analisis = analizarCaracteresQuery(texto);
-        const tieneCaracteresProblema = analisis.tieneProblema;
-
-        if (tieneCaracteresProblema) {
-            console.log('🚫 [SUGERENCIAS] Caracteres problema - NO búsqueda');
-            setSugerencias([]);
-            setEstadoSugerencias("idle");
-            setMostrarSugerencias(false);
-            terminoBusquedaAnteriorSugerencias.current = texto;
-            return;
-        }
-
-        // 📝 TERCERO: Normalización
-        const textoNormalizado = normalizarGoogle(texto, "sugerencias");
-        const textoAnteriorNormalizado = normalizarGoogle(terminoBusquedaAnteriorSugerencias.current, "sugerencias");
-
-        // 🔥 CUARTO: Comparación con textos NORMALIZADOS
-        const textoNoCambioNormalizado = textoNormalizado === textoAnteriorNormalizado;
-            terminoBusquedaAnteriorSugerencias.current = texto;
-
-        //if (textoNoCambioNormalizado) {
-          //  console.log('⚡ [SUGERENCIAS] Texto NORMALIZADO no cambió - Evitando búsqueda');
-           // terminoBusquedaAnteriorSugerencias.current = texto;
-            //return;
-        //}
-
-        console.log('⚡ [SUGERENCIAS] Ejecutando búsqueda aunque texto normalizado sea igual');
-        onSearch(texto, resultados, false); // aquí disparas la búsqueda normalmente (no actualizar URL)
-
-
-        const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
-        const tieneTextoParaSugerencias = textoNormalizado.length >= 1;
-
-        console.log('🔍 [SUGERENCIAS] Comparación CORREGIDA:', {
-            textoOriginal: JSON.stringify(texto),
-            textoNormalizado: JSON.stringify(textoNormalizado),
-            textoSoloEspacios,
-            tieneTextoParaSugerencias,
-            inputFocused
-        });
-
-        if (textoSoloEspacios) {
-            setSugerencias([]);
-            setEstadoSugerencias("idle");
-            setMostrarSugerencias(false);
-            terminoBusquedaAnteriorSugerencias.current = texto;
-        } else if (tieneTextoParaSugerencias && inputFocused) {
-            // 🔥 Si llegamos aquí, es porque el texto cambió y hay que buscar
-            console.log('🚀 [SUGERENCIAS] Buscando sugerencias para:', textoNormalizado);
-
-            setEstadoSugerencias("loading");
-            setMostrarSugerencias(true);
-            terminoBusquedaAnteriorSugerencias.current = texto;
-
-            debounceSugerenciasRef.current = setTimeout(async () => {
-                if (busquedaEnCurso.current) {
-                    console.log('🚫 [RESULTADOS-AUTO] Cancelado, la búsqueda completa ya empezó.');
-                    return; // NO HAGAS NADA
-                }
-                try {
-                    // 🔥 ESTA FUNCIÓN YA MANEJA BACKEND + LOCAL AUTOMÁTICAMENTE
-                    const sugerenciasFinales = await buscarSugerencias(textoNormalizado);
-
-                    // Verificar que el query no haya cambiado
-                    if (query === texto) {
-                        setSugerencias(sugerenciasFinales);
-                        setEstadoSugerencias("success");
-                        setMostrarSugerencias(true);
-
-                        console.log('✅ [SUGERENCIAS-FINAL] Resultado:', {
-                            texto: textoNormalizado,
-                            sugerencias: sugerenciasFinales,
-                            cantidad: sugerenciasFinales.length
-                        });
-
-                        if (sugerenciasFinales.length === 0 && textoNormalizado.length >= 2) {
-                            setMensajeNoResultados(`No se encontraron sugerencias para "${texto}"`);
-                        } else {
-                            setMensajeNoResultados("");
-                        }
+        const texto = query.trim();
+        
+        // Buscar sugerencias con debounce
+        debounceSugerenciasRef.current = setTimeout(async () => {
+            try {
+                const textoNormalizado = normalizarGoogle(texto, "sugerencias");
+                const sugerenciasFinales = await buscarSugerencias(textoNormalizado);
+                
+                if (query.trim() === texto) {
+                    setSugerencias(sugerenciasFinales);
+                    if (sugerenciasFinales.length === 0) {
+                        setMensajeNoResultados(`No se encontraron sugerencias para "${texto}"`);
+                    } else {
+                        setMensajeNoResultados("");
                     }
-                } catch (error) {
-                    console.error('❌ [SUGERENCIAS] Error:', error);
-                    setEstadoSugerencias("error");
-                    setSugerencias([]);
                 }
-            }, 200);
-        } else {
-            terminoBusquedaAnteriorSugerencias.current = texto;
-        }
+            } catch (error) {
+                console.error('❌ Error en sugerencias:', error);
+                setSugerencias([]);
+            }
+        }, 200);
 
         return () => {
             if (debounceSugerenciasRef.current) {
@@ -1244,123 +1184,11 @@ export default function BusquedaAutocompletado({
         };
     }, [query, inputFocused, buscarSugerencias]);
 
-    // 🔥 CORREGIDO: useEffect de resultados para manejar backend + local automáticamente
-    // 🔥 CORREGIDO: useEffect de resultados con la MISMA normalización que sugerencias
-    useEffect(() => {
-
-        if (busquedaEnCurso.current) {
-            console.log('🚫 [RESULTADOS-AUTO] Omitido, "Enter" tiene prioridad.');
-            return;
-        }
-
-        if (debounceResultadosRef.current) {
-            clearTimeout(debounceResultadosRef.current);
-        }
-
-        const texto = query.trim();
-        if (desactivarBusquedaAutomatica.current) {
-            console.log('⏸️ [RESULTADOS] Desactivada temporalmente');
-            return;
-        }
-
-
-        if (busquedaEnCurso.current) {
-            console.log('🚫 [RESULTADOS-AUTO] Omitido, búsqueda completa en curso.');
-            return;
-        }
-
-        // 🔥 NUEVO: Usar la MISMA normalización que en sugerencias
-        const textoNormalizado = normalizarGoogle(texto, "sugerencias");
-        const textoAnteriorNormalizado = normalizarGoogle(terminoBusquedaAnteriorResultados.current, "sugerencias");
-
-        
-
-        const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
-        const tieneTextoParaResultados = textoNormalizado.length >= 2;
-
-        console.log('🔍 [RESULTADOS] Comparación CORREGIDA:', {
-            textoOriginal: JSON.stringify(texto),
-            textoNormalizado: JSON.stringify(textoNormalizado),
-            textoSoloEspacios,
-            tieneTextoParaResultados,
-            busquedaEnCurso: busquedaEnCurso.current
-        });
-
-        // 🔥 MODIFICADO: Usar textoNormalizado para la búsqueda
-        if (!textoSoloEspacios &&
-            tieneTextoParaResultados &&
-            inputFocused &&
-            !busquedaEnCurso.current) {
-
-            console.log('🚀 [RESULTADOS] Programando búsqueda automática para:', textoNormalizado);
-
-            debounceResultadosRef.current = setTimeout(async () => {
-
-                if (busquedaEnCurso.current) {
-                    console.log('🚫 [RESULTADOS-AUTO] Cancelado, "Enter" se adelantó.');
-                    return; // NO HAGAS NADA
-                }
-
-                if (desactivarBusquedaAutomatica.current) {
-                    console.log('🚫 [RESULTADOS-AUTO] Cancelado, se desactivó la búsqueda.');
-                    return;
-                }
-
-                if (query.trim() === texto && !desactivarBusquedaAutomatica.current) {
-                    console.log('📊 [RESULTADOS] Ejecutando búsqueda automática');
-
-
-                    // 🔥 USAR LA MISMA FUNCIÓN QUE MANEJA BACKEND + LOCAL
-                    if (busquedaEnCurso.current) {
-                        console.log('⏸️ [RESULTADOS] Ya hay búsqueda en curso, omitiendo');
-                        return;
-                    }
-
-                    //busquedaEnCurso.current = true;
-                    //terminoBusquedaAnteriorResultados.current = texto;
-                    //setLoadingResultados(true);
-                    //setEstadoBusqueda("loading");
-                    console.log('📊 [RESULTADOS-AUTO] Ejecutando (llamando a función principal)');
-                    await ejecutarBusquedaCompleta(query.trim(), false, false, true);
-
-                }
-            }, 400);
-        } else {
-            terminoBusquedaAnteriorResultados.current = texto;
-        }
-
-        return () => {
-            if (debounceResultadosRef.current) {
-                clearTimeout(debounceResultadosRef.current);
-            }
-        };
-    }, [query, inputFocused, datos, onSearch, apiConfig?.endpoint, ejecutarBusquedaCompleta]);
-
     const manejarFocusInput = useCallback(async () => {
         setInputFocused(true);
-        const textoActual = query.trim();
-
-        if (textoActual.length >= 1) {
-            console.log('🖱️ [FOCUS] Cargando sugerencias para texto existente:', textoActual);
-            setEstadoSugerencias("loading");
-
-            try {
-                const sugerenciasBackend = await buscarSugerencias(textoActual);
-                setSugerencias(sugerenciasBackend);
-                setEstadoSugerencias(sugerenciasBackend.length > 0 ? "success" : "success");
-
-                if (sugerenciasBackend.length === 0) {
-                    setMensajeNoResultados(`No se encontraron sugerencias para "${textoActual}"`);
-                } else {
-                    setMensajeNoResultados("");
-                }
-            } catch (error) {
-                console.error('❌ Error cargando sugerencias al hacer focus:', error);
-                setEstadoSugerencias("error");
-                setMensajeNoResultados("");
-            }
-        }
-    }, [query, buscarSugerencias]);
+        // NO buscar sugerencias automáticamente al hacer focus
+        // Solo mostrar el historial si existe
+    }, []);
 
     // 🔥 MODIFICADO: Búsqueda manual - pierde focus
     const ejecutarBusqueda = useCallback(async () => {
@@ -1393,10 +1221,17 @@ export default function BusquedaAutocompletado({
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(true);
         setLoadingResultados(false);
+        setMostrarLoadingSugerencias(false);
         setMensajeNoResultados("");
         terminoBusquedaAnteriorSugerencias.current = "";
         terminoBusquedaAnteriorResultados.current = "";
         busquedaEnCurso.current = false;
+
+        // Limpiar timeout de loading
+        if (showLoadingTimeoutRef.current) {
+            clearTimeout(showLoadingTimeoutRef.current);
+            showLoadingTimeoutRef.current = null;
+        }
 
         desactivarBusquedaAutomatica.current = false;
 
@@ -1487,30 +1322,19 @@ export default function BusquedaAutocompletado({
 
         );
 
-        // 🔥 CONDICIÓN MEJORADA: Mantener panel abierto si el input está enfocado y hay texto
-        // NO cerrar solo porque está "idle" o vacío mientras el usuario está escribiendo
+        // ✅ Mostrar sugerencias solo si hay algo que mostrar
+        // NO mostrar mientras está cargando para evitar parpadeos
         const debeMostrarSugerencias = Boolean(
             inputFocused &&
             !esSoloEspacios &&
-            texto.length >= 1
-            // ✅ CAMBIO: Mantener abierto SIEMPRE que hay texto y foco, sin importar estadoSugerencias
+            texto.length >= 1 &&
+            !mostrarLoadingSugerencias  // No mostrar si está cargando
         );
-
-        console.log('👀 [VISIBILIDAD] Control de visibilidad:', {
-            inputFocused,
-            query,
-            textoLimpio: texto,
-            esSoloEspacios,
-            estadoSugerencias,
-            sugerenciasCount: sugerencias.length,
-            mensajeNoResultados,
-            debeMostrarSugerencias
-        });
 
         setMostrarHistorialLocal(debeMostrarHistorial);
         setMostrarSugerencias(debeMostrarSugerencias);
 
-    }, [query, inputFocused, historial, mostrarHistorial, estadoSugerencias, sugerencias, mensajeNoResultados, setMostrarHistorialLocal]);
+    }, [query, inputFocused, mostrarHistorial, mostrarLoadingSugerencias]);
     // Efecto para cerrar sugerencias al hacer click fuera
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -1631,14 +1455,6 @@ export default function BusquedaAutocompletado({
                     {tieneCaracteresProblema(query) && <span className="caracteres-invalidos"> - Caracteres especiales se ignoran</span>}
                 </div>
 
-                {/* Mostrar loading en área de resultados */}
-                {loadingResultados && (
-                    <div className="cargando">
-                        <div className="spinner"></div>
-                        <span>Buscando resultados...</span>
-                    </div>
-                )}
-
                 {/* ✅ HISTORIAL ✅ */}
                 {mostrarHistorialLocal && (
                     <ul className="caja-sugerencias" onMouseDown={(e) => {
@@ -1706,26 +1522,36 @@ export default function BusquedaAutocompletado({
 
                 {/* SUGERENCIAS */}
                 {mostrarSugerencias && (
-                    <>
-                        {/* Solo mostrar loader si la búsqueda dura más de 100ms para evitar flashing */}
-                        {estadoSugerencias === "loading" && (
-                            <div className="caja-sugerencias cargando">
+                    <ul 
+                        className="caja-sugerencias"
+                        onMouseDown={(e) => {
+                            e.preventDefault(); 
+                            if (blurTimeoutRef.current) {
+                                clearTimeout(blurTimeoutRef.current);
+                                blurTimeoutRef.current = null;
+                            }
+                        }}
+                    >
+                        <li className="sugerencias-header">
+                            Sugerencias
+                        </li>
+
+                        {mostrarLoadingSugerencias && (
+                            <li className="mensaje-sugerencia cargando">
                                 <div className="spinner"></div>
                                 Buscando sugerencias...
-                            </div>
+                            </li>
                         )}
 
-                        {estadoSugerencias !== "loading" && (
-                            <ul className="caja-sugerencias" onMouseDown={(e) => {
-                                e.preventDefault(); 
-                                if (blurTimeoutRef.current) {
-                                    clearTimeout(blurTimeoutRef.current);
-                                    blurTimeoutRef.current = null;
-                                }
-                            }}>
-                                <li className="sugerencias-header">
-                                    Sugerencias
-                                </li>
+                        {!mostrarLoadingSugerencias && estadoSugerencias === "error" && (
+                            <li className="mensaje-error">
+                                <Search className="icono-sugerencia" size={16} />
+                                {mensaje}
+                            </li>
+                        )}
+
+                        {!mostrarLoadingSugerencias && estadoSugerencias !== "error" && (
+                            <>
                                 {sugerencias.length > 0 ? (
                                     sugerencias.map((s, i) => (
                                         <li
@@ -1748,18 +1574,9 @@ export default function BusquedaAutocompletado({
                                         Sin sugerencias
                                     </li>
                                 )}
-                            </ul>
+                            </>
                         )}
-
-                        {estadoSugerencias === "error" && mensaje && (
-                            <ul className="caja-sugerencias">
-                                <li className="mensaje-error">
-                                    <Search className="icono-sugerencia" size={16} />
-                                    {mensaje}
-                                </li>
-                            </ul>
-                        )}
-                    </>
+                    </ul>
                 )}
             </div>
         </div>
