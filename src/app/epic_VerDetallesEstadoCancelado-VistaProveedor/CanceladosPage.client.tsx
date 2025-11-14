@@ -58,7 +58,7 @@ export default function CanceladosPageClient() {
     // ✅ CORRECCIÓN DE DISEÑO:
     // 'items-start': Alinea el contenido arriba en lugar de al centro.
     // 'pt-24': Agrega espacio superior (padding-top) para que no se pegue al borde.
-    <div className="min-h-screen w-full flex items-start justify-center bg-white px-4 sm:px-6 md:px-10 pt-24 pb-10">
+    <div className="min-h-screen w-full flex items-start justify-center bg-white px-4 sm:px-6 md:px-10 pt-4 pb-10">
       
       <div className="w-full max-w-3xl flex flex-col items-center justify-center bg-white p-4 sm:p-6 md:p-8">
         <DetalleCanceladoCliente data={data ?? fallback} />
