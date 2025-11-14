@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-// Importamos el tipo desde el archivo central 'types'
 import { TransactionItemProps } from "../types";
 
 export default function TransactionItem({ transaction }: TransactionItemProps) {
-  // --- 1. LÓGICA DE EXPANSIÓN (ACORDEÓN) ---
   const [isOpen, setIsOpen] = useState(false);
 
   const esCredito = transaction.type === "credito";
@@ -15,8 +13,7 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
   const signo = esCredito ? "+" : ""; 
 
   return (
-    // --- 2. LI HECHO CLICKEABLE ---
-    // Se añade 'onClick', 'cursor-pointer' y transiciones
+
     <li 
       className="p-4 bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-200 ease-in-out cursor-pointer hover:bg-gray-50"
       onClick={() => setIsOpen(!isOpen)}

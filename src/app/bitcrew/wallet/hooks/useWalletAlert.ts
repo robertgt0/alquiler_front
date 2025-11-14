@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getWalletStatus } from "../services/walletService";
+import { getWalletStatus } from "../service/walletService";
 
 export const useWalletAlert = (usuario: string) => {
   const [saldo, setSaldo] = useState<number | null>(null);
