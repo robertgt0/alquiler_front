@@ -2,8 +2,26 @@
 
 import { Delete } from "lucide-react";
 import { UsuarioDocument } from "../../registro/interfaces/types";
+
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL??"http://localhost:5000 " ;
 
+function cerrarSesion(){
+    localStorage.removeItem("authToken");
+  sessionStorage.clear();
+
+  const eventLogout = new CustomEvent("logout-exitoso");
+  window.dispatchEvent(eventLogout);
+
+  // Mensaje específico
+  alert(
+    "Algún usuario cerró tu sesión en otros dispositivos. " +
+    "Por eso no se pudo realizar la acción que estabas intentando. " +
+    "Vuelve a iniciar sesión."
+  );
+
+  // Redirigir al login
+  window.location.href = "/login";
+}
 export async function crearUsuario(usuario: UsuarioDocument) {
   const res = await fetch(`${API_URL}/api/teamsys/usuario`, {
     method: "POST",
@@ -45,15 +63,22 @@ export async function loginUsuario(correoElectronico: string, password: string) 
   return data;
 }
 
-export async function cambiarTelefono(telefono:string, id:string) {
-        const res= await fetch(`${API_URL}/api/teamsys/usuario/telefono/${id}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: `{"telefono":"${telefono}"}`
-        });
-        return res.json();
-      }
-
+export async function cambiarTelefono(telefono: string, id: string) {
+  const token = sessionStorage.getItem("authToken") || '';
+  const res = await fetch(`${API_URL}/api/teamsys/usuario/telefono/${id}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: `{"telefono":"${telefono}"}`
+  });
+  if (res.status === 401) {
+    cerrarSesion();
+    return; // Evita continuar si no está autorizado
+  }
+  return res.json();
+}
 
 
 export async function solicitarEnlaceAcceso(email: string) {
@@ -96,9 +121,18 @@ export async function solicitarEnlaceAcceso(email: string) {
  */
 
 export async function obtenerMetodoAutenticacion(usuario: string) {
-    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
+  const token = sessionStorage.getItem("authToken") || '';
+  const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
     method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    }
   });
+  if (res.status === 401) {
+    cerrarSesion()
+    return;
+  }
   console.log("Respuesta del servidor:", res.body);
   if (!res.ok) throw new Error("datos Incorrectos");
   return res.json();
@@ -112,7 +146,10 @@ export async function setupTwoFactor(token: string) {
     },
     body: JSON.stringify({}) 
   });
-
+  if (res.status === 401) {
+    cerrarSesion();
+    return;
+  }
   const data = await res.json();
 
   if (!res.ok) {
@@ -130,7 +167,10 @@ export async function verifyTwoFactor(token: string, secret: string, code: strin
     },
     body: JSON.stringify({ token: code,secret }),
   });
-
+  if (res.status === 401) {
+    cerrarSesion();
+    return;
+  }
   const data = await res.json();
 
   if (!res.ok) {
@@ -166,7 +206,10 @@ export async function desactivar2FA(codigo: string, userToken: string) {
       },
       body: JSON.stringify({ token: codigo }) // Código 2FA en body
     });
-
+    if (response.status === 401) {
+    cerrarSesion();
+    return;
+  }
    return response.json()
 }
       
@@ -183,33 +226,56 @@ export function getAccessToken(): string | null {
 async function safeJson(res: Response) {
   try { return await res.json(); } catch { return null; }
 }
-export async function agregarAutenticacion(usuario:string,provider:string,password:string) {
-  if(provider=='local'){
-  const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: `{"provider":"${provider}","password":"${password}"}`
-  });
-  //console.log("Respuesta del servidor:", res.body);
-  return res.json();
-  }else{
+export async function agregarAutenticacion(usuario: string, provider: string, password: string) {
+  const token = sessionStorage.getItem("authToken") || '';
+  if (provider == 'local') {
     const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: `{"provider":"${provider}","email":"${password}"}`
-  });
-  //console.log("Respuesta del servidor:", res.body);
-  return res.json();
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: `{"provider":"${provider}","password":"${password}"}`
+    });
+    //console.log("Respuesta del servidor:", res.body);
+    if (res.status === 401) {
+    cerrarSesion();
+    return;
+  }
+    return res.json();
+  } else {
+    const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: `{"provider":"${provider}","email":"${password}"}`
+    });
+    //console.log("Respuesta del servidor:", res.body);
+    if (res.status === 401) {
+      cerrarSesion()
+      return;
+    }
+    return res.json();
   }
 }
 
-export async function eliminarAutenticacion(usuario:string,provider:string) {
+export async function eliminarAutenticacion(usuario: string, provider: string) {
+  const token = sessionStorage.getItem("authToken") || '';
   const res = await fetch(`${API_URL}/api/teamsys/auth-Method/${usuario}`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
     body: `{"provider":"${provider}"}`
   });
   //console.log("Respuesta del servidor:", res.body);
+  if (res.status === 401) {
+    cerrarSesion()
+    return;
+  }
   return res.json();
 }
 /* ============================
@@ -219,7 +285,7 @@ export async function cambiarContrasenaHU3(payload: {
   actual: string;
   nueva: string;
   confirmacion: string;
-}): Promise<{ ok: boolean; message: string }> {
+}): Promise<{ ok: boolean; message: string }>  {
   // usar tu lector de token (sin tocarlo)
   const token = getAccessToken();
   if (!token) return { ok: false, message: "No hay sesión activa." };
@@ -238,6 +304,15 @@ export async function cambiarContrasenaHU3(payload: {
         "confirmacionContraseña": payload.confirmacion,
       }),
     });
+    if (res.status === 401) {
+    cerrarSesion();
+    return {
+    ok: false,
+    message:
+      "Algún usuario cerró tu sesión en otros dispositivos. " +
+      "Por eso no se pudo realizar la acción.",
+  };
+  }
 
     const data = await safeJson(res);
 
@@ -259,6 +334,7 @@ export async function cambiarContrasenaHU3(payload: {
 // actualizar ubicacion
 export async function actualizarUbicacionBack(id: string, lat: string, long: string) {
   // Convertir strings a número (acepta coma)
+  const token = sessionStorage.getItem("authToken") || '';
   const latNum = parseFloat(lat.replace(",", "."));
   const longNum = parseFloat(long.replace(",", "."));
 
@@ -284,10 +360,15 @@ export async function actualizarUbicacionBack(id: string, lat: string, long: str
   const res = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
     },
     body: JSON.stringify(body)
   });
+  if (res.status === 401) {
+    cerrarSesion();
+    return;
+  }
 
   const data = await res.json().catch(() => ({}));
 
@@ -331,6 +412,15 @@ export async function cerrarSesionesRemotas(
         Authorization: `Bearer ${accessToken}`,
       },
     });
+    if (res.status === 401) {
+    cerrarSesion();
+    return {
+    ok: false,
+    message:
+      "Algún usuario cerró tu sesión en otros dispositivos. " +
+      "Por eso no se pudo realizar la acción.",
+  };
+  }
 
     let data: any = null;
     try {
@@ -370,6 +460,10 @@ export async function obtenerPerfilActual(accessToken: string) {
       "Content-Type": "application/json",
     },
   });
+  if (res.status === 401) {
+    cerrarSesion();
+    return;
+  }
 
   const json = await res.json().catch(() => ({}));
 
