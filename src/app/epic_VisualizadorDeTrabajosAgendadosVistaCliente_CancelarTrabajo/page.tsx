@@ -114,6 +114,7 @@ useEffect(() => {
         )}
 
         <BotonesAccion
+          trabajoId={trabajo.id}
           estadoTrabajo={trabajo.estado}
           onAtras={handleVolverAtras}
           onCancelar={abrirModal}
