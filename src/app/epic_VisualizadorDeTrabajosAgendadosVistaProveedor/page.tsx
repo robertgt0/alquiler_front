@@ -148,8 +148,20 @@ export default function TrabajosAgendadosPage() {
                 router.push(`/trabajo-terminado/${encodeURIComponent(job.id)}?from=${from}`);
                 break;
               }
-              case 'confirmed': {
-                router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+              case 'confirmed':  {
+                const parametro= new URLSearchParams({
+                  id: job.id,
+                  cliente: job.clientName ?? '',
+                  date: fechaISO,
+                  inicio: inicioHHMM,
+                  fin: finHHMM,
+                  servicio: job.service ?? '',
+                  estado: status,
+                  costo: job.costo !== undefined ? String(job.costo) : '',
+                  descripcion: job.description ?? '',
+                  from,
+                });
+                router.push(`/epic_VisualizadorDeTrabajosAgendadosVistaProveedor_CancelarTrabajo?${parametro.toString()}`);
                 break;
               }
               //aqui rediriges a tu ventana de cancelado
