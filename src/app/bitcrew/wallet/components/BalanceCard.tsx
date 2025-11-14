@@ -1,10 +1,7 @@
 import React from "react";
-// Importamos los tipos y los iconos
 import { BalanceCardProps } from "../types";
-// Importamos los iconos (con .tsx)
 import { EyeIcon, EyeSlashIcon, RefreshIcon } from "./WalletIcons";
 
-// 3. RECIBIMOS 'walletId' en las props
 export default function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSaldo, onRefresh, loading, walletId }: BalanceCardProps) {
   
   const saldoFormateado = (saldo || 0).toLocaleString("es-BO", {
@@ -12,8 +9,6 @@ export default function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSald
     maximumFractionDigits: 2,
   });
 
-  // 3.1 NUEVA LÓGICA: Calculamos los 4 dígitos
-  // Obtenemos los últimos 4 caracteres del ID, o "XXXX" si no está
   const lastFour = walletId ? walletId.slice(-4).toUpperCase() : "XXXX";
 
   return (
@@ -35,7 +30,7 @@ export default function BalanceCard({ saldo, moneda, showSaldo, onToggleShowSald
         {showSaldo ? <span>Bs. {saldoFormateado}</span> : <span>Bs. ****,**</span>}
       </div>
 
-      {/* 3.2 MODIFICACIÓN FINAL: Reemplazamos "4829" con la variable */}
+      {/* MODIFICACIÓN FINAL: Reemplazamos "4829" con la variable */}
       <div className="mt-4 flex items-center space-x-2 text-sm">
         <span className="font-mono text-blue-100">**** {lastFour}</span>
         <span className="bg-green-500/30 text-green-100 text-xs font-semibold px-2 py-0.5 rounded-full">

@@ -3,7 +3,7 @@
 import React, { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useWallet } from "./hooks/useWallet";
-import WalletAlert from "./components/walletAlert"; // Respetando el nombre de tu archivo original
+import WalletAlert from "./components/walletAlert";
 import BalanceCard from "./components/BalanceCard";
 import TransactionList from "./components/TransactionList";
 
@@ -12,10 +12,8 @@ function WalletLogic() {
   const searchParams = useSearchParams();
   const usuario = searchParams.get("usuario");
 
-  // Invocamos la lógica que movimos al hook
   const { balanceData, transactions, loading, error, reload } = useWallet(usuario);
   
-  // Estado local de UI
   const [showSaldo, setShowSaldo] = useState(true);
 
   return (
