@@ -74,6 +74,7 @@ export type FixersByCategoryDTO = {
 export type UpdateCategoriesPayload = {
   categories: string[];
   skills?: FixerSkillDTO[];
+  bio?: string; // ✅ BUG 1.1.1 FIX: Agregar campo bio
 };
 
 export async function checkCI(ci: string, excludeId?: string) {
@@ -143,7 +144,7 @@ export async function updateCategories(id: string, payload: UpdateCategoriesPayl
   return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}/categories`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(payload), // ✅ Esto ya enviará bio si está en el payload
   });
 }
 
