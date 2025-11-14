@@ -1,4 +1,5 @@
 export const STORAGE_KEYS = {
+  userId: "FIXER_USER_ID",
   fixerId: "FIXER_ID",
   ci: "FIXER_CI",
   location: "FIXER_LOCATION",
