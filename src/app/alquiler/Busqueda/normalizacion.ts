@@ -39,7 +39,8 @@ export const normalizarGoogle = (
 
         if (tieneCaracteresProblema) {
             console.log('❌ [GOOGLE-BUSQUEDA] Caracteres problemáticos detectados');
-            throw new Error('CARACTERES_PROBLEMA');
+            // 🔥 CAMBIAR: En lugar de lanzar error, devolver cadena vacía
+            return '[INVALID]'; // 🔥 Texto constante que rompe el ciclo
         }
     }
 

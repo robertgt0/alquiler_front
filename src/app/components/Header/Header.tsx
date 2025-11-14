@@ -170,11 +170,12 @@ export default function Header() {
           </svg>
         </button>
 
-        {/* Componente de Búsqueda (¡el tuyo!) */}
+        {/* Componente de Búsqueda */}
         <div className="flex-1">
           <BusquedaAutocompletado
             onSearch={handleHeaderSearch} 
             datos={allJobs} 
+            mostrarHistorial={true}
             placeholder="Buscar en Servineo..."
             valorInicial="" 
             autoFocus={true} 

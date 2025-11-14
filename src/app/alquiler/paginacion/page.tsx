@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import JobCard from "./components/jobCard";
 import UserProfileCard from "./components/UserProfileCard";
@@ -8,38 +8,71 @@ import Pagination from "./components/Pagination";
 import { getJobs } from "./services/jobService";
 import { usePagination } from "./hooks/usePagination";
 import { Job } from "../../../types/job";
-import BusquedaAutocompletado from "../Busqueda/busquedaAutocompletado";
+// import BusquedaAutocompletado from "../Busqueda/busquedaAutocompletado"; 
 import FiltrosForm from "../Feature/Componentes/FiltroForm";
 import { UsuarioResumen } from "../Feature/Types/filtroType";
 import BusquedaAvanzada from "../BusquedaAvanzada/BusquedaAvanzada";
-import { filtrarTrabajosAvanzado, FiltrosJob } from "./services/jobFiltering";
 
-// Componente de fallback simple
-const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-100">
-    <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-    <p className="ml-4 text-lg text-gray-600">Cargando...</p>
-  </div>
-);
+// Componente de carga
+function LoadingFallback() {
+  return (
+    <div className="flex justify-center items-center p-8 min-h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span className="ml-2 text-gray-600">Cargando búsqueda...</span>
+    </div>
+  );
+}
 
 // Componente principal
 function BusquedaContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Estados iniciales del URL
   const urlQuery = searchParams.get("q") || "";
-  // Utilizamos `useMemo` para obtener el `urlPage` y evitar problemas de renderizado
-  const urlPage = useMemo(() => searchParams.get("page"), [searchParams]);
-  // const urlSort = searchParams.get("sort"); // no usado en el código
+  const urlPage = searchParams.get("page");
+  const urlSort = searchParams.get("sort");
+
+  // Función para capitalizar cada palabra (Title Case)
+  function capitalize(texto: string) {
+    if (!texto) return "";
+    return texto
+      .toString()
+      .trim()
+      .replace(/\s+/g, ' ')
+      .split(' ')
+      .map((w) => (w.length === 0 ? '' : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
+      .join(' ');
+  }
 
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [searchResults, setSearchResults] = useState<Job[]>([]);
-  const [searchTerm, setSearchTerm] = useState(urlQuery);
+  const [searchTerm, setSearchTerm] = useState(capitalize(urlQuery));
   const [isLoading, setIsLoading] = useState(true);
-  const [buscando, setBuscando] = useState(false);
+  const [buscando, setBuscando] = useState(false); // Para la búsqueda manual (ya no se usa tanto)
   const [estadoBusqueda, setEstadoBusqueda] = useState<"idle" | "success" | "error">("idle");
   const [errorCaracteres, setErrorCaracteres] = useState<string>("");
+  const [hasLoadedJobs, setHasLoadedJobs] = useState(false); // ¡IMPORTANTE!
+
+  // Efecto para manejar la página desde URL o sessionStorage
+  useEffect(() => {
+    const currentParams = new URLSearchParams(window.location.search);
+
+    if (urlPage) {
+      const pageNum = parseInt(urlPage, 10);
+      if (isNaN(pageNum) || pageNum < 1) {
+        currentParams.set('page', '1');
+        router.replace(`?${currentParams.toString()}`, { scroll: false });
+      }
+    } else if (sessionStorage.getItem('lastPage')) {
+      const lastPage = sessionStorage.getItem('lastPage');
+      currentParams.set('page', lastPage || '1');
+      router.replace(`?${currentParams.toString()}`, { scroll: false });
+    }
+
+    if (urlPage) {
+      sessionStorage.setItem('lastPage', urlPage);
+    }
+  }, [urlPage, router]);
 
   const [sortBy, setSortBy] = useState("Fecha (Reciente)");
   const [usuariosFiltrados, setUsuariosFiltrados] = useState<UsuarioResumen[]>([]);
@@ -47,18 +80,7 @@ function BusquedaContent() {
   const [modoVista, setModoVista] = useState<ModoVista>("jobs");
   const [filtersNoResults, setFiltersNoResults] = useState(false);
   const [filtrosAplicados, setFiltrosAplicados] = useState(false);
-  // const latestSearchIdRef = useRef(0); // No usado, se eliminó
   const itemsPerPage = 10;
-  const [busquedaAvanzadaAbierta, setBusquedaAvanzadaAbierta] = useState(false);
-
-  // NUEVO: Estado para los filtros de trabajos (desde FiltrosForm)
-  const [filtrosTrabajos, setFiltrosTrabajos] = useState<FiltrosJob>({
-    ciudad: "",
-    disponibilidad: "",
-    tipoEspecialidad: "",
-  });
-
-  // --- Funciones de utilidad ---
 
   const opcionesOrdenamiento = [
     "Fecha (Reciente)",
@@ -77,7 +99,6 @@ function BusquedaContent() {
         sorted.sort((a, b) => (b.company || "").localeCompare(a.company || ""));
         break;
       case "Fecha (Reciente)":
-        // Asegurar que postedDate es una cadena o número válido para new Date
         sorted.sort(
           (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
         );
@@ -85,14 +106,190 @@ function BusquedaContent() {
       case "Mayor Calificación (⭐)":
         sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
-      default:
-        // Evitar un caso default vacío, usar el caso más común
-        sorted.sort(
-          (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
-        );
     }
     return sorted;
   };
+
+  //  Función para normalizar texto
+  const normalizar = (texto: string) =>
+    texto.toLowerCase().normalize("NFD").replace(/[\u0000-\u036f]/g, "");
+
+  
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        setIsLoading(true);
+        const jobs = await getJobs();
+        setAllJobs(jobs);
+        setHasLoadedJobs(true); // ¡Importante! Marcamos que ya cargaron
+      } catch (error) {
+        console.error("Error cargando trabajos:", error);
+        setAllJobs([]);
+        setHasLoadedJobs(true); // Marcar como cargado incluso si hay error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadJobs();
+  }, []); // El array vacío [] asegura que SOLO se ejecute una vez
+
+  
+  const performSearch = (termino: string, baseData: Job[] = allJobs) => {
+    if (termino.trim() === "") {
+      setSearchResults(baseData);
+      return;
+    }
+
+    
+    const normalizarBusqueda = (texto: string) => {
+      return texto
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[´'"]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+    };
+
+    const queryNormalizado = normalizarBusqueda(termino);
+    const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
+
+    if (tokens.length === 0) {
+      setSearchResults([]);
+      return;
+    }
+    
+    // Algoritmo de búsqueda local (debe coincidir con el de BusquedaAutocompletado)
+    const resultados = baseData.filter(job => {
+        const tituloNormalizado = job.title ? normalizarBusqueda(job.title) : "";
+        const empresaNormalizada = job.company ? normalizarBusqueda(job.company) : "";
+        const serviciosNormalizados = job.service ? normalizarBusqueda(job.service) : "";
+
+        const campos = [tituloNormalizado, empresaNormalizada, serviciosNormalizados];
+
+        // Verificar que TODOS los tokens aparezcan en ORDEN en algún campo
+        return campos.some(campoTexto => {
+            if (!campoTexto) return false;
+
+            let posicionActual = 0;
+            let todosLosTokensEnOrden = true;
+
+            for (const token of tokens) {
+                const posicionToken = campoTexto.indexOf(token, posicionActual);
+                if (posicionToken === -1) {
+                    todosLosTokensEnOrden = false;
+                    break;
+                }
+                posicionActual = posicionToken + token.length;
+            }
+            return todosLosTokensEnOrden;
+        });
+    });
+
+    setSearchResults(resultados);
+    // Esta función ya no retorna nada, solo actualiza el estado
+  };
+
+
+  useEffect(() => {
+    // No hacer nada si los trabajos iniciales aún no han cargado
+    if (!hasLoadedJobs) {
+      return;
+    }
+
+    // Sincronizar el término de búsqueda con la URL
+    setSearchTerm(capitalize(urlQuery));
+    
+    // Activar/desactivar estado de carga visual
+    if (urlQuery.trim() !== "") {
+      setIsLoading(true); // Muestra "cargando" mientras filtra
+      setEstadoBusqueda("success"); // Asumimos éxito, performSearch filtra
+      console.log("🔍 [Effect URL] Buscando trabajos basado en URL:", urlQuery);
+      performSearch(urlQuery, allJobs); // performSearch actualiza setSearchResults
+    } else {
+      // Si la URL está limpia, mostrar todos los trabajos
+      console.log("🔍 [Effect URL] URL limpia, mostrando todos los trabajos.");
+      setSearchResults(allJobs);
+      setEstadoBusqueda("idle");
+    }
+    
+    setIsLoading(false); // Quita "cargando"
+
+  }, [urlQuery, hasLoadedJobs, allJobs]); // ⬅️ ¡ESTA ES LA CLAVE!
+
+
+
+  const handleAdvancedFilters = (filtros: any) => {
+    console.log(" Filtros aplicados:", filtros);
+
+    let baseData = allJobs;
+
+    // Aplicar filtros avanzados
+    let filtrados = baseData.filter((job) => {
+      let match = true;
+
+      if (filtros.tipoServicio)
+        match &&= job.title.toLowerCase().includes(filtros.tipoServicio.toLowerCase());
+      if (filtros.zona)
+        match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
+      if (filtros.precioMin || filtros.precioMax) {
+        const precioNum = Number(job.salaryRange.replace(/[^0-9.-]+/g, ""));
+        if (filtros.precioMin) match &&= precioNum >= filtros.precioMin;
+        if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
+      }
+      if (filtros.horario)
+        match &&= job.employmentType.toLowerCase() === filtros.horario.toLowerCase();
+
+      return match;
+    });
+
+
+    if (urlQuery.trim() !== "") {
+      const normalizarBusqueda = (texto: string) => {
+        return texto
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[´'"]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase();
+      };
+      const queryNormalizado = normalizarBusqueda(urlQuery);
+      const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
+
+      if (tokens.length > 0) {
+        filtrados = filtrados.filter(job => {
+            const tituloNormalizado = job.title ? normalizarBusqueda(job.title) : "";
+            const empresaNormalizada = job.company ? normalizarBusqueda(job.company) : "";
+            const serviciosNormalizados = job.service ? normalizarBusqueda(job.service) : "";
+            const campos = [tituloNormalizado, empresaNormalizada, serviciosNormalizados];
+
+            return campos.some(campoTexto => {
+                if (!campoTexto) return false;
+                let posicionActual = 0;
+                let todosLosTokensEnOrden = true;
+                for (const token of tokens) {
+                    const posicionToken = campoTexto.indexOf(token, posicionActual);
+                    if (posicionToken === -1) {
+                        todosLosTokensEnOrden = false;
+                        break;
+                    }
+                    posicionActual = posicionToken + token.length;
+                }
+                return todosLosTokensEnOrden;
+            });
+        });
+      }
+    }
+
+    setFiltrosAplicados(true);
+    setSearchResults(filtrados);
+    setModoVista("jobs");
+    setFiltersNoResults(filtrados.length === 0);
+  };
+
+  const [busquedaAvanzadaAbierta, setBusquedaAvanzadaAbierta] = useState(false);
+
   const ordenarUsuarios = (opcion: string, lista: UsuarioResumen[]) => {
     const sorted = [...lista];
     switch (opcion) {
@@ -105,162 +302,21 @@ function BusquedaContent() {
       case "Mayor Calificación (⭐)":
         sorted.sort((a, b) => (b.calificacion ?? 0) - (a.calificacion ?? 0));
         break;
-      default:
-        // Mantener el orden actual si la opción no está definida para usuarios
-        return lista;
     }
     return sorted;
   };
 
-  const actualizarURL = (term: string, page?: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    // Si se proporciona el término, actualiza 'q'
-    if (term.trim()) {
-      params.set('q', term.trim());
-    } else {
-      params.delete('q');
-    }
-
-    // Si se proporciona la página, actualiza 'page', sino la elimina
-    if (page && page > 1) {
-      params.set('page', String(page));
-    } else {
-      params.delete('page');
-    }
-
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    router.push(newUrl, { scroll: false });
-  };
-
-  // --- Efectos de Estado ---
-
-  // Efecto para cargar los trabajos (una sola vez)
-  useEffect(() => {
-    const loadJobs = async () => {
-      try {
-        setIsLoading(true);
-        const jobs = await getJobs();
-        setAllJobs(jobs);
-        setSearchResults(jobs); // Inicializa searchResults con todos los trabajos
-      } catch (error) {
-        console.error("Error cargando trabajos:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadJobs();
-  }, []);
-
-  // Efecto para manejar la paginación y el término de búsqueda inicial del URL
-  useEffect(() => {
-    const currentParams = new URLSearchParams(window.location.search);
-    let currentPage = 1;
-
-    // 1. Manejo de la página del URL y sessionStorage
-    if (urlPage) {
-      const pageNum = parseInt(urlPage, 10);
-      if (isNaN(pageNum) || pageNum < 1) {
-        // Corrección: Si es inválido, forzar la página 1 y actualizar el URL
-        currentParams.set('page', '1');
-        currentPage = 1;
-        router.replace(`?${currentParams.toString()}`, { scroll: false });
-      } else {
-        currentPage = pageNum;
-        sessionStorage.setItem('lastPage', urlPage);
-      }
-    } else if (sessionStorage.getItem('lastPage')) {
-      // Corrección: Leer de sessionStorage solo si no hay 'page' en URL
-      const lastPage = sessionStorage.getItem('lastPage');
-      const pageNum = parseInt(lastPage || '1', 10);
-      if (pageNum > 1) {
-        currentParams.set('page', lastPage || '1');
-        currentPage = pageNum;
-        router.replace(`?${currentParams.toString()}`, { scroll: false });
-      }
-    }
-
-    // 2. Aplicar el término de búsqueda inicial del URL si existe
-    if (urlQuery && allJobs.length > 0 && !filtrosAplicados) {
-      handleSearchResults(urlQuery, allJobs, false); // No actualiza el URL, solo el estado
-    }
-
-    // 3. Forzar la página si es necesario (manejar el hook de paginación)
-    if (currentPage > 1) {
-      // Se necesita una forma de comunicar la página inicial al hook usePagination
-      // Esto se manejará en el hook usePagination o en el estado local de la paginación.
-      // Por ahora, el hook de paginación manejará su propia inicialización basada en los items
-    }
-
-    // Nota: El ordenamiento podría inicializarse aquí si urlSort estuviera en uso
-
-  }, [urlQuery, allJobs, filtrosAplicados, router, urlPage]); // Dependencias importantes
-
-  // --- Lógica de Filtrado y Ordenamiento ---
-
-  // Función de búsqueda y normalización de texto
-  const normalizarBusqueda = (lista: Job[], term: string) => {
-    if (!term || !term.trim()) return lista;
-
-    const normalizar = (texto: string) =>
-      texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const palabras = normalizar(term).split(/\s+/).filter(Boolean);
-
-    return lista.filter((job) => {
-      const title = normalizar(job.title || "");
-      const company = normalizar(job.company || "");
-      const servicio = normalizar(job.service || "");
-
-      // La búsqueda debe pasar por TODAS las palabras si están separadas por espacios
-      return palabras.every(
-        (palabra) =>
-          title.includes(palabra) ||
-          company.includes(palabra) ||
-          servicio.includes(palabra)
-      );
-    });
-  };
-
-  // Jobs para mostrar (Lógica centralizada de búsqueda y ordenamiento)
   const jobsToDisplay = useMemo(() => {
-    let data = [...allJobs]; // Usar una copia
-
-    // 1. Aplicar filtros de trabajos (ciudad, disponibilidad, especialidad)
-    const tieneFiltrActivos = Object.values(filtrosTrabajos).some(v => v && String(v).trim() !== "");
-    if (tieneFiltrActivos) {
-      console.log("🔍 Aplicando filtros de trabajos:", filtrosTrabajos);
-      data = filtrarTrabajosAvanzado(data, filtrosTrabajos);
-    }
-
-    // 2. Filtrar por búsqueda avanzada (solo si se aplicaron filtros avanzados)
-    if (filtrosAplicados && modoVista === 'jobs') {
-      data = searchResults; // searchResults tiene los resultados de filtros avanzados
-    }
-    // 3. Filtrar por búsqueda de texto (solo si no se está aplicando un filtro avanzado y hay un término)
-    else if (searchTerm && searchTerm.trim()) {
-      data = normalizarBusqueda(data, searchTerm);
-    }
-
-    // 4. Ordenar
+    // SIEMPRE trabajar sobre searchResults
+    let data = searchResults;
     return ordenarItems(sortBy, data);
+  }, [searchResults, sortBy]);
 
-  }, [searchResults, allJobs, sortBy, searchTerm, filtrosAplicados, modoVista, filtrosTrabajos]);
-
-  // Usuarios ordenados
   const usuariosOrdenados = useMemo(
     () => ordenarUsuarios(sortBy, usuariosFiltrados),
     [sortBy, usuariosFiltrados]
   );
 
-  // --- Hook de Paginación ---
-
-  // Ajuste: El hook de paginación necesita saber la página inicial
-  const initialPage = useMemo(() => {
-    const pageNum = parseInt(urlPage || '1', 10);
-    return isNaN(pageNum) || pageNum < 1 ? 1 : pageNum;
-  }, [urlPage]);
-
-  // Uso del hook de paginación
   const {
     currentPage,
     totalPages,
@@ -269,238 +325,108 @@ function BusquedaContent() {
     handleNextPage,
     handlePrevPage,
     totalItems,
+    startIndex,
+    endIndex,
   } = usePagination(jobsToDisplay, itemsPerPage);
 
-  // Efecto para actualizar la URL con el número de página después de la paginación
-  useEffect(() => {
-    // Solo actualiza si la página actual no es la inicial del URL
-    if (currentPage !== initialPage) {
-      actualizarURL(searchTerm, currentPage);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]); // Solo depende de currentPage para evitar bucles.
-
-
-
-  // --- Handlers ---
-
-  const handleAdvancedFilters = (filtros: any) => {
-    console.log(" Filtros aplicados:", filtros);
-
-    const filtrados = allJobs.filter((job: Job) => {
-      let match = true;
-
-      // Tipo de servicio
-      if (filtros.tipoServicio) {
-        match &&=
-          job.title?.toLowerCase().includes(filtros.tipoServicio.toLowerCase()) ||
-          job.service?.toLowerCase().includes(filtros.tipoServicio.toLowerCase());
-      }
-
-      // Zona
-      if (filtros.zona) {
-        match &&= job.location?.toLowerCase().includes(filtros.zona.toLowerCase());
-      }
-
-      // Precio (rango salarial)
-      if (filtros.precioMin || filtros.precioMax) {
-        const salaryRangeText = job.salaryRange || "0";
-        const numeros = salaryRangeText.match(/\d+(\.\d+)?/g) || ["0"];
-        const precioNum = parseFloat(numeros[0]);
-
-        if (filtros.precioMin) match &&= precioNum >= filtros.precioMin;
-        if (filtros.precioMax) match &&= precioNum <= filtros.precioMax;
-      }
-
-      // Horario o tipo de empleo
-      if (filtros.horario) {
-        match &&= job.employmentType?.toLowerCase() === filtros.horario.toLowerCase();
-      }
-
-      // Disponibilidad (si existe en tus datos, ej. "Full time" o "Part time")
-      if (filtros.disponibilidad) {
-        match &&= job.employmentType?.toLowerCase().includes(
-          filtros.disponibilidad.toLowerCase()
-        );
-      }
-
-      // Experiencia (asumiendo que existe campo `experienceYears` o similar)
-      if (filtros.experiencia) {
-        const experienciaNum = parseInt((job as any).experienceYears || "0", 10);
-        match &&= experienciaNum >= parseInt(filtros.experiencia, 10);
-      }
-
-      // Fecha (asumiendo que el filtro tiene un rango o una fecha mínima)
-      if (filtros.fechaDesde || filtros.fechaHasta) {
-        const fechaJob = new Date(job.postedDate);
-        if (filtros.fechaDesde) {
-          const fechaMin = new Date(filtros.fechaDesde);
-          match &&= fechaJob >= fechaMin;
-        }
-        if (filtros.fechaHasta) {
-          const fechaMax = new Date(filtros.fechaHasta);
-          match &&= fechaJob <= fechaMax;
-        }
-      }
-
-      return match;
-    });
-
-    setFiltrosAplicados(true);
-    setSearchResults(filtrados);
-    setModoVista("jobs");
-    setFiltersNoResults(filtrados.length === 0);
-    handlePageChange(1);
+  const handleViewDetails = (id: string | number) => {
+    router.push(`/alquiler/${id}`);
   };
 
+ 
 
-  const handleSearchResults = useCallback(
-    (
-      termino: string,
-      _resultados: Job[],
-      maybeIdOrActualizar?: number | boolean
-    ) => {
-      // *Error Corregido: La validación de caracteres especiales debe hacerse aquí
-      const tieneCaracteresProblema = /[@#$%^&*_+=[\]{}|\\<>]/.test(termino);
-
-      setBuscando(true);
-      setEstadoBusqueda("idle");
-      setErrorCaracteres("");
-
-      let actualizarUrl = true;
-      if (typeof maybeIdOrActualizar === "boolean") {
-        actualizarUrl = maybeIdOrActualizar;
-      }
-
-      try {
-        if (tieneCaracteresProblema) {
-          setErrorCaracteres(`No se pueden realizar búsquedas con caracteres especiales como @, #, $, etc. en "${termino}"`);
-          setEstadoBusqueda("error");
-          setSearchResults([]); // Limpiar resultados para mostrar el error
-          setSearchTerm(termino);
-          handlePageChange(1);
-        } else {
-          // *Corrección: La lógica del filtro de texto se maneja en `jobsToDisplay`
-          setSearchTerm(termino);
-          setSearchResults(allJobs); // Restablecer searchResults al set completo para que `jobsToDisplay` haga el filtro de texto
-          setErrorCaracteres("");
-
-          // *Importante: Si se aplica una nueva búsqueda, se eliminan los filtros avanzados
-          setFiltrosAplicados(false);
-
-          // Reinicia la paginación a la página 1
-          handlePageChange(1);
-
-          if (actualizarUrl) actualizarURL(termino, 1); // Actualiza URL y va a la página 1
-          setEstadoBusqueda("success");
-        }
-      } catch (error) {
-        console.error("Error en búsqueda:", error);
-        setEstadoBusqueda("error");
-      } finally {
-        setBuscando(false);
-      }
-    },
-    [allJobs, handlePageChange, actualizarURL]
-  );
-
+  // CORREGIDA
   const handleClearSearch = () => {
+    console.log("🧹 LIMPIANDO BÚSQUEDA COMPLETA - Restaurando estado inicial");
+
+    // 
+    if (allJobs.length > 0) {
+      setSearchResults(allJobs);
+    } else {
+      // Recargar datos si es necesario
+      console.log("🔄 Recargando datos...");
+      getJobs().then(jobs => {
+        setAllJobs(jobs);
+        setSearchResults(jobs);
+      });
+    }
+
+    // Resetear todos los estados
     setSearchTerm("");
-    setSearchResults(allJobs);
     setFiltrosAplicados(false);
     setErrorCaracteres("");
-    actualizarURL("", 1); // Limpiar término y reiniciar paginación
-    handlePageChange(1); // Asegurar que la paginación local se restablezca
+    setUsuariosFiltrados([]);
+    setModoVista("jobs");
+    setFiltersNoResults(false);
+
+    // Limpiar URL
+    const params = new URLSearchParams();
+    params.set('page', '1');
+    router.replace(`?${params.toString()}`, { scroll: false });
+
+    // Limpiar sessionStorage
+    sessionStorage.removeItem('lastPage');
+
+    // Resetear ordenamiento
     setTimeout(() => setSortBy("Fecha (Reciente)"), 0);
+
+    console.log("✅ Búsqueda limpiada, estado inicial restaurado");
   };
 
   const handleClearFilters = () => {
+    // Al limpiar filtros, mantener la búsqueda de URL si existe
+    if (urlQuery && urlQuery.trim() !== "") {
+      performSearch(urlQuery, allJobs);
+    } else {
+      setSearchResults(allJobs);
+    }
+
     setFiltrosAplicados(false);
     setFiltersNoResults(false);
     setUsuariosFiltrados([]);
     setModoVista("jobs");
-    // *Corrección: Los resultados vuelven a ser `allJobs` para que `jobsToDisplay` funcione correctamente
-    setSearchResults(allJobs);
     setErrorCaracteres("");
     setSortBy("Fecha (Reciente)");
-    setFiltrosTrabajos({ ciudad: "", disponibilidad: "", tipoEspecialidad: "" }); // Limpiar filtros de trabajos
-    handlePageChange(1); // Restablecer la página a 1
-    actualizarURL(searchTerm, 1); // Mantener el término de búsqueda si existe, pero restablecer la página
   };
-
-  // NUEVO: Handler para cambios en los filtros de trabajos
-  const handleFiltersChange = useCallback(
-    (filtros: { ciudad?: string; disponibilidad?: string; tipoEspecialidad?: string }) => {
-      console.log("🔄 Filtros de trabajos actualizados:", filtros);
-      setFiltrosTrabajos(filtros);
-      // Reiniciar la paginación a la página 1 cuando se aplican nuevos filtros
-      handlePageChange(1);
-    },
-    [handlePageChange]
-  );
-
-  // Memoizar el callback que recibe los resultados desde `FiltrosForm` para evitar
-  // que el componente hijo reciba una función nueva en cada render (causa de bucles)
-  const handleOnResults = useCallback((usuarios: UsuarioResumen[]) => {
-    setUsuariosFiltrados(usuarios);
-    setModoVista("jobs");
-    setFiltrosAplicados(true);
-    setFiltersNoResults(usuarios.length === 0);
-    handlePageChange(1);
-  }, [handlePageChange]);
-
-  const handleOnFilterNoResults = useCallback((noResults: boolean) => {
-    setFiltersNoResults(noResults);
-    setFiltrosAplicados(true);
-    if (noResults) {
-      setUsuariosFiltrados([]);
-    }
-  }, []);
-
-  const handleViewDetails = (id: string | number) => {
-    // Guarda la página actual en sessionStorage antes de navegar
-    sessionStorage.setItem('lastPage', String(currentPage));
-    router.push(`/alquiler/${id}`);
-  };
-
-  // --- Lógica de Renderizado ---
 
   const mostrarSinResultadosFiltros =
     filtrosAplicados &&
     modoVista === "jobs" &&
-    filtersNoResults; // Corregido: `usuariosFiltrados.length === 0` es redundante si `modoVista` es "jobs"
+    usuariosFiltrados.length === 0 &&
+    filtersNoResults;
 
   const mostrarErrorCaracteres = errorCaracteres && !buscando;
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 to-white">
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl font-extrabold text-blue-600 mb-10 border-l-4 border-blue-600 pl-4 tracking-wide">
-          Ofertas de Trabajo
-        </h1>
-
         <div className="mt-8">
           <BusquedaAvanzada
             onAplicarFiltros={handleAdvancedFilters}
-            onLimpiarFiltros={handleClearFilters}
-            onToggle={setBusquedaAvanzadaAbierta}
+            onLimpiarFiltros={() => handleClearFilters()}
+            onToggle={(abierta: boolean) => setBusquedaAvanzadaAbierta(abierta)}
           />
         </div>
 
         {!busquedaAvanzadaAbierta && (
           <div className="mt-6">
             <FiltrosForm
-              onResults={handleOnResults}
-              onFilterNoResults={handleOnFilterNoResults}
+              onResults={(usuarios: UsuarioResumen[]) => {
+                setUsuariosFiltrados(usuarios);
+                setModoVista(usuarios.length > 0 ? "usuarios" : "jobs");
+                setFiltrosAplicados(true);
+              }}
+              onFilterNoResults={(noResults: boolean) => {
+                setFiltersNoResults(noResults);
+                setFiltrosAplicados(true);
+              }}
               onClearFilters={handleClearFilters}
-              onFiltersChange={handleFiltersChange}
               sort={sortBy}
               setSort={setSortBy}
               opcionesOrdenamiento={opcionesOrdenamiento}
-              totalItems={modoVista === "jobs" ? totalItems : usuariosOrdenados.length}
+              totalItems={totalItems}
               disabled={
-                (modoVista === "jobs" && jobsToDisplay.length === 0 && !isLoading) ||
+                (modoVista === "jobs" && jobsToDisplay.length === 0) ||
                 (modoVista === "usuarios" && usuariosFiltrados.length === 0)
               }
             />
@@ -513,12 +439,12 @@ function BusquedaContent() {
             <h2 className="text-2xl font-bold text-blue-600 mb-6">
               Resultados de Profesionales
             </h2>
-            {usuariosOrdenados.length > 0 ? (
+            {usuariosFiltrados.length > 0 ? (
               <>
                 <div className="UserProfilesContainer space-y-6">
-                  {usuariosOrdenados.map((usuario: UsuarioResumen) => (
+                  {usuariosFiltrados.map((usuario, index) => (
                     <UserProfileCard
-                      key={usuario.id_usuario}
+                      key={`${usuario.id_usuario}-${index}`}
                       usuario={usuario}
                       onContactClick={() =>
                         router.push(`/alquiler/${usuario.id_usuario}`)
@@ -527,7 +453,7 @@ function BusquedaContent() {
                   ))}
                 </div>
                 <p className="text-sm text-gray-600 mt-4">
-                  Se encontraron {usuariosOrdenados.length} profesionales
+                  Se encontraron {usuariosFiltrados.length} profesionales
                 </p>
               </>
             ) : (
@@ -546,49 +472,25 @@ function BusquedaContent() {
             </button>
           </section>
         ) : (
+          // Vista de Trabajos (Jobs)
           <section className="mt-10">
-            {isLoading ? (
+            {isLoading ? ( // 🟢 USAMOS EL isLoading GENERAL
               <p className="text-center text-gray-500 text-lg">Cargando ofertas...</p>
             ) : (
               <>
                 <div className="text-xl text-blue-700 font-semibold mb-6">
-                  {mostrarSinResultadosFiltros ? (
-                    "No se encontraron ofertas"
-                  ) : (
-                    (() => {
-                      // Calcula el rango mostrado: desde - hasta
-                      const desde = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-                      const hasta = desde === 0 ? 0 : desde + currentItems.length - 1;
-                      return `Mostrando ${desde}${hasta ? ` - ${hasta}` : ''} de ${totalItems} Ofertas Disponibles`;
-                    })()
-                  )}
+                  {mostrarSinResultadosFiltros || totalItems === 0
+                    ? "No se encontraron ofertas"
+                    : `Mostrando ${startIndex} - ${endIndex} de ${totalItems} Ofertas Disponibles`}
                 </div>
 
                 <div className="results-area mt-6">
-                  {buscando ? (
-                    // ... Lógica de Buscando ...
+                  {/* Ya no hay 'buscando', el estado 'isLoading' lo maneja */}
+                  {mostrarErrorCaracteres ? ( // Esto es por si 'analizarCaracteresQuery' falla
                     <div className="text-center py-8">
-                      <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-                      <p className="mt-2 text-lg text-gray-600">
-                        Buscando resultados para &quot;{searchTerm}&quot;...
-                      </p>
-                    </div>
-                  ) : mostrarErrorCaracteres ? (
-                    // ... Lógica de Error Caracteres ...
-                    <div className="text-center py-8">
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
-                        <div className="flex items-center justify-center mb-3">
-                          <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                            <span className="text-red-600 text-xl">⚠️</span>
-                          </div>
-                        </div>
-                        <p className="text-lg text-red-700 font-medium mb-2">
-                          Caracteres especiales no permitidos
-                        </p>
+                       <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl mx-auto">
+                        {/* ... (código de error de caracteres) ... */}
                         <p className="text-gray-600 mb-4">{errorCaracteres}</p>
-                        <p className="text-sm text-gray-500 mb-4">
-                          Por favor, usa solo letras, números y espacios para tu búsqueda.
-                        </p>
                         <button
                           onClick={handleClearSearch}
                           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -598,7 +500,6 @@ function BusquedaContent() {
                       </div>
                     </div>
                   ) : mostrarSinResultadosFiltros ? (
-                    // ... Lógica de Sin Resultados Filtros ...
                     <div className="text-center py-8">
                       <p className="text-xl text-gray-600 mb-4">
                         No se encontraron ofertas con los filtros seleccionados
@@ -610,17 +511,17 @@ function BusquedaContent() {
                         Ver todas las ofertas
                       </button>
                     </div>
-                  ) : currentItems.length === 0 && (searchTerm.trim() || filtrosAplicados) ? (
-                    // ... Lógica de Sin Resultados de Búsqueda/Filtro ...
+                  ) : currentItems.length === 0 ? (
+                    // Mensaje unificado para "Sin Resultados"
                     <div className="text-center py-8">
                       <p className="text-xl text-gray-600 mb-4">
                         {searchTerm && estadoBusqueda === "success"
                           ? `No se encontraron resultados para "${searchTerm}"`
-                          : "No hay ofertas de trabajo disponibles con los criterios actuales."}
+                          : "No hay ofertas de trabajo disponibles en este momento."}
                       </p>
-                      {(searchTerm || filtrosAplicados) && (
+                      {searchTerm && (
                         <button
-                          onClick={searchTerm ? handleClearSearch : handleClearFilters}
+                          onClick={handleClearSearch}
                           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                           Ver todas las ofertas
@@ -628,12 +529,12 @@ function BusquedaContent() {
                       )}
                     </div>
                   ) : (
-                    // ... Lógica de Resultados y Paginación ...
+                    // Mostrar resultados
                     <>
                       <div className="space-y-6">
                         {currentItems.map((job, index) => (
                           <JobCard
-                            key={`${job.title}-${index}-${job.id}`} // Agregué job.id para una key más única
+                            key={`${job.title}-${index}`}
                             {...job}
                             onViewDetails={() => handleViewDetails(job.id)}
                           />

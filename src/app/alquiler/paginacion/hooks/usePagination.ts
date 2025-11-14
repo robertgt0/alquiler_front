@@ -9,22 +9,28 @@ export const usePagination = (items: Job[], itemsPerPage: number = 10) => { // 1
   // Obtener página actual de la URL o usar 1 como valor predeterminado
   const initialPage = parseInt(searchParams.get('page') || '1', 10);
   const [currentPage, setCurrentPage] = useState(initialPage);
+  const [hasValidatedPage, setHasValidatedPage] = useState(false);
 
   const totalItems = items.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
 
-  // Validar y ajustar la página si está fuera de rango
+  // Validar y ajustar la página si está fuera de rango (solo una vez)
   useEffect(() => {
-    if (totalPages > 0) {
+    if (totalPages > 0 && !hasValidatedPage) {
+      let validPage = currentPage;
+      
       if (currentPage > totalPages) {
-        // Redirigir a la última página si la actual es mayor
-        updateUrlAndPage(totalPages);
+        validPage = totalPages;
       } else if (currentPage < 1) {
-        // Redirigir a la primera página si la actual es menor a 1
-        updateUrlAndPage(1);
+        validPage = 1;
       }
+      
+      if (validPage !== currentPage) {
+        updateUrlAndPage(validPage);
+      }
+      setHasValidatedPage(true);
     }
-  }, [totalPages, currentPage]);
+  }, [totalPages]);
 
   // Mantener la página actual cuando los items cambian, solo resetear si es necesario
   useEffect(() => {
@@ -108,5 +114,7 @@ export const usePagination = (items: Job[], itemsPerPage: number = 10) => { // 1
     handleNextPage,
     handlePrevPage,
     totalItems,
+    startIndex: (currentPage - 1) * itemsPerPage + 1,
+    endIndex: Math.min(currentPage * itemsPerPage, totalItems),
   };
 };

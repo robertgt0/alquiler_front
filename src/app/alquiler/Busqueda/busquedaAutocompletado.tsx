@@ -24,7 +24,6 @@ interface BusquedaAutocompletadoProps {
         endpoint: string;
         campoResultado: string;
     };
-    autoFocus?: boolean;
 }
 
 interface EspecialidadBackend {
@@ -49,7 +48,7 @@ function getApiRoot(): string {
 }
 
 // ============================================================================
-// SERVICIO DE BACKEND
+// SERVICIO DE BACKEND - MODIFICADO PARA ORDEN EXACTO
 // ============================================================================
 
 class BackendService {
@@ -57,7 +56,7 @@ class BackendService {
 
     static async searchJobsBackend(query: string, endpoint?: string): Promise<Job[]> {
         try {
-            console.log('🚀 [BACKEND-INICIO] Buscando por inicio de palabra:', query);
+            console.log('🚀 [BACKEND-ORDEN-EXACTO] Buscando con orden exacto:', query);
 
             const queryNormalizado = query;
             const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
@@ -66,7 +65,7 @@ class BackendService {
                 return [];
             }
 
-            console.log('🔄 [BACKEND-INICIO] Tokens para búsqueda:', tokens);
+            console.log('🔄 [BACKEND-ORDEN-EXACTO] Tokens para búsqueda:', tokens);
             const payload = {
                 queryOriginal: query,
                 queryNormalizado: queryNormalizado,
@@ -78,8 +77,10 @@ class BackendService {
                     ignoreAccents: true,
                     fuzzyMatch: false,
                     partialMatch: false,
-                    buscarPorInicioPalabra: true,
-                    buscarEnServiciosIndividuales: true
+                    buscarPorInicioPalabra: false, // 🔥 DESACTIVADO
+                    buscarEnServiciosIndividuales: false, // 🔥 DESACTIVADO
+                    ordenExacto: true, // 🔥 NUEVO: Forzar orden exacto
+                    matchFraseCompleta: true // 🔥 NUEVO: Coincidencia de frase completa
                 }
             };
 
@@ -100,24 +101,22 @@ class BackendService {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ [BACKEND-INICIO] Respuesta recibida:', data);
+                console.log('✅ [BACKEND-ORDEN-EXACTO] Respuesta recibida:', data);
 
-                // 🔥 MODIFICADO: Si success es true pero data está vacío, devolver array vacío
                 if (data.success && data.data && Array.isArray(data.data)) {
-                    console.log(`✅ [BACKEND-INICIO] ${data.data.length} resultados del backend`);
+                    console.log(`✅ [BACKEND-ORDEN-EXACTO] ${data.data.length} resultados del backend`);
                     return data.data.slice(0, 50);
                 } else if (data.success) {
-                    // Backend respondió con éxito pero sin datos
-                    console.log('ℹ️ [BACKEND-INICIO] Backend respondió sin datos');
+                    console.log('ℹ️ [BACKEND-ORDEN-EXACTO] Backend respondió sin datos');
                     return [];
                 }
             }
 
-            console.log('⚠️ [BACKEND-INICIO] Respuesta no válida');
+            console.log('⚠️ [BACKEND-ORDEN-EXACTO] Respuesta no válida');
             throw new Error('Backend response not valid');
 
         } catch (error) {
-            console.log('❌ [BACKEND-INICIO] Error:', error);
+            console.log('❌ [BACKEND-ORDEN-EXACTO] Error:', error);
             throw error;
         }
     }
@@ -127,7 +126,7 @@ class BackendService {
             return [];
         }
 
-        console.log('🎯 [ESPECIALIDAD-BACKEND-INICIO] Buscando por especialidad:', especialidad);
+        console.log('🎯 [ESPECIALIDAD-ORDEN-EXACTO] Buscando por especialidad:', especialidad);
 
         try {
             const especialidadNormalizada = normalizarQueryBusqueda(especialidad);
@@ -147,8 +146,10 @@ class BackendService {
                     especialidadNormalizada: especialidadNormalizada,
                     tokens: tokens,
                     estrategias: tokens,
-                    buscarPorInicioPalabra: true,
-                    buscarEnServiciosIndividuales: true
+                    buscarPorInicioPalabra: false, // 🔥 DESACTIVADO
+                    buscarEnServiciosIndividuales: false, // 🔥 DESACTIVADO
+                    ordenExacto: true, // 🔥 NUEVO
+                    matchFraseCompleta: true // 🔥 NUEVO
                 }),
                 signal: controller.signal
             });
@@ -158,7 +159,7 @@ class BackendService {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.data && Array.isArray(data.data)) {
-                    console.log(`✅ [ESPECIALIDAD-BACKEND-INICIO] ${data.data.length} resultados`);
+                    console.log(`✅ [ESPECIALIDAD-ORDEN-EXACTO] ${data.data.length} resultados`);
                     return data.data;
                 }
             }
@@ -166,14 +167,14 @@ class BackendService {
             throw new Error('Backend response not valid');
 
         } catch (error) {
-            console.log('❌ [ESPECIALIDAD-BACKEND-INICIO] Error:', error);
+            console.log('❌ [ESPECIALIDAD-ORDEN-EXACTO] Error:', error);
             throw error;
         }
     }
 
     static async getAutocompleteSuggestionsBackend(query: string, endpoint?: string): Promise<string[]> {
         try {
-            console.log('🔍 [SUGERENCIAS-BACKEND-INICIO] Buscando sugerencias para:', query);
+            console.log('🔍 [SUGERENCIAS-ORDEN-EXACTO] Buscando sugerencias para:', query);
 
             const queryNormalizado = normalizarQueryBusqueda(query);
 
@@ -181,7 +182,7 @@ class BackendService {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-            const url = `${apiEndpoint}?q=${encodeURIComponent(queryNormalizado)}&limit=6&inicioPalabra=true`;
+            const url = `${apiEndpoint}?q=${encodeURIComponent(queryNormalizado)}&limit=6&inicioPalabra=false&ordenExacto=true`;
 
             const response = await fetch(url, { signal: controller.signal });
 
@@ -189,9 +190,8 @@ class BackendService {
 
             if (response.ok) {
                 const data: ApiResponse = await response.json();
-                console.log('✅ [SUGERENCIAS-BACKEND-INICIO] Respuesta completa del backend:', data);
+                console.log('✅ [SUGERENCIAS-ORDEN-EXACTO] Respuesta completa del backend:', data);
 
-                // 🔥 CLAVE: Si success es true, devolver data (aunque esté vacío)
                 if (data.success) {
                     if (data.data && Array.isArray(data.data)) {
                         const sugerencias = data.data
@@ -199,35 +199,35 @@ class BackendService {
                             .filter((nombre: string) => nombre && nombre.trim())
                             .slice(0, 10);
 
-                        console.log('📋 [SUGERENCIAS-BACKEND-INICIO] Sugerencias procesadas:', sugerencias);
-                        return sugerencias; // ← Puede ser array vacío
+                        console.log('📋 [SUGERENCIAS-ORDEN-EXACTO] Sugerencias procesadas:', sugerencias);
+                        return sugerencias;
                     } else {
-                        console.log('ℹ️ [SUGERENCIAS-BACKEND-INICIO] Backend: success=true pero data no es array');
-                        return []; // ← Array vacío explícito
+                        console.log('ℹ️ [SUGERENCIAS-ORDEN-EXACTO] Backend: success=true pero data no es array');
+                        return [];
                     }
                 } else {
-                    console.log('❌ [SUGERENCIAS-BACKEND-INICIO] Backend: success=false');
+                    console.log('❌ [SUGERENCIAS-ORDEN-EXACTO] Backend: success=false');
                     throw new Error('Backend response not successful');
                 }
             }
 
-            console.log('⚠️ [SUGERENCIAS-BACKEND-INICIO] Respuesta HTTP no ok:', response.status);
+            console.log('⚠️ [SUGERENCIAS-ORDEN-EXACTO] Respuesta HTTP no ok:', response.status);
             throw new Error(`HTTP ${response.status}`);
 
         } catch (error) {
-            console.log('❌ [SUGERENCIAS-BACKEND-INICIO] Error:', error);
-            throw error; // ← Propagar el error para que el servicio principal lo maneje
+            console.log('❌ [SUGERENCIAS-ORDEN-EXACTO] Error:', error);
+            throw error;
         }
     }
 }
 
 // ============================================================================
-// SERVICIO LOCAL UNIFICADO - SOLO COMO FALLBACK
+// SERVICIO LOCAL UNIFICADO - MODIFICADO PARA ORDEN EXACTO
 // ============================================================================
 
 class LocalService {
     static buscarTrabajos(query: string, jobs: Job[], campoBusqueda: keyof Job | "all" = "all"): Job[] {
-        console.log('🔍 [LOCAL-FALLBACK] Buscando localmente:', query);
+        console.log('🔍 [LOCAL-ORDEN-EXACTO] Buscando localmente con orden exacto:', query);
 
         if (!query.trim()) return [];
 
@@ -244,34 +244,54 @@ class LocalService {
 
                 const campos = [tituloNormalizado, empresaNormalizada, serviciosNormalizados];
 
-                return tokens.every(token =>
-                    campos.some(campoTexto => {
-                        if (!campoTexto) return false;
-                        const palabras = campoTexto.split(' ');
-                        return palabras.some(palabra => palabra.startsWith(token));
-                    })
-                );
+                // 🔥 NUEVO: Verificar que TODOS los tokens aparezcan en ORDEN en algún campo
+                return campos.some(campoTexto => {
+                    if (!campoTexto) return false;
+
+                    // 🔥 VERIFICAR ORDEN EXACTO: Los tokens deben aparecer en el orden correcto
+                    let posicionActual = 0;
+                    let todosLosTokensEnOrden = true;
+
+                    for (const token of tokens) {
+                        const posicionToken = campoTexto.indexOf(token, posicionActual);
+                        if (posicionToken === -1) {
+                            todosLosTokensEnOrden = false;
+                            break;
+                        }
+                        posicionActual = posicionToken + token.length;
+                    }
+
+                    return todosLosTokensEnOrden;
+                });
             } else {
                 const campoValor = job[campoBusqueda];
                 if (!campoValor) return false;
 
                 const campoNormalizado = this.normalizarTexto(String(campoValor));
-                const palabras = campoNormalizado.split(' ');
 
-                return tokens.every(token =>
-                    palabras.some(palabra =>
-                        palabra.startsWith(token) && token.length >= 2
-                    )
-                );
+                // 🔥 NUEVO: Verificar orden exacto en campo específico
+                let posicionActual = 0;
+                let todosLosTokensEnOrden = true;
+
+                for (const token of tokens) {
+                    const posicionToken = campoNormalizado.indexOf(token, posicionActual);
+                    if (posicionToken === -1) {
+                        todosLosTokensEnOrden = false;
+                        break;
+                    }
+                    posicionActual = posicionToken + token.length;
+                }
+
+                return todosLosTokensEnOrden;
             }
         }).slice(0, 50);
     }
 
     static getSugerencias(query: string, jobs: Job[]): string[] {
-        console.log('💡 [SUGERENCIAS-LOCAL-FALLBACK] Generando sugerencias locales para:', query);
+        console.log('💡 [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Generando sugerencias locales para:', query);
 
         if (!query.trim() || query.trim().length < 2) {
-            console.log('⏸️ [SUGERENCIAS-LOCAL-FALLBACK] Query muy corta, omitiendo');
+            console.log('⏸️ [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Query muy corta, omitiendo');
             return [];
         }
 
@@ -285,17 +305,8 @@ class LocalService {
                 servicios.forEach(servicio => {
                     const servicioNormalizado = this.normalizarTexto(servicio);
 
+                    // 🔥 MODIFICADO: Solo sugerir si coincide desde el inicio con orden
                     if (servicioNormalizado.startsWith(queryNormalizado)) {
-                        sugerencias.add(servicio);
-                        return;
-                    }
-
-                    const palabrasServicio = servicioNormalizado.split(' ');
-                    const coincideEnPalabra = palabrasServicio.some(palabra =>
-                        palabra.startsWith(queryNormalizado)
-                    );
-
-                    if (coincideEnPalabra) {
                         sugerencias.add(servicio);
                     }
                 });
@@ -309,17 +320,8 @@ class LocalService {
                     const valorCampo = String(job[campo]);
                     const campoNormalizado = this.normalizarTexto(valorCampo);
 
+                    // 🔥 MODIFICADO: Solo sugerir si coincide desde el inicio con orden
                     if (campoNormalizado.startsWith(queryNormalizado)) {
-                        sugerencias.add(valorCampo);
-                        return;
-                    }
-
-                    const palabrasCampo = campoNormalizado.split(' ');
-                    const coincideEnPalabra = palabrasCampo.some(palabra =>
-                        palabra.startsWith(queryNormalizado)
-                    );
-
-                    if (coincideEnPalabra) {
                         sugerencias.add(valorCampo);
                     }
                 }
@@ -344,7 +346,7 @@ class LocalService {
         });
 
         const sugerenciasFinales = sugerenciasOrdenadas.slice(0, 10);
-        console.log('✅ [SUGERENCIAS-LOCAL-FALLBACK] Sugerencias locales encontradas:', sugerenciasFinales);
+        console.log('✅ [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Sugerencias locales encontradas:', sugerenciasFinales);
         return sugerenciasFinales;
     }
 
@@ -361,13 +363,13 @@ class LocalService {
 }
 
 // ============================================================================
-// SERVICIO PRINCIPAL - PRIORIDAD AL BACKEND
+// SERVICIO PRINCIPAL - MODIFICADO PARA ORDEN EXACTO
 // ============================================================================
 
 class BusquedaService {
     private static API_BASE = getApiRoot();
 
-    // 🔥 FUNCIÓN: Calcular puntaje de relevancia DESDE FRONTEND
+    // 🔥 MODIFICADO: Calcular relevancia basada en ORDEN EXACTO
     private static calcularRelevancia(job: Job, query: string): number {
         const queryNormalizado = normalizarQueryBusqueda(query);
         const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
@@ -380,7 +382,7 @@ class BusquedaService {
         const empresaNormalizada = job.company ? this.normalizarTexto(job.company) : "";
         const serviciosNormalizados = job.service ? this.normalizarTexto(job.service) : "";
 
-        console.log('🔍 [RELEVANCIA] Calculando para:', {
+        console.log('🔍 [RELEVANCIA-ORDEN-EXACTO] Calculando para:', {
             titulo: job.title,
             query: query,
             tituloNormalizado: tituloNormalizado,
@@ -390,90 +392,85 @@ class BusquedaService {
         // 🔥 MÁXIMA PRIORIDAD: Coincidencia EXACTA del nombre completo
         if (tituloNormalizado === queryNormalizado) {
             puntaje += 1000;
-            console.log('🎯 [RELEVANCIA] Coincidencia EXACTA +1000');
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Coincidencia EXACTA +1000');
         }
 
         // 🔥 ALTA PRIORIDAD: El query contiene el nombre completo
         if (tituloNormalizado.includes(queryNormalizado)) {
             puntaje += 500;
-            console.log('🎯 [RELEVANCIA] Query contiene nombre completo +500');
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Query contiene nombre completo +500');
         }
 
         // 🔥 ALTA PRIORIDAD: El nombre contiene el query completo
         if (queryNormalizado.includes(tituloNormalizado)) {
             puntaje += 400;
-            console.log('🎯 [RELEVANCIA] Nombre contiene query +400');
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Nombre contiene query +400');
         }
 
-        // 🔥 COINCIDENCIA DE TODAS LAS PALABRAS EN ORDEN
+        // 🔥 NUEVO: Verificar ORDEN EXACTO de tokens en título
+        const ordenExactoTitulo = this.verificarOrdenExacto(tituloNormalizado, tokens);
+        if (ordenExactoTitulo) {
+            puntaje += 600; // 🔥 ALTA PRIORIDAD PARA ORDEN EXACTO
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Orden exacto en título +600');
+        }
+
+        // 🔥 NUEVO: Verificar ORDEN EXACTO en empresa
+        if (empresaNormalizada) {
+            const ordenExactoEmpresa = this.verificarOrdenExacto(empresaNormalizada, tokens);
+            if (ordenExactoEmpresa) {
+                puntaje += 300;
+                console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Orden exacto en empresa +300');
+            }
+        }
+
+        // 🔥 NUEVO: Verificar ORDEN EXACTO en servicios
+        if (serviciosNormalizados) {
+            const ordenExactoServicios = this.verificarOrdenExacto(serviciosNormalizados, tokens);
+            if (ordenExactoServicios) {
+                puntaje += 200;
+                console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Orden exacto en servicios +200');
+            }
+        }
+
+        // 🔥 COINCIDENCIA DE TODAS LAS PALABRAS EN ORDEN (ya no es necesario, se maneja arriba)
         const palabrasTitulo = tituloNormalizado.split(' ');
         const todasLasPalabrasCoinciden = tokens.every(token =>
             palabrasTitulo.some(palabra => palabra.includes(token))
         );
 
-        if (todasLasPalabrasCoinciden) {
-            puntaje += 300;
-            console.log('🎯 [RELEVANCIA] Todas las palabras coinciden +300');
+        if (todasLasPalabrasCoinciden && !ordenExactoTitulo) {
+            puntaje += 100; // 🔥 REDUCIDO porque no es orden exacto
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Todas las palabras coinciden (sin orden) +100');
         }
 
-        // 🔥 COINCIDENCIA POR PALABRAS INDIVIDUALES
-        tokens.forEach(token => {
-            // Coincidencia exacta de palabra en título
-            if (tituloNormalizado.includes(token)) {
-                puntaje += 50;
-                console.log(`🎯 [RELEVANCIA] Coincidencia palabra "${token}" en título +50`);
-            }
-
-            // 🔥 BONUS: Coincidencia al INICIO de palabra en título
-            if (palabrasTitulo.some(palabra => palabra.startsWith(token))) {
-                puntaje += 30;
-                console.log(`🎯 [RELEVANCIA] Inicio de palabra "${token}" en título +30`);
-            }
-
-            // Coincidencia en empresa
-            if (empresaNormalizada.includes(token)) {
-                puntaje += 20;
-                console.log(`🎯 [RELEVANCIA] Coincidencia en empresa "${token}" +20`);
-            }
-
-            // Coincidencia en servicios
-            if (serviciosNormalizados.includes(token)) {
-                puntaje += 10;
-                console.log(`🎯 [RELEVANCIA] Coincidencia en servicios "${token}" +10`);
-            }
-        });
-
-        // 🔥 BONUS: Orden correcto de las palabras
-        const tituloConEspacios = ` ${tituloNormalizado} `;
-        let ordenCorrecto = true;
-        let posicionAnterior = -1;
-
-        for (const token of tokens) {
-            const posicion = tituloConEspacios.indexOf(` ${token}`);
-            if (posicion > posicionAnterior) {
-                posicionAnterior = posicion;
-            } else {
-                ordenCorrecto = false;
-                break;
-            }
-        }
-
-        if (ordenCorrecto && tokens.length > 1) {
-            puntaje += 100;
-            console.log('🎯 [RELEVANCIA] Orden correcto de palabras +100');
-        }
-
-        console.log(`📊 [RELEVANCIA] Puntaje final para "${job.title}": ${puntaje}`);
+        console.log(`📊 [RELEVANCIA-ORDEN-EXACTO] Puntaje final para "${job.title}": ${puntaje}`);
         return puntaje;
     }
 
-    // 🔥 FUNCIÓN: Ordenar resultados por relevancia DESDE FRONTEND
+    // 🔥 NUEVO: Función para verificar orden exacto
+    private static verificarOrdenExacto(texto: string, tokens: string[]): boolean {
+        if (!texto || tokens.length === 0) return false;
+
+        let posicionActual = 0;
+
+        for (const token of tokens) {
+            const posicionToken = texto.indexOf(token, posicionActual);
+            if (posicionToken === -1) {
+                return false; // Token no encontrado
+            }
+            posicionActual = posicionToken + token.length;
+        }
+
+        return true; // Todos los tokens encontrados en orden
+    }
+
+    // 🔥 MODIFICADO: Ordenar resultados por relevancia con énfasis en orden exacto
     public static ordenarPorRelevancia(resultados: Job[], query: string): Job[] {
         if (!query.trim() || resultados.length === 0) {
             return resultados;
         }
 
-        console.log('🎯 [RELEVANCIA] Ordenando resultados por relevancia...');
+        console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Ordenando resultados por relevancia...');
 
         const resultadosConPuntaje = resultados.map(job => ({
             job,
@@ -494,7 +491,7 @@ class BusquedaService {
 
         const resultadosOrdenados = resultadosConPuntaje.map(item => item.job);
 
-        console.log('📋 [RELEVANCIA] Resultados ordenados:');
+        console.log('📋 [RELEVANCIA-ORDEN-EXACTO] Resultados ordenados:');
         resultadosConPuntaje.forEach((item, index) => {
             console.log(`   ${index + 1}. "${item.job.title}" - Puntaje: ${item.puntaje}`);
         });
@@ -513,17 +510,17 @@ class BusquedaService {
             .toLowerCase();
     }
 
-    // 🔥 NUEVO: Búsqueda de trabajos con fallback automático similar
+    // 🔥 MODIFICADO: Búsqueda optimizada con orden exacto
     static async searchJobsOptimized(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
         try {
-            console.log('🔍 [SERVICE-BACKEND-PRIORITY] Buscando primero en backend:', query);
+            console.log('🔍 [SERVICE-ORDEN-EXACTO] Buscando primero en backend con orden exacto:', query);
 
             if (!query.trim()) {
                 return [];
             }
 
             const queryNormalizado = query;
-            console.log('✅ [SERVICE] Query ya normalizado desde componente:', queryNormalizado);
+            console.log('✅ [SERVICE-ORDEN-EXACTO] Query ya normalizado desde componente:', queryNormalizado);
 
             const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
 
@@ -531,77 +528,78 @@ class BusquedaService {
                 return [];
             }
 
-            // 1. INTENTAR BACKEND PRIMERO
+            // 1. INTENTAR BACKEND PRIMERO CON ORDEN EXACTO
             const resultadosBackend = await BackendService.searchJobsBackend(queryNormalizado, endpoint);
 
             if (resultadosBackend && resultadosBackend.length > 0) {
-                console.log(`✅ [BACKEND-PRIORITY] ${resultadosBackend.length} resultados del backend`);
+                console.log(`✅ [BACKEND-ORDEN-EXACTO] ${resultadosBackend.length} resultados del backend`);
                 const resultadosOrdenados = this.ordenarPorRelevancia(resultadosBackend, query);
                 return resultadosOrdenados;
             }
 
-            // 2. Si backend responde pero sin resultados (array vacío), usar FALLBACK LOCAL AUTOMÁTICO
-            console.log('🔄 [BACKEND-PRIORITY] Backend respondió sin resultados, usando fallback local');
+            // 2. Si backend responde pero sin resultados, usar FALLBACK LOCAL CON ORDEN EXACTO
+            console.log('🔄 [BACKEND-ORDEN-EXACTO] Backend respondió sin resultados, usando fallback local con orden exacto');
             const resultadosLocales = LocalService.buscarTrabajos(query, jobsReales);
             return this.ordenarPorRelevancia(resultadosLocales, query);
 
         } catch (error) {
-            console.log('🔄 [BACKEND-PRIORITY] Backend falló, usando local como fallback:', error);
+            console.log('🔄 [BACKEND-ORDEN-EXACTO] Backend falló, usando local como fallback con orden exacto:', error);
             const resultadosLocales = LocalService.buscarTrabajos(query, jobsReales);
             return this.ordenarPorRelevancia(resultadosLocales, query);
         }
     }
+
     static async searchByEspecialidad(especialidad: string, jobsReales: Job[]): Promise<Job[]> {
         if (!especialidad.trim()) {
             return [];
         }
 
-        console.log('🎯 [ESPECIALIDAD-BACKEND-PRIORITY] Buscando por especialidad:', especialidad);
+        console.log('🎯 [ESPECIALIDAD-ORDEN-EXACTO] Buscando por especialidad con orden exacto:', especialidad);
 
         try {
             const resultadosBackend = await BackendService.searchByEspecialidadBackend(especialidad);
             return resultadosBackend;
         } catch (backendError) {
-            console.log('🔄 [ESPECIALIDAD-BACKEND-PRIORITY] Backend falló, usando local como fallback');
+            console.log('🔄 [ESPECIALIDAD-ORDEN-EXACTO] Backend falló, usando local como fallback con orden exacto');
             return LocalService.buscarTrabajos(especialidad, jobsReales);
         }
     }
 
     static async getAutocompleteSuggestions(query: string, jobsReales: Job[], endpoint?: string): Promise<string[]> {
         try {
-            console.log('🔍 [SUGERENCIAS-BACKEND-PRIORITY] Buscando sugerencias en backend:', query);
+            console.log('🔍 [SUGERENCIAS-ORDEN-EXACTO] Buscando sugerencias en backend con orden exacto:', query);
 
-            // 1. INTENTAR BACKEND PRIMERO SIEMPRE
+            // 1. INTENTAR BACKEND PRIMERO SIEMPRE CON ORDEN EXACTO
             const sugerenciasBackend = await BackendService.getAutocompleteSuggestionsBackend(query, endpoint);
 
-            console.log('📊 [SUGERENCIAS-BACKEND-PRIORITY] Respuesta backend:', {
+            console.log('📊 [SUGERENCIAS-ORDEN-EXACTO] Respuesta backend:', {
                 tieneSugerencias: sugerenciasBackend && sugerenciasBackend.length > 0,
                 cantidad: sugerenciasBackend?.length || 0,
                 sugerencias: sugerenciasBackend
             });
 
-            // 2. SI el backend responde con array vacío (success:true pero data:[]), usar FALLBACK LOCAL
+            // 2. SI el backend responde con array vacío, usar FALLBACK LOCAL CON ORDEN EXACTO
             if (sugerenciasBackend && sugerenciasBackend.length === 0) {
-                console.log('🔄 [SUGERENCIAS-BACKEND-PRIORITY] Backend respondió con array VACÍO, usando FALLBACK LOCAL');
+                console.log('🔄 [SUGERENCIAS-ORDEN-EXACTO] Backend respondió con array VACÍO, usando FALLBACK LOCAL');
                 const sugerenciasLocales = LocalService.getSugerencias(query, jobsReales);
-                console.log('💡 [SUGERENCIAS-LOCAL] Sugerencias locales encontradas:', sugerenciasLocales);
+                console.log('💡 [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Sugerencias locales encontradas:', sugerenciasLocales);
                 return sugerenciasLocales;
             }
 
             // 3. SI el backend tiene sugerencias, usarlas
             if (sugerenciasBackend && sugerenciasBackend.length > 0) {
-                console.log('✅ [SUGERENCIAS-BACKEND-PRIORITY] Usando sugerencias del backend');
+                console.log('✅ [SUGERENCIAS-ORDEN-EXACTO] Usando sugerencias del backend');
                 return sugerenciasBackend;
             }
 
             // 4. Por seguridad, si llegamos aquí, usar local
-            console.log('🔄 [SUGERENCIAS-BACKEND-PRIORITY] Caso inesperado, usando fallback local');
+            console.log('🔄 [SUGERENCIAS-ORDEN-EXACTO] Caso inesperado, usando fallback local');
             return LocalService.getSugerencias(query, jobsReales);
 
         } catch (error) {
-            console.log('🔄 [SUGERENCIAS-BACKEND-PRIORITY] Backend falló, usando local como fallback:', error);
+            console.log('🔄 [SUGERENCIAS-ORDEN-EXACTO] Backend falló, usando local como fallback:', error);
             const sugerenciasLocales = LocalService.getSugerencias(query, jobsReales);
-            console.log('💡 [SUGERENCIAS-LOCAL] Sugerencias locales por error:', sugerenciasLocales);
+            console.log('💡 [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Sugerencias locales por error:', sugerenciasLocales);
             return sugerenciasLocales;
         }
     }
@@ -619,15 +617,21 @@ export default function BusquedaAutocompletado({
     campoBusqueda = "all",
     maxResultados = 50,
     mostrarHistorial = true,
-    apiConfig,
-    autoFocus = false
+    apiConfig
 }: BusquedaAutocompletadoProps) {
-    const [query, setQuery] = useState(valorInicial);
+    // Helper: Title Case (capitalizar cada palabra)
+    const titleCase = (t: string) => {
+        if (!t) return "";
+        return t.toString().trim().replace(/\s+/g, ' ').split(' ').map((w) => (w.length === 0 ? '' : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())).join(' ');
+    };
+
+    const [query, setQuery] = useState(titleCase(valorInicial));
     const [sugerencias, setSugerencias] = useState<string[]>([]);
     const [estadoSugerencias, setEstadoSugerencias] = useState<EstadoSugerencias>("idle");
     const [estadoBusqueda, setEstadoBusqueda] = useState<EstadoBusqueda>("idle");
     const [mensaje, setMensaje] = useState("");
     const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+    const [mostrarLoadingSugerencias, setMostrarLoadingSugerencias] = useState(false);
     const [resultados, setResultados] = useState<Job[]>([]);
     const [loadingResultados, setLoadingResultados] = useState(false);
     const [mensajeNoResultados, setMensajeNoResultados] = useState("");
@@ -643,9 +647,14 @@ export default function BusquedaAutocompletado({
     const busquedaEnCurso = useRef(false);
     const desactivarBusquedaAutomatica = useRef(false);
 
+    const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const justFocusedRef = useRef(false);
+    const showLoadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     // 🔥 NUEVAS REFERENCIAS para búsqueda local - AÑADE ESTO
     const debounceSugerenciasLocalesRef = useRef<NodeJS.Timeout | null>(null);
     const debounceResultadosLocalesRef = useRef<NodeJS.Timeout | null>(null);
+
     // USAR HOOK DE HISTORIAL
     const {
         historial,
@@ -663,6 +672,24 @@ export default function BusquedaAutocompletado({
         mostrarHistorial,
         apiConfig
     });
+
+    // 🧹 LIMPIEZA: Cleanup de timeouts al desmontar el componente
+    useEffect(() => {
+        return () => {
+            if (showLoadingTimeoutRef.current) {
+                clearTimeout(showLoadingTimeoutRef.current);
+            }
+            if (debounceSugerenciasRef.current) {
+                clearTimeout(debounceSugerenciasRef.current);
+            }
+            if (debounceResultadosRef.current) {
+                clearTimeout(debounceResultadosRef.current);
+            }
+            if (blurTimeoutRef.current) {
+                clearTimeout(blurTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // 🔥 MODIFICADO: Flujo exacto solicitado - Primero analizarCaracteresQuery, luego normalizarGoogle
     const ejecutarBusquedaCompleta = useCallback(async (
@@ -694,9 +721,9 @@ export default function BusquedaAutocompletado({
             clearTimeout(debounceSugerenciasLocalesRef.current);
         }
 
-        if (guardarEnHistorialFlag && mostrarHistorial) {
+        /**if (guardarEnHistorialFlag && mostrarHistorial) {
             guardarEnHistorial(textoLimpio);
-        }
+        }*/
 
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
@@ -796,9 +823,17 @@ export default function BusquedaAutocompletado({
             if (resultadosFinales.length > 0) {
                 setMensajeNoResultados("");
                 onSearch(textoLimpio, resultadosFinales, actualizarUrl);
+
+                if (guardarEnHistorialFlag && mostrarHistorial) {
+                    await guardarEnHistorial(textoLimpio);
+                }
             } else {
                 setMensajeNoResultados(`No se encontraron resultados para "${textoLimpio}"`);
                 onSearch(textoLimpio, [], actualizarUrl);
+                if (mostrarHistorial) {
+                    console.log('💾 [HISTORIAL] Guardando término sin resultados (404) en historial:', textoLimpio);
+                    guardarEnHistorial(textoLimpio);
+                }
             }
 
         } catch (error) {
@@ -836,14 +871,35 @@ export default function BusquedaAutocompletado({
             debounceResultadosRef.current = null;
         }
 
-        setQuery(texto);
+        setQuery(titleCase(texto));
         setSugerencias([]);
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
 
-        // 🔥 PIERDE EL FOCUS DESPUÉS DE SELECCIONAR
-        inputRef.current?.blur();
+        // 🔥 SOLUCIÓN: Blur con timeout para asegurar que se ejecute
+        // 🔥 SOLUCIÓN MEJORADA: Múltiples métodos para asegurar el blur
+        console.log('🔴 [FOCUS] Forzando pérdida de focus después de selección...');
+
+        // Método 1: Blur del input específico
+        if (inputRef.current) {
+            inputRef.current.blur();
+        }
+
+        // Método 2: Blur de cualquier elemento activo
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+
+        // Método 3: Forzar el estado
         setInputFocused(false);
+
+        // Método 4: Timeout adicional como respaldo
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.blur();
+            }
+            setInputFocused(false);
+        }, 50);
 
         console.log('🚀 [SUGERENCIA] Ejecutando búsqueda desde sugerencia...');
         await ejecutarBusquedaCompleta(texto, true, false, true);
@@ -859,7 +915,7 @@ export default function BusquedaAutocompletado({
     // 🔥 NUEVO: useEffect PARA SUGERENCIAS LOCALES EN TIEMPO REAL
     // ============================================================================
     useEffect(() => {
-
+        /** 
         if (busquedaEnCurso.current) {
             console.log('🚫 [SUGERENCIAS] Omitido, búsqueda completa en curso.');
             return;
@@ -939,14 +995,14 @@ export default function BusquedaAutocompletado({
             if (debounceSugerenciasLocalesRef.current) {
                 clearTimeout(debounceSugerenciasLocalesRef.current);
             }
-        };
-    }, [query, inputFocused, datos]);
+        };*/
+    }, [query, inputFocused, datos, onSearch]);
 
     // ============================================================================
     // 🔥 NUEVO: useEffect PARA RESULTADOS LOCALES EN TIEMPO REAL  
     // ============================================================================
     useEffect(() => {
-
+        /** 
         if (busquedaEnCurso.current) {
             console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
             return;
@@ -1025,26 +1081,16 @@ export default function BusquedaAutocompletado({
             if (debounceResultadosLocalesRef.current) {
                 clearTimeout(debounceResultadosLocalesRef.current);
             }
-        };
+        };*/
     }, [query, inputFocused, datos, campoBusqueda]);
 
     // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
     const manejarCambioInput = useCallback((nuevoValor: string) => {
-        // ✅ NUEVO: Validar que empiece con mayúscula (si tiene contenido)
-        if (nuevoValor.length > 0 && nuevoValor[0] !== ' ' && nuevoValor[0] !== nuevoValor[0].toUpperCase()) {
-            // Convertir primer carácter a mayúscula
-            nuevoValor = nuevoValor.charAt(0).toUpperCase() + nuevoValor.slice(1);
-        }
-
-        setQuery(nuevoValor);
+        // Mostrar/guardar en Title Case mientras el usuario escribe
+        const valorCapitalizado = titleCase(nuevoValor || "");
+        setQuery(valorCapitalizado);
 
         const textoLimpio = nuevoValor.trim();
-
-        // ✅ VALIDAR PRIMER CARÁCTER DE BÚSQUEDA
-        if (textoLimpio.length > 0 && textoLimpio[0] !== textoLimpio[0].toUpperCase()) {
-            setMensajeNoResultados("La búsqueda debe comenzar con mayúscula");
-            return;
-        }
 
         // 🔥 SOLO MOSTRAR MENSAJE INFORMATIVO, NO BLOQUEAR
         const analisis = analizarCaracteresQuery(textoLimpio);
@@ -1074,7 +1120,7 @@ export default function BusquedaAutocompletado({
 
             if (textoNormalizado.length < 1) {
                 console.log('⏸️ [AMAZON-SUGERENCIAS] Texto muy corto');
-                return [];
+
             }
 
             console.log('🔄 [AMAZON-SUGERENCIAS] Llamando al servicio...');
@@ -1101,118 +1147,39 @@ export default function BusquedaAutocompletado({
         }
     }, [datos, apiConfig?.endpoint]);
 
-    // 🔥 CORREGIDO: useEffect de sugerencias para manejar backend + local automáticamente
+    // 🔥 useEffect: Sugerencias automáticas al escribir
     useEffect(() => {
-
-        if (busquedaEnCurso.current) {
-            console.log('🚫 [RESULTADOS-AUTO] Cancelado, la búsqueda completa ya empezó.');
-            return; // NO HAGAS NADA
+        if (!inputFocused || !query.trim()) {
+            setSugerencias([]);
+            setMensajeNoResultados("");
+            return;
         }
 
         if (debounceSugerenciasRef.current) {
             clearTimeout(debounceSugerenciasRef.current);
         }
 
-        const texto = query;
+        const texto = query.trim();
 
-        // 🔥 PRIMERO: Comparación rápida con texto ORIGINAL
-        const textoNoCambioOriginal = texto === terminoBusquedaAnteriorSugerencias.current;
+        // Buscar sugerencias con debounce
+        debounceSugerenciasRef.current = setTimeout(async () => {
+            try {
+                const textoNormalizado = normalizarGoogle(texto, "sugerencias");
+                const sugerenciasFinales = await buscarSugerencias(textoNormalizado);
 
-        if (textoNoCambioOriginal) {
-            console.log('⚡ [SUGERENCIAS] Texto ORIGINAL no cambió - Evitando procesamiento');
-            return;
-        }
-
-        // 🔍 SEGUNDO: Detección de caracteres problema
-        const analisis = analizarCaracteresQuery(texto);
-        const tieneCaracteresProblema = analisis.tieneProblema;
-
-        if (tieneCaracteresProblema) {
-            console.log('🚫 [SUGERENCIAS] Caracteres problema - NO búsqueda');
-            setSugerencias([]);
-            setEstadoSugerencias("idle");
-            setMostrarSugerencias(false);
-            terminoBusquedaAnteriorSugerencias.current = texto;
-            return;
-        }
-
-        // 📝 TERCERO: Normalización
-        const textoNormalizado = normalizarGoogle(texto, "sugerencias");
-        const textoAnteriorNormalizado = normalizarGoogle(terminoBusquedaAnteriorSugerencias.current, "sugerencias");
-
-        // 🔥 CUARTO: Comparación con textos NORMALIZADOS
-        const textoNoCambioNormalizado = textoNormalizado === textoAnteriorNormalizado;
-
-        if (textoNoCambioNormalizado) {
-            console.log('⚡ [SUGERENCIAS] Texto NORMALIZADO no cambió - Evitando búsqueda');
-            terminoBusquedaAnteriorSugerencias.current = texto;
-            return;
-        }
-
-        const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
-        const tieneTextoParaSugerencias = textoNormalizado.length >= 1;
-
-        // ✅ VALIDAR PRIMER CARÁCTER DEBE SER MAYÚSCULA
-        const comienzaConMayuscula = texto.length > 0 && /^[A-Z]/.test(texto);
-
-        console.log('🔍 [SUGERENCIAS] Comparación CORREGIDA:', {
-            textoOriginal: JSON.stringify(texto),
-            textoNormalizado: JSON.stringify(textoNormalizado),
-            textoSoloEspacios,
-            tieneTextoParaSugerencias,
-            comienzaConMayuscula,
-            inputFocused
-        });
-
-        if (textoSoloEspacios) {
-            setSugerencias([]);
-            setEstadoSugerencias("idle");
-            setMostrarSugerencias(false);
-            terminoBusquedaAnteriorSugerencias.current = texto;
-        } else if (tieneTextoParaSugerencias && inputFocused && comienzaConMayuscula) {
-            // 🔥 Si llegamos aquí, es porque el texto cambió y hay que buscar
-            console.log('🚀 [SUGERENCIAS] Buscando sugerencias para:', textoNormalizado);
-
-            setEstadoSugerencias("loading");
-            setMostrarSugerencias(true);
-            terminoBusquedaAnteriorSugerencias.current = texto;
-
-            debounceSugerenciasRef.current = setTimeout(async () => {
-                if (busquedaEnCurso.current) {
-                    console.log('🚫 [RESULTADOS-AUTO] Cancelado, la búsqueda completa ya empezó.');
-                    return; // NO HAGAS NADA
-                }
-                try {
-                    // 🔥 ESTA FUNCIÓN YA MANEJA BACKEND + LOCAL AUTOMÁTICAMENTE
-                    const sugerenciasFinales = await buscarSugerencias(textoNormalizado);
-
-                    // Verificar que el query no haya cambiado
-                    if (query === texto) {
-                        setSugerencias(sugerenciasFinales);
-                        setEstadoSugerencias("success");
-                        setMostrarSugerencias(true);
-
-                        console.log('✅ [SUGERENCIAS-FINAL] Resultado:', {
-                            texto: textoNormalizado,
-                            sugerencias: sugerenciasFinales,
-                            cantidad: sugerenciasFinales.length
-                        });
-
-                        if (sugerenciasFinales.length === 0 && textoNormalizado.length >= 2) {
-                            setMensajeNoResultados(`No se encontraron sugerencias para "${texto}"`);
-                        } else {
-                            setMensajeNoResultados("");
-                        }
+                if (query.trim() === texto) {
+                    setSugerencias(sugerenciasFinales);
+                    if (sugerenciasFinales.length === 0) {
+                        setMensajeNoResultados(`No se encontraron sugerencias para "${texto}"`);
+                    } else {
+                        setMensajeNoResultados("");
                     }
-                } catch (error) {
-                    console.error('❌ [SUGERENCIAS] Error:', error);
-                    setEstadoSugerencias("error");
-                    setSugerencias([]);
                 }
-            }, 300);
-        } else {
-            terminoBusquedaAnteriorSugerencias.current = texto;
-        }
+            } catch (error) {
+                console.error('❌ Error en sugerencias:', error);
+                setSugerencias([]);
+            }
+        }, 200);
 
         return () => {
             if (debounceSugerenciasRef.current) {
@@ -1221,135 +1188,11 @@ export default function BusquedaAutocompletado({
         };
     }, [query, inputFocused, buscarSugerencias]);
 
-    // 🔥 CORREGIDO: useEffect de resultados para manejar backend + local automáticamente
-    // 🔥 CORREGIDO: useEffect de resultados con la MISMA normalización que sugerencias
-    useEffect(() => {
-
-        if (busquedaEnCurso.current) {
-            console.log('🚫 [RESULTADOS-AUTO] Omitido, "Enter" tiene prioridad.');
-            return;
-        }
-
-        if (debounceResultadosRef.current) {
-            clearTimeout(debounceResultadosRef.current);
-        }
-
-        const texto = query.trim();
-        if (desactivarBusquedaAutomatica.current) {
-            console.log('⏸️ [RESULTADOS] Desactivada temporalmente');
-            return;
-        }
-
-
-        if (busquedaEnCurso.current) {
-            console.log('🚫 [RESULTADOS-AUTO] Omitido, búsqueda completa en curso.');
-            return;
-        }
-
-        // 🔥 NUEVO: Usar la MISMA normalización que en sugerencias
-        const textoNormalizado = normalizarGoogle(texto, "sugerencias");
-        const textoAnteriorNormalizado = normalizarGoogle(terminoBusquedaAnteriorResultados.current, "sugerencias");
-
-        // 🔥 PRIMERO: Comparación con textos NORMALIZADOS (incluyendo comas)
-        const textoNoCambioNormalizado = textoNormalizado === textoAnteriorNormalizado;
-
-        if (textoNoCambioNormalizado) {
-            console.log('⚡ [RESULTADOS] Texto NORMALIZADO no cambió - Evitando búsqueda');
-            terminoBusquedaAnteriorResultados.current = texto;
-            return;
-        }
-
-        const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
-        const tieneTextoParaResultados = textoNormalizado.length >= 2;
-
-        // ✅ VALIDAR PRIMER CARÁCTER DEBE SER MAYÚSCULA
-        const comienzaConMayuscula = texto.length > 0 && /^[A-Z]/.test(texto);
-
-        console.log('🔍 [RESULTADOS] Comparación CORREGIDA:', {
-            textoOriginal: JSON.stringify(texto),
-            textoNormalizado: JSON.stringify(textoNormalizado),
-            textoSoloEspacios,
-            tieneTextoParaResultados,
-            comienzaConMayuscula,
-            busquedaEnCurso: busquedaEnCurso.current
-        });
-
-        // 🔥 MODIFICADO: Usar textoNormalizado para la búsqueda Y VALIDAR MAYÚSCULA
-        if (!textoSoloEspacios &&
-            tieneTextoParaResultados &&
-            inputFocused &&
-            comienzaConMayuscula &&
-            !busquedaEnCurso.current) {
-
-            console.log('🚀 [RESULTADOS] Programando búsqueda automática para:', textoNormalizado);
-
-            debounceResultadosRef.current = setTimeout(async () => {
-
-                if (busquedaEnCurso.current) {
-                    console.log('🚫 [RESULTADOS-AUTO] Cancelado, "Enter" se adelantó.');
-                    return; // NO HAGAS NADA
-                }
-
-                if (desactivarBusquedaAutomatica.current) {
-                    console.log('🚫 [RESULTADOS-AUTO] Cancelado, se desactivó la búsqueda.');
-                    return;
-                }
-
-                if (query.trim() === texto && !desactivarBusquedaAutomatica.current) {
-                    console.log('📊 [RESULTADOS] Ejecutando búsqueda automática');
-
-
-                    // 🔥 USAR LA MISMA FUNCIÓN QUE MANEJA BACKEND + LOCAL
-                    if (busquedaEnCurso.current) {
-                        console.log('⏸️ [RESULTADOS] Ya hay búsqueda en curso, omitiendo');
-                        return;
-                    }
-
-                    //busquedaEnCurso.current = true;
-                    //terminoBusquedaAnteriorResultados.current = texto;
-                    //setLoadingResultados(true);
-                    //setEstadoBusqueda("loading");
-                    console.log('📊 [RESULTADOS-AUTO] Ejecutando (llamando a función principal)');
-                    await ejecutarBusquedaCompleta(query.trim(), false, false, true);
-
-                }
-            }, 600);
-        } else {
-            terminoBusquedaAnteriorResultados.current = texto;
-        }
-
-        return () => {
-            if (debounceResultadosRef.current) {
-                clearTimeout(debounceResultadosRef.current);
-            }
-        };
-    }, [query, inputFocused, datos, onSearch, apiConfig?.endpoint, ejecutarBusquedaCompleta]);
-
     const manejarFocusInput = useCallback(async () => {
         setInputFocused(true);
-        const textoActual = query.trim();
-
-        if (textoActual.length >= 1) {
-            console.log('🖱️ [FOCUS] Cargando sugerencias para texto existente:', textoActual);
-            setEstadoSugerencias("loading");
-
-            try {
-                const sugerenciasBackend = await buscarSugerencias(textoActual);
-                setSugerencias(sugerenciasBackend);
-                setEstadoSugerencias(sugerenciasBackend.length > 0 ? "success" : "success");
-
-                if (sugerenciasBackend.length === 0) {
-                    setMensajeNoResultados(`No se encontraron sugerencias para "${textoActual}"`);
-                } else {
-                    setMensajeNoResultados("");
-                }
-            } catch (error) {
-                console.error('❌ Error cargando sugerencias al hacer focus:', error);
-                setEstadoSugerencias("error");
-                setMensajeNoResultados("");
-            }
-        }
-    }, [query, buscarSugerencias]);
+        // NO buscar sugerencias automáticamente al hacer focus
+        // Solo mostrar el historial si existe
+    }, []);
 
     // 🔥 MODIFICADO: Búsqueda manual - pierde focus
     const ejecutarBusqueda = useCallback(async () => {
@@ -1358,11 +1201,18 @@ export default function BusquedaAutocompletado({
         // 🔥 PIERDE EL FOCUS AL EJECUTAR BÚSQUEDA
         inputRef.current?.blur();
         setInputFocused(false);
-        setMostrarSugerencias(true);
+        setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
 
+        busquedaEnCurso.current = false;
+
         await ejecutarBusquedaCompleta(query, true, false, true);
-    }, [query, ejecutarBusquedaCompleta]);
+    }, [
+        query,
+        ejecutarBusquedaCompleta,
+        setMostrarSugerencias,
+        setMostrarHistorialLocal
+    ]);
 
     // 🔥 MODIFICADO: Limpiar SÍ actualiza URL
     const limpiarBusqueda = useCallback(() => {
@@ -1375,10 +1225,17 @@ export default function BusquedaAutocompletado({
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(true);
         setLoadingResultados(false);
+        setMostrarLoadingSugerencias(false);
         setMensajeNoResultados("");
         terminoBusquedaAnteriorSugerencias.current = "";
         terminoBusquedaAnteriorResultados.current = "";
         busquedaEnCurso.current = false;
+
+        // Limpiar timeout de loading
+        if (showLoadingTimeoutRef.current) {
+            clearTimeout(showLoadingTimeoutRef.current);
+            showLoadingTimeoutRef.current = null;
+        }
 
         desactivarBusquedaAutomatica.current = false;
 
@@ -1416,7 +1273,7 @@ export default function BusquedaAutocompletado({
                     if (mostrarHistorialLocal) {
                         const textoSeleccionado = seleccionarPorIndice(indiceSeleccionado);
                         if (textoSeleccionado) {
-                            setQuery(textoSeleccionado);
+                            setQuery(titleCase(textoSeleccionado));
                             setMostrarHistorialLocal(false);
                             ejecutarBusquedaCompleta(textoSeleccionado, true, false, true);
                         }
@@ -1469,35 +1326,19 @@ export default function BusquedaAutocompletado({
 
         );
 
-        // 🔥 CONDICIÓN CORREGIDA para sugerencias
+        // ✅ Mostrar sugerencias solo si hay algo que mostrar
+        // NO mostrar mientras está cargando para evitar parpadeos
         const debeMostrarSugerencias = Boolean(
             inputFocused &&
             !esSoloEspacios &&
             texto.length >= 1 &&
-            (
-                estadoSugerencias === "loading" ||
-                estadoSugerencias === "success" ||  // ✅ NUEVO: Estado success
-                estadoSugerencias === "error" ||    // ✅ NUEVO: Estado error  
-                sugerencias.length > 0 ||
-                mensajeNoResultados
-            )
+            !mostrarLoadingSugerencias  // No mostrar si está cargando
         );
-
-        console.log('👀 [VISIBILIDAD] Control de visibilidad:', {
-            inputFocused,
-            query,
-            textoLimpio: texto,
-            esSoloEspacios,
-            estadoSugerencias,
-            sugerenciasCount: sugerencias.length,
-            mensajeNoResultados,
-            debeMostrarSugerencias
-        });
 
         setMostrarHistorialLocal(debeMostrarHistorial);
         setMostrarSugerencias(debeMostrarSugerencias);
 
-    }, [query, inputFocused, historial, mostrarHistorial, estadoSugerencias, sugerencias, mensajeNoResultados, setMostrarHistorialLocal]);
+    }, [query, inputFocused, mostrarHistorial, mostrarLoadingSugerencias]);
     // Efecto para cerrar sugerencias al hacer click fuera
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -1517,7 +1358,7 @@ export default function BusquedaAutocompletado({
     // Manejar selección del historial
     const manejarSeleccionHistorial = useCallback(async (texto: string) => {
         const textoSeleccionado = seleccionarDelHistorial(texto) || "";
-        setQuery(textoSeleccionado);
+        setQuery(titleCase(textoSeleccionado));
         setSugerencias([]);
         setMensaje("");
         setMostrarSugerencias(false);
@@ -1530,8 +1371,18 @@ export default function BusquedaAutocompletado({
     }, [seleccionarDelHistorial, ejecutarBusquedaCompleta, setIndiceSeleccionado]);
 
     return (
-
-        <div className="w-full relative" ref={containerRef}>
+        <div
+            className="contenedor-busqueda"
+            ref={containerRef}
+            onMouseDown={() => {
+                // Si el usuario hace clic EN CUALQUIER LUGAR
+                // dentro del componente, cancelamos el blur.
+                if (blurTimeoutRef.current) {
+                    clearTimeout(blurTimeoutRef.current);
+                    blurTimeoutRef.current = null;
+                }
+            }}
+        >
             <div className="busqueda-barra">
                 <Search className="icono-busqueda" size={20} />
                 <input
@@ -1543,10 +1394,47 @@ export default function BusquedaAutocompletado({
                         manejarCambioInput(e.target.value);
                         setMostrarHistorialLocal(false);
                     }}
+                    onMouseDown={() => {
+                        if (!inputFocused) {
+                            console.log('🖱️ [MOUSE-DOWN] Forzando estado de foco desde el input.');
+
+                            if (blurTimeoutRef.current) {
+                                clearTimeout(blurTimeoutRef.current);
+                                blurTimeoutRef.current = null;
+                            }
+                            manejarFocusInput();
+                        }
+                    }}
                     onKeyDown={manejarKeyDown}
-                    onFocus={manejarFocusInput}
-                    onBlur={() => {
+                    onFocus={() => {
+                        // Limpia cualquier blur pendiente
+                        if (blurTimeoutRef.current) {
+                            clearTimeout(blurTimeoutRef.current);
+                            blurTimeoutRef.current = null;
+                        }
+
+                        justFocusedRef.current = true;
+                        manejarFocusInput();
                         setTimeout(() => {
+                            justFocusedRef.current = false;
+                        }, 100);
+                    }}
+                    onBlur={() => {
+                        if (justFocusedRef.current) {
+                            return;
+                        }
+
+                        if (blurTimeoutRef.current) {
+                            clearTimeout(blurTimeoutRef.current);
+                        }
+
+                        blurTimeoutRef.current = setTimeout(() => {
+                            if (document.activeElement === inputRef.current) {
+                                console.log('🏁 [BLUR] Blur cancelado, el foco sigue en el input (scroll).');
+                                return;
+                            }
+
+                            console.log('🏁 [BLUR] Blur real detectado. Cerrando menú.');
                             setInputFocused(false);
                         }, 200);
                     }}
@@ -1569,17 +1457,18 @@ export default function BusquedaAutocompletado({
                 {tieneCaracteresProblema(query) && <span className="caracteres-invalidos"> - Caracteres especiales se ignoran</span>}
             </div>
 
-            {/* Mostrar loading en área de resultados */}
-            {loadingResultados && (
-                <div className="cargando">
-                    <div className="spinner"></div>
-                    <span>Buscando resultados...</span>
-                </div>
-            )}
-
             {/* ✅ HISTORIAL ✅ */}
             {mostrarHistorialLocal && (
-                <ul className="caja-sugerencias">
+                <ul className="caja-sugerencias" onMouseDown={(e) => {
+                    e.preventDefault(); // Mantiene el foco del navegador
+
+                    // Cancela el timeout de blur
+                    if (blurTimeoutRef.current) {
+                        clearTimeout(blurTimeoutRef.current);
+                        blurTimeoutRef.current = null;
+                    }
+                }}>
+
                     <li className="sugerencias-header" onMouseDown={(e) => e.preventDefault()}>
                         Búsquedas recientes
                         {cargandoHistorial && (
@@ -1589,7 +1478,7 @@ export default function BusquedaAutocompletado({
 
                     {/* ✅ AQUÍ LA CONDICIÓN PARA MOSTRAR EL MENSAJE */}
                     {!cargandoHistorial && historial.length === 0 ? (
-                        <li className="mensaje-historial" onMouseDown={(e) => e.preventDefault()}>
+                        <li className="mensaje-historialon" onMouseDown={(e) => e.preventDefault()}>
                             No hay búsquedas recientes
                         </li>
                     ) : (
@@ -1635,49 +1524,71 @@ export default function BusquedaAutocompletado({
 
             {/* SUGERENCIAS */}
             {mostrarSugerencias && (
-                <>
-                    {estadoSugerencias === "loading" && (
-                        <div className="caja-sugerencias cargando">
+                <ul
+                    className="caja-sugerencias"
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        if (blurTimeoutRef.current) {
+                            clearTimeout(blurTimeoutRef.current);
+                            blurTimeoutRef.current = null;
+                        }
+                    }}
+                >
+                    <li className="sugerencias-header">
+                        Sugerencias
+                    </li>
+
+                    {mostrarLoadingSugerencias && (
+                        <li className="mensaje-sugerencia cargando">
                             <div className="spinner"></div>
                             Buscando sugerencias...
-                        </div>
+                        </li>
                     )}
 
-                    {estadoSugerencias !== "loading" && (
-                        <ul className="caja-sugerencias">
-                            <li className="sugerencias-header">
-                                Sugerencias
-                            </li>
-                            {sugerencias.map((s, i) => (
-                                <li
-                                    key={i}
-                                    onClick={() => seleccionarSugerencia(s)}
-                                    className={i === indiceSeleccionado ? 'seleccionado' : ''}
-                                >
-                                    <Search className="icono-sugerencia" size={16} />
-                                    {s}
-                                </li>
-                            ))}
-                            {sugerencias.length === 0 && mensajeNoResultados && (
+                    {!mostrarLoadingSugerencias && estadoSugerencias === "error" && (
+                        <li className="mensaje-error">
+                            <Search className="icono-sugerencia" size={16} />
+                            {mensaje}
+                        </li>
+                    )}
+
+                    {!mostrarLoadingSugerencias && estadoSugerencias !== "error" && (
+                        <>
+                            {sugerencias.length > 0 ? (
+                                sugerencias.map((s, i) => (
+                                    <li
+                                        key={i}
+                                        onClick={() => seleccionarSugerencia(s)}
+                                        className={i === indiceSeleccionado ? 'seleccionado' : ''}
+                                    >
+                                        <Search className="icono-sugerencia" size={16} />
+                                        {s}
+                                    </li>
+                                ))
+                            ) : mensajeNoResultados ? (
                                 <li className="mensaje-sugerencia">
                                     <div className="icono-info">ℹ️</div>
                                     {mensajeNoResultados}
                                 </li>
+                            ) : (
+                                <li className="mensaje-sugerencia">
+                                    <div className="icono-info">ℹ️</div>
+                                    Sin sugerencias
+                                </li>
                             )}
-                        </ul>
+                        </>
                     )}
-
-                    {estadoSugerencias === "error" && mensaje && (
-                        <ul className="caja-sugerencias">
-                            <li className="mensaje-error">
-                                <Search className="icono-sugerencia" size={16} />
-                                {mensaje}
-                            </li>
-                        </ul>
-                    )}
-                </>
+                </ul>
             )}
-        </div>
 
+            {/* Mostrar loading en área de resultados */}
+            {loadingResultados && (
+                <div className="cargando">
+                    <div className="spinner"></div>
+                    <span>Buscando resultados...</span>
+                </div>
+            )}
+
+        </div>
     );
 }
