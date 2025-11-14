@@ -179,7 +179,7 @@ export default function OfferDetail() {
           </div>
           <h1 style={{ margin: 0, fontSize: 28, color: '#111827', fontWeight: 600 }}>Detalles de la oferta</h1>
           <p style={{ margin: '8px 0 0', color: '#6B7280', fontSize: 14 }}>
-            Revisa la informacion completa de la publicacion.
+            Revisa la información completa de la publicación.
           </p>
         </div>
         <button
@@ -311,7 +311,7 @@ export default function OfferDetail() {
           </div>
 
           <div style={{ display: 'grid', gap: 10 }}>
-            <span style={labelStyle}>Informacion de contacto</span>
+            <span style={labelStyle}>Información de contacto</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 15, color: '#1F2937' }}>
               {offer.contact?.whatsapp && (
                 <span>
