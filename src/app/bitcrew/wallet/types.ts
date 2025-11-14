@@ -39,7 +39,3 @@ export interface TransactionListProps {
 export interface TransactionItemProps {
   transaction: IFrontendTransaction;
 }
-
-export interface TransactionItemProps {
-  transaction: IFrontendTransaction;
-}
