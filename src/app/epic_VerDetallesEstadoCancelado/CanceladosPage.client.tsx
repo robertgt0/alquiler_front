@@ -21,12 +21,18 @@ function buildFromParams(sp: URLSearchParams): SolicitudClienteDetalle | null {
     descripcion: sp.get('descripcion') || 'Descripción no disponible.',
     costo: Number(sp.get('costo') || 0),
     estado: 'Cancelado' as EstadoTrabajo,
-    // ✅ SOLO estos 2 campos extra
-    cancelReason: sp.get('justificacion') || '',
-    cancelledBy: sp.get('canceladoPor') || '',
+
+    // 🔴 CAMBIADO: soporta nombres del backend y los viejos
+    cancelReason:
+      sp.get('justificacion_cancelacion') ??
+      sp.get('justificacion') ??
+      '',
+    cancelledBy:
+      sp.get('cancelado_por') ??
+      sp.get('canceladoPor') ??
+      '',
   };
 }
-
 // 🔹 Componente principal (IGUAL que pendiente)
 export default function CanceladosPageClient() {
   const sp = useSearchParams();
