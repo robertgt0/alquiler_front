@@ -12,5 +12,6 @@ export interface Job {
   status: JobStatus;
   cancelReason?: string;
   description?: string;
+  cancelledBy?: string;
   cost?: number;         // ✅ Añadido para pasar a HU10
 }

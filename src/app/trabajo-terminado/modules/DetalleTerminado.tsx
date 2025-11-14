@@ -1,4 +1,4 @@
-"use client";
+"use client"; 
 import React from "react";
 import { useRouter } from "next/navigation";
 import type { TrabajoTerminado } from "../interfaces/Trabajo.interface";
@@ -21,52 +21,69 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
   const calificacion = raw === null || raw === undefined ? null : Number(raw);
   const tieneCalificacion = Number.isFinite(calificacion);
 
-  // 3) MAPA DE ESTADOS → color de fondo + color de texto + etiqueta a mostrar
-  //    Si tu BD entrega "estado" en mayúsculas/minúsculas distinto,
-  //    más abajo normalizamos a "Terminado/Cancelado/Confirmado/Pendiente".
+  // 3) MAPA DE ESTADOS
   const estadoMap = {
-    Terminado:  { bg: "bg-[#31C950]", text: "text-black",  label: "Terminado"  }, // verde
-    Cancelado:  { bg: "bg-[#E84141]", text: "text-white",  label: "Cancelado"  }, // rojo
-    Confirmado: { bg: "bg-[#0C4FE9]", text: "text-white",  label: "Confirmado" }, // azul 
-    Pendiente:  { bg: "bg-[#F0D92B]", text: "text-black",  label: "Pendiente"  }, // amarillo
+    Terminado:  { bg: "bg-[#31C950]", text: "text-black",  label: "Terminado"  },
+    Cancelado:  { bg: "bg-[#E84141]", text: "text-white",  label: "Cancelado"  },
+    Confirmado: { bg: "bg-[#0C4FE9]", text: "text-white",  label: "Confirmado" },
+    Pendiente:  { bg: "bg-[#F0D92B]", text: "text-black",  label: "Pendiente"  },
   } as const;
 
-  // 4) Normalizamos el "estado" recibido por si viene en minúsculas/variante
+  // 4) Normalización de estado
   const estadoNormalizado = (() => {
     const v = String(trabajo.estado || "").toLowerCase();
     if (v === "terminado" || v === "completado")  return "Terminado";
     if (v === "cancelado")  return "Cancelado";
     if (v === "confirmado") return "Confirmado";
     if (v === "pendiente")  return "Pendiente";
-    return "Pendiente"; // fallback
+    return "Pendiente";
   })() as keyof typeof estadoMap;
 
-  // 5) Obtenemos la configuración (colores/texto) del estado actual
+  // 5) Config del badge
   const badge = estadoMap[estadoNormalizado];
 
   return (
-    /**
-     * CONTENEDOR DE LA VISTA
-     * - min-h-screen: ocupa alto de ventana
-     * - items-start + pt-26: empuja el contenido hacia arriba (ajusta el pt-26 si lo quieres aún más pegado)
-     *   Por ejemplo: pt-16 / pt-20 / pt-24 / pt-26
-     */
-    <section className={`${poppins.className} min-h-screen flex items-start justify-center bg-white pt-26`}>
+    <section
+      className={`
+        ${poppins.className}
+        min-h-screen
+        flex
+        items-start
+        justify-center
+        bg-white
+        pt-10
+        sm:pt-16
+        md:pt-20
+      `}
+    >
       {/* CONTENEDOR CENTRAL */}
-      <div className="w-full max-w-[760px] px-6 text-gray-900 text-[16px]">
-
+      <div className="w-full max-w-[760px] px-4 sm:px-6 text-gray-900 text-[15px] sm:text-[16px]">
         {/* TÍTULO */}
-        <h1 className="text-center text-3xl font-extrabold text-[#0C4FE9] mb-7">
+        <h1 className="text-center text-2xl sm:text-3xl font-extrabold text-[#0C4FE9] mb-7">
           Trabajo
         </h1>
 
         {/**
          * TABLA “ETIQUETA : VALOR”
-         * - grid-cols-[140px_1fr]: columna izquierda fija 140px, derecha flexible
-         * - ml-[100px]: empuja el bloque hacia adentro (ajústalo a tu gusto)
-         * - gap-y/gap-x: separaciones entre filas/columnas
+         * - En móvil: una sola columna (etiqueta arriba, valor abajo)
+         * - En sm+: dos columnas (140px / resto), con margen izquierdo
          */}
-        <div className="w-fit ml-[100px] grid grid-cols-[140px_1fr] gap-y-1/2 gap-x-1/2 text-[18px]">
+        <div
+          className={`
+            w-full
+            sm:w-fit
+            mx-auto
+            sm:ml-[100px]
+            grid
+            grid-cols-1
+            sm:grid-cols-[140px_1fr]
+            gap-y-2
+            sm:gap-y-1.5
+            sm:gap-x-4
+            text-[16px]
+            sm:text-[18px]
+          `}
+        >
           <span className="font-bold text-black">Cliente:</span>
           <span>{trabajo.cliente}</span>
 
@@ -87,43 +104,91 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
 
           <span className="font-bold text-black">Estado:</span>
           <span>
-            {/**
-             * BADGE DINÁMICO
-             * - color y texto cambian según el estado normalizado
-             * - px/py: tamaño del “chip”
-             */}
-            <span className={`inline-block ${badge.bg} ${badge.text} px-4 py-1 rounded-md font-semibold`}>
+            <span
+              className={`
+                inline-block
+                ${badge.bg}
+                ${badge.text}
+                px-4
+                py-1
+                rounded-md
+                font-semibold
+                text-sm
+                sm:text-base
+              `}
+            >
               {badge.label}
             </span>
           </span>
         </div>
 
         {/* BOTONES */}
-        <div className="flex justify-center gap-16 mt-8">
+        <div
+          className={`
+            flex
+            flex-col
+            items-center
+            gap-3
+            sm:flex-row
+            sm:justify-center
+            sm:gap-[300px]
+            
+            mt-8
+          `}
+        >
           {/* Atrás */}
           <button
             type="button"
             onClick={() => router.back()}
-            className="min-w-[180px] bg-[#0C4FE9] hover:bg-blue-700 text-white font-semibold rounded-lg py-1 px-7 transition duration-200 ease-in-out translate-x-[-115px] cursor-pointer active:scale-95"
+            className={`
+              w-full
+              sm:w-auto
+              min-w-[180px]
+              bg-[#0C4FE9]
+              hover:bg-blue-700
+              text-white
+              font-semibold
+              rounded-lg
+              py-2
+              px-7
+              transition
+              duration-200
+              ease-in-out
+              cursor-pointer
+              active:scale-95
+            `}
           >
             Atrás
           </button>
 
-          {/* Ver mi calificación
-             - Si deseas que SOLO aparezca cuando estado === "Terminado",
-               reemplaza la condición por: (tieneCalificacion && estadoNormalizado === "Terminado") */}
+          {/* Ver mi calificación */}
           <button
             type="button"
             onClick={() => {
               if (tieneCalificacion) alert(`Tu calificación fue ${calificacion} ★`);
               else alert("Este trabajo aún no tiene calificación.");
             }}
-            className="min-w-[180px] bg-[#0C4FE9] hover:bg-blue-700 text-white font-semibold rounded-lg py-1 px-7 transition duration-200 ease-in-out translate-x-[80px] cursor-pointer active:scale-95"
+            className={`
+              w-full
+              sm:w-auto
+              min-w-[180px]
+              bg-[#0C4FE9]
+              hover:bg-blue-700
+              text-white
+              font-semibold
+              rounded-lg
+              py-2
+              px-7
+              transition
+              duration-200
+              ease-in-out
+              cursor-pointer
+              active:scale-95
+            `}
           >
             Ver mi calificación
           </button>
         </div>
-
       </div>
     </section>
   );
