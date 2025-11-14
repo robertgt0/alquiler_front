@@ -89,7 +89,11 @@ export default async function FixerDetailPage({ params }: PageProps) {
   const rating = Number(data?.ratingAvg ?? 4.4);
   const memberSince = data?.memberSince ?? data?.createdAt ?? new Date(2019, 7, 28).toISOString();
   const methods: string[] = Array.isArray(data?.paymentMethods) ? data.paymentMethods : ["cash", "qr", "card"];
-  const bio = data?.bio ?? "Soy una persona responsable y eficiente que trabaja tanto en obras grandes como pequeñas.";
+  
+  // ✅ Bug 1.1.1 RESUELTO: Mostrar bio real o mensaje específico del fixer
+  const bio = data?.bio?.trim() || null;
+  const hasBio = bio !== null && bio.length > 0;
+  
   const phone = data?.whatsapp ?? "+59170123456";
   const photoUrl =
     data?.photoUrl ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E5E7EB&color=111827&size=128`;
@@ -203,9 +207,19 @@ export default async function FixerDetailPage({ params }: PageProps) {
             </div>
           </div>
 
+          {/* ✅ Bug 1.1.1 RESUELTO: Mostrar bio real o mensaje personalizado */}
           <div className="rounded-xl border border-slate-200 p-4 md:col-span-3">
             <div className="mb-2 text-sm text-slate-500">Sobre mí</div>
-            <div className="rounded-lg bg-slate-50 p-4 text-slate-800">{bio}</div>
+            {hasBio ? (
+              <div className="rounded-lg bg-slate-50 p-4 text-slate-800">{bio}</div>
+            ) : (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-amber-800 text-sm">
+                <p className="font-medium mb-1">Este fixer aún no ha agregado una descripción personal.</p>
+                <p className="text-xs text-amber-700">
+                  Si eres el propietario de este perfil, puedes agregar información sobre ti en la sección de edición.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="rounded-xl border border-slate-200 p-4 md:col-span-3">
@@ -244,8 +258,10 @@ export default async function FixerDetailPage({ params }: PageProps) {
         )}
       </div>
 
+      {/* ✅ Bug 1.1.1 RESUELTO: Componente de edición para el propietario */}
       <FixerOwnerActions
         fixerId={id}
+        currentBio={bio}
         skills={skillsDetails.map((skill) => ({
           id: skill.id,
           name: skill.name,
