@@ -1,10 +1,14 @@
 // app/epic_trabajo-terminadoCliente/modules/DetalleTerminado.tsx
 "use client";
-import React from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // 👈 agregamos useSearchParams
+import React, { useState } from "react"; // 👈 NUEVO: importamos useState
+import { useRouter, useSearchParams } from "next/navigation";
 import type { TrabajoTerminado } from "../interfaces/Trabajo.interface";
 import { formatFechaLargaES } from "../utils/date";
 import { Poppins } from "next/font/google";
+
+// NUEVO: Importa tu modal.
+// (Ajusta la ruta si es necesario, ej: "../components/RatingModal")
+import { RatingModal } from "./RatingModal"; 
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -17,6 +21,9 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
 
   // 👇 role según desde dónde se hizo click (tag del URL)
   const role = (searchParams.get("role") ?? "cliente") as "cliente" | "proveedor";
+
+  // NUEVO: Estado para controlar el modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 1) Formato de fecha "jueves 20 de noviembre" (sin coma)
   const fechaLarga = formatFechaLargaES(trabajo.fecha).replace(",", "");
@@ -50,6 +57,54 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
   // 👇 Persona mostrada según el rol
   const labelPersona = role === "cliente" ? "Proveedor" : "Cliente";
   const nombrePersona = role === "cliente" ? trabajo.proveedor : trabajo.cliente;
+
+  // --- NUEVO: LÓGICA PARA LOS BOTONES DEL MODAL ---
+  // (Copiada de tu segundo código)
+
+  const handleAtrasClick = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleOmitirClick = () => {
+    setIsModalOpen(false);
+  };
+  
+  const API_URL = `http://localhost:5000/api/los_vengadores/trabajos/trabajo/${trabajo.id}/calificar`;
+
+  const handleEnviarClick = async (rating: number, comment: string) => {
+    console.log("Datos a enviar:", { rating, comment });
+  
+    try {
+      const response = await fetch(API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numero_estrellas: rating, comentario_calificacion: comment }),
+      });
+  
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        data = {}; // fallback si la respuesta no tiene JSON
+      }
+  
+      if (!response.ok) {
+        console.error("Error del backend:", response.status, data);
+        throw new Error(data.message || data.error || "Error al enviar calificación");
+      }
+  
+      console.log("Respuesta exitosa:", data);
+      alert("Calificación enviada con éxito");
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error("Error en handleEnviarClick:", error.message || error);
+      alert("Error al enviar la calificación. Revisa la consola.");
+    }
+  };
+
+
+  // --- RENDERIZADO ---
+  // (Se mantiene idéntico, solo cambia el onClick del botón)
 
   return (
     <section
@@ -167,9 +222,8 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
 
           <button
             type="button"
-            onClick={() => {
-                router.push(`/epic_VerDetallesAmbos?id=${trabajo.id}`);
-            }}
+            // 👇 MODIFICADO: Abre el modal en lugar de navegar
+            onClick={() => setIsModalOpen(true)}
             className="
               w-full
               sm:w-auto
@@ -192,6 +246,14 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
           </button>
         </div>
       </div>
+
+      {/* NUEVO: El modal se renderiza aquí */}
+      <RatingModal
+        isOpen={isModalOpen}
+        onCloseClick={handleAtrasClick}
+        onOmitClick={handleOmitirClick}
+        onSubmitClick={handleEnviarClick}
+      />
     </section>
-  );
+  );
 }
