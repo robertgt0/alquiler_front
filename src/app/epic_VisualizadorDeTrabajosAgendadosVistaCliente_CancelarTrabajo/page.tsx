@@ -25,7 +25,7 @@ const CancelarTrabajoPage: React.FC = () => {
   } = useCancelarTrabajo();
 
   useEffect(() => {
-    obtenerTrabajo("123").then(setTrabajo);
+    obtenerTrabajo("6907d2bc6d942a4964cb5b9e").then(setTrabajo);
   }, []);
 
   const handleCancelar = () => {

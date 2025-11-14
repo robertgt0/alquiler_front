@@ -31,7 +31,7 @@ const Calendario: React.FC = () => {
     const cargarInfoProveedor = async () => {
       try {
         setCargandoInfo(true);
-        const info = await DisponibilidadAPIService.obtenerInfoProveedor("proveedor_123");
+        const info = await DisponibilidadAPIService.obtenerInfoProveedor("6902c43438df4e88b6680640");
         setInfoProveedor(info);
       } catch (error)
 {
@@ -169,7 +169,7 @@ const Calendario: React.FC = () => {
     return (
       <Horario
         fechaSeleccionada={fechaSeleccionada}
-        proveedorId="proveedor_123"
+        proveedorId="6902c43438df4e88b6680640"
         infoProveedor={infoProveedor}
         onVolver={() => {
           setFechaSeleccionada(null);
