@@ -8,6 +8,10 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./ui/dial
 import { cn } from "@/lib/utils";
 import LocationForm from "./LocationForms";
 import ModalConfirmacion from "./ModalConfirmacion";
+import { createAndNotify } from "@/lib/appointments_gmail";
+import { updateAndNotify } from "@/lib/appointments_gmail";
+import { createAndNotifyWhatsApp } from "@/lib/appointments_whatsapp";
+import { updateAndNotifyWhatsApp } from "@/lib/appointments_whatsapp";
 
 type UISlot = { label: string; startISO: string; endISO: string };
 
@@ -267,6 +271,15 @@ export function AppointmentModal({
     return bookedDays.includes(dateStr);
   };
 
+/*
+cliente: {
+          nombre: patientName,
+          email: "adrianvallejosflores24@gmail.com",
+          phone: "59177484270",
+        }
+*/
+
+
   const handleConfirm = async () => {
     if (!API_URL) return alert("Falta NEXT_PUBLIC_API_URL en .env.local");
     if (!selectedDate || !selectedSlot) return alert("Selecciona fecha y horario");
@@ -292,13 +305,14 @@ export function AppointmentModal({
         estado: "pendiente",
       };
 
-      let url = `${API_URL}/api/devcode/citas`;
-      let method = "POST";
+      console.log("🟢 Enviando payload:", payload);
 
-      if (isEditing && appointmentId) {
-        url = `${API_URL}/api/devcode/citas/${appointmentId}`;
-        method = "PUT";
-      }
+      // 📡 URL y método según si es edición o creación
+      const url = isEditing && appointmentId
+        ? `${API_URL}/api/devcode/citas/${appointmentId}`
+        : `${API_URL}/api/devcode/citas`;
+
+      const method = isEditing ? "PUT" : "POST";
 
       const res = await fetch(url, {
         method,
@@ -307,11 +321,30 @@ export function AppointmentModal({
       });
 
       const body = await res.json().catch(() => ({}));
-      
+
+      // ❌ Manejo de errores HTTP
       if (!res.ok) {
-        if (res.status === 409) return alert(body?.message || "Horario no disponible.");
-        return alert(body?.message || `Error HTTP ${res.status}`);
+        const message =
+          body?.message ||
+          (res.status === 409 ? "Horario no disponible." : `Error HTTP ${res.status}`);
+        alert(message)
+        return;
       }
+
+      // 🔔 Notificaciones (solo si la cita se creó o actualizó correctamente)
+      if (isEditing) {
+        await Promise.allSettled([
+          updateAndNotify(payload),
+          updateAndNotifyWhatsApp(payload),
+        ]);
+      } else {
+        await Promise.allSettled([
+          createAndNotify(payload),
+          createAndNotifyWhatsApp(payload),
+        ]);
+      }
+
+      alert(isEditing ? "Cita actualizada correctamente" : "Cita creada correctamente");
 
       setShowConfirmationModal(true);
       onOpenChange(false);
@@ -319,8 +352,8 @@ export function AppointmentModal({
       setSelectedSlot(null);
 
     } catch (err) {
-      console.error(err);
-      alert("No se pudo crear la cita");
+      console.error("❌ Error al crear o actualizar la cita:", err);
+      alert("No se pudo crear o actualizar la cita");
     } finally {
       setSaving(false);
     }
