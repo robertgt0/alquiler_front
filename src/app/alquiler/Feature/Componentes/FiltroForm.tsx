@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFiltros } from "app/alquiler/Feature/Hooks/useFiltro";
-import type { UsuarioResumen } from "app/alquiler/Feature/Types/filtroType";
 
 interface FiltrosFormProps {
   onResults?: (usuarios: any[]) => void;
@@ -62,7 +61,7 @@ export default function FiltrosForm({
     } catch {}
   }, []);
 
-  // BLOQUEA flechas globales salvo cuando selectAbierto === true
+  // Bloquea flechas globales salvo cuando selectAbierto === true
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!selectAbierto && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
@@ -81,7 +80,7 @@ export default function FiltrosForm({
     }, 300);
   };
 
-  // Maneja resultados
+  // Manejar resultados
   useEffect(() => {
     if (onResults) onResults(usuarios);
     if (onFilterNoResults) onFilterNoResults(Boolean(sinResultados));
@@ -97,21 +96,30 @@ export default function FiltrosForm({
   };
 
   // -----------------------------
-  // Función para limpiar filtros y aplicar solo el seleccionado
+  // 🔥 FUNCIÓN CORREGIDA: YA NO BORRA LA CIUDAD CUANDO SELECCIONAS ESPECIALIDAD
   const handleFiltroUnico = async (campo: string, valor: string) => {
-    // Limpiar todos los filtros
-    handleChange("departamento", "");
-    handleChange("ciudad", "");
-    handleChange("disponibilidad", "");
-    handleChange("tipoEspecialidad", "");
-
-    // Aplicar solo el filtro actual
-    handleChange(campo, valor);
-
-    // Si es departamento, cargar ciudades
+    // Si el filtro es departamento → reinicia todo
     if (campo === "departamento") {
+      handleChange("departamento", valor);
+      handleChange("ciudad", "");
+      handleChange("disponibilidad", "");
+      handleChange("tipoEspecialidad", "");
+
       setDepartamentoSeleccionado(valor);
       await loadCiudadesByDepartamento(valor);
+      return;
+    }
+
+    // Si el filtro es ciudad → NO reiniciar departamento
+    if (campo === "ciudad") {
+      handleChange("ciudad", valor);
+      return;
+    }
+
+    // Si el filtro es disponibilidad o tipoEspecialidad → NO borrar ciudad/departamento
+    if (campo === "disponibilidad" || campo === "tipoEspecialidad") {
+      handleChange(campo, valor);
+      return;
     }
   };
 
@@ -242,5 +250,3 @@ export default function FiltrosForm({
     </div>
   );
 }
-
-
