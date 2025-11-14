@@ -8,6 +8,8 @@ import { RatingModal } from './RatingModal';
 export default function VerDetallesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
+  const API_URL = "http://localhost:5000/api/los_vengadores/trabajos/trabajo/69043b0b04115600c8f6fa65/calificar";
+
   // Eliminamos 'router' y 'redirectPath' si ya no se usan para redireccionar
   // const router = useRouter(); 
   // const redirectPath = '/epic_VisualizadorDeTrabajosAgendadosVistaCliente';
@@ -23,49 +25,34 @@ export default function VerDetallesPage() {
   };
 
   const handleEnviarClick = async (rating: number, comment: string) => {
-    console.log('Enviando al backend:', { rating, comment });
-
-    // --- INICIO: LÓGICA DE BACKEND (COMENTADA) ---
-    /*
+    console.log("Datos a enviar:", { rating, comment });
+  
     try {
-      const response = await fetch('/api/proveedor/calificar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // providerId: 'proveedor_123',
-          // jobId: 'trabajo_456',
-          rating: rating,
-          comment: comment,
-        }),
+      const response = await fetch(API_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numero_estrellas: rating, comentario_calificacion: comment }),
       });
-
-      if (!response.ok) {
-        throw new Error('Error al enviar la calificación');
+  
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        data = {}; // fallback si la respuesta no tiene JSON
       }
-
-      const result = await response.json();
-      console.log('Respuesta del backend:', result);
-
-      alert('Calificación enviada con éxito'); 
-
-    } catch (error) {
-      console.error('Error en handleEnviarClick:', error);
-      alert('No se pudo enviar tu calificación. Inténtalo de nuevo.');
-      throw error; 
+  
+      if (!response.ok) {
+        console.error("Error del backend:", response.status, data);
+        throw new Error(data.message || data.error || "Error al enviar calificación");
+      }
+  
+      console.log("Respuesta exitosa:", data);
+      alert("Calificación enviada con éxito");
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error("Error en handleEnviarClick:", error.message || error);
+      alert("Error al enviar la calificación. Revisa la consola.");
     }
-    */
-    // --- FIN: LÓGICA DE BACKEND ---
-
-    // Simulación
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log('Calificación enviada (simulación)');
-
-    // Mensaje de confirmación
-    alert('Calificación enviada con éxito');
-
-    // --- ÉXITO: Solo cerramos el modal ---
-    setIsModalOpen(false);
-    // router.push(redirectPath); // <-- LÍNEA ELIMINADA
   };
 
   // --- RENDERIZADO DE LA PÁGINA ---
