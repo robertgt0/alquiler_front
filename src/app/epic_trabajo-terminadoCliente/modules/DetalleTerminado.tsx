@@ -89,9 +89,12 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
             sm:text-[18px]
           "
         >
-          {/* 👇 Solo una fila, cambia según role */}
-          <span className="font-bold text-black">{labelPersona}:</span>
-          <span>{nombrePersona}</span>
+          {}
+        <span className="font-bold text-black">Cliente:</span>
+        <span>{trabajo.cliente}</span>
+
+        <span className="font-bold text-black">Proveedor:</span>
+        <span>{trabajo.proveedor}</span>
 
           <span className="font-bold text-black">Fecha:</span>
           <span>{fechaLarga}</span>
@@ -165,8 +168,7 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
           <button
             type="button"
             onClick={() => {
-              if (tieneCalificacion) alert(`Vamos a Calificar: ${calificacion} ★`);
-              else alert("Este trabajo ya tiene calificación.");
+                router.push(`/epic_VerDetallesAmbos?id=${trabajo.id}`);
             }}
             className="
               w-full
