@@ -123,7 +123,7 @@ export default function TrabajosAgendadosPage() {
         break;
       }
       case 'done': {
-        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+        router.push(`/epic_trabajo-terminadoCliente/${encodeURIComponent(job.id)}?from=${from}`);
         break;
       }
       case 'confirmed': {
