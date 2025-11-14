@@ -1,0 +1,454 @@
+.busqueda-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #f3f4f6;
+    padding: 1rem;
+    font-family: "Inter", sans-serif;
+    color: black;
+}
+
+.busqueda-container {
+    position: relative;
+    width: 100%;
+    max-width: 72rem;
+    /* 👈 Igual que tu max-w-6xl (1152px) */
+    background-color: #ffffff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    color: black;
+    margin: 0 auto;
+    /* 👈 Centrar */
+}
+
+/* CONTENEDOR INTERNO PARA LA BÚSQUEDA */
+.contenedor-busqueda {
+    position: relative;
+    width: 100%;
+}
+
+
+.item-historial {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+/* Agrupa icono y texto alineados a la izquierda */
+.contenedor-texto-historial {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.texto-historial {
+    text-align: left;
+}
+
+.boton-eliminar-historial {
+    background: transparent;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.boton-eliminar-historial:hover {
+    color: red;
+}
+
+.mensaje-historial {
+    padding: 10px;
+    color: #777;
+    text-align: center;
+    font-size: 14px;
+}
+
+
+/* BARRA DE BÚSQUEDA */
+.busqueda-barra {
+    position: relative;
+    width: 100%;
+    background-color: #f8f9fa;
+    padding: 0.25rem;
+    border-radius: 9999px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 2px solid #e5e7eb;
+    transition: all 0.2s ease;
+    color: black;
+    margin: 0 auto;
+}
+
+.busqueda-input {
+    width: 100%;
+    padding: 12px 90px 12px 45px;
+    border-radius: 9999px;
+    border: none;
+    font-size: 16px;
+    background-color: #f8f9fa;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.busqueda-input:focus {
+    background-color: white;
+}
+
+.busqueda-barra:focus-within {
+    background-color: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.icono-busqueda {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    z-index: 2;
+}
+
+.btn-limpiar {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 2;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.btn-limpiar:hover {
+    color: #374151;
+    background-color: #e5e7eb;
+}
+
+.contador-caracteres {
+    text-align: right;
+    font-size: 12px;
+    color: #888;
+    margin-top: 0px;
+    padding: 0 4px;
+}
+
+.contador-caracteres.alerta {
+    color: #c0392b;
+}
+
+/* CAJA DE SUGERENCIAS */
+.caja-sugerencias {
+    position: absolute;
+    top: 65px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    list-style: none;
+    margin: 0 0 0;
+    padding: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    overflow: hidden;
+    max-height: 350px;
+    overflow-y: auto;
+    animation: aparecer 0.2s ease-out;
+}
+
+.caja-sugerencias li {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 2px 0;
+}
+
+.caja-sugerencias li:hover {
+    background-color: #f3f4f6;
+}
+
+.item-historial {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6b7280;
+}
+
+.icono-historial {
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.mensaje-sugerencia {
+    color: #6b7280;
+    font-size: 14px;
+    text-align: center;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin: 4px;
+    font-style: italic;
+}
+
+.mensaje-error {
+    color: #ef4444;
+    font-size: 14px;
+    text-align: center;
+    padding: 16px;
+    background: #fef2f2;
+    border-radius: 8px;
+    margin: 4px;
+}
+
+.cargando {
+    background: #f9fafb;
+    text-align: center;
+    padding: 16px;
+    font-size: 14px;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 8px;
+    margin: 4px;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #2563eb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Navegacion por teclado*/
+
+.item-historial.seleccionado,
+.caja-sugerencias li.seleccionado {
+    background-color: #e0f7fa;
+    font-weight: 600;
+    color: #000;
+}
+
+.caja-sugerencias li:hover:not(.seleccionado) {
+    background-color: #f8f9fa;
+}
+
+
+/* CAJA DE RESULTADOS */
+.caja-resultados {
+    margin-top: 80px;
+    /* 👈 Espacio suficiente para las sugerencias */
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.resultado-item {
+    padding: 14px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #2563eb;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.resultado-item:hover {
+    background: #e3f2fd;
+    transform: translateX(2px);
+}
+
+.mensaje-resultado {
+    text-align: center;
+    color: #666;
+    padding: 30px 20px;
+    font-style: italic;
+    font-size: 15px;
+}
+
+/* SCROLLBAR */
+.caja-resultados::-webkit-scrollbar,
+.caja-sugerencias::-webkit-scrollbar {
+    width: 6px;
+}
+
+.caja-resultados::-webkit-scrollbar-track,
+.caja-sugerencias::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.caja-resultados::-webkit-scrollbar-thumb,
+.caja-sugerencias::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.caja-resultados::-webkit-scrollbar-thumb:hover,
+.caja-sugerencias::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* ANIMACIONES */
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .busqueda-page {
+        padding: 0.5rem;
+    }
+
+    .busqueda-container {
+        padding: 0.75rem;
+    }
+
+    .busqueda-input {
+        font-size: 16px;
+        padding: 12px 40px 12px 40px;
+    }
+
+    .caja-sugerencias {
+        max-height: 200px;
+    }
+
+    .caja-sugerencias li {
+        padding: 14px 16px;
+        font-size: 15px;
+    }
+
+    .caja-sugerencias.caja-historial-grande {
+        max-height: 500;
+        
+    }
+
+    .caja-resultados {
+        margin-top: 70px;
+        max-height: 350px;
+        padding: 12px;
+    }
+
+    .resultado-item {
+        padding: 12px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .busqueda-container {
+        padding: 0.5rem;
+    }
+
+    .caja-resultados {
+        margin-top: 60px;
+        max-height: 300px;
+    }
+
+    .caja-sugerencias {
+        max-height: 180px;
+    }
+}
+
+/* MEJORAS DE VISUALIZACIÓN */
+.busqueda-barra:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* CONTENEDOR PARA PREVENIR DESBORDAMIENTO */
+.contenedor-principal {
+    width: 100%;
+    max-width: 450px;
+    position: relative;
+}
+
+/* Botón Buscar */
+.btn-buscar {
+    position: absolute;
+    right: 10px;
+    background-color: #2563eb;
+    /* color fijo */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    /* mano normal, sin icono prohibido */
+    font-size: 14px;
+}
+
+.btn-buscar:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+
+/* Ajustar el input para que deje espacio al botón */
+.busqueda-input {
+    flex: 1;
+    border-right: none;
+    /* Quitar borde derecho para que se una con el botón */
+    border-radius: 8px 0 0 8px;
+}
+
+/* Estilos para la lupa en sugerencias */
+.icono-sugerencia {
+    margin-right: 8px;
+    color: #666;
+    flex-shrink: 0;
+}
+
+.caja-sugerencias li {
+    display: flex;
+    top: 68%;
+    align-items: center;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.mensaje-sugerencia,
+.mensaje-error {
+    display: flex;
+    align-items: center;
+}
