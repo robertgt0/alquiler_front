@@ -313,7 +313,7 @@ function AddOrEditOfferPageContent() {
     }
     const trimmedDescription = description.trim();
     if (!trimmedDescription) {
-      setFeedback({ type: 'error', message: 'La descripcion es obligatoria.' });
+      setFeedback({ type: 'error', message: 'La descripción es obligatoria.' });
       return;
     }
     if (category === PLACEHOLDER_CATEGORY) {
@@ -448,7 +448,7 @@ function AddOrEditOfferPageContent() {
 
           <div className="grid gap-6 md:grid-cols-2 md:gap-8">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-900">Descripcion</label>
+              <label className="text-sm font-medium text-slate-900">Descripción</label>
               <input
                 type="text"
                 value={description}
@@ -482,7 +482,7 @@ function AddOrEditOfferPageContent() {
           <div className="space-y-4 rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
             <p className="text-base font-semibold text-slate-900">Adjuntar imagenes</p>
             <p className="text-sm text-slate-500">
-              Sube imagenes para una mejor descripcion de tu servicio (JPG o PNG, max 5MB).
+              Sube imagenes para una mejor descripción de tu servicio (JPG o PNG, max 5MB).
             </p>
             <button
               type="button"

@@ -64,7 +64,7 @@ export default function AddCategoryForm({ onCreated }: Props) {
       />
       <textarea
         className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-        placeholder="Descripcion general para este tipo de trabajo"
+        placeholder="Descripción general para este tipo de trabajo"
         rows={3}
         value={description}
         onChange={(event) => setDescription(event.target.value)}

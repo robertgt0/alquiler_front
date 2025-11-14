@@ -7,7 +7,7 @@ import type { StepTermsProps } from "./types";
 
 const METHOD_LABEL: Record<string, string> = {
   card: "Tarjeta",
-  qr: "Codigo QR",
+  qr: "Código QR",
   cash: "Efectivo",
 };
 
@@ -18,7 +18,7 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
 
   async function handleAccept() {
     if (!checked) {
-      setError("Debes aceptar los terminos para continuar");
+      setError("Debes aceptar los términos para continuar");
       return;
     }
 
@@ -28,7 +28,7 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
       await acceptTerms(fixerId);
       onFinish();
     } catch (err: any) {
-      setError(String(err?.message || "No se pudo registrar la aceptacion"));
+      setError(String(err?.message || "No se pudo registrar la aceptación"));
     } finally {
       setLoading(false);
     }
@@ -38,9 +38,9 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
     <section className="mx-auto flex max-w-3xl flex-col gap-6">
       <header className="rounded-3xl bg-white p-8 shadow-lg">
         <StepProgress current={5} />
-        <h2 className="mt-2 text-2xl font-semibold text-slate-900">Terminos y condiciones</h2>
+        <h2 className="mt-2 text-2xl font-semibold text-slate-900">Términos y condiciones</h2>
         <p className="mt-2 text-sm text-slate-500">
-          Revisa el resumen de tu registro y confirma los datos antes de aceptar los terminos.
+          Revisa el resumen de tu registro y confirma los datos antes de aceptar los términos.
         </p>
 
         <div className="mt-6 space-y-5 rounded-2xl border border-slate-200 bg-slate-50 p-6">
@@ -55,8 +55,8 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
               <div className="mt-3 space-y-3">
                 {summary.categories.map((category) => {
                   const personal = (category.customDescription ?? "").trim();
-                  const text = personal || category.description || "Sin descripcion disponible.";
-                  const badgeLabel = personal ? "Descripcion personalizada" : "Descripcion general";
+                  const text = personal || category.description || "Sin descripción disponible.";
+                  const badgeLabel = personal ? "Descripción personalizada" : "Descripción general";
                   const badgeClass = personal
                     ? "bg-purple-100 text-purple-700 border border-purple-200"
                     : "bg-slate-200 text-slate-700 border border-slate-300";
@@ -77,12 +77,12 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
                 })}
               </div>
             ) : (
-              <p className="mt-2 text-sm text-slate-500">Sin categorias registradas.</p>
+              <p className="mt-2 text-sm text-slate-500">Sin categorías registradas.</p>
             )}
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase text-slate-500">Metodos de pago</p>
+            <p className="text-xs font-semibold uppercase text-slate-500">Métodos de pago</p>
             {summary.payment.methods.length ? (
               <ul className="mt-2 space-y-1 text-sm text-slate-700">
                 {summary.payment.methods.map((method) => (
@@ -98,24 +98,24 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
                 ))}
               </ul>
             ) : (
-              <p className="mt-2 text-sm text-slate-500">Aun no definiste metodos de pago.</p>
+              <p className="mt-2 text-sm text-slate-500">Aún no definiste métodos de pago.</p>
             )}
           </div>
         </div>
       </header>
 
       <article className="rounded-3xl bg-white p-8 shadow-lg">
-        <h3 className="text-lg font-semibold text-slate-900">Contrato de terminos y servicios</h3>
+        <h3 className="text-lg font-semibold text-slate-900">Contrato de términos y servicios</h3>
         <div className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
           <p>
-            El fixer se compromete a brindar servicios de calidad respetando las politicas de Servineo y la normativa
-            vigente. Toda la informacion suministrada debe ser verdadera.
+            El fixer se compromete a brindar servicios de calidad respetando las políticas de Servineo y la normativa
+            vigente. Toda la información suministrada debe ser verdadera.
           </p>
           <p>
-            Al aceptar este documento autorizas el tratamiento de tus datos personales segun la Politica de Privacidad y garantizas
-            que usaras la aplicacion de manera etica y responsable.
+            Al aceptar este documento autorizas el tratamiento de tus datos personales según la Política de Privacidad y garantizas
+            que usarás la aplicación de manera ética y responsable.
           </p>
-          <p>Servineo podra actualizar estos terminos y te notificara cualquier cambio relevante por los canales oficiales.</p>
+          <p>Servineo podrá actualizar estos términos y te notificará cualquier cambio relevante por los canales oficiales.</p>
         </div>
       </article>
 
@@ -129,7 +129,7 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
             onChange={(event) => setChecked(event.target.checked)}
             className="mt-1 h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
           />
-          <span className="text-sm text-slate-600">He leido y acepto los terminos y condiciones de Servineo.</span>
+          <span className="text-sm text-slate-600">He leído y acepto los términos y condiciones de Servineo.</span>
         </label>
 
         <div className="flex items-center justify-between">
@@ -138,7 +138,7 @@ export default function StepTermsView({ fixerId, summary, onBack, onFinish }: St
             onClick={onBack}
             className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-blue-500 hover:text-blue-600"
           >
-            Atras
+            Atrás
           </button>
           <button
             type="button"

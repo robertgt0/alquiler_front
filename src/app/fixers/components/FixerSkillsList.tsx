@@ -43,7 +43,7 @@ export default function FixerSkillsList({ initialSkills }: Props) {
   return (
     <div className="space-y-3">
       {skills.map((skill) => {
-        const badgeLabel = skill.personal ? 'Descripcion personalizada' : 'Descripcion general';
+        const badgeLabel = skill.personal ? 'Descripción personalizada' : 'Descripción general';
         const badgeClass = skill.personal
           ? 'bg-purple-100 text-purple-700 border border-purple-200'
           : 'bg-slate-200 text-slate-700 border border-slate-300';

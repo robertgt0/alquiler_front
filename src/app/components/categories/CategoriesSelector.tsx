@@ -238,7 +238,7 @@ export default function CategoriesSelector({ open, selectedIds, onClose, onSave 
                 setNewDescription(event.target.value);
                 setDescriptionError(null);
               }}
-              placeholder="Descripcion general que veran todos los fixers"
+              placeholder="Descripción general que verán todos los fixers"
               rows={3}
               style={{
                 padding: "10px 12px",
