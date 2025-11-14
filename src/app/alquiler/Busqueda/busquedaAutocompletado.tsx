@@ -619,7 +619,13 @@ export default function BusquedaAutocompletado({
     mostrarHistorial = true,
     apiConfig
 }: BusquedaAutocompletadoProps) {
-    const [query, setQuery] = useState(valorInicial);
+    // Helper: Title Case (capitalizar cada palabra)
+    const titleCase = (t: string) => {
+        if (!t) return "";
+        return t.toString().trim().replace(/\s+/g, ' ').split(' ').map((w) => (w.length === 0 ? '' : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())).join(' ');
+    };
+
+    const [query, setQuery] = useState(titleCase(valorInicial));
     const [sugerencias, setSugerencias] = useState<string[]>([]);
     const [estadoSugerencias, setEstadoSugerencias] = useState<EstadoSugerencias>("idle");
     const [estadoBusqueda, setEstadoBusqueda] = useState<EstadoBusqueda>("idle");
@@ -841,7 +847,7 @@ export default function BusquedaAutocompletado({
             debounceResultadosRef.current = null;
         }
 
-        setQuery(texto);
+        setQuery(titleCase(texto));
         setSugerencias([]);
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
@@ -1056,7 +1062,9 @@ export default function BusquedaAutocompletado({
 
     // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
     const manejarCambioInput = useCallback((nuevoValor: string) => {
-        setQuery(nuevoValor);
+        // Mostrar/guardar en Title Case mientras el usuario escribe
+        const valorCapitalizado = titleCase(nuevoValor || "");
+        setQuery(valorCapitalizado);
 
         const textoLimpio = nuevoValor.trim();
 
@@ -1165,7 +1173,7 @@ export default function BusquedaAutocompletado({
         //}
 
         console.log('⚡ [SUGERENCIAS] Ejecutando búsqueda aunque texto normalizado sea igual');
-        onSearch(texto, resultados); // aquí disparas la búsqueda normalmente
+        onSearch(texto, resultados, false); // aquí disparas la búsqueda normalmente (no actualizar URL)
 
 
         const textoSoloEspacios = textoNormalizado.length === 0 && texto.length > 0;
@@ -1224,7 +1232,7 @@ export default function BusquedaAutocompletado({
                     setEstadoSugerencias("error");
                     setSugerencias([]);
                 }
-            }, 300);
+            }, 200);
         } else {
             terminoBusquedaAnteriorSugerencias.current = texto;
         }
@@ -1316,7 +1324,7 @@ export default function BusquedaAutocompletado({
                     await ejecutarBusquedaCompleta(query.trim(), false, false, true);
 
                 }
-            }, 600);
+            }, 400);
         } else {
             terminoBusquedaAnteriorResultados.current = texto;
         }
@@ -1423,10 +1431,10 @@ export default function BusquedaAutocompletado({
                 if (indiceSeleccionado !== -1) {
                     const terminoSeleccionado = itemsList[indiceSeleccionado];
 
-                    if (mostrarHistorialLocal) {
+                            if (mostrarHistorialLocal) {
                         const textoSeleccionado = seleccionarPorIndice(indiceSeleccionado);
                         if (textoSeleccionado) {
-                            setQuery(textoSeleccionado);
+                            setQuery(titleCase(textoSeleccionado));
                             setMostrarHistorialLocal(false);
                             ejecutarBusquedaCompleta(textoSeleccionado, true, false, true);
                         }
@@ -1479,18 +1487,13 @@ export default function BusquedaAutocompletado({
 
         );
 
-        // 🔥 CONDICIÓN CORREGIDA para sugerencias
+        // 🔥 CONDICIÓN MEJORADA: Mantener panel abierto si el input está enfocado y hay texto
+        // NO cerrar solo porque está "idle" o vacío mientras el usuario está escribiendo
         const debeMostrarSugerencias = Boolean(
             inputFocused &&
             !esSoloEspacios &&
-            texto.length >= 1 &&
-            (
-                estadoSugerencias === "loading" ||
-                estadoSugerencias === "success" ||  // ✅ NUEVO: Estado success
-                estadoSugerencias === "error" ||    // ✅ NUEVO: Estado error  
-                sugerencias.length > 0 ||
-                mensajeNoResultados
-            )
+            texto.length >= 1
+            // ✅ CAMBIO: Mantener abierto SIEMPRE que hay texto y foco, sin importar estadoSugerencias
         );
 
         console.log('👀 [VISIBILIDAD] Control de visibilidad:', {
@@ -1527,7 +1530,7 @@ export default function BusquedaAutocompletado({
     // Manejar selección del historial
     const manejarSeleccionHistorial = useCallback(async (texto: string) => {
         const textoSeleccionado = seleccionarDelHistorial(texto) || "";
-        setQuery(textoSeleccionado);
+        setQuery(titleCase(textoSeleccionado));
         setSugerencias([]);
         setMensaje("");
         setMostrarSugerencias(false);
@@ -1704,6 +1707,7 @@ export default function BusquedaAutocompletado({
                 {/* SUGERENCIAS */}
                 {mostrarSugerencias && (
                     <>
+                        {/* Solo mostrar loader si la búsqueda dura más de 100ms para evitar flashing */}
                         {estadoSugerencias === "loading" && (
                             <div className="caja-sugerencias cargando">
                                 <div className="spinner"></div>
@@ -1722,20 +1726,26 @@ export default function BusquedaAutocompletado({
                                 <li className="sugerencias-header">
                                     Sugerencias
                                 </li>
-                                {sugerencias.map((s, i) => (
-                                    <li
-                                        key={i}
-                                        onClick={() => seleccionarSugerencia(s)}
-                                        className={i === indiceSeleccionado ? 'seleccionado' : ''}
-                                    >
-                                        <Search className="icono-sugerencia" size={16} />
-                                        {s}
-                                    </li>
-                                ))}
-                                {sugerencias.length === 0 && mensajeNoResultados && (
+                                {sugerencias.length > 0 ? (
+                                    sugerencias.map((s, i) => (
+                                        <li
+                                            key={i}
+                                            onClick={() => seleccionarSugerencia(s)}
+                                            className={i === indiceSeleccionado ? 'seleccionado' : ''}
+                                        >
+                                            <Search className="icono-sugerencia" size={16} />
+                                            {s}
+                                        </li>
+                                    ))
+                                ) : mensajeNoResultados ? (
                                     <li className="mensaje-sugerencia">
                                         <div className="icono-info">ℹ️</div>
                                         {mensajeNoResultados}
+                                    </li>
+                                ) : (
+                                    <li className="mensaje-sugerencia">
+                                        <div className="icono-info">ℹ️</div>
+                                        Sin sugerencias
                                     </li>
                                 )}
                             </ul>

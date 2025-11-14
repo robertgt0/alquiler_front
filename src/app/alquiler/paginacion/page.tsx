@@ -32,9 +32,21 @@ function BusquedaContent() {
   const urlPage = searchParams.get("page");
   const urlSort = searchParams.get("sort");
 
+  // Función para capitalizar cada palabra (Title Case)
+  function capitalize(texto: string) {
+    if (!texto) return "";
+    return texto
+      .toString()
+      .trim()
+      .replace(/\s+/g, ' ')
+      .split(' ')
+      .map((w) => (w.length === 0 ? '' : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
+      .join(' ');
+  }
+
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [searchResults, setSearchResults] = useState<Job[]>([]);
-  const [searchTerm, setSearchTerm] = useState(urlQuery);
+  const [searchTerm, setSearchTerm] = useState(capitalize(urlQuery));
   const [isLoading, setIsLoading] = useState(true);
   const [buscando, setBuscando] = useState(false);
   const [estadoBusqueda, setEstadoBusqueda] = useState<"idle" | "success" | "error">("idle");
@@ -122,6 +134,8 @@ function BusquedaContent() {
         if (urlQuery && urlQuery.trim() !== "") {
           console.log("🔍 Búsqueda desde URL (recarga):", urlQuery);
           setIsFromURLLoad(true); // 🔹 Marcar que viene de URL
+          // Mostrar la versión capitalizada en el input y en el estado
+          setSearchTerm(capitalize(urlQuery));
           performSearch(urlQuery, jobs);
         } else {
           setSearchResults(jobs);
@@ -284,6 +298,8 @@ function BusquedaContent() {
     handleNextPage,
     handlePrevPage,
     totalItems,
+    startIndex,
+    endIndex,
   } = usePagination(jobsToDisplay, itemsPerPage);
 
   const handleViewDetails = (id: string | number) => {
@@ -292,7 +308,7 @@ function BusquedaContent() {
 
   const actualizarURL = (searchTerm: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (searchTerm.trim()) params.set('q', searchTerm.trim());
+    if (searchTerm.trim()) params.set('q', capitalize(searchTerm.trim()));
     else params.delete('q');
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     router.push(newUrl, { scroll: false });
@@ -356,11 +372,12 @@ function BusquedaContent() {
         setErrorCaracteres("");
       }
 
-      setSearchTerm(termino);
+      const terminoCap = capitalize(termino);
+      setSearchTerm(terminoCap);
       setSearchResults(resultados);
       setFiltersNoResults(resultados.length === 0);
 
-      if (actualizarUrl) actualizarURL(termino);
+      if (actualizarUrl) actualizarURL(terminoCap);
       setEstadoBusqueda("success");
 
     } catch (error) {
@@ -451,7 +468,7 @@ function BusquedaContent() {
             onSearch={handleSearchResults}
             datos={allJobs}
             placeholder="Buscar por nombre parcial o encargado..."
-            valorInicial={urlQuery} // 🔹 Siempre usar la URL como valor inicial
+            valorInicial={capitalize(urlQuery)} // 🔹 Siempre usar la URL como valor inicial (capitalizada)
           />
         )}
 
@@ -534,9 +551,9 @@ function BusquedaContent() {
             ) : (
               <>
                 <div className="text-xl text-blue-700 font-semibold mb-6">
-                  {mostrarSinResultadosFiltros
+                  {mostrarSinResultadosFiltros || totalItems === 0
                     ? "No se encontraron ofertas"
-                    : `Mostrando ${currentItems.length} de ${totalItems} Ofertas Disponibles`}
+                    : `Mostrando ${startIndex} - ${endIndex} de ${totalItems} Ofertas Disponibles`}
                 </div>
 
                 <div className="results-area mt-6">
