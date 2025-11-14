@@ -9,8 +9,11 @@ import { useCancelarTrabajo } from "./hooks/useCancelarTrabajo";
 import DetallesTrabajo from "./components/DetalleTrabajo";
 import ModalCancelar from "./components/ModalCancelar";
 import BotonesAccion from "./components/BotonesAccion";
+import { useSearchParams,useRouter  } from "next/navigation";
 
 const CancelarTrabajoPage: React.FC = () => {
+    const sp = useSearchParams();
+    const router = useRouter(); 
   const [trabajo, setTrabajo] = useState<Trabajo | null>(null);
   
   const {
@@ -25,9 +28,51 @@ const CancelarTrabajoPage: React.FC = () => {
     cancelarTrabajo,
   } = useCancelarTrabajo();
 
-  useEffect(() => {
-    obtenerTrabajo("6907d2bc6d942a4964cb5b9e").then(setTrabajo);
-  }, []);
+useEffect(() => {
+    const id = sp.get("id");
+    const clientName = sp.get("cliente") || "Cliente no especificado";
+    const startISO = sp.get("date") || "2025-11-25";
+    const inicio = sp.get("inicio") || "10:00";
+    const fin = sp.get("fin") || "11:00";
+    const service = sp.get("servicio") || "Servicio no especificado";
+    const estadoParam = sp.get("estado") || "Pendiente";
+    const costo = Number(sp.get("costo") || 0);
+    const description = sp.get("descripcion") || "Descripción no disponible";
+    const from = sp.get("from") || "";
+
+    if (id) {
+      // Si hay id en la URL, construimos el objeto directamente
+        let estadoFinal: "Confirmado" | "Cancelado";
+      if (estadoParam.toLowerCase() === "confirmed") {
+        estadoFinal = "Confirmado";
+      } else if (estadoParam.toLowerCase() === "cancelled") {
+        estadoFinal = "Cancelado";
+      } else {
+        estadoFinal = "Confirmado"; // fallback seguro
+      }
+      setTrabajo({
+        id,
+        cliente: clientName,
+        fecha: (() => {
+          const [año, mes, día] = startISO.split("-").map(Number);
+          const fechaObj = new Date(año, mes - 1, día);
+          const fechaFormateada = new Intl.DateTimeFormat("es-ES", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          }).format(fechaObj).replace(",", "");
+          return fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+        })(),
+        horario: `${inicio} - ${fin}`,
+        descripcion: description,
+        costo: costo,
+        estado:estadoFinal,
+      });
+    } else {
+      // Si no hay id, llamamos al backend con ID estático
+      obtenerTrabajo({}).then(setTrabajo);
+    }
+  }, [sp]);
 
   const handleCancelar = () => {
     if (trabajo) {
@@ -36,8 +81,8 @@ const CancelarTrabajoPage: React.FC = () => {
   };
 
   const handleVolverAtras = () => {
-    console.log("Volviendo atrás...");
-  };
+      router.push("/epic_VisualizadorDeTrabajosAgendadosVistaProveedor");
+    };
 
   const handleTrabajoTerminado = () => {
     console.log("Marcando trabajo como terminado...");
