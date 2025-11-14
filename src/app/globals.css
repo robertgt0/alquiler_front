@@ -1,5 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* stylelint-disable at-rule-no-unknown */
-@import "tailwindcss";
+/*@import "tailwindcss";
+@import "tw-animate-css";*/
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+@import "tailwindcss/theme";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));

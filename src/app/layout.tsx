@@ -4,6 +4,9 @@ import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { NotificationProvider } from '@/context/NotificationContext';
 
+// 🟢 Importamos la campanita global
+import NotificationBell from "@/components/NotificationBell";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -21,14 +24,21 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="bg-blue-50 text-gray-900 antialiased min-h-screen">
         <NotificationProvider>
-          {children}
+          {/* 🟣 Header global con campanita */}
+          <header className="flex items-center justify-between px-6 py-3 bg-white border-b shadow-sm">
+            <h1 className="text-lg font-semibold text-gray-800">FixerApp</h1>
+
+            {/* 🔔 Campanita de notificaciones */}
+            <NotificationBell />
+          </header>
+
+          {/* Contenido dinámico de cada página */}
+          <main className="p-4">{children}</main>
         </NotificationProvider>
       </body>
     </html>
