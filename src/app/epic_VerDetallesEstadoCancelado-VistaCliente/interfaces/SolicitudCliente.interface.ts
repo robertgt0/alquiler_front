@@ -3,13 +3,15 @@ export type EstadoTrabajo = "Pendiente" | "Confirmado" | "Cancelado" | "Terminad
 export interface SolicitudClienteDetalle {
   id: string;
   proveedor: string;
+  cliente: string; // ✅ CAMBIO: Añadimos este campo para mostrar ambos nombres
   fechaISO: string;
   horaInicio: string;
   horaFin: string;
   descripcion: string;
   costo: number;
   estado: EstadoTrabajo;
-  // Solo estos 2 campos extra para cancelados (opcionales)
+  
+  // Campos opcionales para cancelados
   cancelReason?: string;
   cancelledBy?: string;
 }

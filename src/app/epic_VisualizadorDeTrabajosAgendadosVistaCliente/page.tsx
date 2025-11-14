@@ -131,22 +131,7 @@ export default function TrabajosAgendadosPage() {
         break;
       }
       case 'cancelled': {
-        const params = new URLSearchParams({
-          id: job.id,
-          proveedor: job.providerName ?? '',       // MISMO que pendiente
-          date: fechaISO,                          // MISMO  
-          inicio: inicioHHMM,                      // MISMO
-          fin: finHHMM,                            // MISMO
-          servicio: job.service ?? '',             // MISMO
-          estado: 'Cancelado',                     // MISMO
-          costo: job.costo !== undefined ? String(job.costo) : '', // MISMO
-          descripcion: job.description ?? '',      // MISMO
-          from,                            // MISMO
-          // Solo estos 2 parámetros extra
-          justificacion: job.cancelReason ?? '',
-          cancelado_por: job.cancelledBy ?? '',
-        });
-        router.push(`/epic_VerDetallesEstadoCancelado?${params.toString()}`);
+        router.push(`/epic_VerDetallesEstadoCancelado-VistaCliente?id=${encodeURIComponent(job.id)}`);
               break;
       }
       default: {
