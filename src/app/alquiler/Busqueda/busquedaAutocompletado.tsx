@@ -622,7 +622,12 @@ export default function BusquedaAutocompletado({
     // Helper: Title Case (capitalizar cada palabra)
     const titleCase = (t: string) => {
         if (!t) return "";
-        return t.toString().trim().replace(/\s+/g, ' ').split(' ').map((w) => (w.length === 0 ? '' : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())).join(' ');
+        // Preservar exactamente los espacios que el usuario escribe.
+        // Capitalizamos cada secuencia de caracteres no espaciales, pero
+        // dejamos las secuencias de espacios intactas (incluyendo múltiples espacios).
+        return t.toString().replace(/\S+/g, (word) => {
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        });
     };
 
     const [query, setQuery] = useState(titleCase(valorInicial));
@@ -1079,6 +1084,54 @@ export default function BusquedaAutocompletado({
             }
         };*/
     }, [query, inputFocused, datos, campoBusqueda]);
+
+    // ==========================================================================
+    // 🔥 useEffect: Búsqueda dinámica al escribir (debounce)
+    // - Ejecuta la búsqueda completa automáticamente sin necesidad de Enter
+    // - Preserva los espacios visibles en el input, pero usa la versión "limpia"
+    //   para validar/enviar (ej. mínimo 2 caracteres)
+    // ==========================================================================
+    useEffect(() => {
+        if (!inputFocused) return;
+        if (desactivarBusquedaAutomatica.current) return;
+
+        const textoVisible = query; // conserva los espacios tal como los introduce el usuario
+        const textoLimpio = textoVisible.trim();
+
+        // Si está en curso una búsqueda completa, esperar
+        if (busquedaEnCurso.current) return;
+
+        // Si el texto limpio es muy corto, limpiar resultados y no buscar
+        if (textoLimpio.length < 2) {
+            if (debounceResultadosRef.current) {
+                clearTimeout(debounceResultadosRef.current);
+                debounceResultadosRef.current = null;
+            }
+            setResultados([]);
+            onSearch("", [], true);
+            return;
+        }
+
+        if (debounceResultadosRef.current) {
+            clearTimeout(debounceResultadosRef.current);
+        }
+
+        debounceResultadosRef.current = setTimeout(() => {
+            if (busquedaEnCurso.current) return;
+            // Ejecutar búsqueda completa con el texto tal como se ve en la UI
+            ejecutarBusquedaCompleta(textoVisible, true, false, true).catch((err) => {
+                console.error('Error búsqueda dinámica:', err);
+            });
+        }, 400);
+
+        return () => {
+            if (debounceResultadosRef.current) {
+                clearTimeout(debounceResultadosRef.current);
+                debounceResultadosRef.current = null;
+            }
+        };
+
+    }, [query, inputFocused, ejecutarBusquedaCompleta]);
 
     // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
     const manejarCambioInput = useCallback((nuevoValor: string) => {
