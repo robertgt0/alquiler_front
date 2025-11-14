@@ -467,6 +467,7 @@ function BusquedaContent() {
           <BusquedaAutocompletado
             onSearch={handleSearchResults}
             datos={allJobs}
+            mostrarHistorial={true}
             placeholder="Buscar por nombre parcial o encargado..."
             valorInicial={capitalize(urlQuery)} // 🔹 Siempre usar la URL como valor inicial (capitalizada)
           />
