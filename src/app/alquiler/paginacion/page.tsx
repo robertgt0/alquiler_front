@@ -538,7 +538,7 @@ function BusquedaContent() {
             <button
               onClick={() => {
                 handleClearFilters();
-                router.push('/alquiler');
+                //router.push('/alquiler');
               }}
               className="inline-block mt-6 bg-blue-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-blue-700 transition"
             >
