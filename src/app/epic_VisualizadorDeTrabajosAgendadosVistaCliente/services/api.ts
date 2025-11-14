@@ -15,10 +15,14 @@ interface BackendTrabajo {
   hora_fin: string;
   estado: string;
   descripcion?: string;
+<<<<<<< HEAD
+  costo?: number; //costo
+=======
   costo?: number;
   // ✅ AGREGAR ESTOS CAMPOS DE CANCELACIÓN
   justificacion_cancelacion?: string;
   cancelado_por?: string;
+>>>>>>> a0e862e3e01b74bc9c309dd4cf98aa12f29bb192
 }
 
 // 🔹 Obtener trabajos del cliente desde el backend real
