@@ -123,11 +123,23 @@ export default function TrabajosAgendadosPage() {
         break;
       }
       case 'done': {
-        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+        router.push(`/epic_trabajo-terminadoCliente/${encodeURIComponent(job.id)}?from=${from}`);
         break;
       }
-      case 'confirmed': {
-        router.push(`/epic_VerDetallesAmbos?id=${encodeURIComponent(job.id)}&from=${from}`);
+      case 'confirmed':  {
+        const parametro= new URLSearchParams({
+          id: job.id,
+          proveedor: job.providerName ?? '',
+          date: fechaISO,
+          inicio: inicioHHMM,
+          fin: finHHMM,
+          servicio: job.service ?? '',
+          estado: status,
+          costo: job.costo !== undefined ? String(job.costo) : '',
+          descripcion: job.description ?? '',
+          from,
+        });
+        router.push(`/epic_VisualizadorDeTrabajosAgendadosVistaCliente_CancelarTrabajo?${parametro.toString()}`);
         break;
       }
       case 'cancelled': {
