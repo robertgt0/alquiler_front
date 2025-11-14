@@ -81,9 +81,7 @@ export default async function FixerDetailPage({ params }: PageProps) {
   try {
     const res = await getFixer(id);
     data = res?.data ?? null;
-  } catch {
-    // backend no disponible, usamos placeholders
-  }
+  } catch {}
 
   const name = data?.name ?? "Juan Perez";
   const city = data?.city ?? "Cochabamba";
@@ -91,7 +89,7 @@ export default async function FixerDetailPage({ params }: PageProps) {
   const rating = Number(data?.ratingAvg ?? 4.4);
   const memberSince = data?.memberSince ?? data?.createdAt ?? new Date(2019, 7, 28).toISOString();
   const methods: string[] = Array.isArray(data?.paymentMethods) ? data.paymentMethods : ["cash", "qr", "card"];
-  const bio = data?.bio ?? "Soy una persona responsable y eficiente que trabaja tanto en obras grandes como pequenas.";
+  const bio = data?.bio ?? "Soy una persona responsable y eficiente que trabaja tanto en obras grandes como pequeñas.";
   const phone = data?.whatsapp ?? "+59170123456";
   const photoUrl =
     data?.photoUrl ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E5E7EB&color=111827&size=128`;
@@ -101,13 +99,13 @@ export default async function FixerDetailPage({ params }: PageProps) {
   const categoriesInfo = Array.isArray(data?.categoriesInfo) ? data.categoriesInfo : [];
   const rawCategories = Array.isArray(data?.categories) && data.categories.length ? data.categories : defaultSkills;
 
-type SkillDisplay = {
-  id: string;
-  name: string;
-  general: string;
-  personal?: string;
-  source: "personal" | "general";
-};
+  type SkillDisplay = {
+    id: string;
+    name: string;
+    general: string;
+    personal?: string;
+    source: "personal" | "general";
+  };
 
   const skillsDetails: SkillDisplay[] = skillsInfo.length
     ? skillsInfo.map((skill: any) => {
@@ -143,15 +141,11 @@ type SkillDisplay = {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <nav className="mb-6 text-sm text-slate-500">
-        <Link href="/" className="hover:text-slate-800">
-          Home
-        </Link>
+        <Link href="/" className="hover:text-slate-800">Home</Link>
         <span className="mx-2">/</span>
-        <Link href="/convertirse-fixer" className="hover:text-slate-800">
-          Convertirse en Fixer
-        </Link>
+        <Link href="/convertirse-fixer" className="hover:text-slate-800">Convertirse en fixer</Link>
         <span className="mx-2">/</span>
-        <span className="text-slate-900">Sobre el Fixer</span>
+        <span className="text-slate-900">Sobre el fixer</span>
       </nav>
 
       <div className="grid grid-cols-1 gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-[160px_1fr]">
@@ -172,6 +166,7 @@ type SkillDisplay = {
             <div className="text-sm text-slate-500">Trabajos registrados</div>
             <div className="text-2xl font-semibold text-slate-900">{jobsCount}</div>
           </div>
+
           <div className="rounded-xl border border-slate-200 p-4">
             <div className="text-sm text-slate-500">Calificación</div>
             <div className="flex items-center gap-2">
@@ -179,6 +174,7 @@ type SkillDisplay = {
               <span className="text-slate-700">{rating.toFixed(1)}</span>
             </div>
           </div>
+
           <div className="rounded-xl border border-slate-200 p-4">
             <div className="text-sm text-slate-500">En servicio desde</div>
             <div className="text-slate-900">{calculateTimeSince(memberSince)}</div>
@@ -186,11 +182,13 @@ type SkillDisplay = {
 
           <div className="rounded-xl border border-slate-200 p-4 md:col-span-3">
             <div className="mb-1 text-sm text-slate-500">Rubros</div>
-            <div className="text-slate-900">{skillTags.length ? skillTags.join(", ") : "Sin informacion"}</div>
+            <div className="text-slate-900">
+              {skillTags.length ? skillTags.join(", ") : "Sin información"}
+            </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 p-4 md:col-span-3">
-            <div className="mb-1 text-sm text-slate-500">Metodos de pago</div>
+            <div className="mb-1 text-sm text-slate-500">Métodos de pago</div>
             <div className="text-slate-900">
               {methods.length
                 ? methods.map((m) => (
@@ -206,7 +204,7 @@ type SkillDisplay = {
           </div>
 
           <div className="rounded-xl border border-slate-200 p-4 md:col-span-3">
-            <div className="mb-2 text-sm text-slate-500">Sobre mi</div>
+            <div className="mb-2 text-sm text-slate-500">Sobre mí</div>
             <div className="rounded-lg bg-slate-50 p-4 text-slate-800">{bio}</div>
           </div>
 
