@@ -26,6 +26,8 @@ interface TrabajoBackend {
   horaInicio?: string;
   horaFin?: string;
   estadoTrabajo?: string;
+  justificacion_cancelacion?: string;
+  cancelado_por?: string;
 }
 
 // Convierte fecha y hora en formato ISO "YYYY-MM-DDTHH:MM:00"
