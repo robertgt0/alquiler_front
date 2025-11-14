@@ -822,18 +822,26 @@ export default function BusquedaAutocompletado({
 
             if (resultadosFinales.length > 0) {
                 setMensajeNoResultados("");
-                onSearch(textoLimpio, resultadosFinales, actualizarUrl);
 
+                // PASO 1: Guardar en historial (CON AWAIT)
                 if (guardarEnHistorialFlag && mostrarHistorial) {
                     await guardarEnHistorial(textoLimpio);
                 }
+
+                // PASO 2: Navegar (DESPUÉS de guardar)
+                onSearch(textoLimpio, resultadosFinales, actualizarUrl);
+
             } else {
                 setMensajeNoResultados(`No se encontraron resultados para "${textoLimpio}"`);
-                onSearch(textoLimpio, [], actualizarUrl);
+
+                // PASO 1: Guardar el 404 (CON AWAIT)
                 if (mostrarHistorial) {
                     console.log('💾 [HISTORIAL] Guardando término sin resultados (404) en historial:', textoLimpio);
-                    guardarEnHistorial(textoLimpio);
+                    await guardarEnHistorial(textoLimpio); // <-- ¡LA CLAVE!
                 }
+
+                // PASO 2: Navegar (DESPUÉS de guardar)
+                onSearch(textoLimpio, [], actualizarUrl);
             }
 
         } catch (error) {
