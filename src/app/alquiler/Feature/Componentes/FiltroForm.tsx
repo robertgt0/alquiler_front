@@ -229,7 +229,7 @@ export default function FiltrosForm({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-600 font-medium">Total de Ofertas: {totalItems}</div>
+            {/*<div className="text-sm text-gray-600 font-medium">Total de Ofertas: {totalItems}</div>*/}
           <button
             type="button"
             onClick={() => {
