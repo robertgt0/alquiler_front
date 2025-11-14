@@ -178,7 +178,7 @@ export default function Header() {
             mostrarHistorial={true}
             placeholder="Buscar en Servineo..."
             valorInicial="" 
-            autoFocus={true} 
+            //autoFocus={true} 
           />
         </div>
       </header>
