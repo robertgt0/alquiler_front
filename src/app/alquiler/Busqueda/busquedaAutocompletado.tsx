@@ -48,7 +48,7 @@ function getApiRoot(): string {
 }
 
 // ============================================================================
-// SERVICIO DE BACKEND
+// SERVICIO DE BACKEND - MODIFICADO PARA ORDEN EXACTO
 // ============================================================================
 
 class BackendService {
@@ -56,7 +56,7 @@ class BackendService {
 
     static async searchJobsBackend(query: string, endpoint?: string): Promise<Job[]> {
         try {
-            console.log('🚀 [BACKEND-INICIO] Buscando por inicio de palabra:', query);
+            console.log('🚀 [BACKEND-ORDEN-EXACTO] Buscando con orden exacto:', query);
 
             const queryNormalizado = query;
             const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
@@ -65,7 +65,7 @@ class BackendService {
                 return [];
             }
 
-            console.log('🔄 [BACKEND-INICIO] Tokens para búsqueda:', tokens);
+            console.log('🔄 [BACKEND-ORDEN-EXACTO] Tokens para búsqueda:', tokens);
             const payload = {
                 queryOriginal: query,
                 queryNormalizado: queryNormalizado,
@@ -77,8 +77,10 @@ class BackendService {
                     ignoreAccents: true,
                     fuzzyMatch: false,
                     partialMatch: false,
-                    buscarPorInicioPalabra: true,
-                    buscarEnServiciosIndividuales: true
+                    buscarPorInicioPalabra: false, // 🔥 DESACTIVADO
+                    buscarEnServiciosIndividuales: false, // 🔥 DESACTIVADO
+                    ordenExacto: true, // 🔥 NUEVO: Forzar orden exacto
+                    matchFraseCompleta: true // 🔥 NUEVO: Coincidencia de frase completa
                 }
             };
 
@@ -99,24 +101,22 @@ class BackendService {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('✅ [BACKEND-INICIO] Respuesta recibida:', data);
+                console.log('✅ [BACKEND-ORDEN-EXACTO] Respuesta recibida:', data);
 
-                // 🔥 MODIFICADO: Si success es true pero data está vacío, devolver array vacío
                 if (data.success && data.data && Array.isArray(data.data)) {
-                    console.log(`✅ [BACKEND-INICIO] ${data.data.length} resultados del backend`);
+                    console.log(`✅ [BACKEND-ORDEN-EXACTO] ${data.data.length} resultados del backend`);
                     return data.data.slice(0, 50);
                 } else if (data.success) {
-                    // Backend respondió con éxito pero sin datos
-                    console.log('ℹ️ [BACKEND-INICIO] Backend respondió sin datos');
+                    console.log('ℹ️ [BACKEND-ORDEN-EXACTO] Backend respondió sin datos');
                     return [];
                 }
             }
 
-            console.log('⚠️ [BACKEND-INICIO] Respuesta no válida');
+            console.log('⚠️ [BACKEND-ORDEN-EXACTO] Respuesta no válida');
             throw new Error('Backend response not valid');
 
         } catch (error) {
-            console.log('❌ [BACKEND-INICIO] Error:', error);
+            console.log('❌ [BACKEND-ORDEN-EXACTO] Error:', error);
             throw error;
         }
     }
@@ -126,7 +126,7 @@ class BackendService {
             return [];
         }
 
-        console.log('🎯 [ESPECIALIDAD-BACKEND-INICIO] Buscando por especialidad:', especialidad);
+        console.log('🎯 [ESPECIALIDAD-ORDEN-EXACTO] Buscando por especialidad:', especialidad);
 
         try {
             const especialidadNormalizada = normalizarQueryBusqueda(especialidad);
@@ -146,8 +146,10 @@ class BackendService {
                     especialidadNormalizada: especialidadNormalizada,
                     tokens: tokens,
                     estrategias: tokens,
-                    buscarPorInicioPalabra: true,
-                    buscarEnServiciosIndividuales: true
+                    buscarPorInicioPalabra: false, // 🔥 DESACTIVADO
+                    buscarEnServiciosIndividuales: false, // 🔥 DESACTIVADO
+                    ordenExacto: true, // 🔥 NUEVO
+                    matchFraseCompleta: true // 🔥 NUEVO
                 }),
                 signal: controller.signal
             });
@@ -157,7 +159,7 @@ class BackendService {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.data && Array.isArray(data.data)) {
-                    console.log(`✅ [ESPECIALIDAD-BACKEND-INICIO] ${data.data.length} resultados`);
+                    console.log(`✅ [ESPECIALIDAD-ORDEN-EXACTO] ${data.data.length} resultados`);
                     return data.data;
                 }
             }
@@ -165,14 +167,14 @@ class BackendService {
             throw new Error('Backend response not valid');
 
         } catch (error) {
-            console.log('❌ [ESPECIALIDAD-BACKEND-INICIO] Error:', error);
+            console.log('❌ [ESPECIALIDAD-ORDEN-EXACTO] Error:', error);
             throw error;
         }
     }
 
     static async getAutocompleteSuggestionsBackend(query: string, endpoint?: string): Promise<string[]> {
         try {
-            console.log('🔍 [SUGERENCIAS-BACKEND-INICIO] Buscando sugerencias para:', query);
+            console.log('🔍 [SUGERENCIAS-ORDEN-EXACTO] Buscando sugerencias para:', query);
 
             const queryNormalizado = normalizarQueryBusqueda(query);
 
@@ -180,7 +182,7 @@ class BackendService {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-            const url = `${apiEndpoint}?q=${encodeURIComponent(queryNormalizado)}&limit=6&inicioPalabra=true`;
+            const url = `${apiEndpoint}?q=${encodeURIComponent(queryNormalizado)}&limit=6&inicioPalabra=false&ordenExacto=true`;
 
             const response = await fetch(url, { signal: controller.signal });
 
@@ -188,9 +190,8 @@ class BackendService {
 
             if (response.ok) {
                 const data: ApiResponse = await response.json();
-                console.log('✅ [SUGERENCIAS-BACKEND-INICIO] Respuesta completa del backend:', data);
+                console.log('✅ [SUGERENCIAS-ORDEN-EXACTO] Respuesta completa del backend:', data);
 
-                // 🔥 CLAVE: Si success es true, devolver data (aunque esté vacío)
                 if (data.success) {
                     if (data.data && Array.isArray(data.data)) {
                         const sugerencias = data.data
@@ -198,35 +199,35 @@ class BackendService {
                             .filter((nombre: string) => nombre && nombre.trim())
                             .slice(0, 10);
 
-                        console.log('📋 [SUGERENCIAS-BACKEND-INICIO] Sugerencias procesadas:', sugerencias);
-                        return sugerencias; // ← Puede ser array vacío
+                        console.log('📋 [SUGERENCIAS-ORDEN-EXACTO] Sugerencias procesadas:', sugerencias);
+                        return sugerencias;
                     } else {
-                        console.log('ℹ️ [SUGERENCIAS-BACKEND-INICIO] Backend: success=true pero data no es array');
-                        return []; // ← Array vacío explícito
+                        console.log('ℹ️ [SUGERENCIAS-ORDEN-EXACTO] Backend: success=true pero data no es array');
+                        return [];
                     }
                 } else {
-                    console.log('❌ [SUGERENCIAS-BACKEND-INICIO] Backend: success=false');
+                    console.log('❌ [SUGERENCIAS-ORDEN-EXACTO] Backend: success=false');
                     throw new Error('Backend response not successful');
                 }
             }
 
-            console.log('⚠️ [SUGERENCIAS-BACKEND-INICIO] Respuesta HTTP no ok:', response.status);
+            console.log('⚠️ [SUGERENCIAS-ORDEN-EXACTO] Respuesta HTTP no ok:', response.status);
             throw new Error(`HTTP ${response.status}`);
 
         } catch (error) {
-            console.log('❌ [SUGERENCIAS-BACKEND-INICIO] Error:', error);
-            throw error; // ← Propagar el error para que el servicio principal lo maneje
+            console.log('❌ [SUGERENCIAS-ORDEN-EXACTO] Error:', error);
+            throw error;
         }
     }
 }
 
 // ============================================================================
-// SERVICIO LOCAL UNIFICADO - SOLO COMO FALLBACK
+// SERVICIO LOCAL UNIFICADO - MODIFICADO PARA ORDEN EXACTO
 // ============================================================================
 
 class LocalService {
     static buscarTrabajos(query: string, jobs: Job[], campoBusqueda: keyof Job | "all" = "all"): Job[] {
-        console.log('🔍 [LOCAL-FALLBACK] Buscando localmente:', query);
+        console.log('🔍 [LOCAL-ORDEN-EXACTO] Buscando localmente con orden exacto:', query);
 
         if (!query.trim()) return [];
 
@@ -243,34 +244,54 @@ class LocalService {
 
                 const campos = [tituloNormalizado, empresaNormalizada, serviciosNormalizados];
 
-                return tokens.every(token =>
-                    campos.some(campoTexto => {
-                        if (!campoTexto) return false;
-                        const palabras = campoTexto.split(' ');
-                        return palabras.some(palabra => palabra.startsWith(token));
-                    })
-                );
+                // 🔥 NUEVO: Verificar que TODOS los tokens aparezcan en ORDEN en algún campo
+                return campos.some(campoTexto => {
+                    if (!campoTexto) return false;
+
+                    // 🔥 VERIFICAR ORDEN EXACTO: Los tokens deben aparecer en el orden correcto
+                    let posicionActual = 0;
+                    let todosLosTokensEnOrden = true;
+
+                    for (const token of tokens) {
+                        const posicionToken = campoTexto.indexOf(token, posicionActual);
+                        if (posicionToken === -1) {
+                            todosLosTokensEnOrden = false;
+                            break;
+                        }
+                        posicionActual = posicionToken + token.length;
+                    }
+
+                    return todosLosTokensEnOrden;
+                });
             } else {
                 const campoValor = job[campoBusqueda];
                 if (!campoValor) return false;
 
                 const campoNormalizado = this.normalizarTexto(String(campoValor));
-                const palabras = campoNormalizado.split(' ');
 
-                return tokens.every(token =>
-                    palabras.some(palabra =>
-                        palabra.startsWith(token) && token.length >= 2
-                    )
-                );
+                // 🔥 NUEVO: Verificar orden exacto en campo específico
+                let posicionActual = 0;
+                let todosLosTokensEnOrden = true;
+
+                for (const token of tokens) {
+                    const posicionToken = campoNormalizado.indexOf(token, posicionActual);
+                    if (posicionToken === -1) {
+                        todosLosTokensEnOrden = false;
+                        break;
+                    }
+                    posicionActual = posicionToken + token.length;
+                }
+
+                return todosLosTokensEnOrden;
             }
         }).slice(0, 50);
     }
 
     static getSugerencias(query: string, jobs: Job[]): string[] {
-        console.log('💡 [SUGERENCIAS-LOCAL-FALLBACK] Generando sugerencias locales para:', query);
+        console.log('💡 [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Generando sugerencias locales para:', query);
 
         if (!query.trim() || query.trim().length < 2) {
-            console.log('⏸️ [SUGERENCIAS-LOCAL-FALLBACK] Query muy corta, omitiendo');
+            console.log('⏸️ [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Query muy corta, omitiendo');
             return [];
         }
 
@@ -284,17 +305,8 @@ class LocalService {
                 servicios.forEach(servicio => {
                     const servicioNormalizado = this.normalizarTexto(servicio);
 
+                    // 🔥 MODIFICADO: Solo sugerir si coincide desde el inicio con orden
                     if (servicioNormalizado.startsWith(queryNormalizado)) {
-                        sugerencias.add(servicio);
-                        return;
-                    }
-
-                    const palabrasServicio = servicioNormalizado.split(' ');
-                    const coincideEnPalabra = palabrasServicio.some(palabra =>
-                        palabra.startsWith(queryNormalizado)
-                    );
-
-                    if (coincideEnPalabra) {
                         sugerencias.add(servicio);
                     }
                 });
@@ -308,17 +320,8 @@ class LocalService {
                     const valorCampo = String(job[campo]);
                     const campoNormalizado = this.normalizarTexto(valorCampo);
 
+                    // 🔥 MODIFICADO: Solo sugerir si coincide desde el inicio con orden
                     if (campoNormalizado.startsWith(queryNormalizado)) {
-                        sugerencias.add(valorCampo);
-                        return;
-                    }
-
-                    const palabrasCampo = campoNormalizado.split(' ');
-                    const coincideEnPalabra = palabrasCampo.some(palabra =>
-                        palabra.startsWith(queryNormalizado)
-                    );
-
-                    if (coincideEnPalabra) {
                         sugerencias.add(valorCampo);
                     }
                 }
@@ -343,7 +346,7 @@ class LocalService {
         });
 
         const sugerenciasFinales = sugerenciasOrdenadas.slice(0, 10);
-        console.log('✅ [SUGERENCIAS-LOCAL-FALLBACK] Sugerencias locales encontradas:', sugerenciasFinales);
+        console.log('✅ [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Sugerencias locales encontradas:', sugerenciasFinales);
         return sugerenciasFinales;
     }
 
@@ -360,13 +363,13 @@ class LocalService {
 }
 
 // ============================================================================
-// SERVICIO PRINCIPAL - PRIORIDAD AL BACKEND
+// SERVICIO PRINCIPAL - MODIFICADO PARA ORDEN EXACTO
 // ============================================================================
 
 class BusquedaService {
     private static API_BASE = getApiRoot();
 
-    // 🔥 FUNCIÓN: Calcular puntaje de relevancia DESDE FRONTEND
+    // 🔥 MODIFICADO: Calcular relevancia basada en ORDEN EXACTO
     private static calcularRelevancia(job: Job, query: string): number {
         const queryNormalizado = normalizarQueryBusqueda(query);
         const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
@@ -379,7 +382,7 @@ class BusquedaService {
         const empresaNormalizada = job.company ? this.normalizarTexto(job.company) : "";
         const serviciosNormalizados = job.service ? this.normalizarTexto(job.service) : "";
 
-        console.log('🔍 [RELEVANCIA] Calculando para:', {
+        console.log('🔍 [RELEVANCIA-ORDEN-EXACTO] Calculando para:', {
             titulo: job.title,
             query: query,
             tituloNormalizado: tituloNormalizado,
@@ -389,90 +392,85 @@ class BusquedaService {
         // 🔥 MÁXIMA PRIORIDAD: Coincidencia EXACTA del nombre completo
         if (tituloNormalizado === queryNormalizado) {
             puntaje += 1000;
-            console.log('🎯 [RELEVANCIA] Coincidencia EXACTA +1000');
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Coincidencia EXACTA +1000');
         }
 
         // 🔥 ALTA PRIORIDAD: El query contiene el nombre completo
         if (tituloNormalizado.includes(queryNormalizado)) {
             puntaje += 500;
-            console.log('🎯 [RELEVANCIA] Query contiene nombre completo +500');
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Query contiene nombre completo +500');
         }
 
         // 🔥 ALTA PRIORIDAD: El nombre contiene el query completo
         if (queryNormalizado.includes(tituloNormalizado)) {
             puntaje += 400;
-            console.log('🎯 [RELEVANCIA] Nombre contiene query +400');
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Nombre contiene query +400');
         }
 
-        // 🔥 COINCIDENCIA DE TODAS LAS PALABRAS EN ORDEN
+        // 🔥 NUEVO: Verificar ORDEN EXACTO de tokens en título
+        const ordenExactoTitulo = this.verificarOrdenExacto(tituloNormalizado, tokens);
+        if (ordenExactoTitulo) {
+            puntaje += 600; // 🔥 ALTA PRIORIDAD PARA ORDEN EXACTO
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Orden exacto en título +600');
+        }
+
+        // 🔥 NUEVO: Verificar ORDEN EXACTO en empresa
+        if (empresaNormalizada) {
+            const ordenExactoEmpresa = this.verificarOrdenExacto(empresaNormalizada, tokens);
+            if (ordenExactoEmpresa) {
+                puntaje += 300;
+                console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Orden exacto en empresa +300');
+            }
+        }
+
+        // 🔥 NUEVO: Verificar ORDEN EXACTO en servicios
+        if (serviciosNormalizados) {
+            const ordenExactoServicios = this.verificarOrdenExacto(serviciosNormalizados, tokens);
+            if (ordenExactoServicios) {
+                puntaje += 200;
+                console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Orden exacto en servicios +200');
+            }
+        }
+
+        // 🔥 COINCIDENCIA DE TODAS LAS PALABRAS EN ORDEN (ya no es necesario, se maneja arriba)
         const palabrasTitulo = tituloNormalizado.split(' ');
         const todasLasPalabrasCoinciden = tokens.every(token =>
             palabrasTitulo.some(palabra => palabra.includes(token))
         );
 
-        if (todasLasPalabrasCoinciden) {
-            puntaje += 300;
-            console.log('🎯 [RELEVANCIA] Todas las palabras coinciden +300');
+        if (todasLasPalabrasCoinciden && !ordenExactoTitulo) {
+            puntaje += 100; // 🔥 REDUCIDO porque no es orden exacto
+            console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Todas las palabras coinciden (sin orden) +100');
         }
 
-        // 🔥 COINCIDENCIA POR PALABRAS INDIVIDUALES
-        tokens.forEach(token => {
-            // Coincidencia exacta de palabra en título
-            if (tituloNormalizado.includes(token)) {
-                puntaje += 50;
-                console.log(`🎯 [RELEVANCIA] Coincidencia palabra "${token}" en título +50`);
-            }
-
-            // 🔥 BONUS: Coincidencia al INICIO de palabra en título
-            if (palabrasTitulo.some(palabra => palabra.startsWith(token))) {
-                puntaje += 30;
-                console.log(`🎯 [RELEVANCIA] Inicio de palabra "${token}" en título +30`);
-            }
-
-            // Coincidencia en empresa
-            if (empresaNormalizada.includes(token)) {
-                puntaje += 20;
-                console.log(`🎯 [RELEVANCIA] Coincidencia en empresa "${token}" +20`);
-            }
-
-            // Coincidencia en servicios
-            if (serviciosNormalizados.includes(token)) {
-                puntaje += 10;
-                console.log(`🎯 [RELEVANCIA] Coincidencia en servicios "${token}" +10`);
-            }
-        });
-
-        // 🔥 BONUS: Orden correcto de las palabras
-        const tituloConEspacios = ` ${tituloNormalizado} `;
-        let ordenCorrecto = true;
-        let posicionAnterior = -1;
-
-        for (const token of tokens) {
-            const posicion = tituloConEspacios.indexOf(` ${token}`);
-            if (posicion > posicionAnterior) {
-                posicionAnterior = posicion;
-            } else {
-                ordenCorrecto = false;
-                break;
-            }
-        }
-
-        if (ordenCorrecto && tokens.length > 1) {
-            puntaje += 100;
-            console.log('🎯 [RELEVANCIA] Orden correcto de palabras +100');
-        }
-
-        console.log(`📊 [RELEVANCIA] Puntaje final para "${job.title}": ${puntaje}`);
+        console.log(`📊 [RELEVANCIA-ORDEN-EXACTO] Puntaje final para "${job.title}": ${puntaje}`);
         return puntaje;
     }
 
-    // 🔥 FUNCIÓN: Ordenar resultados por relevancia DESDE FRONTEND
+    // 🔥 NUEVO: Función para verificar orden exacto
+    private static verificarOrdenExacto(texto: string, tokens: string[]): boolean {
+        if (!texto || tokens.length === 0) return false;
+
+        let posicionActual = 0;
+
+        for (const token of tokens) {
+            const posicionToken = texto.indexOf(token, posicionActual);
+            if (posicionToken === -1) {
+                return false; // Token no encontrado
+            }
+            posicionActual = posicionToken + token.length;
+        }
+
+        return true; // Todos los tokens encontrados en orden
+    }
+
+    // 🔥 MODIFICADO: Ordenar resultados por relevancia con énfasis en orden exacto
     public static ordenarPorRelevancia(resultados: Job[], query: string): Job[] {
         if (!query.trim() || resultados.length === 0) {
             return resultados;
         }
 
-        console.log('🎯 [RELEVANCIA] Ordenando resultados por relevancia...');
+        console.log('🎯 [RELEVANCIA-ORDEN-EXACTO] Ordenando resultados por relevancia...');
 
         const resultadosConPuntaje = resultados.map(job => ({
             job,
@@ -493,7 +491,7 @@ class BusquedaService {
 
         const resultadosOrdenados = resultadosConPuntaje.map(item => item.job);
 
-        console.log('📋 [RELEVANCIA] Resultados ordenados:');
+        console.log('📋 [RELEVANCIA-ORDEN-EXACTO] Resultados ordenados:');
         resultadosConPuntaje.forEach((item, index) => {
             console.log(`   ${index + 1}. "${item.job.title}" - Puntaje: ${item.puntaje}`);
         });
@@ -512,17 +510,17 @@ class BusquedaService {
             .toLowerCase();
     }
 
-    // 🔥 NUEVO: Búsqueda de trabajos con fallback automático similar
+    // 🔥 MODIFICADO: Búsqueda optimizada con orden exacto
     static async searchJobsOptimized(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
         try {
-            console.log('🔍 [SERVICE-BACKEND-PRIORITY] Buscando primero en backend:', query);
+            console.log('🔍 [SERVICE-ORDEN-EXACTO] Buscando primero en backend con orden exacto:', query);
 
             if (!query.trim()) {
                 return [];
             }
 
             const queryNormalizado = query;
-            console.log('✅ [SERVICE] Query ya normalizado desde componente:', queryNormalizado);
+            console.log('✅ [SERVICE-ORDEN-EXACTO] Query ya normalizado desde componente:', queryNormalizado);
 
             const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
 
@@ -530,77 +528,78 @@ class BusquedaService {
                 return [];
             }
 
-            // 1. INTENTAR BACKEND PRIMERO
+            // 1. INTENTAR BACKEND PRIMERO CON ORDEN EXACTO
             const resultadosBackend = await BackendService.searchJobsBackend(queryNormalizado, endpoint);
 
             if (resultadosBackend && resultadosBackend.length > 0) {
-                console.log(`✅ [BACKEND-PRIORITY] ${resultadosBackend.length} resultados del backend`);
+                console.log(`✅ [BACKEND-ORDEN-EXACTO] ${resultadosBackend.length} resultados del backend`);
                 const resultadosOrdenados = this.ordenarPorRelevancia(resultadosBackend, query);
                 return resultadosOrdenados;
             }
 
-            // 2. Si backend responde pero sin resultados (array vacío), usar FALLBACK LOCAL AUTOMÁTICO
-            console.log('🔄 [BACKEND-PRIORITY] Backend respondió sin resultados, usando fallback local');
+            // 2. Si backend responde pero sin resultados, usar FALLBACK LOCAL CON ORDEN EXACTO
+            console.log('🔄 [BACKEND-ORDEN-EXACTO] Backend respondió sin resultados, usando fallback local con orden exacto');
             const resultadosLocales = LocalService.buscarTrabajos(query, jobsReales);
             return this.ordenarPorRelevancia(resultadosLocales, query);
 
         } catch (error) {
-            console.log('🔄 [BACKEND-PRIORITY] Backend falló, usando local como fallback:', error);
+            console.log('🔄 [BACKEND-ORDEN-EXACTO] Backend falló, usando local como fallback con orden exacto:', error);
             const resultadosLocales = LocalService.buscarTrabajos(query, jobsReales);
             return this.ordenarPorRelevancia(resultadosLocales, query);
         }
     }
+
     static async searchByEspecialidad(especialidad: string, jobsReales: Job[]): Promise<Job[]> {
         if (!especialidad.trim()) {
             return [];
         }
 
-        console.log('🎯 [ESPECIALIDAD-BACKEND-PRIORITY] Buscando por especialidad:', especialidad);
+        console.log('🎯 [ESPECIALIDAD-ORDEN-EXACTO] Buscando por especialidad con orden exacto:', especialidad);
 
         try {
             const resultadosBackend = await BackendService.searchByEspecialidadBackend(especialidad);
             return resultadosBackend;
         } catch (backendError) {
-            console.log('🔄 [ESPECIALIDAD-BACKEND-PRIORITY] Backend falló, usando local como fallback');
+            console.log('🔄 [ESPECIALIDAD-ORDEN-EXACTO] Backend falló, usando local como fallback con orden exacto');
             return LocalService.buscarTrabajos(especialidad, jobsReales);
         }
     }
 
     static async getAutocompleteSuggestions(query: string, jobsReales: Job[], endpoint?: string): Promise<string[]> {
         try {
-            console.log('🔍 [SUGERENCIAS-BACKEND-PRIORITY] Buscando sugerencias en backend:', query);
+            console.log('🔍 [SUGERENCIAS-ORDEN-EXACTO] Buscando sugerencias en backend con orden exacto:', query);
 
-            // 1. INTENTAR BACKEND PRIMERO SIEMPRE
+            // 1. INTENTAR BACKEND PRIMERO SIEMPRE CON ORDEN EXACTO
             const sugerenciasBackend = await BackendService.getAutocompleteSuggestionsBackend(query, endpoint);
 
-            console.log('📊 [SUGERENCIAS-BACKEND-PRIORITY] Respuesta backend:', {
+            console.log('📊 [SUGERENCIAS-ORDEN-EXACTO] Respuesta backend:', {
                 tieneSugerencias: sugerenciasBackend && sugerenciasBackend.length > 0,
                 cantidad: sugerenciasBackend?.length || 0,
                 sugerencias: sugerenciasBackend
             });
 
-            // 2. SI el backend responde con array vacío (success:true pero data:[]), usar FALLBACK LOCAL
+            // 2. SI el backend responde con array vacío, usar FALLBACK LOCAL CON ORDEN EXACTO
             if (sugerenciasBackend && sugerenciasBackend.length === 0) {
-                console.log('🔄 [SUGERENCIAS-BACKEND-PRIORITY] Backend respondió con array VACÍO, usando FALLBACK LOCAL');
+                console.log('🔄 [SUGERENCIAS-ORDEN-EXACTO] Backend respondió con array VACÍO, usando FALLBACK LOCAL');
                 const sugerenciasLocales = LocalService.getSugerencias(query, jobsReales);
-                console.log('💡 [SUGERENCIAS-LOCAL] Sugerencias locales encontradas:', sugerenciasLocales);
+                console.log('💡 [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Sugerencias locales encontradas:', sugerenciasLocales);
                 return sugerenciasLocales;
             }
 
             // 3. SI el backend tiene sugerencias, usarlas
             if (sugerenciasBackend && sugerenciasBackend.length > 0) {
-                console.log('✅ [SUGERENCIAS-BACKEND-PRIORITY] Usando sugerencias del backend');
+                console.log('✅ [SUGERENCIAS-ORDEN-EXACTO] Usando sugerencias del backend');
                 return sugerenciasBackend;
             }
 
             // 4. Por seguridad, si llegamos aquí, usar local
-            console.log('🔄 [SUGERENCIAS-BACKEND-PRIORITY] Caso inesperado, usando fallback local');
+            console.log('🔄 [SUGERENCIAS-ORDEN-EXACTO] Caso inesperado, usando fallback local');
             return LocalService.getSugerencias(query, jobsReales);
 
         } catch (error) {
-            console.log('🔄 [SUGERENCIAS-BACKEND-PRIORITY] Backend falló, usando local como fallback:', error);
+            console.log('🔄 [SUGERENCIAS-ORDEN-EXACTO] Backend falló, usando local como fallback:', error);
             const sugerenciasLocales = LocalService.getSugerencias(query, jobsReales);
-            console.log('💡 [SUGERENCIAS-LOCAL] Sugerencias locales por error:', sugerenciasLocales);
+            console.log('💡 [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Sugerencias locales por error:', sugerenciasLocales);
             return sugerenciasLocales;
         }
     }
@@ -847,9 +846,30 @@ export default function BusquedaAutocompletado({
         setMostrarSugerencias(false);
         setMostrarHistorialLocal(false);
 
-        // 🔥 PIERDE EL FOCUS DESPUÉS DE SELECCIONAR
-        inputRef.current?.blur();
+        // 🔥 SOLUCIÓN: Blur con timeout para asegurar que se ejecute
+// 🔥 SOLUCIÓN MEJORADA: Múltiples métodos para asegurar el blur
+    console.log('🔴 [FOCUS] Forzando pérdida de focus después de selección...');
+    
+        // Método 1: Blur del input específico
+        if (inputRef.current) {
+            inputRef.current.blur();
+        }
+
+        // Método 2: Blur de cualquier elemento activo
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+
+        // Método 3: Forzar el estado
         setInputFocused(false);
+
+        // Método 4: Timeout adicional como respaldo
+        setTimeout(() => {
+            if (inputRef.current) {
+                inputRef.current.blur();
+            }
+            setInputFocused(false);
+        }, 50);
 
         console.log('🚀 [SUGERENCIA] Ejecutando búsqueda desde sugerencia...');
         await ejecutarBusquedaCompleta(texto, true, false, true);
