@@ -1566,7 +1566,7 @@ export default function BusquedaAutocompletado({
 
                         {/* ✅ AQUÍ LA CONDICIÓN PARA MOSTRAR EL MENSAJE */}
                         {!cargandoHistorial && historial.length === 0 ? (
-                            <li className="mensaje-historial">
+                            <li className="mensaje-historialon" onMouseDown={(e) => e.preventDefault()}>
                                 No hay búsquedas recientes
                             </li>
                         ) : (
