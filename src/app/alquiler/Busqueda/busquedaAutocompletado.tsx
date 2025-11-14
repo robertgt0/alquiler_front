@@ -923,7 +923,7 @@ export default function BusquedaAutocompletado({
     // 🔥 NUEVO: useEffect PARA SUGERENCIAS LOCALES EN TIEMPO REAL
     // ============================================================================
     useEffect(() => {
-        /** 
+         
         if (busquedaEnCurso.current) {
             console.log('🚫 [SUGERENCIAS] Omitido, búsqueda completa en curso.');
             return;
@@ -1003,14 +1003,14 @@ export default function BusquedaAutocompletado({
             if (debounceSugerenciasLocalesRef.current) {
                 clearTimeout(debounceSugerenciasLocalesRef.current);
             }
-        };*/
+        };
     }, [query, inputFocused, datos, onSearch]);
 
     // ============================================================================
     // 🔥 NUEVO: useEffect PARA RESULTADOS LOCALES EN TIEMPO REAL  
     // ============================================================================
     useEffect(() => {
-        /** 
+         
         if (busquedaEnCurso.current) {
             console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
             return;
@@ -1089,7 +1089,7 @@ export default function BusquedaAutocompletado({
             if (debounceResultadosLocalesRef.current) {
                 clearTimeout(debounceResultadosLocalesRef.current);
             }
-        };*/
+        };
     }, [query, inputFocused, datos, campoBusqueda]);
 
     // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
