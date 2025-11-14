@@ -29,6 +29,7 @@ const router = useRouter();
   const [metodoSeleccionadoParaContrasena, setMetodoSeleccionadoParaContrasena] = useState<string | null>(null);
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
   const limpiarError = () => setError(null);
 
   // ===== Helpers sin any =====
@@ -75,7 +76,6 @@ const router = useRouter();
 
     const metodo = metodos.find(m => m.id === metodoId);
     if (metodo?.activo) {
-      setError('Este método ya está activo');
       return;
     }
 
@@ -127,7 +127,6 @@ const router = useRouter();
 
       const metodo = metodos.find(m => m.id === metodoId);
       if (metodo?.activo) {
-        setError('Este método ya está activo');
         return;
       }
 
@@ -140,9 +139,11 @@ const router = useRouter();
         setMetodoSeleccionadoParaContrasena(metodoId);
         setModalContrasenaAbierto(true);
       } else if (metodoId === 'google') {
-        activarMetodoGoogle(); // misma ventana
+        activarMetodoGoogle();
       } else {
         await activarMetodo(metodoId);
+        // ✅ MENSAJE EMERGENTE SENCILLO
+        alert('Método activado exitosamente');
         desactivarModos();
       }
     } catch (err) {
@@ -150,141 +151,126 @@ const router = useRouter();
     }
   };
 
-  // ====== Google en la misma ventana ======
-  // ====== Google en POPUP (no reemplaza toda la ventana) ======
-// ====== Google en POPUP (vincular método; sin guardar tokens) ======
-const activarMetodoGoogle = (): void => {
-  if (typeof window === "undefined") return;
+  const activarMetodoGoogle = (): void => {
+    if (typeof window === "undefined") return;
 
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  if (!clientId) {
-    setError("Falta NEXT_PUBLIC_GOOGLE_CLIENT_ID");
-    return;
-  }
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      setError("Falta NEXT_PUBLIC_GOOGLE_CLIENT_ID");
+      return;
+    }
 
-  // Volver a la misma pantalla
-  const returnTo = window.location.pathname + window.location.search + window.location.hash;
+    const returnTo = window.location.pathname + window.location.search + window.location.hash;
 
-  // redirect_uri fijo al callback
-  const origin = (() => {
-    const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
-    return base || window.location.origin;
-  })();
-  const redirectUri = `${origin}/auth/google/callback`;
+    const origin = (() => {
+      const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
+      return base || window.location.origin;
+    })();
+    const redirectUri = `${origin}/auth/google/callback`;
 
-  // flow=link-google para que el callback sepa que es vinculación
-  const state = btoa(JSON.stringify({ returnTo, flow: "link-google" as const }));
+    const state = btoa(JSON.stringify({ returnTo, flow: "link-google" as const }));
 
-  const params = new URLSearchParams({
-    client_id: String(clientId),
-    redirect_uri: redirectUri,
-    response_type: "code",
-    scope: "openid email profile",
-    access_type: "offline",
-    prompt: "consent",
-    state,
-  });
+    const params = new URLSearchParams({
+      client_id: String(clientId),
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      access_type: "offline",
+      prompt: "consent",
+      state,
+    });
 
-  const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-  // Popup centrado
-  const width = 500, height = 600;
-  const left = window.screenX + (window.outerWidth - width) / 2;
-  const top = window.screenY + (window.outerHeight - height) / 2;
-  const features = `width=${width},height=${height},left=${left},top=${top}`;
+    const width = 500, height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    const features = `width=${width},height=${height},left=${left},top=${top}`;
 
-  const popup = window.open(googleAuthUrl, "google-oauth", features);
-  if (!popup) {
-    // Fallback si bloquean el popup
-    window.location.href = googleAuthUrl;
-    return;
-  }
+    const popup = window.open(googleAuthUrl, "google-oauth", features);
+    if (!popup) {
+      window.location.href = googleAuthUrl;
+      return;
+    }
 
-  setCargandoGoogle(true);
+    setCargandoGoogle(true);
 
-  // Tipos seguros para el mensaje
-  type Flow = "link-google" | "signup";
-  type SuccessMsg = {
-    type: "google-auth-success";
-    email?: string;
-    returnTo?: string;
-    flow?: Flow;
-  };
-  type ErrorMsg = {
-    type: "google-auth-error";
-    message?: string;
-  };
-  type Payload = SuccessMsg | ErrorMsg;
+    type Flow = "link-google" | "signup";
+    type SuccessMsg = {
+      type: "google-auth-success";
+      email?: string;
+      returnTo?: string;
+      flow?: Flow;
+    };
+    type ErrorMsg = {
+      type: "google-auth-error";
+      message?: string;
+    };
+    type Payload = SuccessMsg | ErrorMsg;
 
-  const onMessage = async (ev: MessageEvent) => {
-    if (ev.origin !== origin) return;
-    const payload = ev.data as unknown;
+    const onMessage = async (ev: MessageEvent) => {
+      if (ev.origin !== origin) return;
+      const payload = ev.data as unknown;
 
-    // Valida estructura básica
-    if (!payload || typeof payload !== "object") return;
-    const p = payload as Payload;
+      if (!payload || typeof payload !== "object") return;
+      const p = payload as Payload;
 
-    if (p.type === "google-auth-success") {
-      // Viene solo email desde el callback en flujo link-google
-      const email = typeof p.email === "string" ? p.email : undefined;
+      if (p.type === "google-auth-success") {
+        const email = typeof p.email === "string" ? p.email : undefined;
 
-      try {
-        // 1) Usuario actual desde sessionStorage (YA existente en tu app)
-        const userDataString = sessionStorage.getItem("userData");
-        if (!userDataString) throw new Error("No hay userData en sessionStorage");
+        try {
+          const userDataString = sessionStorage.getItem("userData");
+          if (!userDataString) throw new Error("No hay userData en sessionStorage");
 
-        // Tipar mínimamente lo que necesitas
-        interface StoredUser {
-          _id?: string;
-          id?: string;
-          email?: string;
-          correo?: string;
+          interface StoredUser {
+            _id?: string;
+            id?: string;
+            email?: string;
+            correo?: string;
+          }
+          const userData: StoredUser = JSON.parse(userDataString);
+
+          const userId = userData._id ?? userData.id;
+          const emailActual = userData.email ?? userData.correo;
+
+          if (!userId) throw new Error("No se pudo obtener el id del usuario actual");
+          if (!email) throw new Error("No llegó el email desde Google");
+          if (!emailActual) throw new Error("El usuario actual no tiene email en sessionStorage");
+
+          if (email.toLowerCase() !== emailActual.toLowerCase()) {
+            throw new Error("El correo de Google no coincide con el del usuario actual");
+          }
+
+          const resp = await agregarAutenticacion(userId, "google", email);
+          if (!resp || resp.success !== true) {
+            const msg = (resp && typeof resp.message === "string") ? resp.message : "No se pudo vincular el método Google";
+            throw new Error(msg);
+          }
+
+          // ✅ MENSAJE EMERGENTE SENCILLO
+          alert('Método activado exitosamente');
+          if (recargarMetodos) await recargarMetodos();
+          desactivarModos();
+          setCargandoGoogle(false);
+          window.removeEventListener("message", onMessage);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Error al vincular Google";
+          setCargandoGoogle(false);
+          setError(msg);
+          window.removeEventListener("message", onMessage);
         }
-        const userData: StoredUser = JSON.parse(userDataString);
+      }
 
-        const userId = userData._id ?? userData.id;
-        const emailActual = userData.email ?? userData.correo;
-
-        if (!userId) throw new Error("No se pudo obtener el id del usuario actual");
-        if (!email) throw new Error("No llegó el email desde Google");
-        if (!emailActual) throw new Error("El usuario actual no tiene email en sessionStorage");
-
-        // 2) Comparar correos (case-insensitive)
-        if (email.toLowerCase() !== emailActual.toLowerCase()) {
-          throw new Error("El correo de Google no coincide con el del usuario actual");
-        }
-
-        // 3) Vincular método google en backend (tu función usa email en el campo "password" cuando provider !== local)
-        const resp = await agregarAutenticacion(userId, "google", email);
-        if (!resp || resp.success !== true) {
-          const msg = (resp && typeof resp.message === "string") ? resp.message : "No se pudo vincular el método Google";
-          throw new Error(msg);
-        }
-
-        // 4) Refrescar UI del Gestor
-        if (recargarMetodos) await recargarMetodos();
-        desactivarModos();
+      if (p.type === "google-auth-error") {
         setCargandoGoogle(false);
-        window.removeEventListener("message", onMessage);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Error al vincular Google";
-        setCargandoGoogle(false);
-        setError(msg);
+        setError(p.message || "Error en la autenticación con Google");
         window.removeEventListener("message", onMessage);
       }
-    }
+    };
 
-    if (p.type === "google-auth-error") {
-      setCargandoGoogle(false);
-      setError(p.message || "Error en la autenticación con Google");
-      window.removeEventListener("message", onMessage);
-    }
+    window.addEventListener("message", onMessage);
   };
 
-  window.addEventListener("message", onMessage);
-};
-
-  // ====== Correo/Contraseña ======
   const manejarConfirmacionContrasena = async (contrasena: string) => {
     try {
       limpiarError();
@@ -303,6 +289,8 @@ const activarMetodoGoogle = (): void => {
       const resp = await agregarAutenticacion(userId, 'local', contrasena);
       if (!resp.success) throw new Error(resp.message);
 
+      // ✅ MENSAJE EMERGENTE SENCILLO
+      alert('Método activado exitosamente');
       if (recargarMetodos) await recargarMetodos();
       setModalContrasenaAbierto(false);
       setMetodoSeleccionadoParaContrasena(null);
@@ -313,7 +301,6 @@ const activarMetodoGoogle = (): void => {
     }
   };
 
-  // ====== Eliminar métodos ======
   const eliminarMetodosSeleccionados = async () => {
     try {
       limpiarError();
@@ -351,6 +338,8 @@ const activarMetodoGoogle = (): void => {
         await eliminarAutenticacion(userId, provider);
       }
 
+      // ✅ MENSAJE EMERGENTE SENCILLO
+      alert('Método eliminado exitosamente');
       if (recargarMetodos) await recargarMetodos();
       desactivarModos();
     } catch (err) {
@@ -358,7 +347,6 @@ const activarMetodoGoogle = (): void => {
     }
   };
 
-  // ====== Catálogo de métodos disponibles ======
   const metodosDisponibles: MetodoAutenticacion[] = [
     {
       id: 'correo',
