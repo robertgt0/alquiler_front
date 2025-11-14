@@ -253,6 +253,76 @@ export default function TrabajosAgendadosPage() {
           );
         })}
       </div>
+
+       <div className="footer-controls" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        alignItems: 'center', 
+        marginTop: '20px', 
+        width: '660px'
+      }}>
+        
+        <button
+          onClick={() => router.push('/')}
+          style={{
+            padding: '10px 20px',
+            height: 40,
+            borderRadius: 8,
+            background: C.confirmed,
+            color: C.white,
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: '16px'
+          }}
+        >
+          Volver
+        </button>
+
+        {totalPages > 1 && (
+          <div className="pagination" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '10px 15px',
+                borderRadius: 5,
+                border: '1px solid #ddd',
+                background: C.white,
+                color: C.text,
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                opacity: currentPage === 1 ? 0.6 : 1,
+              }}
+            >
+              Anterior
+            </button>
+            
+            <span style={{ color: C.text, fontSize: '16px', fontWeight: 500 }}>
+              Página {currentPage} de {totalPages}
+            </span>
+            
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '10px 15px',
+                borderRadius: 5,
+                border: '1px solid #ddd',
+                background: C.white,
+                color: C.text,
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                opacity: currentPage === totalPages ? 0.6 : 1,
+              }}
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
+
+        {totalPages <= 1 && (
+          <div /> 
+        )}
+      </div>
     </main>
   );
 }
