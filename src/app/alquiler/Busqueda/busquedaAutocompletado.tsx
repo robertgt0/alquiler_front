@@ -1083,8 +1083,9 @@ export default function BusquedaAutocompletado({
     // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
     const manejarCambioInput = useCallback((nuevoValor: string) => {
         // Mostrar/guardar en Title Case mientras el usuario escribe
-        const valorCapitalizado = titleCase(nuevoValor || "");
-        setQuery(valorCapitalizado);
+        //const valorCapitalizado = titleCase(nuevoValor || "");
+        //setQuery(valorCapitalizado);
+        setQuery(nuevoValor);
 
         const textoLimpio = nuevoValor.trim();
 
