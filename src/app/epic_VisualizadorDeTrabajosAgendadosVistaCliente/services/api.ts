@@ -1,21 +1,24 @@
+// src/app/epic_VisualizadorDeTrabajosAgendadosVistaCliente/services/api.ts
 import { Job } from '../interfaces/types';
 import { convertirAISO, normalizarEstado } from '../utils/helpers';
 
-// URL real del backend
 const API_URL = 'http://localhost:5000/api/los_vengadores/trabajos';
 
-// 🔹 Tipo que representa el objeto que devuelve el backend
+// 🔹 Actualizar la interfaz para incluir campos de cancelación
 interface BackendTrabajo {
   _id: string;
   id_cliente?: { nombre: string };
   id_proveedor?: { nombre: string };
   servicio: string;
-  fecha: string;        // formato DD/MM/YY
-  hora_inicio: string;  // formato HH:mm
-  hora_fin: string;     // formato HH:mm
-  estado: string;       // "Pendiente", "Confirmado", etc.
+  fecha: string;
+  hora_inicio: string;
+  hora_fin: string;
+  estado: string;
   descripcion?: string;
   costo?: number;
+  // ✅ AGREGAR ESTOS CAMPOS DE CANCELACIÓN
+  justificacion_cancelacion?: string;
+  cancelado_por?: string;
 }
 
 // 🔹 Obtener trabajos del cliente desde el backend real
@@ -34,5 +37,8 @@ export async function fetchTrabajosCliente(clienteId: string): Promise<Job[]> {
     status: normalizarEstado(t.estado),
     description: t.descripcion || 'Sin descripción',
     cost: t.costo || 0,
+    // ✅ AGREGAR ESTOS CAMPOS AL JOB
+    cancelReason: t.justificacion_cancelacion || '',
+    cancelledBy: t.cancelado_por || '',
   }));
 }

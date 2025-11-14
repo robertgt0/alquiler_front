@@ -1,6 +1,7 @@
-"use client"; 
+// app/epic_trabajo-terminadoCliente/modules/DetalleTerminado.tsx
+"use client";
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // 👈 agregamos useSearchParams
 import type { TrabajoTerminado } from "../interfaces/Trabajo.interface";
 import { formatFechaLargaES } from "../utils/date";
 import { Poppins } from "next/font/google";
@@ -12,6 +13,10 @@ const poppins = Poppins({
 
 export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminado }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 👇 role según desde dónde se hizo click (tag del URL)
+  const role = (searchParams.get("role") ?? "cliente") as "cliente" | "proveedor";
 
   // 1) Formato de fecha "jueves 20 de noviembre" (sin coma)
   const fechaLarga = formatFechaLargaES(trabajo.fecha).replace(",", "");
@@ -34,13 +39,17 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
     const v = String(trabajo.estado || "").toLowerCase();
     if (v === "terminado" || v === "completado")  return "Terminado";
     if (v === "cancelado")  return "Cancelado";
-    if (v === "confirmado") return "Confirmado";
+    if (v === "confirmado" || v === "comfirmado") return "Confirmado";
     if (v === "pendiente")  return "Pendiente";
     return "Pendiente";
   })() as keyof typeof estadoMap;
 
   // 5) Config del badge
   const badge = estadoMap[estadoNormalizado];
+
+  // 👇 Persona mostrada según el rol
+  const labelPersona = role === "cliente" ? "Proveedor" : "Cliente";
+  const nombrePersona = role === "cliente" ? trabajo.proveedor : trabajo.cliente;
 
   return (
     <section
@@ -63,13 +72,9 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
           Trabajo
         </h1>
 
-        {/**
-         * TABLA “ETIQUETA : VALOR”
-         * - En móvil: una sola columna (etiqueta arriba, valor abajo)
-         * - En sm+: dos columnas (140px / resto), con margen izquierdo
-         */}
+        {/* TABLA “ETIQUETA : VALOR” */}
         <div
-          className={`
+          className="
             w-full
             sm:w-fit
             mx-auto
@@ -82,13 +87,14 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
             sm:gap-x-4
             text-[16px]
             sm:text-[18px]
-          `}
+          "
         >
-          <span className="font-bold text-black">Cliente:</span>
-          <span>{trabajo.cliente}</span>
+          {}
+        <span className="font-bold text-black">Cliente:</span>
+        <span>{trabajo.cliente}</span>
 
-          <span className="font-bold text-black">Proveedor:</span>
-          <span>{trabajo.proveedor}</span>
+        <span className="font-bold text-black">Proveedor:</span>
+        <span>{trabajo.proveedor}</span>
 
           <span className="font-bold text-black">Fecha:</span>
           <span>{fechaLarga}</span>
@@ -124,7 +130,7 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
 
         {/* BOTONES */}
         <div
-          className={`
+          className="
             flex
             flex-col
             items-center
@@ -132,15 +138,13 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
             sm:flex-row
             sm:justify-center
             sm:gap-[300px]
-            
             mt-8
-          `}
+          "
         >
-          {/* Atrás */}
           <button
             type="button"
             onClick={() => router.back()}
-            className={`
+            className="
               w-full
               sm:w-auto
               min-w-[180px]
@@ -156,19 +160,17 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
               ease-in-out
               cursor-pointer
               active:scale-95
-            `}
+            "
           >
             Atrás
           </button>
 
-          {/* Ver mi calificación */}
           <button
             type="button"
             onClick={() => {
-              if (tieneCalificacion) alert(`Tu calificación fue ${calificacion} ★`);
-              else alert("Este trabajo aún no tiene calificación.");
+                router.push(`/epic_VerDetallesAmbos?id=${trabajo.id}`);
             }}
-            className={`
+            className="
               w-full
               sm:w-auto
               min-w-[180px]
@@ -184,9 +186,9 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
               ease-in-out
               cursor-pointer
               active:scale-95
-            `}
+            "
           >
-            Ver mi calificación
+            Calificar Proveedor
           </button>
         </div>
       </div>

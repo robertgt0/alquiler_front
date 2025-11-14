@@ -9,8 +9,10 @@ export interface Job {
   service: string;
   startISO: string;      // ISO de inicio
   endISO: string;        // ISO de fin
+  fechaISO?: string;    // "2025-11-02"  <-- útil para enviar a HU1 como date
   status: JobStatus;
   cancelReason?: string;
   description?: string;
+  cancelledBy?: string;
   cost?: number;         // ✅ Añadido para pasar a HU10
 }

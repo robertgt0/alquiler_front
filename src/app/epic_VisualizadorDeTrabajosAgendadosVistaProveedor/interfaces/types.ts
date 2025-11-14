@@ -14,4 +14,5 @@ export interface Job {
   cancelReason?: string;
   description?: string; // texto descriptivo del trabajo
   costo?: number;       // costo en Bs (si existe)
+  cancelledBy?: string;
 }
