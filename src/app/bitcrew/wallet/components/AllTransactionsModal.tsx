@@ -2,13 +2,18 @@
 
 import React from "react";
 import { IFrontendTransaction } from "../types";
+// Importamos sin la extensión, que es la forma estándar
 import TransactionItem from "./TransactionItem";
 
+// --- CORRECCIÓN AQUÍ ---
+// Nos aseguramos de que la interfaz incluya "onClose".
 interface ModalProps {
   transactions: IFrontendTransaction[];
   onClose: () => void;
 }
+// --- FIN DE LA CORRECCIÓN ---
 
+// Icono de Cierre (X)
 const CloseIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -18,10 +23,12 @@ const CloseIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
 export default function AllTransactionsModal({ transactions, onClose }: ModalProps) {
   return (
     <div 
+      // Fondo "blur" y responsivo
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm transition-opacity"
       onClick={onClose} 
     >
       <div 
+        // Ancho responsivo
         className="relative bg-white w-full max-w-lg md:max-w-3xl mx-4 rounded-xl shadow-2xl flex flex-col" 
         onClick={(e) => e.stopPropagation()} 
       >
@@ -40,7 +47,12 @@ export default function AllTransactionsModal({ transactions, onClose }: ModalPro
           {transactions.length > 0 ? (
             <ul className="space-y-3">
               {transactions.map((tx) => (
-                <TransactionItem key={tx.id} transaction={tx} />
+                // --- MODIFICACIÓN AQUÍ ---
+                // Quitamos la prop 'allowWrap'
+                <TransactionItem 
+                  key={tx.id} 
+                  transaction={tx} 
+                />
               ))}
             </ul>
           ) : (
