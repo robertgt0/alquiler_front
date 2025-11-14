@@ -3,11 +3,27 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search } from "lucide-react";
 
+// =============================
+// 🔵 FUNCIÓN DE FECHA SEGURA
+// =============================
+function parseFechaSegura(fecha: string) {
+  if (!fecha) return 0;
+
+  let f = fecha.replace(/\//g, "-");
+
+  // Caso: dd-mm-yyyy → yyyy-mm-dd
+  if (/^\d{2}-\d{2}-\d{4}$/.test(f)) {
+    const [dd, mm, yyyy] = f.split("-");
+    f = `${yyyy}-${mm}-${dd}`;
+  }
+
+  const time = Date.parse(f);
+  return isNaN(time) ? 0 : time;
+}
+
 // Función para llamar al backend
 const ordenarBorbotones = async (criterio: string) => {
   try {
-    //http://localhost:5000/api/borbotones/orden?orden=${criterio}
-    //https://alquiler-back.vercel.app/api/borbotones/orden?orden=${criterio}
     const response = await fetch(`https://alquiler-back.vercel.app/api/borbotones/orden?orden=${criterio}`);
     if (!response.ok) throw new Error("Error al ordenar borbotones");
 
@@ -24,24 +40,31 @@ interface Item {
   calificacion: number;
 }
 
-// Ordenamiento local como respaldo
+// =============================
+// 🔵 ORDENAMIENTO LOCAL (BACKUP)
+// =============================
 const ordenarItems = (opcion: string, lista: Item[]): Item[] => {
   if (!lista || lista.length === 0) return [];
   const sorted = [...lista];
+
   switch (opcion) {
     case "Nombre A-Z":
       sorted.sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
       break;
+
     case "Nombre Z-A":
       sorted.sort((a, b) => (b.nombre || "").localeCompare(a.nombre || ""));
       break;
+
     case "Fecha (Reciente)":
-      sorted.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+      sorted.sort((a, b) => parseFechaSegura(b.fecha) - parseFechaSegura(a.fecha));
       break;
+
     case "Mayor Calificación (⭐)":
       sorted.sort((a, b) => (b.calificacion || 0) - (a.calificacion || 0));
       break;
   }
+
   return sorted;
 };
 
@@ -65,10 +88,10 @@ export default function Ordenamiento({
   const [itemsFromBackend, setItemsFromBackend] = useState<Item[]>([]);
   const [cargando, setCargando] = useState(false);
 
-  // Nuevo estado para mostrar/ocultar select de ordenamiento
   const [mostrarOrden, setMostrarOrden] = useState(false);
 
   const opciones = ["Nombre A-Z", "Nombre Z-A", "Fecha (Reciente)", "Mayor Calificación (⭐)"];
+
   const criterioMap: { [key: string]: string } = {
     "Nombre A-Z": "nombre_A-Z",
     "Nombre Z-A": "nombre_Z-A",
@@ -77,14 +100,18 @@ export default function Ordenamiento({
   };
 
   const handleOrdenarBackend = async (criterioLocal: string) => {
+    console.log("🚀 handleOrdenarBackend llamado con:", criterioLocal);
     const criterioBackend = criterioMap[criterioLocal];
+    console.log("🔹 Criterio backend:", criterioBackend);
     if (!criterioBackend) return;
 
     setCargando(true);
     try {
       const datos = await ordenarBorbotones(criterioBackend);
+      console.log("🔥 BACKEND DEVUELVE:", datos); // <-- LOG MODIFICADO
       setItemsFromBackend(datos);
-    } catch {
+    } catch (error) {
+      console.log("🚨 ERROR BACKEND:", error); // <-- LOG MODIFICADO
       setItemsFromBackend([]);
     } finally {
       setCargando(false);
@@ -107,15 +134,14 @@ export default function Ordenamiento({
   }, [search, items, itemsFromBackend]);
 
   const itemsToRender = useMemo(() => {
-    return itemsFromBackend.length > 0 ? filteredItems : ordenarItems(sort, filteredItems);
-  }, [sort, filteredItems, itemsFromBackend]);
+    return ordenarItems(sort, filteredItems);
+  }, [sort, filteredItems]);
 
   const showNoOrderMessage = search !== "" && filteredItems.length === 0;
 
   return (
     <div className="container">
       <div className="card">
-        {/* Título clickeable */}
         <p
           className="sort-label text-blue-500 font-semibold cursor-pointer hover:text-blue-600 transition"
           onClick={() => setMostrarOrden(!mostrarOrden)}
@@ -123,7 +149,6 @@ export default function Ordenamiento({
           Ordenar
         </p>
 
-        {/* Select de ordenamiento solo se muestra si mostrarOrden = true */}
         {mostrarOrden && (
           <div className="sort-section mt-2">
             <select
@@ -142,18 +167,19 @@ export default function Ordenamiento({
           </div>
         )}
 
-        {/* Mostrar resultados */}
         <div className="results-section mt-4">
           {itemsToRender.length > 0 && (
             <div className="results-count mb-2">Mostrando {itemsToRender.length} elementos</div>
           )}
+
           <div className="items-list space-y-2">
-a
             {itemsToRender.map((item, index) => (
               <div key={index} className="item-card border p-2 rounded-md hover:bg-gray-50 transition">
                 <h3 className="item-name font-semibold">{item.nombre}</h3>
                 <p className="item-date text-sm text-gray-600">Fecha: {item.fecha}</p>
-                <p className="item-rating text-sm text-gray-600">Calificación: {item.calificacion} ⭐</p>
+                <p className="item-rating text-sm text-gray-600">
+                  Calificación: {item.calificacion} ⭐
+                </p>
               </div>
             ))}
           </div>

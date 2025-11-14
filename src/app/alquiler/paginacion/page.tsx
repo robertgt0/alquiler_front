@@ -89,6 +89,14 @@ function BusquedaContent() {
     "Nombre Z-A",
     "Mayor Calificación (⭐)",
   ];
+const parseFechaDDMMYYYY = (fechaStr: string) => {
+  if (!fechaStr) return new Date(0); // fallback
+  const partes = fechaStr.split('/').map(Number);
+  if (partes.length !== 3) return new Date(0);
+  const [day, month, year] = partes;
+  return new Date(year, month - 1, day); // mes en JS es 0-index
+};
+
 
   const ordenarItems = (opcion: string, lista: Job[]) => {
     const sorted = [...lista];
@@ -100,10 +108,10 @@ function BusquedaContent() {
         sorted.sort((a, b) => (b.company || "").localeCompare(a.company || ""));
         break;
       case "Fecha (Reciente)":
-        sorted.sort(
-          (a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime()
-        );
-        break;
+  sorted.sort(
+    (a, b) => parseFechaDDMMYYYY(b.postedDate).getTime() - parseFechaDDMMYYYY(a.postedDate).getTime()
+  );
+  break;
       case "Mayor Calificación (⭐)":
         sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
@@ -279,11 +287,37 @@ function BusquedaContent() {
     return sorted;
   };
 
-  const jobsToDisplay = useMemo(() => {
-    // SIEMPRE trabajar sobre searchResults
-    let data = searchResults;
-    return ordenarItems(sortBy, data);
-  }, [searchResults, sortBy]);
+const jobsToDisplay = useMemo(() => {
+  // Clonar para evitar mutaciones
+  const data = [...searchResults];
+
+  // 🔥 ORDENAR AQUÍ SIEMPRE ANTES DE PAGINAR
+  const ordenados = ordenarItems(sortBy, data);
+  const parseFechaDDMMYYYY = (fechaStr: string) => {
+    if (!fechaStr) return new Date(0); // fallback
+    const partes = fechaStr.split('/').map(Number);
+    if (partes.length !== 3) return new Date(0);
+    const [day, month, year] = partes;
+    return new Date(year, month - 1, day);
+  };
+
+  console.log(
+    "📌 Jobs ordenados por fecha:",
+    ordenados.map(j => `${j.title} (${j.postedDate}) -> ${parseFechaDDMMYYYY(j.postedDate).toISOString()}`)
+  );
+
+  // 🔹 Logs para depuración
+  console.log("📊 Ordenamiento aplicado:", sortBy);
+  console.log(
+  "📌 Jobs ordenados por fecha:",
+  ordenados.map(j => `${j.title} (${j.postedDate})`)
+);
+
+  return ordenados;
+}, [searchResults, sortBy]);
+
+
+
 
   const usuariosOrdenados = useMemo(
     () => ordenarUsuarios(sortBy, usuariosFiltrados),
