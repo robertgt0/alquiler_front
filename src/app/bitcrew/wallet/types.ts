@@ -29,6 +29,7 @@ export interface BalanceCardProps {
   onToggleShowSaldo: () => void;
   onRefresh: () => void;
   loading: boolean;
+  walletId: string | undefined;
 }
 
 export interface TransactionListProps {
