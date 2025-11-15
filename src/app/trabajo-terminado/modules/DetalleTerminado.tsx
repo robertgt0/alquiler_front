@@ -53,7 +53,7 @@ export default function DetalleTerminado({ trabajo }: { trabajo: TrabajoTerminad
         bg-white
         pt-10
         sm:pt-16
-        md:pt-20
+        md:pt-10
       `}
     >
       {/* CONTENEDOR CENTRAL */}
