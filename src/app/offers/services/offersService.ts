@@ -19,6 +19,7 @@ export interface ListOffersParams {
   page?: number;
   pageSize?: number;
   includeInactive?: boolean;
+  ownerId?: string;
 }
 export interface ListOffersResult { total: number; items: Offer[]; }
 
@@ -51,8 +52,8 @@ function normalize(o: any): Offer {
 
 // ---- HU9: Listado ----
 export async function listOffers(params: ListOffersParams = {}): Promise<ListOffersResult> {
-  const { query = '', page = 1, pageSize = 10, includeInactive = true } = params;
-  const url = `${API_BASE}/api/offers?${qs({ query, page, pageSize, includeInactive })}`;
+  const { query = '', page = 1, pageSize = 10, includeInactive = true, ownerId } = params;
+  const url = `${API_BASE}/api/offers?${qs({ query, page, pageSize, includeInactive, ownerId })}`;
 
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('Error al cargar ofertas');
@@ -74,14 +75,15 @@ export async function getOfferById(id: string): Promise<Offer | null> {
 }
 
 // ---- Permisos simulados
-export async function canEditOffer(offer: Offer, currentUserId: string): Promise<boolean> {
-  return offer.ownerId === currentUserId;
+export function canEditOffer(offer: Offer, currentFixerId?: string | null): boolean {
+  if (!currentFixerId) return false;
+  return offer.ownerId === currentFixerId;
 }
 
 // ---- Crear oferta (JSON). Acepta imagen en base64 en `images: string[]`
-export async function createOffer(input: {
+type CreateOfferPayload = {
   id?: string;
-  ownerId?: string;
+  ownerId: string;
   title?: string;
   description?: string;
   category?: string;
@@ -90,10 +92,17 @@ export async function createOffer(input: {
   // alias en español
   descripcion?: string;
   categoria?: string;
-}): Promise<Offer> {
+};
+
+export async function createOffer(input: CreateOfferPayload): Promise<Offer> {
+  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+  if (input.ownerId) {
+    headers['x-owner-id'] = input.ownerId;
+  }
+
   const res = await fetch(`${API_BASE}/api/offers`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -105,20 +114,26 @@ export async function createOffer(input: {
 }
 
 // ---- Editar (PUT)
-export async function updateOffer(id: string, patch: Partial<{
-  title: string;
-  description: string;
-  category: string;
-  contact: { whatsapp?: string; phone?: string; email?: string };
-  images: string[];
-  status: OfferStatus;
-  descripcion: string;
-  categoria: string;
-}>): Promise<Offer> {
+export async function updateOffer(
+  id: string,
+  patch: Partial<{
+    title: string;
+    description: string;
+    category: string;
+    contact: { whatsapp?: string; phone?: string; email?: string };
+    images: string[];
+    status: OfferStatus;
+    descripcion: string;
+    categoria: string;
+  }>,
+  ownerId: string
+): Promise<Offer> {
+  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+  if (ownerId) headers['x-owner-id'] = ownerId;
   const res = await fetch(`${API_BASE}/api/offers/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patch),
+    headers,
+    body: JSON.stringify({ ...patch, ownerId }),
   });
   if (!res.ok) throw new Error('No se pudo editar la oferta');
   const o = await res.json();
@@ -126,7 +141,13 @@ export async function updateOffer(id: string, patch: Partial<{
 }
 
 // ---- Eliminar (soft delete)
-export async function deleteOffer(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/offers/${id}`, { method: 'DELETE' });
+export async function deleteOffer(id: string, ownerId: string): Promise<void> {
+  const headers: HeadersInit = {};
+  if (ownerId) headers['x-owner-id'] = ownerId;
+  const res = await fetch(`${API_BASE}/api/offers/${id}`, {
+    method: 'DELETE',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ownerId }),
+  });
   if (!res.ok) throw new Error('No se pudo eliminar la oferta');
 }

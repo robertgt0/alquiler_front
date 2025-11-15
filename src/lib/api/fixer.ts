@@ -1,3 +1,4 @@
+import type { CategoryDTO } from "@/lib/api/categories";
 import type { PaymentMethodKey } from "@/types/payment";
 
 const RAW_API = process.env.NEXT_PUBLIC_API_URL || "";
@@ -22,17 +23,58 @@ async function request<T = any>(path: string, init?: RequestInit): Promise<T> {
   return payload;
 }
 
+export type FixerSkillDTO = {
+  categoryId: string;
+  customDescription?: string;
+};
+
+export type FixerSkillInfoDTO = {
+  category: CategoryDTO;
+  description: string;
+  customDescription?: string;
+  source: "personal" | "general";
+};
+
 export type FixerDTO = {
   id: string;
   userId: string;
   ci?: string;
   location?: { lat: number; lng: number; address?: string };
   categories?: string[];
+  skills?: FixerSkillDTO[];
+  categoriesInfo?: CategoryDTO[];
+  skillsInfo?: FixerSkillInfoDTO[];
   paymentMethods?: ("card" | "qr" | "cash")[];
   paymentAccounts?: Record<string, { holder: string; accountNumber: string }>;
   termsAccepted?: boolean;
   createdAt: string;
   updatedAt: string;
+  name?: string;
+  city?: string;
+  photoUrl?: string;
+  whatsapp?: string;
+  bio?: string;
+  jobsCount?: number;
+  ratingAvg?: number;
+  ratingCount?: number;
+  memberSince?: string;
+};
+
+export type FixerWithCategoriesDTO = FixerDTO & {
+  categoriesInfo: CategoryDTO[];
+  skillsInfo?: FixerSkillInfoDTO[];
+};
+
+export type FixersByCategoryDTO = {
+  category: CategoryDTO;
+  total: number;
+  fixers: FixerWithCategoriesDTO[];
+};
+
+export type UpdateCategoriesPayload = {
+  categories: string[];
+  skills?: FixerSkillDTO[];
+  bio?: string; // ✅ BUG 1.1.1 FIX: Agregar campo bio
 };
 
 export async function checkCI(ci: string, excludeId?: string) {
@@ -47,6 +89,7 @@ export async function checkCI(ci: string, excludeId?: string) {
 export async function createFixer(payload: {
   userId: string;
   ci: string;
+  city?: string;
   location?: { lat: number; lng: number; address?: string };
 }): Promise<ApiSuccess<FixerDTO>> {
   return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}`, {
@@ -58,6 +101,31 @@ export async function createFixer(payload: {
 
 export async function getFixer(id: string): Promise<ApiSuccess<FixerDTO>> {
   return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}`, { cache: "no-store" });
+}
+
+export async function getFixerByUser(userId: string): Promise<FixerDTO | null> {
+  const url = `${FIXER_BASE}/user/${userId}`;
+  const res = await fetch(url, { cache: "no-store" });
+  const payloadText = await res.text();
+  const payload = payloadText ? (JSON.parse(payloadText) as Partial<ApiSuccess<FixerDTO>>) : null;
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const message =
+      (payload && typeof (payload as any).message === "string" ? (payload as any).message : null) ||
+      `Error HTTP ${res.status}`;
+    throw new Error(message);
+  }
+  return payload?.data ?? null;
+}
+
+export async function getFixersByCategory(search?: string): Promise<FixersByCategoryDTO[]> {
+  const url = new URL(`${FIXER_BASE}/by-category`);
+  const trimmed = search?.trim();
+  if (trimmed) {
+    url.searchParams.set("search", trimmed);
+  }
+  const response = await request<ApiSuccess<FixersByCategoryDTO[]>>(url.toString(), { cache: "no-store" });
+  return response.data;
 }
 
 export async function updateIdentity(id: string, ci: string): Promise<ApiSuccess<FixerDTO>> {
@@ -76,11 +144,11 @@ export async function updateLocation(id: string, location: { lat: number; lng: n
   });
 }
 
-export async function updateCategories(id: string, categories: string[]) {
+export async function updateCategories(id: string, payload: UpdateCategoriesPayload) {
   return request<ApiSuccess<FixerDTO>>(`${FIXER_BASE}/${id}/categories`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ categories }),
+    body: JSON.stringify(payload), // ✅ Esto ya enviará bio si está en el payload
   });
 }
 

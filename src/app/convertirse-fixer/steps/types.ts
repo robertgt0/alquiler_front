@@ -1,6 +1,10 @@
 import type { CategoryDTO } from "@/lib/api/categories";
 import type { PaymentState } from "@/types/payment";
 
+export type SelectedCategory = CategoryDTO & {
+  customDescription?: string;
+};
+
 export type StepIdentityProps = {
   fixerId: string | null;
   userId: string;
@@ -17,9 +21,9 @@ export type StepLocationProps = {
 
 export type StepCategoriesProps = {
   fixerId: string;
-  selected: CategoryDTO[];
+  selected: SelectedCategory[];
   onBack: () => void;
-  onComplete: (categories: CategoryDTO[]) => void;
+  onComplete: (categories: SelectedCategory[]) => void;
 };
 
 export type StepPaymentProps = {
@@ -33,7 +37,7 @@ export type StepTermsProps = {
   fixerId: string;
   summary: {
     ci: string;
-    categories: CategoryDTO[];
+    categories: SelectedCategory[];
     payment: PaymentState;
   };
   onBack: () => void;

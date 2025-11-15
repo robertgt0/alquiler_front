@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Opcional: afinar tipografía */
+/* La propiedad `color-scheme` en :root era inválida y ha sido eliminada. */
+html {
+  color-scheme: dark;
+  background-color: #eae3e3;
+}
