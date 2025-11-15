@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useLoginForm } from '../hooks/useLoginForm';
 import AppleIcon from '../assets/icons8-apple-50.png';
 import Link from 'next/link';
@@ -11,6 +11,7 @@ import { GoogleButton } from '../../google/components/GoogleButton';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
+  //const datos=sessionStorage.clear()
   const {
     datosFormulario,
     errores,
@@ -21,13 +22,15 @@ export const LoginForm: React.FC = () => {
   } = useLoginForm();
   const [errorBackend, setErrorBackend] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
   const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
     await handleGoogleAuth();
   };
-
+useEffect(()=>{
+      
+sessionStorage.clear()
+    },[]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorBackend(null);

@@ -5,7 +5,7 @@ import { UsuarioDocument } from "../../registro/interfaces/types";
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL??"http://localhost:5000 " ;
 
-function cerrarSesion(){
+export function cerrarSesion(){
     localStorage.removeItem("authToken");
   sessionStorage.clear();
 
@@ -152,10 +152,6 @@ export async function setupTwoFactor(token: string) {
   }
   const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data.message || 'Error al generar configuración 2FA');
-  }
-
   return data.data; // contiene { secret, qrCode, backupCodes }
 }
 export async function verifyTwoFactor(token: string, secret: string, code: string) {
@@ -173,9 +169,6 @@ export async function verifyTwoFactor(token: string, secret: string, code: strin
   }
   const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data.message || 'Error al verificar el código 2FA');
-  }
 
   return data;
 }
@@ -285,17 +278,18 @@ export async function cambiarContrasenaHU3(payload: {
   actual: string;
   nueva: string;
   confirmacion: string;
-}): Promise<{ ok: boolean; message: string }>  {
+},socketId?:string): Promise<{ ok: boolean; message: string }>  {
   // usar tu lector de token (sin tocarlo)
   const token = getAccessToken();
   if (!token) return { ok: false, message: "No hay sesión activa." };
-
+console.log(`socket ${socketId}`)
   try {
     const res = await fetch(`${API_URL}/api/teamsys/usuario/cambiar-contrasena`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // Bearer requerido
+        Authorization: `Bearer ${token}`, 
+        ...(socketId ? { "x-socket-id": socketId } : {}),// Bearer requerido
       },
       // claves con ñ, entre comillas (según contrato que te pasaron)
       body: JSON.stringify({
@@ -382,7 +376,8 @@ export async function actualizarUbicacionBack(id: string, lat: string, long: str
 // === Cerrar sesiones en todos los dispositivos excepto el actual ===
 // === Cerrar sesiones en todos los dispositivos excepto el actual (con fallbacks y verificación real) ===
 export async function cerrarSesionesRemotas(
-  accessToken: string
+  accessToken: string,
+  socketId?: string            // NUEVO (opcional)
 ): Promise<{ ok: boolean; message: string }> {
   if (!accessToken) {
     return { ok: false, message: "Token de sesión no proporcionado." };
@@ -410,17 +405,20 @@ export async function cerrarSesionesRemotas(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
+        // SOLO AGREGADO: enviamos el socketId si existe
+        ...(socketId ? { "x-socket-id": socketId } : {}),
       },
     });
+
     if (res.status === 401) {
-    cerrarSesion();
-    return {
-    ok: false,
-    message:
-      "Algún usuario cerró tu sesión en otros dispositivos. " +
-      "Por eso no se pudo realizar la acción.",
-  };
-  }
+      cerrarSesion();
+      return {
+        ok: false,
+        message:
+          "Algún usuario cerró tu sesión en otros dispositivos. " +
+          "Por eso no se pudo realizar la acción.",
+      };
+    }
 
     let data: any = null;
     try {
@@ -451,6 +449,7 @@ export async function cerrarSesionesRemotas(
     };
   }
 }
+
 
 export async function obtenerPerfilActual(accessToken: string) {
   const res = await fetch(`${API_URL}/api/teamsys/me`, {

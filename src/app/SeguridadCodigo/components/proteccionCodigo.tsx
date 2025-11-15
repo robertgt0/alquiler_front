@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { verifyTwoFactor } from '@/app/teamsys/services/UserService';
 // Componente para mostrar el código secreto y copiarlo
+const BLOQUEO_KEY = 'twofactor_block_until';
+const BLOQUEO_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
 const SecretCodeBox: React.FC = () => {
   const [copiado, setCopiado] = useState(false);
   const [secretData, setSecretData] = useState<string>('');
@@ -57,12 +60,58 @@ export const ProteccionCodigo: React.FC = () => {
   const [codigo, setCodigo] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+const [intentos, setIntentos] = useState(0);
+const [bloqueado, setBloqueado] = useState(false);
+const [tiempoRestante, setTiempoRestante] = useState(0);
+useEffect(() => {
+  const raw = sessionStorage.getItem(BLOQUEO_KEY);
+  if (!raw) return;
+
+  const hasta = parseInt(raw, 10);
+  if (Number.isNaN(hasta)) {
+    sessionStorage.removeItem(BLOQUEO_KEY);
+    return;
+  }
+
+  const ahora = Date.now();
+  if (ahora >= hasta) {
+    // ya venció
+    sessionStorage.removeItem(BLOQUEO_KEY);
+    return;
+  }
+
+  const diffSec = Math.floor((hasta - ahora) / 1000);
+  setBloqueado(true);
+  setTiempoRestante(diffSec);
+}, []);
+useEffect(() => {
+  if (!bloqueado || tiempoRestante <= 0) return;
+
+  const timer = setInterval(() => {
+    setTiempoRestante((prev) => {
+      if (prev <= 1) {
+        setBloqueado(false);
+        setIntentos(0); 
+        sessionStorage.removeItem(BLOQUEO_KEY);
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, [bloqueado, tiempoRestante]);
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setError(null);
+    if (bloqueado) {
+    setError('Has excedido el número de intentos. Espera unos minutos antes de volver a intentar.');
+    return;
+  }
+
   if (!/^\d{6}$/.test(codigo)) {
-    setError('Código incorrecto. Inténtalo de nuevo.');
+    setError('Código incorrecto debe de ser de 6 numeros. Inténtalo de nuevo.');
     return;
   }
 
@@ -83,16 +132,38 @@ export const ProteccionCodigo: React.FC = () => {
     //sessionStorage.removeItem('twofactor_backup');
 
     router.push('/');
-  } catch (err) {
+    } catch (err) {
     console.error(err);
-    setError(typeof err === 'string' ? err : 'Código incorrecto. Inténtalo de nuevo.');
+
+    //  Manejo de intentos y bloqueo
+    setIntentos((prev) => {
+  const nuevos = prev + 1;
+
+  if (nuevos >= 3) {
+    setBloqueado(true);
+    setTiempoRestante(300); // 5 minutos
+
+    const hasta = Date.now() + BLOQUEO_TTL_MS;
+    sessionStorage.setItem(BLOQUEO_KEY, String(hasta));
+
+    setError('Has excedido el número de intentos. Inténtalo nuevamente en 5 minutos.');
+  } else {
+    setError(`Código incorrecto. Te quedan ${3 - nuevos} intento(s).`);
+  }
+
+  return nuevos;
+});
+
   } finally {
     setIsLoading(false);
+    setCodigo(''); // limpia el input después de cada intento
   }
+
 };
  // 🔹 Manejar el botón Cancelar
   const handleCancel = () => {
     sessionStorage.removeItem("checkSeguridad")
+    sessionStorage.removeItem('twofactor_secret');
     router.push("/")
     // o podrías usar: router.push('/Seguridad') si tienes una ruta específica
   };
@@ -136,23 +207,36 @@ export const ProteccionCodigo: React.FC = () => {
                 name="codigo"
                 type="text"
                 value={codigo}
-                onChange={(e) => { setCodigo(e.target.value); setError(null); }}
-                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 text-center ${
+                onChange={(e) => {
+  const valorNumeros = e.target.value.replace(/\D/g, ''); // elimina todo lo que no sea número
+  setCodigo(valorNumeros);
+  setError(null);
+}}className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 text-center ${
                   error ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 placeholder="Código de verificación"
                 maxLength={6}
+                pattern="[0-9]{6}"
+                disabled={isLoading || bloqueado}
               />
               {error && (
                 <p className="mt-1 text-xs sm:text-sm text-red-600 text-center" role="alert">{error}</p>
               )}
+              {bloqueado && tiempoRestante > 0 && (
+  <p className="mt-1 text-xs sm:text-sm text-red-600 text-center">
+    Inténtalo nuevamente en {Math.floor(tiempoRestante / 60)}:
+    {('0' + (tiempoRestante % 60)).slice(-2)} minutos
+  </p>
+)}
+
             </div>
           </div>
 
           <div className="mt-6 sm:mt-8 flex flex-col items-center gap-3">
                         <button
               type="submit"
-              disabled={isLoading || codigo.length !== 6}
+              disabled={isLoading || codigo.length !== 6 || bloqueado}
+
               className={`w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 border rounded-2xl focus:outline-none focus:ring-2 transition-colors duration-200 flex items-center justify-center gap-3 text-sm sm:text-base font-medium ${
                 isLoading
                   ? 'bg-gray-400 text-gray-600 cursor-not-allowed'

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useRegistrationForm } from '../hooks/useRegistrationForm';
 import { useGoogleAuth } from '../../google/hooks/useGoogleAuth';
 import { GoogleButton } from '../../google/components/GoogleButton';
@@ -19,7 +19,7 @@ export const RegistrationForm: React.FC = () => {
     manejarBlur,
     validarFormulario
   } = useRegistrationForm();
-
+//sessionStorage.clear()
   const { isLoading: googleLoading, error: googleError, handleGoogleAuth } = useGoogleAuth();
 
   const handleGoogleClick = async () => {
@@ -32,6 +32,10 @@ export const RegistrationForm: React.FC = () => {
 
   const [showEmailMessage, setShowEmailMessage] = useState(false);
 
+  useEffect(()=>{
+    sessionStorage.clear()
+
+  },[]);
   return (
     <div className="min-h-screen bg-blue-500 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md lg:max-w-2xl bg-white rounded-3xl shadow-md p-4 sm:p-6 lg:p-8">

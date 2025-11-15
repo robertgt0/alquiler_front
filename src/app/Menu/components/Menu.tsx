@@ -41,7 +41,7 @@ export default function SimpleProfileMenu() {
   const handleConfirmLogout = () => {
     // Eliminamos datos de sesión y emitimos el evento de logout
     localStorage.removeItem("authToken");
-    sessionStorage.removeItem("authToken");
+    sessionStorage.clear();
     localStorage.removeItem("userData");
     sessionStorage.removeItem("userData");
 

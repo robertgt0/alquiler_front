@@ -3,6 +3,7 @@
 import React from 'react';
 import StatusPanel from './statusPanel';
 import { cerrarSesionesRemotas } from '@/app/teamsys/services/UserService';
+import { getSocket } from "@/app/teamsys/realtime/socketClient";
 
 interface CerrarSesionesProps {
   onContinue?: () => void;  // ya no lo usamos, se mantiene por compatibilidad
@@ -19,8 +20,10 @@ export const CerrarSesiones: React.FC<CerrarSesionesProps> = ({ onCancel }) => {
     setLoading(true);
     const token=sessionStorage.getItem("authToken")
     if(token==null)throw new Error("no existe accesstoken");
-    
-    const res = await cerrarSesionesRemotas(token);
+    const socket = getSocket();
+    const socketId = socket.id;
+
+    const res = await cerrarSesionesRemotas(token,socketId);
     setLoading(false);
 
     if (res.ok) {

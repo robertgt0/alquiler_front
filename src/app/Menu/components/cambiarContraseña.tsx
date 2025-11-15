@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { cambiarContrasenaHU3 } from "@/app/teamsys/services/UserService";
+import { getSocket } from "@/app/teamsys/realtime/socketClient";
 
 interface Props {
   onClose: () => void;
@@ -71,41 +72,57 @@ export default function CambiarContrasena({ onClose }: Props) {
   };
 
   const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBanner({ type: null, text: "" });
+  e.preventDefault();
+  setBanner({ type: null, text: "" });
 
-    if (!validar()) return;
+  if (!validar()) return;
 
+  try {
     setLoading(true);
-    const resp = await cambiarContrasenaHU3({
-      actual,
-      nueva,
-      confirmacion,
-    });
+
+    //  Igual que en CerrarSesiones
+    const socket = getSocket();
+    const socketId = socket?.id;  // por si acaso
+
+    const resp = await cambiarContrasenaHU3(
+      {
+        actual,
+        nueva,
+        confirmacion,
+      },
+      socketId  //  aquí se envía al servicio
+    );
+
     setLoading(false);
 
     if (!resp.ok) {
       setBanner({
         type: "err",
-        text: resp.message || "Error al cambiar la contraseña.",
+        text: resp.message || "No se pudo cambiar la contraseña.",
       });
       return;
     }
 
-    // Éxito HU3
-    setBanner({
-      type: "ok",
-      text: resp.message || "Tu contraseña fue actualizada.",
-    });
-
-    // Limpia campos
     setActual("");
     setNueva("");
     setConfirmacion("");
 
+    setBanner({
+      type: "ok",
+      text: resp.message || "Contraseña cambiada exitosamente.",
+    });
+
     // Muestra ventana "Tu contraseña fue actualizada"
     setShowSuccessModal(true);
-  };
+  } catch (error) {
+    setLoading(false);
+    setBanner({
+      type: "err",
+      text: "Error de red o servidor.",
+    });
+  }
+};
+
 
   const closeSuccessModal = () => {
     setShowSuccessModal(false);

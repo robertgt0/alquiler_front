@@ -18,7 +18,8 @@
     "react-icons": "^5.5.0",
     "react-leaflet": "^5.0.0",
     "react-leaflet-markercluster": "^5.0.0-rc.0",
-    "react-modal": "^3.16.3"
+    "react-modal": "^3.16.3",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.16",
@@ -28,6 +29,7 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/react-modal": "^3.16.3",
+    "@types/socket.io-client": "^1.4.36",
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { verifyTwoFactorLogin } from '@/app/teamsys/services/UserService';
 import { desactivar2FA } from '@/app/teamsys/services/UserService';
+const BLOQUEO_DESACTIVAR_KEY = 'twofactor_desactivar_block_until';
+const BLOQUEO_TTL_MS = 5 * 60 * 1000; // 5 minutos
 
 // Export default directamente al definir el componente
 export default function LoginSeguridad() {
@@ -15,6 +17,32 @@ const router = useRouter();
   const [bloqueado, setBloqueado] = useState(false);
   const [tiempoRestante, setTiempoRestante] = useState(0);
 
+    useEffect(() => {
+    const desactivar = sessionStorage.getItem('desactivar2FA');
+    if (desactivar !== 'true') return; // solo aplica para desactivar
+
+    const raw = sessionStorage.getItem(BLOQUEO_DESACTIVAR_KEY);
+    if (!raw) return;
+
+    const hasta = parseInt(raw, 10);
+    if (Number.isNaN(hasta)) {
+      sessionStorage.removeItem(BLOQUEO_DESACTIVAR_KEY);
+      return;
+    }
+
+    const ahora = Date.now();
+    if (ahora >= hasta) {
+      // ya venció
+      sessionStorage.removeItem(BLOQUEO_DESACTIVAR_KEY);
+      return;
+    }
+
+    const diffSec = Math.floor((hasta - ahora) / 1000);
+    setBloqueado(true);
+    setTiempoRestante(diffSec);
+  }, []);
+
+
      useEffect(() => {
     let timer: NodeJS.Timeout;
     if (bloqueado && tiempoRestante > 0) {
@@ -22,6 +50,8 @@ const router = useRouter();
         setTiempoRestante((prev) => {
           if (prev <= 1) {
             setBloqueado(false);
+            setIntentos(0); 
+            sessionStorage.removeItem(BLOQUEO_DESACTIVAR_KEY); 
             clearInterval(timer);
             return 0;
           }
@@ -40,7 +70,7 @@ const router = useRouter();
         if (bloqueado) return;
 
     if (!/^\d{6}$/.test(codigo)) {
-      setError('Código incorrecto. Inténtalo de nuevo.');
+      setError('Código debe ser de 6 numeros. Inténtalo de nuevo.');
       return;
     }
 
@@ -67,7 +97,7 @@ const Token= sessionStorage.getItem("authToken")
        
 
 }else{
-console.log('verify-login payload ->', { userId, token }); // 👈 revisa en consola
+console.log('verify-login payload ->', { userId, token }); // revisa en consola
  res = await verifyTwoFactorLogin(userId, token);
 }
 
@@ -88,20 +118,29 @@ console.log('verify-login payload ->', { userId, token }); // 👈 revisa en con
           router.push('/'); 
           return
     // Código correcto, redirige al home
-      } else {
+            } else {
         setIntentos(prev => {
-        const nuevosIntentos = prev + 1;
-        if (nuevosIntentos >= 3) { 
+          const nuevosIntentos = prev + 1;
+
+          if (nuevosIntentos >= 3) { 
             setBloqueado(true);
             setTiempoRestante(300);
-            setError('Has excedido el número de intentos. Inténtalo nuevamente en 5 minutos.');
-        } else {
-            setError(`Código incorrecto. Te quedan ${3 - nuevosIntentos} intento(s).`);
-        }
 
-        return nuevosIntentos;
-      });
+            // Solo persistimos el bloqueo si está desactivando 2FA
+            if (desactivar === 'true') {
+              const hasta = Date.now() + BLOQUEO_TTL_MS;
+              sessionStorage.setItem(BLOQUEO_DESACTIVAR_KEY, String(hasta));
+            }
+
+            setError('Has excedido el número de intentos. Inténtalo nuevamente en 5 minutos.');
+          } else {
+            setError(`Código incorrecto. Te quedan ${3 - nuevosIntentos} intento(s).`);
+          }
+
+          return nuevosIntentos;
+        });
       }
+
     } catch (err) {
       console.error('Error al verificar el código:', err);
       setError('Ocurrió un error, inténtalo más tarde.');
@@ -113,8 +152,17 @@ console.log('verify-login payload ->', { userId, token }); // 👈 revisa en con
 
  // 🔹 Manejar el botón Cancelar
   const handleCancel = () => {
-    sessionStorage.clear()
-    router.back(); // vuelve a la página anterior
+    const desc=sessionStorage.getItem('desactivar2FA');
+    if(desc=='true'){
+          sessionStorage.removeItem('desactivar2FA');
+        router.push('/')
+        }
+  else {
+    sessionStorage.removeItem(BLOQUEO_DESACTIVAR_KEY);
+    sessionStorage.clear();
+  router.push('/login')}
+  return;
+ // vuelve a la página anterior
     // o podrías usar: router.push('/Seguridad') si tienes una ruta específica
   };
 
@@ -140,8 +188,12 @@ console.log('verify-login payload ->', { userId, token }); // 👈 revisa en con
                 name="codigo"
                 type="text"
                 value={codigo}
-                onChange={(e) => { setCodigo(e.target.value); setError(null); }}
-                className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 text-center ${
+                onChange={(e) => {
+  const valorNumeros = e.target.value.replace(/\D/g, ''); // elimina todo lo que no sea número
+  setCodigo(valorNumeros);
+  setError(null);
+}}
+className={`w-full px-3 py-2 sm:py-3 text-sm sm:text-base border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-600 text-gray-950 text-center ${
                   error ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
                 }`}
                 placeholder="Código de verificación"
@@ -164,7 +216,8 @@ console.log('verify-login payload ->', { userId, token }); // 👈 revisa en con
 <div className="mt-6 sm:mt-8 flex flex-col items-center gap-3">
   <button
     type="submit"
-    disabled={isLoading || codigo.length !== 6}
+    disabled={isLoading || codigo.length !== 6 || bloqueado}
+
     className={`w-full max-w-xs sm:max-w-sm py-2 sm:py-3 px-4 border rounded-2xl focus:outline-none focus:ring-2 transition-colors duration-200 flex items-center justify-center gap-3 text-sm sm:text-base font-medium ${
       isLoading
         ? 'bg-gray-400 text-gray-600 cursor-not-allowed'

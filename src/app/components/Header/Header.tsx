@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import Icono from './Icono';
 import { useRouter } from 'next/navigation';
 import SimpleProfileMenu from '@/app/Menu/components/Menu';
+import { useForceLogout } from "../../teamsys/hooks/useForceLogout";
 
 export default function Header() {
   const [isClient, setIsClient] = useState(false);
@@ -13,8 +14,25 @@ export default function Header() {
 
    // control si el menu esta visible
    const [menuVisible, setMenuVisible] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // NUEVO: solo cuando esto sea true creamos socket
+  const [canInitSocket, setCanInitSocket] = useState(false);
   const lastScrollY = useRef(0);
+  let isSocketReady = useForceLogout(
+    isLoggedIn && canInitSocket ? userId : null
+  );
+  const handleHomeClick = () => {
+    // Si el socket NO está formado, limpiamos
+    
+    if (!isSocketReady) {
+      // lo que pediste:
+      sessionStorage.clear(); // o solo algunas claves si prefieres
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userData");
+    }
+    // No hace falta router.push aquí, Link ya navega a "/"
+  };
   const router = useRouter();
   // Detectar si es móvil
 const [isMobile, setIsMobile] = useState(false);
@@ -33,8 +51,21 @@ useEffect(() => {
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     if (token) {
       setIsLoggedIn(true);
+      setCanInitSocket(true);
     }
+    try {
+      const raw =
+        sessionStorage.getItem("userData") ||
+        localStorage.getItem("userData");
 
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const id = parsed._id || null;
+        setUserId(id);
+      }
+    } catch (e) {
+      console.error("[Header] error leyendo userData:", e);
+    }
     const handleScroll = () => {
       if (window.innerWidth < 640) {
         setAreButtonsVisible(window.scrollY <= lastScrollY.current || window.scrollY === 0);
@@ -45,11 +76,27 @@ useEffect(() => {
     // Escuchar evento de login exitoso
     const handleLoginExitoso = () => {
       setIsLoggedIn(true);
+      setCanInitSocket(true);
+
+      try {
+        const raw =
+          sessionStorage.getItem("userData") ||
+          localStorage.getItem("userData");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const id = parsed._id || null;
+          setUserId(id);
+        }
+      } catch (e) {
+        console.error("[Header] error leyendo userData tras login:", e);
+      }
     };
 
     // Escuchar evento de logout
     const handleLogoutEvent = () => {
       setIsLoggedIn(false);
+      setCanInitSocket(false);
+      setUserId(null);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -74,6 +121,7 @@ useEffect(() => {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
     
+      // Solo crea socket cuando hay login + userId válido
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -108,7 +156,7 @@ useEffect(() => {
       <header className="hidden sm:flex items-center justify-between p-4 bg-[#EEF7FF] shadow-md fixed top-0 left-0 w-full z-50">
         {/* LOGO */}
         <div className="flex items-center">
-          <Link href="/">
+          <Link href="/" onClick={handleHomeClick}>
             <Icono size={40} />
           </Link>
           <span className="ml-2 text-xl font-bold text-[#11255A]">Servineo</span>
