@@ -13,7 +13,7 @@ const RecargaQR: React.FC = () => {
   const [numeroDocumento, setNumeroDocumento] = useState("");
   const [mensajeError, setMensajeError] = useState("");
 
-  const [saldo, setSaldo] = useState<number>(12730.5);
+  const [saldo, setSaldo] = useState<number>(0.0);
 
   const [monto, setMonto] = useState<number | string>("");
   const [montoError, setMontoError] = useState<string>(""); //estado para manejar el error
@@ -60,7 +60,7 @@ const RecargaQR: React.FC = () => {
     if (!numeroDocumento || !/^\d+$/.test(numeroDocumento)) valid = false;
     if (!correo || correoError) valid = false;
     if (!telefono || telefono.length < 1) valid = false;
-    if (!detalle || detalle.length < 1 || detalle.length > 40) valid = false;
+    if (detalle.length > 40) valid = false;
 
     setIsFormValid(valid);
   }, [monto, nombre, numeroDocumento, telefono, correo, correoError, detalle]);
@@ -68,15 +68,24 @@ const RecargaQR: React.FC = () => {
   const handleMontoClick = (valor: number) => setMonto(valor);
 
   const handleMontoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^\d*$/.test(value) && Number(value) <= 3000) setMonto(value);
-    else if (value === "") setMonto("");
-  };
+  const value = e.target.value;
+
+  if (/^\d*$/.test(value) && Number(value) <= 3000) {
+    setMonto(value);
+      } else if (value === "") {
+        setMonto("");
+      }
+    }; // ← ESTA LLAVE ES LA QUE FALTABA
+
+  const [errorServidor, setErrorServidor] = useState("");
+
+
 
   //Para el backend enviarRecarga
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   //Para el backend enviarRecarga
-  const enviarRecarga = async (): Promise<void> => {
+  //Para el backend enviarRecarga
+const enviarRecarga = async (): Promise<void> => {
   try {
     const response = await axios.post(`${API_URL}/bitCrew/recarga`, {
       nombre,
@@ -88,25 +97,24 @@ const RecargaQR: React.FC = () => {
       numeroDocumento,
     });
 
+    console.log("✅ Respuesta del backend:", response.data);
 
-      console.log("✅ Respuesta del backend:", response.data);
-
-      if (response.data.success) {
-          setMostrarQR(true);
-        } else {
-          console.error("Error: " + response.data.message);
-        }
-
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        console.error("❌ Error de Axios:", error.response?.data || error.message);
-        alert(`Error del servidor: ${error.response?.data?.message || error.message}`);
-      } else {
-        console.error("❌ Error desconocido:", error);
-        alert("Ocurrió un error inesperado al registrar la recarga.");
-      }
+    if (response.data.success) {
+      setMostrarQR(true);
+    } else {
+      console.error("Error: " + response.data.message);
     }
-  };
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error("❌ Error de Axios:", error.response?.data || error.message);
+      setErrorServidor(error.response?.data?.message || "Error de conexión con el servidor.");
+    } else {
+      console.error("❌ Error desconocido:", error);
+      setErrorServidor("Ocurrió un error inesperado al registrar la recarga.");
+    }
+  }
+}; // ← ESTA LLAVE ES FUNDAMENTAL
+
 
   const handleConfirmar = async () => {
     const nuevosErrores: ErroresType = {};
@@ -134,8 +142,10 @@ const RecargaQR: React.FC = () => {
       nuevosErrores.correo = "El correo es obligatorio";
       valido = false;
     }
-    if (!detalle) {
-      nuevosErrores.detalle = "El detalle de recarga es obligatorio";
+    // detalle vacío permitido → no generamos error
+
+    if (detalle.length > 40) {
+      nuevosErrores.detalle = "Máximo 40 caracteres";
       valido = false;
     }
 
@@ -329,6 +339,13 @@ const RecargaQR: React.FC = () => {
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6" style={{ color: "#11255A" }}>
           Recarga por QR
         </h1>
+
+        {errorServidor && (
+          <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 border border-red-300 text-center">
+            ⚠️ {errorServidor}
+          </div>
+        )}
+
 
         {/* Saldo */}
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
@@ -585,6 +602,12 @@ const RecargaQR: React.FC = () => {
               value={detalle}
              onChange={(e) => {
                 const val = e.target.value;
+
+                // Permitir vacío
+                if (val === "") {
+                  setDetalle("");
+                  return;
+                }
 
                 // Máximo 40 caracteres
                 if (val.length > 40) return;
