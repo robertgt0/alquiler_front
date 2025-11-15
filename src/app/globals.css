@@ -49,3 +49,17 @@ html {
     opacity: 1;
   }
 }
+
+
+/* En tu archivo global.css */
+@media (max-width: 768px) {
+  .mobile-top-adjust {
+    margin-top: -7rem !important;
+  }
+}
+/* Tablets (vertical y horizontal) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .mobile-top-adjust {
+    margin-top: -5rem !important; /* Ajusta según necesites */
+  }
+}

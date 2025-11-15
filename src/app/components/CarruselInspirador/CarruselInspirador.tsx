@@ -27,6 +27,7 @@ const slides = [
 
 const CarruselInspirador: React.FC = () => {
   const [current, setCurrent] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const router = useRouter();
 
   const nextSlide = () => setCurrent((prev) => (prev + 1) % slides.length);
@@ -34,9 +35,11 @@ const CarruselInspirador: React.FC = () => {
     setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
 
   useEffect(() => {
+    if (isPaused) return; // No iniciar el intervalo si está pausado
+    
     const interval = setInterval(nextSlide, 6000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPaused]); // Se reinicia cuando cambia el estado de pausa
 
   const handleVerMas = () => {
     const start = window.scrollY;
@@ -64,8 +67,19 @@ const CarruselInspirador: React.FC = () => {
     router.push("/porqueservineo");
   };
 
+  // Función para pausar el carrusel
+  const pauseCarousel = () => setIsPaused(true);
+  
+  // Función para reanudar el carrusel
+  const resumeCarousel = () => setIsPaused(false);
+
   return (
-    <section className="relative w-full overflow-hidden rounded-2xl shadow-lg bg-white flex flex-col md:flex-row h-auto md:h-[420px]">
+    <section 
+      className="relative w-full overflow-hidden rounded-2xl shadow-lg bg-white flex flex-col md:flex-row h-auto md:h-[420px] mt-0 md:mt-8 mobile-top-adjust"
+      onMouseEnter={pauseCarousel} // Pausar cuando el cursor entra
+      onMouseLeave={resumeCarousel} // Reanudar cuando el cursor sale
+      onTouchStart={pauseCarousel} // Pausar en dispositivos táctiles
+    >
       {/* Imagen */}
       <div className="relative w-full md:w-1/2 h-64 md:h-full">
         <Image
@@ -88,12 +102,14 @@ const CarruselInspirador: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center">
           <button
             onClick={handleVerMas}
+            onMouseEnter={pauseCarousel} // Pausar también al hover en botones
             className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 text-white px-6 py-3 rounded-full shadow-md w-full sm:w-auto"
           >
             Ver más
           </button>
           <button
             onClick={handlePorQueServineo}
+            onMouseEnter={pauseCarousel} // Pausar también al hover en botones
             className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 text-white px-6 py-3 rounded-full shadow-md w-full sm:w-auto"
           >
             ¿Por qué escoger Servineo?
@@ -104,12 +120,14 @@ const CarruselInspirador: React.FC = () => {
       {/* Flechas */}
       <button
         onClick={prevSlide}
+        onMouseEnter={pauseCarousel} // Pausar al hover en flechas
         className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 p-3 rounded-full"
       >
         <ChevronLeft className="text-white" />
       </button>
       <button
         onClick={nextSlide}
+        onMouseEnter={pauseCarousel} // Pausar al hover en flechas
         className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 p-3 rounded-full"
       >
         <ChevronRight className="text-white" />
