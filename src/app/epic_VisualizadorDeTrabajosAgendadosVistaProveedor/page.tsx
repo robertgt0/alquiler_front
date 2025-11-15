@@ -94,8 +94,8 @@ export default function TrabajosAgendadosPage() {
 
   if (!jobs) {
     return (
-      <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 500, color: C.text }}>
-        <h1 style={{ fontSize: 36, color: C.title }}>Trabajos Agendados</h1>
+      <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 500, color: C.text, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <h1 style={{ fontSize: 36, color: C.title, width: '660px' }}>Trabajos Agendados</h1>
         <div style={{ height: 1.5, width: '660px', background: C.line }} />
         <p style={{ textAlign: 'center' }}>Cargando trabajos...</p>
       </main>
@@ -103,8 +103,8 @@ export default function TrabajosAgendadosPage() {
   }
 
   return (
-    <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 400 }}>
-      <h1 style={{ fontSize: 36, color: C.title }}>Trabajos Agendados</h1>
+    <main style={{ padding: 24, maxWidth: 980, margin: '0 auto', fontWeight: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 10 }}>
+      <h1 style={{ fontSize: 36, color: C.title, width: '660px', marginTop: 0 }}>Trabajos Agendados</h1>
       <div style={{ height: 1.5, width: '660px', background: C.line, marginBottom: 10 }} />
       <TabsComponent tab={tab} setTab={setTab} counts={counts} setCurrentPage={setCurrentPage} />
 
@@ -250,6 +250,76 @@ export default function TrabajosAgendadosPage() {
             </article>
           );
         })}
+      </div>
+
+       <div className="footer-controls" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        alignItems: 'center', 
+        marginTop: '20px', 
+        width: '660px'
+      }}>
+        
+        <button
+          onClick={() => router.push('/')}
+          style={{
+            padding: '10px 20px',
+            height: 40,
+            borderRadius: 8,
+            background: C.confirmed,
+            color: C.white,
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: '16px'
+          }}
+        >
+          Volver
+        </button>
+
+        {totalPages > 1 && (
+          <div className="pagination" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '10px 15px',
+                borderRadius: 5,
+                border: '1px solid #ddd',
+                background: C.white,
+                color: C.text,
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                opacity: currentPage === 1 ? 0.6 : 1,
+              }}
+            >
+              Anterior
+            </button>
+            
+            <span style={{ color: C.text, fontSize: '16px', fontWeight: 500 }}>
+              Página {currentPage} de {totalPages}
+            </span>
+            
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '10px 15px',
+                borderRadius: 5,
+                border: '1px solid #ddd',
+                background: C.white,
+                color: C.text,
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                opacity: currentPage === totalPages ? 0.6 : 1,
+              }}
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
+
+        {totalPages <= 1 && (
+          <div /> 
+        )}
       </div>
     </main>
   );
