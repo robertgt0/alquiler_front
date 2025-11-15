@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion"; // <-- Importamos Framer Motion
+import { motion, AnimatePresence, Variants } from "framer-motion";
 
 const slides = [
   {
@@ -39,7 +39,6 @@ const CarruselInspirador: React.FC = () => {
     if (isPaused) return;
     const interval = setInterval(nextSlide, 6000);
     return () => clearInterval(interval);
-    // Añadimos 'current' para que el temporizador se reinicie en cambios manuales
   }, [isPaused, current]);
 
   const handleVerMas = () => {
@@ -68,11 +67,21 @@ const CarruselInspirador: React.FC = () => {
     router.push("/porqueservineo");
   };
 
-  // Definimos las variantes de animación para Framer Motion
-  const textVariants = {
+  // Variants tipadas y con 'ease' como curvas Bézier (Easing[])
+  const textVariants: Variants = {
     initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
-    exit: { opacity: 0, y: -20, transition: { duration: 0.3, ease: "easeIn" } },
+    // [0.22, 1, 0.36, 1] ≈ easeOut cubic-bezier
+    animate: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
+    },
+    // [0.42, 0, 1, 1] ≈ easeIn cubic-bezier
+    exit: {
+      opacity: 0,
+      y: -20,
+      transition: { duration: 0.3, ease: [0.42, 0, 1, 1] },
+    },
   };
 
   return (
@@ -86,7 +95,6 @@ const CarruselInspirador: React.FC = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* 1. Animación de IMAGEN (con 'fade' usando Tailwind, sin cambios) */}
       <div className="relative w-full md:w-1/2 h-[300px] md:h-full !mt-0 !pt-0">
         {slides.map((slide, index) => (
           <Image
@@ -97,25 +105,22 @@ const CarruselInspirador: React.FC = () => {
             className={`
               object-cover
               transition-opacity duration-1000 ease-in-out 
-              ${index === current ? 'opacity-100' : 'opacity-0'}
+              ${index === current ? "opacity-100" : "opacity-0"}
             `}
             priority={index === 0}
           />
         ))}
       </div>
 
-      {/* 2. Animación de TEXTO (¡Con Framer Motion!) */}
       <div className="w-full md:w-1/2 flex flex-col justify-center items-center text-center px-6 md:px-8 py-6 md:py-0 bg-gradient-to-r from-gray-50 to-white overflow-hidden">
-        {/* AnimatePresence permite animar la salida de componentes que se desmontan */}
-        <AnimatePresence mode="wait"> {/* 'wait' espera a que la animación de salida termine antes de montar la nueva */}
-          {/* Usamos 'motion.div' y le pasamos las variantes y la 'key' del slide actual */}
+        <AnimatePresence mode="wait">
           <motion.div
-            key={current} // La key es crucial para que Framer Motion sepa que es un nuevo componente
-            variants={textVariants} // Nuestras reglas de animación
-            initial="initial" // Estado inicial
-            animate="animate" // Estado al montar
-            exit="exit" // Estado al desmontar (cuando cambia el slide)
-            className="w-full" // Para que ocupe todo el ancho disponible
+            key={current}
+            variants={textVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="w-full"
           >
             <h2 className="text-xl md:text-3xl font-bold mb-4 text-gray-800">
               {slides[current].title}
@@ -141,7 +146,6 @@ const CarruselInspirador: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* Flechas */}
       <button
         onClick={prevSlide}
         className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 p-3 rounded-full z-10"
@@ -154,7 +158,6 @@ const CarruselInspirador: React.FC = () => {
       >
         <ChevronRight className="text-white" />
       </button>
-      
     </section>
   );
 };

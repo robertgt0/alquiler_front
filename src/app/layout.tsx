@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 // ✅ CORRECCIÓN: Agregar declaración para CSS
