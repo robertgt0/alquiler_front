@@ -1,11 +1,12 @@
-"use client"; // 👈 1. Convertir a Client Component
+// Archivo: layout.tsx (Corregido)
 
-import { useState, useEffect } from "react"; // 👈 2. Importar hooks
-import type { Metadata } from "next";
+"use client";
+
+import { useState, useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import Header from "./components/Header/Header";
+import Header from "./components/Header/Header"; // Ajusta tu ruta si es necesario
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,30 +23,24 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 3. Estado para rastrear la conexión
   const [isOnline, setIsOnline] = useState(true);
 
-  // 4. Efecto para escuchar eventos de conexión
   useEffect(() => {
-    // Función para actualizar el estado
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    // Asignar estado inicial al cargar
     if (typeof window !== "undefined") {
       setIsOnline(navigator.onLine);
     }
 
-    // Agregar event listeners
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
 
-    // Limpiar listeners al desmontar el componente
     return () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, []); // El array vacío asegura que esto solo se ejecute al montar/desmontar
+  }, []);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -53,9 +48,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}
       >
-        {/* 5. Banner de "Sin Conexión" */}
+        {/* Banner de "Sin Conexión" */}
         {!isOnline && (
-          <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center p-2 z-50 shadow-lg animate-pulse">
+          // Este banner mide aprox. 52px de alto
+          <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-center p-2 z-[60] shadow-lg animate-pulse">
             <p className="font-semibold">
               Estás sin conexión
             </p>
@@ -65,13 +61,18 @@ export default function RootLayout({
           </div>
         )}
 
-        <Header />
+        {/* Pasamos 'isOnline' para que el Header se mueva */}
+        <Header isOnline={isOnline} />
 
-        {/* SOLUCIÓN: Cambiar el padding para que funcione en todos los dispositivos */}
-        <div className="pt-16 sm:pt-10">
-          {/* Aumenté el padding-top */}
+        {/* AQUÍ ESTÁ LA CORRECCIÓN FINAL:
+          pt-[44px] -> 44px exactos para el header móvil
+          sm:pt-[72px] -> 72px exactos para el header desktop
+          pb-[70px] -> Espacio para el footer móvil (ajusta si es necesario)
+        */}
+        <main className="pt-[44px] pb-[70px] sm:pt-[72px] sm:pb-0">
           {children}
-        </div>
+        </main>
+        
       </body>
     </html>
   );

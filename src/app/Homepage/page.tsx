@@ -1,4 +1,4 @@
-// src/app/Homepage/page.tsx
+// src/app/Homepage/page.tsx (CORREGIDO)
 
 /*
  * IMPORTANTE:
@@ -15,28 +15,28 @@ import CarruselInspirador from "../components/CarruselInspirador/CarruselInspira
 
 import categorias, { type CategoriaBase } from "../components/data/categoriasData";
 
-// Es buena práctica que la función se llame como la página
 export default function Homepage() {
-  return (
-    <main>
-      <section className="my-0">
-        <CarruselInspirador />
-      </section>
+  return (
+    // --- CAMBIO AQUÍ: 'main' reemplazado por '<>' ---
+    <>
+      <section className="my-0">
+        <CarruselInspirador />
+      </section>
 
-      <section id="mapa" className="my-10">
-        <Mapa />
-      </section>
+      <section id="mapa" className="my-10">
+        <Mapa />
+      </section>
 
-      <section id="servicios" className="my-5 w-full">
-        {/* HomeFixer solo necesita id, titulo, descripcion, icono */}
-        <HomeFixer categorias={categorias as CategoriaBase[]} />
-      </section>
+      <section id="servicios" className="my-5 w-full">
+        <HomeFixer categorias={categorias as CategoriaBase[]} />
+      </section>
 
-      <section id="trabajos-recientes" className="my-5 w-full">
-        <CarruselOfertas />
-      </section>
+      <section id="trabajos-recientes" className="my-5 w-full">
+        <CarruselOfertas />
+      </section>
 
-      <Footer />
-    </main>
-  );
+      <Footer />
+    </>
+    // --- CAMBIO AQUÍ: 'main' reemplazado por '</>' ---
+  );
 }
