@@ -244,6 +244,7 @@ class BackendService {
 // ============================================================================
 
 class LocalService {
+
     static buscarTrabajos(query: string, jobs: Job[], campoBusqueda: keyof Job | "all" = "all"): Job[] {
         console.log('🔍 [LOCAL-ORDEN-EXACTO] Buscando localmente con orden exacto:', query);
 
@@ -304,12 +305,45 @@ class LocalService {
             }
         }).slice(0, 50);
     }
+    static buscarPorPalabras(query: string, jobs: Job[], campoBusqueda: keyof Job | "all" = "all"): Job[] {
+        console.log('🎯 [BUSQUEDA-ESTRICTA] Buscando con coincidencia estricta:', query);
 
+        if (!query.trim()) return [];
+
+        const queryNormalizado = normalizarQueryBusqueda(query);
+
+        return jobs.filter(job => {
+            if (campoBusqueda === "all") {
+                const tituloNormalizado = job.title ? this.normalizarTexto(job.title) : "";
+                const empresaNormalizada = job.company ? this.normalizarTexto(job.company) : "";
+                const serviciosNormalizados = job.service ? this.normalizarTexto(job.service) : "";
+
+                const campos = [tituloNormalizado, empresaNormalizada, serviciosNormalizados];
+
+                // 🔥 CAMBIADO: Coincidencia estricta (como en sugerencias)
+                return campos.some(campoTexto => {
+                    if (!campoTexto) return false;
+                    // ✅ COINCIDENCIA ESTRICTA: El campo debe CONTENER el query completo
+                    return campoTexto.includes(queryNormalizado);
+                });
+            } else {
+                const campoValor = job[campoBusqueda];
+                if (!campoValor) return false;
+
+                const campoNormalizado = this.normalizarTexto(String(campoValor));
+
+                // 🔥 CAMBIADO: Coincidencia estricta
+                return campoNormalizado.includes(queryNormalizado);
+            }
+        }).slice(0, 50);
+    }
+
+    // En LocalService.getSugerencias, modifica:
     static getSugerencias(query: string, jobs: Job[]): string[] {
-        console.log('💡 [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Generando sugerencias locales para:', query);
+        console.log('💡 [SUGERENCIAS-POR-CONTENIDO] Generando sugerencias para:', query);
 
         if (!query.trim() || query.trim().length < 2) {
-            console.log('⏸️ [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Query muy corta, omitiendo');
+            console.log('⏸️ [SUGERENCIAS-POR-CONTENIDO] Query muy corta');
             return [];
         }
 
@@ -317,29 +351,29 @@ class LocalService {
         const sugerencias = new Set<string>();
 
         jobs.forEach(job => {
+            // Buscar en servicios
             if (job.service) {
                 const servicios = job.service.split(',').map(s => s.trim());
 
                 servicios.forEach(servicio => {
                     const servicioNormalizado = this.normalizarTexto(servicio);
 
-                    // 🔥 MODIFICADO: Solo sugerir si coincide desde el inicio con orden
-                    if (servicioNormalizado.startsWith(queryNormalizado)) {
+                    // 🔥 MODIFICADO: Coincidencia parcial en lugar de solo inicio
+                    if (servicioNormalizado.includes(queryNormalizado)) {
                         sugerencias.add(servicio);
                     }
                 });
             }
-        });
 
-        jobs.forEach(job => {
-            const campos = ['title', 'company'] as const;
+            // Buscar en otros campos
+            const campos = ['title', 'company', 'service'] as const;
             campos.forEach(campo => {
                 if (job[campo]) {
                     const valorCampo = String(job[campo]);
                     const campoNormalizado = this.normalizarTexto(valorCampo);
 
-                    // 🔥 MODIFICADO: Solo sugerir si coincide desde el inicio con orden
-                    if (campoNormalizado.startsWith(queryNormalizado)) {
+                    // 🔥 MODIFICADO: Coincidencia parcial
+                    if (campoNormalizado.includes(queryNormalizado)) {
                         sugerencias.add(valorCampo);
                     }
                 }
@@ -348,6 +382,7 @@ class LocalService {
 
         const sugerenciasArray = Array.from(sugerencias);
 
+        // Ordenar por relevancia (coincidencias que empiezan con el query primero)
         const sugerenciasOrdenadas = sugerenciasArray.sort((a, b) => {
             const aNormalizado = this.normalizarTexto(a);
             const bNormalizado = this.normalizarTexto(b);
@@ -358,13 +393,11 @@ class LocalService {
             if (aEmpiezaExacto && !bEmpiezaExacto) return -1;
             if (!aEmpiezaExacto && bEmpiezaExacto) return 1;
 
-            if (a.length !== b.length) return a.length - b.length;
-
             return aNormalizado.localeCompare(bNormalizado);
         });
 
         const sugerenciasFinales = sugerenciasOrdenadas.slice(0, 10);
-        console.log('✅ [SUGERENCIAS-LOCAL-ORDEN-EXACTO] Sugerencias locales encontradas:', sugerenciasFinales);
+        console.log('✅ [SUGERENCIAS-POR-CONTENIDO] Sugerencias encontradas:', sugerenciasFinales);
         return sugerenciasFinales;
     }
 
@@ -413,41 +446,35 @@ class BusquedaService {
         });
     }
 
-    // 🔥 MODIFICADO: Búsqueda optimizada con orden exacto
+    // En BusquedaService, modifica searchJobsOptimized:
     static async searchJobsOptimized(query: string, jobsReales: Job[], endpoint?: string): Promise<Job[]> {
         try {
-            console.log('🔍 [SERVICE-ORDEN-EXACTO] Buscando primero en backend con orden exacto:', query);
+            console.log('🔍 [SERVICE-POR-CONTENIDO] Buscando:', query);
 
             if (!query.trim()) {
                 return [];
             }
 
             const queryNormalizado = query;
-            console.log('✅ [SERVICE-ORDEN-EXACTO] Query ya normalizado desde componente:', queryNormalizado);
+            console.log('✅ [SERVICE-POR-CONTENIDO] Query normalizado:', queryNormalizado);
 
-            const tokens = queryNormalizado.split(' ').filter(token => token.length > 0);
-
-            if (tokens.length === 0) {
-                return [];
-            }
-
-            // 1. INTENTAR BACKEND PRIMERO CON ORDEN EXACTO
+            // 1. INTENTAR BACKEND PRIMERO 
             const resultadosBackend = await BackendService.searchJobsBackend(queryNormalizado, endpoint);
 
             if (resultadosBackend && resultadosBackend.length > 0) {
-                console.log(`✅ [BACKEND-ORDEN-EXACTO] ${resultadosBackend.length} resultados del backend`);
+                console.log(`✅ [BACKEND-POR-CONTENIDO] ${resultadosBackend.length} resultados`);
                 const resultadosOrdenados = this.ordenarPorRelevancia(resultadosBackend, query);
                 return resultadosOrdenados;
             }
 
-            // 2. Si backend responde pero sin resultados, usar FALLBACK LOCAL CON ORDEN EXACTO
-            console.log('🔄 [BACKEND-ORDEN-EXACTO] Backend respondió sin resultados, usando fallback local con orden exacto');
-            const resultadosLocales = LocalService.buscarTrabajos(query, jobsReales);
+            // 2. FALLBACK LOCAL CON BÚSQUEDA POR PALABRAS
+            console.log('🔄 [BACKEND-POR-CONTENIDO] Usando búsqueda local por palabras');
+            const resultadosLocales = LocalService.buscarPorPalabras(query, jobsReales);
             return this.ordenarPorRelevancia(resultadosLocales, query);
 
         } catch (error) {
-            console.log('🔄 [BACKEND-ORDEN-EXACTO] Backend falló, usando local como fallback con orden exacto:', error);
-            const resultadosLocales = LocalService.buscarTrabajos(query, jobsReales);
+            console.log('🔄 [BACKEND-POR-CONTENIDO] Backend falló, usando local por palabras:', error);
+            const resultadosLocales = LocalService.buscarPorPalabras(query, jobsReales);
             return this.ordenarPorRelevancia(resultadosLocales, query);
         }
     }
@@ -898,12 +925,13 @@ export default function BusquedaAutocompletado({
     }, [query, inputFocused, datos, onSearch]);
 
     // ============================================================================
-    // 🔥 NUEVO: useEffect PARA RESULTADOS LOCALES EN TIEMPO REAL  
+    // ============================================================================
+    // 🔥 CORREGIDO: useEffect PARA RESULTADOS LOCALES EN TIEMPO REAL  
     // ============================================================================
     useEffect(() => {
-        
+
         if (busquedaEnCurso.current) {
-            console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
+            console.log('🚫 [RESULTADOS-LOCALES] Omitido, búsqueda completa en curso.');
             return;
         }
 
@@ -927,24 +955,21 @@ export default function BusquedaAutocompletado({
             textoNormalizado,
             inputFocused,
             debeBuscarResultadosLocales,
-            busquedaEnCurso: busquedaEnCurso.current
+            busquedaEnCurso: busquedaEnCurso.current,
+            desactivarBusquedaAutomatica: desactivarBusquedaAutomatica.current
         });
 
         if (debeBuscarResultadosLocales) {
             debounceResultadosLocalesRef.current = setTimeout(async () => {
-                if (busquedaEnCurso.current) {
-                    console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
+                if (busquedaEnCurso.current || desactivarBusquedaAutomatica.current) {
+                    console.log('🚫 [RESULTADOS-LOCALES] Cancelado.');
                     return;
                 }
                 try {
-                    if (busquedaEnCurso.current) {
-                        console.log('🚫 [SUGERENCIAS-BACKEND] Cancelado.');
-                        return;
-                    }
                     console.log('🚀 [RESULTADOS-LOCALES-REAL-TIME] Buscando resultados locales para:', texto);
 
                     // 🔥 BUSCAR RESULTADOS LOCALES DIRECTAMENTE
-                    const resultadosLocales = LocalService.buscarTrabajos(texto, datos, campoBusqueda);
+                    const resultadosLocales = LocalService.buscarPorPalabras(texto, datos, campoBusqueda);
                     const resultadosOrdenados = BusquedaService.ordenarPorRelevancia(resultadosLocales, texto);
 
                     console.log('📊 [RESULTADOS-LOCALES-REAL-TIME] Resultados encontrados:', {
@@ -974,6 +999,20 @@ export default function BusquedaAutocompletado({
                     setLoadingResultados(false);
                 }
             }, 400); // Debounce para resultados
+        } else {
+            // 🔥 ESTA ES LA PARTE QUE LE FALTABA - LIMPIAR CUANDO NO DEBE BUSCAR
+            if (texto.length === 0 || !inputFocused) {
+                console.log('🧹 [RESULTADOS-LOCALES] Limpiando resultados - query vacío o sin foco');
+                setResultados([]);
+                setEstadoBusqueda("idle");
+                setMensajeNoResultados("");
+                setLoadingResultados(false);
+
+                // También limpiar en el padre si el query está vacío
+                if (texto.length === 0) {
+                    onSearch("", [], false);
+                }
+            }
         }
 
         return () => {
@@ -981,8 +1020,9 @@ export default function BusquedaAutocompletado({
                 clearTimeout(debounceResultadosLocalesRef.current);
             }
         };
-    }, [query, inputFocused, datos, campoBusqueda]);
-
+        // 🔥 SOLUCIÓN: Usar dependencias estables en lugar del array completo
+    }, [query, inputFocused, campoBusqueda]);
+    // ❌ QUITAR: datos, onSearch (porque cambian entre renders)
     // 🔥 MODIFICADO: Manejar cambio en el input - solo mensajes informativos
     const manejarCambioInput = useCallback((nuevoValor: string) => {
         // Mostrar/guardar en Title Case mientras el usuario escribe
