@@ -4,17 +4,22 @@ export interface BalanceLogic {
   balance: number;
   logs: string[];
   isLoading: boolean;
+  userEmail: string;
   updateBalance: (amount: number) => void;
   clearLogs: () => void;
   resetBalance: () => void;
+  setUserEmail: (email: string) => void;
 }
 
-// Servicio de notificaciones integrado
-const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Promise<boolean> => {
+// Servicio de notificaciones integrado - CON LOGS MEJORADOS
+const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number, userEmail: string): Promise<boolean> => {
+  // Definir subject fuera del try para que esté disponible en el catch
+  let subject = '';
+  
   try {
     const userData = {
-      name: 'Santi',
-      email: 'adriavall1234@gmail.com'
+      name: 'Usuario Fixer',
+      email: userEmail
     };
 
     const date = new Date().toLocaleDateString("es-BO", {
@@ -26,7 +31,6 @@ const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Prom
       minute: "2-digit"
     });
 
-    let subject = '';
     let htmlMessage = '';
 
     if (type === 'HU5') {
@@ -49,7 +53,6 @@ const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Prom
     Por favor, recarga tu billetera para continuar usando los servicios.
   </p>
   <div style="font-size: 13px; color: #333; border-top: 1px solid #ccc; padding-top: 8px;">
-    <p style="margin: 4px 0;"><strong>ID Fixer:</strong> 1012</p>
     <p style="margin: 4px 0;"><strong>Fecha:</strong> ${date}</p>
     <p style="margin: 4px 0;"><strong>Tipo:</strong> HU5 - Saldo en Cero</p>
   </div>
@@ -75,7 +78,6 @@ const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Prom
     Por favor, recarga tu billetera lo antes posible para evitar la suspensión de servicios.
   </p>
   <div style="font-size: 13px; color: #333; border-top: 1px solid #ccc; padding-top: 8px;">
-    <p style="margin: 4px 0;"><strong>ID Fixer:</strong> 1012</p>
     <p style="margin: 4px 0;"><strong>Fecha:</strong> ${date}</p>
     <p style="margin: 4px 0;"><strong>Tipo:</strong> HU6 - Saldo Negativo</p>
   </div>
@@ -95,7 +97,14 @@ const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Prom
 
     const backendUrl = process.env.NEXT_PUBLIC_API_URL;
     
-    console.log('📤 Enviando petición al backend:', `${backendUrl}/api/gmail-notifications`);
+    //  LOG COMPLETO DE LO QUE SE ENVÍA
+    console.group('📤 DATOS ENVIADOS AL BACKEND');
+    console.log('🔗 Endpoint:', `${backendUrl}/api/gmail-notifications`);
+    console.log('📨 Payload completo:', JSON.stringify(gmailPayload, null, 2));
+    console.log('📧 Email destino:', userEmail);
+    console.log('🎯 Tipo notificación:', type);
+    console.log('💰 Balance:', balance);
+    console.groupEnd();
     
     const response = await fetch(`${backendUrl}/api/gmail-notifications`, {
       method: 'POST',
@@ -106,28 +115,77 @@ const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Prom
       body: JSON.stringify(gmailPayload)
     });
 
-    console.log('📥 Respuesta del backend - Status:', response.status);
+    // 🎯 LOG COMPLETO DE LO QUE SE RECIBE
+    console.group('📥 RESPUESTA DEL BACKEND');
+    console.log('🟢 Status:', response.status);
+    console.log('🔗 URL:', response.url);
     
+    const responseText = await response.text();
+    let responseData;
+    
+    try {
+      responseData = JSON.parse(responseText);
+      console.log('✅ Datos recibidos:', JSON.stringify(responseData, null, 2));
+    } catch {
+      console.log('📝 Respuesta (texto):', responseText);
+      responseData = { raw: responseText };
+    }
+    
+    console.groupEnd();
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Error del backend:', errorText);
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+      console.error('❌ ERROR - Datos que NO se pudieron enviar:');
+      console.error('📤 Payload fallido:', JSON.stringify(gmailPayload, null, 2));
+      console.error('📧 Email destino:', userEmail);
+      console.error('🔍 Error:', responseText);
+      
+      // 🎯 ESTOS SON LOS DATOS QUE SE GUARDARÍAN EN BD CUANDO FALLA
+      const failedNotificationData = {
+        channel: "Gmail",
+        type: type,
+        balance: balance,
+        destination: userEmail,
+        subject: subject,
+        message: "Tu billetera ha llegado a Bs. " + balance.toFixed(2) + ". No tienes fondos disponibles en este momento.",
+        error: responseText,
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('💾 DATOS PARA GUARDAR EN BD (fallo):', JSON.stringify(failedNotificationData, null, 2));
+      
+      throw new Error(`HTTP ${response.status}: ${responseText}`);
     }
 
-    const data = await response.json();
-    console.log('✅ Respuesta del backend:', data);
-    
-    // CORRECCIÓN: El backend puede estar retornando éxito de diferentes formas
-    // Verificamos varias formas posibles de éxito
-    if (data.success === true || data.status === 'success' || data.message?.includes('enviado') || response.status === 200) {
+    // Verificar éxito
+    if (responseData.success === true || responseData.status === 'success' || responseData.message?.includes('enviado') || response.status === 200) {
+      console.log('🎉 NOTIFICACIÓN EXITOSA');
+      console.log('📩 Message ID:', responseData.messageId);
+      console.log('👤 Destinatario:', userEmail);
+      console.log('⏰ Timestamp:', new Date().toISOString());
       return true;
     } else {
-      console.warn('⚠️ Backend respondió pero sin éxito claro:', data);
+      console.warn('⚠️ Respuesta ambigua del backend:', responseData);
       return false;
     }
     
   } catch (error) {
-    console.error('❌ Error enviando notificación:', error);
+    console.error('💥 ERROR CRÍTICO EN NOTIFICACIÓN:');
+    console.error('🔍 Detalles:', error);
+    
+    // 🎯 DATOS QUE SE GUARDARÍAN EN BD POR ERROR
+    const errorNotificationData = {
+      channel: "Gmail",
+      type: type,
+      balance: balance,
+      destination: userEmail,
+      subject: subject, // ✅ Ahora subject está disponible
+      message: "Tu billetera ha llegado a Bs. " + balance.toFixed(2) + ". No tienes fondos disponibles en este momento.",
+      error: error instanceof Error ? error.message : 'Error desconocido',
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('💾 DATOS PARA GUARDAR EN BD (error):', JSON.stringify(errorNotificationData, null, 2));
+    
     throw error;
   }
 };
@@ -136,8 +194,8 @@ export const useBalanceLogic = (): BalanceLogic => {
   const [balance, setBalance] = useState<number>(100);
   const [logs, setLogs] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string>('');
   
-  // Usar useRef para evitar duplicados - más confiable que useState
   const lastNotifiedRef = useRef<{ type: 'HU5' | 'HU6' | null; balance: number }>({ 
     type: null, 
     balance: 100 
@@ -149,63 +207,59 @@ export const useBalanceLogic = (): BalanceLogic => {
   }, []);
 
   const sendNotification = useCallback(async (type: 'HU5' | 'HU6', currentBalance: number): Promise<void> => {
-    // ✅ CORRECCIÓN: Prevención robusta de duplicados
+    // Verificar que el usuario haya ingresado un email
+    if (!userEmail) {
+      addLog('❌ Error: No se ha configurado un email destino');
+      return;
+    }
+
     const notificationKey = `${type}_${currentBalance}`;
     
-    // Si ya estamos enviando una notificación para este tipo y balance, ignorar
     if (lastNotifiedRef.current.type === type && lastNotifiedRef.current.balance === currentBalance) {
       console.log(`🛑 Notificación ${notificationKey} ya enviada, ignorando...`);
       return;
     }
     
-    // Marcar como enviando inmediatamente
     lastNotifiedRef.current = { type, balance: currentBalance };
     setIsLoading(true);
 
     try {
-      addLog(`📧 Enviando ${type} a cristhiancalizaya165@gmail.com...`);
+      addLog(`📧 Enviando ${type} a ${userEmail}...`);
       
-      const success = await sendEmailNotification(type, currentBalance);
+      const success = await sendEmailNotification(type, currentBalance, userEmail);
       
       if (success) {
-        addLog(`✅ ${type} ENVIADO CORRECTAMENTE a cristhiancalizaya165@gmail.com`);
+        addLog(`✅ ${type} ENVIADO CORRECTAMENTE a ${userEmail}`);
         addLog(`📨 Revisa tu bandeja de entrada (y spam)`);
       } else {
         addLog(`⚠️ ${type}: Backend respondió pero sin confirmación clara de éxito`);
-        // Si falla, permitir reintento resetando la referencia
         lastNotifiedRef.current = { type: null, balance: 100 };
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       addLog(`❌ FALLO ENVÍO ${type}: ${errorMessage}`);
-      
-      // Si falla, permitir reintento resetando la referencia
       lastNotifiedRef.current = { type: null, balance: 100 };
       
-      // Si es error de red, sugerir verificar backend
       if (errorMessage.includes('fetch') || errorMessage.includes('network')) {
         addLog('🔌 Verifica que el backend esté corriendo en puerto 5000');
       }
     } finally {
       setIsLoading(false);
     }
-  }, [addLog]);
+  }, [addLog, userEmail]);
 
   const updateBalance = useCallback((amount: number): void => {
     setBalance(prev => {
       const newBalance = prev + amount;
       
-      // Log del cambio
       addLog(`Balance actualizado: ${prev.toFixed(2)} → ${newBalance.toFixed(2)}`);
       
-      // ✅ CORRECCIÓN: Lógica mejorada de detección sin duplicados
       const shouldNotifyHU5 = newBalance === 0 && 
         !(lastNotifiedRef.current.type === 'HU5' && lastNotifiedRef.current.balance === 0);
         
       const shouldNotifyHU6 = newBalance < 0 && 
         !(lastNotifiedRef.current.type === 'HU6' && lastNotifiedRef.current.balance === newBalance);
       
-      // Detección automática de HU5 y HU6
       if (shouldNotifyHU5) {
         addLog('🎯 HU5 DETECTADO: Saldo en cero - Enviando notificación...');
         sendNotification('HU5', newBalance);
@@ -213,7 +267,6 @@ export const useBalanceLogic = (): BalanceLogic => {
         addLog(`⚠️ HU6 DETECTADO: Saldo negativo (Bs. ${newBalance.toFixed(2)}) - Enviando notificación...`);
         sendNotification('HU6', newBalance);
       } else if (newBalance === 0 || newBalance < 0) {
-        // Solo log si ya fue notificado
         const alertType = newBalance === 0 ? 'HU5' : 'HU6';
         addLog(`ℹ️ ${alertType} ya fue notificado para este balance, evitando duplicado`);
       }
@@ -229,7 +282,6 @@ export const useBalanceLogic = (): BalanceLogic => {
 
   const resetBalance = useCallback((): void => {
     setBalance(100);
-    // Resetear la referencia de notificaciones también
     lastNotifiedRef.current = { type: null, balance: 100 };
     addLog('🔄 Balance reiniciado a Bs. 100.00 - Notificaciones reseteadas');
   }, [addLog]);
@@ -238,8 +290,10 @@ export const useBalanceLogic = (): BalanceLogic => {
     balance,
     logs,
     isLoading,
+    userEmail,
     updateBalance,
     clearLogs,
-    resetBalance
+    resetBalance,
+    setUserEmail
   };
 };

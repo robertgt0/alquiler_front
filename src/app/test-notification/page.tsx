@@ -7,9 +7,11 @@ export default function TestNotificationPage() {
     balance,
     logs,
     isLoading,
+    userEmail, // ← Nuevo: email del usuario
     updateBalance,
     clearLogs,
-    resetBalance
+    resetBalance,
+    setUserEmail // ← Nuevo: función para cambiar email
   } = useBalanceLogic();
 
   return (
@@ -30,7 +32,7 @@ export default function TestNotificationPage() {
           marginBottom: '8px',
           fontWeight: 'bold'
         }}>
-          🚀 Simulador de Notificaciones HU5 & HU6
+           Simulador de Notificaciones HU5 & HU6
         </h1>
         <p style={{ color: '#616E8A', fontSize: '16px' }}>
           Sistema automático de detección y envío de notificaciones por correo
@@ -57,6 +59,52 @@ export default function TestNotificationPage() {
         {/* Panel Izquierdo - Controles */}
         <div>
           
+          {/* NUEVO: Campo para email del usuario */}
+          <div style={{
+            border: '2px solid #DBDEE5',
+            borderRadius: '12px',
+            padding: '24px',
+            backgroundColor: '#FAFBFC',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{
+              color: '#11255a',
+              fontSize: '18px',
+              marginBottom: '16px',
+              textAlign: 'center'
+            }}>
+               Configurar Email Destino
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input
+                type="email"
+                placeholder="Ingresa tu correo electrónico"
+                value={userEmail}
+                onChange={(e) => setUserEmail(e.target.value)}
+                disabled={isLoading}
+                style={{
+                  padding: '14px 16px',
+                  border: '2px solid #DBDEE5',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  backgroundColor: 'white',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#0c4fe9'}
+                onBlur={(e) => e.target.style.borderColor = '#DBDEE5'}
+              />
+              <div style={{
+                fontSize: '12px',
+                color: '#616E8A',
+                textAlign: 'center'
+              }}>
+                Las notificaciones HU5 y HU6 se enviarán a este email
+              </div>
+            </div>
+          </div>
+
           {/* Balance Display */}
           <div style={{
             border: `3px solid ${balance < 0 ? '#E91923' : balance === 0 ? '#FFA500' : '#0c4fe9'}`,
@@ -93,46 +141,46 @@ export default function TestNotificationPage() {
             }}>
               <button
                 onClick={() => updateBalance(-10)}
-                disabled={isLoading}
+                disabled={isLoading || !userEmail} // ← Deshabilitar si no hay email
                 style={{
                   width: '70px',
                   height: '70px',
-                  backgroundColor: isLoading ? '#CCCCCC' : '#E91923',
+                  backgroundColor: isLoading || !userEmail ? '#CCCCCC' : '#E91923',
                   color: 'white',
                   border: 'none',
                   borderRadius: '50%',
                   fontSize: '36px',
                   fontWeight: 'bold',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  cursor: (isLoading || !userEmail) ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                   boxShadow: '0 4px 8px rgba(233, 25, 35, 0.3)',
-                  opacity: isLoading ? 0.6 : 1
+                  opacity: (isLoading || !userEmail) ? 0.6 : 1
                 }}
-                onMouseOver={(e) => !isLoading && (e.currentTarget.style.transform = 'scale(1.1)')}
-                onMouseOut={(e) => !isLoading && (e.currentTarget.style.transform = 'scale(1)')}
+                onMouseOver={(e) => !isLoading && userEmail && (e.currentTarget.style.transform = 'scale(1.1)')}
+                onMouseOut={(e) => !isLoading && userEmail && (e.currentTarget.style.transform = 'scale(1)')}
               >
                 ↓
               </button>
               
               <button
                 onClick={() => updateBalance(10)}
-                disabled={isLoading}
+                disabled={isLoading || !userEmail} // ← Deshabilitar si no hay email
                 style={{
                   width: '70px',
                   height: '70px',
-                  backgroundColor: isLoading ? '#CCCCCC' : '#31C950',
+                  backgroundColor: isLoading || !userEmail ? '#CCCCCC' : '#31C950',
                   color: 'white',
                   border: 'none',
                   borderRadius: '50%',
                   fontSize: '36px',
                   fontWeight: 'bold',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  cursor: (isLoading || !userEmail) ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                   boxShadow: '0 4px 8px rgba(49, 201, 80, 0.3)',
-                  opacity: isLoading ? 0.6 : 1
+                  opacity: (isLoading || !userEmail) ? 0.6 : 1
                 }}
-                onMouseOver={(e) => !isLoading && (e.currentTarget.style.transform = 'scale(1.1)')}
-                onMouseOut={(e) => !isLoading && (e.currentTarget.style.transform = 'scale(1)')}
+                onMouseOver={(e) => !isLoading && userEmail && (e.currentTarget.style.transform = 'scale(1.1)')}
+                onMouseOut={(e) => !isLoading && userEmail && (e.currentTarget.style.transform = 'scale(1)')}
               >
                 ↑
               </button>
@@ -152,7 +200,7 @@ export default function TestNotificationPage() {
               }}>
                 ⚠️ HU6 ACTIVO - SALDO NEGATIVO
                 <div style={{ fontSize: '12px', marginTop: '4px', fontWeight: 'normal' }}>
-                  Notificación enviada a cristhiancalizaya165@gmail.com
+                  {userEmail ? `Notificación enviada a ${userEmail}` : 'Configura un email para recibir notificaciones'}
                 </div>
               </div>
             )}
@@ -167,10 +215,25 @@ export default function TestNotificationPage() {
                 fontWeight: '700',
                 textAlign: 'center'
               }}>
-                🎯 HU5 ACTIVO - SALDO EN CERO
+                 HU5 ACTIVO - SALDO EN CERO
                 <div style={{ fontSize: '12px', marginTop: '4px', fontWeight: 'normal' }}>
-                  Notificación enviada a cristhiancalizaya165@gmail.com
+                  {userEmail ? `Notificación enviada a ${userEmail}` : 'Configura un email para recibir notificaciones'}
                 </div>
+              </div>
+            )}
+
+            {/* Advertencia si no hay email configurado */}
+            {!userEmail && (
+              <div style={{
+                marginTop: '12px',
+                padding: '12px',
+                backgroundColor: '#FFF3CD',
+                border: '1px solid #FFEAA7',
+                borderRadius: '6px',
+                color: '#856404',
+                fontSize: '14px'
+              }}>
+                ⚠️ Ingresa un email arriba para recibir notificaciones
               </div>
             )}
           </div>
@@ -232,7 +295,7 @@ export default function TestNotificationPage() {
                 onMouseOver={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#E64A19')}
                 onMouseOut={(e) => !isLoading && (e.currentTarget.style.backgroundColor = '#FF5722')}
               >
-                🗑️ Limpiar Todos los Logs
+                 Limpiar Todos los Logs
               </button>
             </div>
           </div>
@@ -258,8 +321,8 @@ export default function TestNotificationPage() {
               margin: 0,
               paddingLeft: '20px'
             }}>
-              <li><strong>Email destino:</strong> cristhiancalizaya165@gmail.com</li>
-              <li><strong>Backend:</strong> process.env.NEXT_PUBLIC_API_URL</li>
+              <li><strong>Email destino:</strong> {userEmail || 'No configurado'}</li>
+              <li><strong>Backend:</strong> http://localhost:5000</li>
               <li><strong>HU5:</strong> Se envía automáticamente cuando balance = 0</li>
               <li><strong>HU6:</strong> Se envía automáticamente cuando balance &lt; 0</li>
               <li><strong>Protección:</strong> No envía notificaciones duplicadas</li>
@@ -267,7 +330,7 @@ export default function TestNotificationPage() {
           </div>
         </div>
 
-        {/* Panel Derecho - Logs */}
+        {/* Panel Derecho - Logs (se mantiene igual) */}
         <div>
           <div style={{
             border: '2px solid #11255a',
