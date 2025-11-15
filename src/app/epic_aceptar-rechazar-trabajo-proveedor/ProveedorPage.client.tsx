@@ -45,8 +45,8 @@ export default function ProveedorPageClient() {
   return (
     <div
       className="
-        min-h-screen w-full flex items-center justify-center bg-white 
-        px-4 sm:px-6 md:px-8 py-8 sm:py-12
+         min-h-screen w-full flex justify-center bg-white 
+         px-4 sm:px-6 md:px-8 pt-0
       "
     >
       <DetalleSolicitudTrabajo data={data ?? fallback} />

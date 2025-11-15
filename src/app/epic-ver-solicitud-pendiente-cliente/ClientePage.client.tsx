@@ -58,10 +58,8 @@ export default function ClientePageClient() {
       {/* 📱 Contenedor totalmente limpio, sin bordes ni sombras */}
       <div
         className="
-          w-full max-w-3xl
-          flex flex-col items-center justify-center
-          bg-white
-          p-4 sm:p-6 md:p-8
+         min-h-screen w-full flex justify-center bg-white 
+         px-4 sm:px-6 md:px-8 pt-0
         "
       >
         <DetalleSolicitudCliente data={data ?? fallback} />
