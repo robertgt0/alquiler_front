@@ -275,9 +275,9 @@ export default function FixersByCategoryView() {
         )}
 
         {/* Layout con sidebar y contenido */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '24px' }}>
           {/* Sidebar de categorías */}
-          <aside style={{ width: '100%', maxWidth: '256px' }}>
+          <aside style={{ flex: '0 0 256px' }}>
             <div style={{ 
               borderRadius: '24px', 
               border: '1px solid #e2e8f0', 
