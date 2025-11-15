@@ -16,25 +16,29 @@ const BotonesAccion: React.FC<BotonesAccionProps> = ({
   const deshabilitado = estadoTrabajo === "Cancelado";
 
   return (
-    <div className="flex gap-4 justify-center">
-      <button
-        onClick={onAtras}
-        className="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md"
-      >
-        Atrás
-      </button>
+      <div className="flex gap-4 w-full">
 
-      <button
-        onClick={onCancelar}
-        disabled={deshabilitado}
-        className={`px-8 py-3 font-bold rounded-lg transition-colors shadow-md ${
-          deshabilitado
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-        }`}
-      >
-        Cancelar Trabajo
-      </button>
+          {/* Botón Atrás a la izquierda */}
+          <button
+            onClick={onAtras}
+            className="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+          >
+            Atrás
+          </button>
+
+          {/* Grupo de los otros botones, empujado a la derecha */}
+          <div className="flex gap-4 ml-auto">
+            <button
+              onClick={onCancelar}
+              disabled={deshabilitado}
+              className={`px-8 py-3 font-bold rounded-lg transition-colors shadow-md mr-0 ${
+                deshabilitado
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+            >
+              Cancelar Trabajo
+            </button>
 
       <button
         onClick={onTerminado}
@@ -47,7 +51,9 @@ const BotonesAccion: React.FC<BotonesAccionProps> = ({
       >
         Trabajo Terminado
       </button>
-    </div>
+          </div>
+
+        </div>
   );
 };
 
