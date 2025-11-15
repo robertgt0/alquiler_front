@@ -7,33 +7,33 @@ interface DetallesTrabajoProps {
 
 const DetallesTrabajo: React.FC<DetallesTrabajoProps> = ({ trabajo }) => {
   return (
-    <div className="space-y-4 mb-8">
-      <div className="flex">
+    <div className="space-y-4 mb-8 text-[17px] sm:text-[19px] leading-8 Poppins">
+      <div className="flex gap-x-3">
         <span className="font-bold text-gray-800 w-32">Cliente:</span>
         <span className="text-gray-700">{trabajo.cliente}</span>
       </div>
 
-      <div className="flex">
+      <div className="flex gap-x-3">
         <span className="font-bold text-gray-800 w-32">Fecha:</span>
         <span className="text-gray-700">{trabajo.fecha}</span>
       </div>
 
-      <div className="flex">
+      <div className="flex gap-x-3">
         <span className="font-bold text-gray-800 w-32">Horario:</span>
         <span className="text-gray-700">{trabajo.horario}</span>
       </div>
 
-      <div className="flex">
+      <div className="flex gap-x-3">
         <span className="font-bold text-gray-800 w-32">Descripción:</span>
         <span className="text-gray-700">{trabajo.descripcion}</span>
       </div>
 
-      <div className="flex">
+      <div className="flex gap-x-3">
         <span className="font-bold text-gray-800 w-32">Costo:</span>
         <span className="text-gray-700">{trabajo.costo} Bs</span>
       </div>
 
-      <div className="flex items-center">
+      <div className="flex gap-x-3 items-center">
         <span className="font-bold text-gray-800 w-32">Estado:</span>
         <span
           className={`px-4 py-1 rounded-md font-semibold ${

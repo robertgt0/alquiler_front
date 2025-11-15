@@ -76,39 +76,44 @@ const BotonesAccion: React.FC<BotonesAccionProps> = ({
   return (
     // NUEVO: Usamos un Fragment (<>) para envolver los botones y el modal
     <> 
-      <div className="flex gap-4 justify-center">
-        <button
-          onClick={onAtras}
-          className="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md"
-        >
-          Atrás
-        </button>
+      <div className="flex gap-4 w-full">
 
-        <button
-          onClick={onCancelar}
-          disabled={deshabilitado}
-          className={`px-8 py-3 font-bold rounded-lg transition-colors shadow-md ${
-            deshabilitado
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-          }`}
-        >
-          Cancelar Trabajo
-        </button>
+          {/* Botón Atrás a la izquierda */}
+          <button
+            onClick={onAtras}
+            className="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+          >
+            Atrás
+          </button>
 
-        <button
-          // MODIFICADO: Ahora abre el modal
-          onClick={() => setIsModalOpen(true)}
-          disabled={deshabilitado}
-          className={`px-8 py-3 font-bold rounded-lg transition-colors shadow-md ${
-            deshabilitado
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700"
-          }`}
-        >
-          Trabajo Terminado
-        </button>
-      </div>
+          {/* Grupo de los otros botones, empujado a la derecha */}
+          <div className="flex gap-4 ml-auto">
+            <button
+              onClick={onCancelar}
+              disabled={deshabilitado}
+              className={`px-8 py-3 font-bold rounded-lg transition-colors shadow-md mr-0 ${
+                deshabilitado
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
+            >
+              Cancelar Trabajo
+            </button>
+
+            <button
+              onClick={() => setIsModalOpen(true)}
+              disabled={deshabilitado}
+              className={`px-8 py-3 font-bold rounded-lg transition-colors shadow-md mr-4 ${
+                deshabilitado
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              Trabajo Terminado
+            </button>
+          </div>
+
+        </div>
 
       {/* NUEVO: El modal se renderiza aquí y se conecta a los handlers */}
       <RatingModal
