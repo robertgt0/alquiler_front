@@ -24,32 +24,14 @@ type TabKey = 'all' | JobStatus;
 const ITEMS_PER_PAGE = 10;
 
 const IcoUser = ({ size = 24, color = C.text }: { size?: number; color?: string }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 21a8 8 0 0 0-16 0" />
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
 const IcoCalendar = ({ size = 24, color = C.text }: { size?: number; color?: string }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="18" rx="2" />
     <line x1="16" y1="2" x2="16" y2="6" />
     <line x1="8" y1="2" x2="8" y2="6" />
@@ -58,32 +40,14 @@ const IcoCalendar = ({ size = 24, color = C.text }: { size?: number; color?: str
 );
 
 const IcoBrief = ({ size = 24, color = C.text }: { size?: number; color?: string }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="7" width="18" height="13" rx="2" />
     <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
   </svg>
 );
 
 const IcoClock = ({ size = 24, color = C.text }: { size?: number; color?: string }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />
     <path d="M12 6v6l4 2" />
   </svg>
@@ -479,57 +443,30 @@ interface TabsProps {
 
 function TabsComponent({ tab, setTab, counts, setCurrentPage }: TabsProps) {
   return (
-    <div
-      role="tablist"
-      aria-label="Filtros de estado"
-      style={{ display: 'flex', gap: 12, marginBottom: 14, width: '660px' }}
-    >
+    <div style={{ display: 'flex', gap: 12, marginBottom: 14, width: '660px' }}>
       {(['all', 'confirmed', 'pending', 'cancelled', 'done'] as TabKey[]).map((k) => {
         const active = tab === k;
-        const badge =
-          k === 'all'
-            ? counts.confirmed + counts.pending + counts.cancelled + counts.done
-            : counts[k];
+        const badge = k === 'all' ? (counts.confirmed + counts.pending + counts.cancelled + counts.done) : counts[k];
 
         const baseBtn: React.CSSProperties = {
-          borderRadius: 8,
+           borderRadius: 8,
           border: `2px solid ${C.borderBtn}`,
           background: active ? C.active : C.white,
           color: active ? C.white : C.text,
-          fontWeight: 400,
           fontSize: 16,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
           cursor: 'pointer',
-          transition: 'all 0.2s ease',
           padding: '8px 12px',
-          lineHeight: '22px',
-          whiteSpace: 'nowrap',
         };
-        const isAll = k === 'all';
-        const allSize: React.CSSProperties = isAll
-          ? { padding: '8px 14px', minWidth: 115, height: 40 }
-          : {};
-
         return (
-          <button
-            key={k}
-            onClick={() => {
-              setTab(k);
-              setCurrentPage(1);
-            }}
-            style={{ ...baseBtn, ...allSize }}
-          >
-            {k === 'all'
-              ? `Todos (${badge})`
-              : k === 'confirmed'
-              ? `Confirmados (${badge})`
-              : k === 'pending'
-              ? `Pendientes (${badge})`
-              : k === 'cancelled'
-              ? `Cancelados (${badge})`
+          <button key={k} onClick={() => { setTab(k); setCurrentPage(1); }} style={baseBtn}>
+            {k === 'all' ? `Todos (${badge})`
+              : k === 'confirmed' ? `Confirmados (${badge})`
+              : k === 'pending' ? `Pendientes (${badge})`
+              : k === 'cancelled' ? `Cancelados (${badge})`
               : `Terminados (${badge})`}
           </button>
         );
