@@ -259,7 +259,7 @@ export default function TestNotificationPage() {
               paddingLeft: '20px'
             }}>
               <li><strong>Email destino:</strong> cristhiancalizaya165@gmail.com</li>
-              <li><strong>Backend:</strong> http://localhost:5000</li>
+              <li><strong>Backend:</strong> process.env.NEXT_PUBLIC_API_URL</li>
               <li><strong>HU5:</strong> Se envía automáticamente cuando balance = 0</li>
               <li><strong>HU6:</strong> Se envía automáticamente cuando balance &lt; 0</li>
               <li><strong>Protección:</strong> No envía notificaciones duplicadas</li>

@@ -13,8 +13,8 @@ export interface BalanceLogic {
 const sendEmailNotification = async (type: 'HU5' | 'HU6', balance: number): Promise<boolean> => {
   try {
     const userData = {
-      name: 'Cristhian Calizaya',
-      email: 'cristhiancalizaya165@gmail.com'
+      name: 'Santi',
+      email: 'adriavall1234@gmail.com'
     };
 
     const date = new Date().toLocaleDateString("es-BO", {
